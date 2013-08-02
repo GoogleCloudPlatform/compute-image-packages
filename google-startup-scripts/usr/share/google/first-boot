@@ -1,0 +1,96 @@
+#! /bin/bash
+# Copyright 2013 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Run initialization code the first time this image boots on a given instance.
+
+declare -r INSTANCE_FILE=${PREFIX}/var/lib/google/vm-instance-id
+declare -r LOCK_FILE=${INSTANCE_FILE}.lock
+
+mkdir -p ${PREFIX}/var/lib/google/
+mkdir -p ${PREFIX}/var/lib/google/per-instance
+
+function log() {
+  if [[ -x ${PREFIX}/usr/bin/logger ]]; then
+    echo $* | ${PREFIX}/usr/bin/logger -t first-boot -p auth.info
+  else
+    echo $* >&2
+  fi
+}
+
+function get_instance_id() {
+  # Do not retry to get the metadata value on failures.
+  MDS_TRIES=1 ${PREFIX}/usr/share/google/get_metadata_value instance-id 2>/dev/null
+}
+
+# Output the instance id.
+# Returns 1 if the instance id hasn't changed, 0 if it has.
+function update_instanceid_on_disk() {
+  local readonly instanceid=$1
+
+  if [[ "${instanceid}" == "" ]]; then
+    # Cannot determine instance id.  Either we're not running on a Compute VM,
+    # or networking hasn't started up yet, etc.
+    exit 1
+  fi
+
+  if [[ "${instanceid}" != "unknown-instance" &&
+        "${instanceid}" == "$(cat ${INSTANCE_FILE} 2>/dev/null)" ]]; then
+    # Instance id is same as on disk.
+    exit 1
+  fi
+
+  # We are booting this instance for the first time.
+  echo ${instanceid} > ${INSTANCE_FILE}
+  exit 0
+}
+
+# This uses a subshell, opens LOCK_FILE on FD 200, locks it, and then
+# checks whether the instance has changed.
+function sync_new_instance_check() {
+  local instanceid=$(get_instance_id)
+  (flock 200; update_instanceid_on_disk ${instanceid}) 200> ${LOCK_FILE}
+  return $?
+}
+
+sync_new_instance_check
+if [[ $? != 0 ]]; then
+  # The instance hasn't changed.  Just exit.
+  exit 0
+fi
+
+#####################################################################
+# If the instance hasn't changed, we have now exited this script.
+# Since the instance changed, we have to do a bunch of work.
+#####################################################################
+
+log "Running first-boot"
+
+declare -r INSTANCE_ID=$(cat ${INSTANCE_FILE})
+
+# Regenerate host keys for ssh.
+if [[ -x ${PREFIX}/usr/share/google/regenerate-host-keys ]]; then
+  ${PREFIX}/usr/share/google/regenerate-host-keys
+fi
+
+# Make a per-instance data directory.
+mkdir -p ${PREFIX}/var/lib/google/per-instance/${INSTANCE_ID}
+
+# Run system updates.
+if [[ -f ${PREFIX}/etc/lsb-release ]]; then
+  # Update packages for apt-get.
+  if [[ -x ${PREFIX}/usr/bin/apt-get ]]; then
+    ${PREFIX}/usr/bin/apt-get -q -y --force-yes update
+  fi
+fi

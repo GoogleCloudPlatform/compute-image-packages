@@ -1,0 +1,72 @@
+#!/bin/bash
+# Copyright 2013 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Regenerates the SSH host keys when the VM is restarted with a new IP
+# address.  Booting a VM from an image with a known SSH key allows a
+# number of attacks, so this script regenerates the host key whenever
+# the IP address changes.  (This applies on firstboot, but also if the
+# VM disk has been used for another image.)
+
+log() {
+  logger -t regenerate-host-keys -p auth.info -s "$@"
+}
+
+sshd_cmd() {
+  local cmd=$1
+  log "${cmd}ing sshd"
+  if [[ -x /etc/init.d/ssh || -f /etc/init/ssh.conf ]]; then
+    service ssh ${cmd}
+  fi
+  if [[ -x /etc/init.d/sshd || -f /etc/init/sshd.conf ]]; then
+    service sshd ${cmd}
+  fi
+}
+
+generate_key() {
+  local key_type=$1
+  local key_dest=$2
+  local tmp_file="/tmp/keyfile.$$";
+  local log_file=$(mktemp);
+  log "Regenerating sshd key ${key_dest}"
+  ssh-keygen -N '' -t ${key_type} -f ${tmp_file} > ${log_file} 2>&1
+  if [[ $? == 0 ]]; then
+    rm -f ${key_dest} ${key_dest}.pub
+    cp -f ${tmp_file} ${key_dest}
+    cp -f ${tmp_file}.pub ${key_dest}.pub
+  else
+    log "Could not create sshd key ${key_dest}"
+    log "$(cat ${log_file})"
+  fi
+  rm -f ${tmp_file}
+  rm -f ${log_file}
+}
+
+regenerate_host_keys() {
+  log "Regenerating SSH Host Keys for: $new_ip_address (previously $old_ip_address)."
+  rm -f /etc/ssh/ssh_host_key  # SSH1 RSA key.
+  generate_key rsa /etc/ssh/ssh_host_rsa_key
+  generate_key dsa /etc/ssh/ssh_host_dsa_key
+  generate_key ecdsa /etc/ssh/ssh_host_ecdsa_key
+  # Allow sshd to come up if we were suppressing it.
+  if [[ $(cat /etc/ssh/sshd_not_to_be_run 2>/dev/null) == "GOOGLE" ]]; then
+    rm -f /etc/ssh/sshd_not_to_be_run
+  fi
+  # Start sshd if it was not running.
+  sshd_cmd start
+  # Reload sshd config if it already was running.
+  sshd_cmd reload
+}
+
+regenerate_host_keys

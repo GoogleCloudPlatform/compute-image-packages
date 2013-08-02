@@ -1,0 +1,54 @@
+#! /bin/bash
+# Copyright 2013 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Get a metadata value from the metadata server.
+
+declare -r VARNAME=$1
+declare -r MDS=http://metadata.google.internal/0.1/meta-data
+declare -r MDS_TRIES=${MDS_TRIES:-100}
+
+function get_metadata_value() {
+  local readonly varname=$1
+  local readonly tmpfile=$(mktemp)
+  curl -f ${MDS}/${varname} > ${tmpfile} 2>/dev/null
+  local return_code=$?
+  if [[ ${return_code} == 0 ]]; then
+    cat ${tmpfile}
+  else
+    echo "curl for ${varname} returned ${return_code}" > /dev/console
+  fi
+  rm -f ${tmpfile}
+  return ${return_code}
+}
+
+function get_metadata_value_with_retries() {
+  local return_code=1  # General error code.
+  for ((count=0; count <= ${MDS_TRIES}; count++)); do
+    get_metadata_value $VARNAME
+    return_code=$?
+    case $return_code in
+      # No error.  We're done.
+      0) exit ${return_code};;
+      # Failed to connect to host.  Retry.
+      7) sleep 0.1; continue;;
+      # A genuine error.  Exit.
+      *) exit ${return_code};
+    esac
+  done
+  # Exit with the last return code we got.
+  exit ${return_code}
+}
+
+get_metadata_value_with_retries

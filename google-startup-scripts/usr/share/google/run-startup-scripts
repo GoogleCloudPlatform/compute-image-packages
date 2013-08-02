@@ -1,0 +1,64 @@
+#! /bin/bash
+# Copyright 2013 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Run startup scripts that should happen "Late" at boot.
+#
+# Do NOT "set -e"
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
+
+LOG_CMD="/usr/bin/logger -t startupscript -p daemon.info"
+
+function log() {
+  echo $* | ${LOG_CMD}
+}
+
+function die() {
+  log $*
+  exit 1
+}
+
+declare -r LEGACY_STARTUP_SCRIPT=/var/run/google.startup.script
+declare -r GOOGLE_ENVIRONMENT=/var/run/google.environment
+declare -r CLOUDINIT_USER_DATA=/var/run/google.cloudinit.user_data
+
+# Make sure all udev changes settle before running startup scripts.
+udevadm settle
+
+
+function copy_and_run() {
+  local source=$1
+  local dest=$(mktemp)
+  cat ${source} >> ${dest}
+  chmod u+x ${dest}
+  log "Running startup script ${source}"
+  ${dest} 2>&1 | ${LOG_CMD}
+  log "Finished running startup script ${source}"
+  rm -f ${dest}
+}
+
+if [[ -e ${LEGACY_STARTUP_SCRIPT} ]]; then
+  (
+    [ -r ${GOOGLE_ENVIRONMENT} ] && source ${GOOGLE_ENVIRONMENT};
+    copy_and_run ${LEGACY_STARTUP_SCRIPT}
+  )
+fi
+
+if [[ -e ${CLOUDINIT_USER_DATA} ]]; then
+  (
+    [ -r ${GOOGLE_ENVIRONMENT} ] && source ${GOOGLE_ENVIRONMENT};
+    copy_and_run ${LEGACY_STARTUP_SCRIPT}
+  )
+fi
