@@ -60,7 +60,7 @@ def main(argv):
   config = SafeConfigParser()
   config.read(SYSTEM_BOTO_CONFIG_TEMPLATE)
 
-  # TODO(jbeda): Figure out if we need a retry here.
+  # TODO(user): Figure out if we need a retry here.
   project_id = GetNumericProjectId()
   if not project_id:
     # Our project doesn't support service accounts.
@@ -73,7 +73,7 @@ def main(argv):
 
   if not config.has_section('GoogleCompute'):
     config.add_section('GoogleCompute')
-  # TODO(jbeda): Plumb a metadata value to set this.  We probably want
+  # TODO(user): Plumb a metadata value to set this.  We probably want
   # to namespace the metadata values in some way like
   # 'boto_auth.servicee_account'.
   config.set('GoogleCompute', 'service_account', 'default')
