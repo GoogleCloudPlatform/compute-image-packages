@@ -37,6 +37,8 @@ import utils
 def SetupArgsParser():
   """Sets up the command line flags."""
   parser = OptionParser()
+  parser.add_option('-d', '--disk', dest='disk',
+                    help='Disk to bundle.')
   parser.add_option('-r', '--root', dest='root_directory',
                     default='/', metavar='ROOT',
                     help='Root of the file system to bundle.'
@@ -153,6 +155,11 @@ def main():
 
   bundle = block_disk.RootFsRaw(options.fs_size)
   bundle.SetTarfile(temp_file_name)
+  if options.disk:
+    bundle.AddDisk(options.disk)
+    # TODO(user): Find the location where the first partition of the disk
+    # is mounted and add it as the source instead of relying on the source
+    # param flag
   bundle.AddSource(options.root_directory)
   bundle.SetKey(options.key)
   bundle.SetScratchDirectory(scratch_dir)
@@ -192,6 +199,7 @@ def main():
         options.output_directory, '%s.image.tar.gz' % digest)
 
   os.rename(temp_file_name, output_file)
+  print 'Created tar.gz file at %s' % output_file
 
   if options.bucket:
     bucket = options.bucket

@@ -24,32 +24,8 @@ import subprocess
 import time
 
 
-class MakePartitionTableException(Exception):
-  """Error occurred in parted during partition table creation."""
-
-
-class MakePartitionException(Exception):
-  """Error occurred in parted during partition creation."""
-
-
-class LoadDiskImageException(Exception):
-  """Error occurred in kpartx loading a raw image."""
-
-
 class MakeFileSystemException(Exception):
   """Error occurred in file system creation."""
-
-
-class MountFileSystemException(Exception):
-  """Error occurred in file system mount."""
-
-
-class RsyncException(Exception):
-  """Error occurred in rsync execution."""
-
-
-class TarAndGzipFileException(Exception):
-  """Error occurred in tar\gzip execution."""
 
 
 class LoadDiskImage(object):
@@ -61,9 +37,6 @@ class LoadDiskImage(object):
     Args:
       file_path: a path to a file containing raw disk image.
 
-    Raises:
-      LoadDiskImageException: If kpartx encountered an error while load image.
-
     Returns:
       A list of devices for every partition found in an image.
     """
@@ -72,11 +45,7 @@ class LoadDiskImage(object):
   def __enter__(self):
     """Map disk image as a device."""
     kpartx_cmd = ['kpartx', '-av', self._file_path]
-    p = subprocess.Popen(kpartx_cmd, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
-    output = p.communicate()[0]
-    if p.returncode != 0:
-      raise LoadDiskImageException(output)
+    output = RunCommand(kpartx_cmd)
     devs = []
     for line in output.splitlines():
       split_line = line.split()
@@ -94,7 +63,7 @@ class LoadDiskImage(object):
       unused_exc_tb: unused.
     """
     kpartx_cmd = ['kpartx', '-d', self._file_path]
-    subprocess.call(kpartx_cmd)
+    RunCommand(kpartx_cmd)
 
 
 class MountFileSystem(object):
@@ -112,14 +81,9 @@ class MountFileSystem(object):
 
   def __enter__(self):
     """Mounts a device.
-
-    Raises:
-      MakeFileSystemException: If a mount command encountered an error.
     """
     mount_cmd = ['mount', self._dev_path, self._dir_path]
-    retcode = subprocess.call(mount_cmd)
-    if retcode != 0:
-      raise MakeFileSystemException(self._dev_path)
+    RunCommand(mount_cmd)
 
   def __exit__(self, unused_exc_type, unused_exc_value, unused_exc_tb):
     """Unmounts a file system.
@@ -130,7 +94,7 @@ class MountFileSystem(object):
       unused_exc_tb: unused.
     """
     umount_cmd = ['umount', self._dir_path]
-    subprocess.call(umount_cmd)
+    RunCommand(umount_cmd)
 
 
 def GetMounts(root='/'):
@@ -142,8 +106,7 @@ def GetMounts(root='/'):
   Returns:
     A list of mount points.
   """
-  mount_cmd = ['/bin/mount', '-l']
-  output = subprocess.Popen(mount_cmd, stdout=subprocess.PIPE).communicate()[0]
+  output = RunCommand(['/bin/mount', '-l'])
   mounts = []
   for line in output.splitlines():
     split_line = line.split()
@@ -162,14 +125,8 @@ def MakePartitionTable(file_path):
 
   Args:
     file_path: A path to a file where a partition table will be created.
-
-  Raises:
-    MakePartitionTableException: If parted encounters an error.
   """
-  parted_cmd = ['parted', file_path, 'mklabel', 'msdos']
-  retcode = subprocess.call(parted_cmd)
-  if retcode != 0:
-    raise MakePartitionTableException(file_path)
+  RunCommand(['parted', file_path, 'mklabel', 'msdos'])
 
 
 def MakePartition(file_path, partition_type, fs_type, start, end):
@@ -182,46 +139,39 @@ def MakePartition(file_path, partition_type, fs_type, start, end):
       etc.
     start: Start offset of a partition in bytes.
     end: End offset of a partition in bytes.
-
-  Raises:
-    MakePartitionException: If parted encounters an error.
   """
-  parted_cmd = ['parted', file_path, 'mkpart', partition_type, fs_type,
-                str(start / (1024 * 1024)), str(end / (1024 * 1024))]
-  retcode = subprocess.call(parted_cmd)
-  if retcode != 0:
-    raise MakePartitionException(file_path)
+  parted_cmd = ['parted', file_path, 'unit B', 'mkpart', partition_type,
+                fs_type, str(start), str(end)]
+  RunCommand(parted_cmd)
 
 
-def MakeFileSystem(dev_path, fs_type):
+def MakeFileSystem(dev_path, fs_type, uuid=None):
   """Create a file system in a device.
 
   Args:
     dev_path: A path to a device.
     fs_type: A type of a file system to be created. For example ext2, ext3, etc.
+    uuid: The value to use as the UUID for the filesystem. If none, a random
+        UUID will be generated and used.
 
   Returns:
-    The uuid of the filesystem.
+    The uuid of the filesystem. This will be the same as the passed value if
+    a value was specified. If no uuid was passed in, this will be the randomly
+    generated uuid.
 
   Raises:
     MakeFileSystemException: If mkfs encounters an error.
   """
-  p = subprocess.Popen(['uuidgen'], stdout=subprocess.PIPE)
-  if p.wait() != 0:
-    raise MakeFileSystemException(dev_path)
-  uuid = p.communicate()[0].strip()
+  if uuid is None:
+    uuid = RunCommand(['uuidgen']).strip()
   if uuid is None:
     raise MakeFileSystemException(dev_path)
 
   mkfs_cmd = ['mkfs', '-t', fs_type, dev_path]
-  retcode = subprocess.call(mkfs_cmd)
-  if retcode != 0:
-    raise MakeFileSystemException(dev_path)
+  RunCommand(mkfs_cmd)
 
   set_uuid_cmd = ['tune2fs', '-U', uuid, dev_path]
-  retcode = subprocess.call(set_uuid_cmd)
-  if retcode != 0:
-    raise MakeFileSystemException(dev_path)
+  RunCommand(set_uuid_cmd)
 
   return uuid
 
@@ -237,9 +187,6 @@ def Rsync(src, dest, exclude_file, ignore_hard_links, recursive):
     ignore_hard_links: If True a hard links are copied as a separate files. If
       False, hard link are recreated in dest.
     recursive: Specifies if directories are copied recursively or not.
-
-  Raises:
-    RsyncException: If rsync encounters an error.
   """
   rsync_cmd = ['rsync', '--times', '--perms', '--owner', '--group', '--links',
                '--devices', '--sparse']
@@ -260,11 +207,145 @@ def Rsync(src, dest, exclude_file, ignore_hard_links, recursive):
       for line in excludes:
         logging.debug('  %s', line.rstrip())
 
-  # TODO: It would be great to capture the stderr/stdout from this and
-  # put it in the log.  We could then include verbose output.
-  retcode = subprocess.call(rsync_cmd)
-  if retcode != 0:
-    raise RsyncException(src)
+  RunCommand(rsync_cmd)
+
+
+def GetUUID(partition_path):
+  """Fetches the UUID of the filesystem on the specified partition.
+
+  Args:
+    partition_path: The path to the partition.
+
+  Returns:
+    The uuid of the filesystem.
+  """
+  output = RunCommand(['blkid', partition_path])
+  for token in output.split():
+    if token.startswith('UUID='):
+      uuid = token.strip()[len('UUID="'):-1]
+
+  logging.debug('found uuid = %s', uuid)
+  return uuid
+
+
+def CopyBytes(src, dest, count):
+  """Copies count bytes from the src to dest file.
+
+  Args:
+    src: The source to read bytes from.
+    dest: The destination to copy bytes to.
+    count: Number of bytes to copy.
+  """
+  block_size = 4096
+  block_count = count / block_size
+  dd_command = ['dd',
+                'if=%s' % src,
+                'of=%s' % dest,
+                'conv=notrunc',
+                'bs=%s' % block_size,
+                'count=%s' % block_count]
+  RunCommand(dd_command)
+  remaining_bytes = count - block_count * block_size
+  if remaining_bytes:
+    logging.debug('remaining bytes to copy = %s', remaining_bytes)
+    dd_command = ['dd',
+                  'if=%s' % src,
+                  'of=%s' % dest,
+                  'seek=%s' % block_count,
+                  'skip=%s' % block_count,
+                  'conv=notrunc',
+                  'bs=1',
+                  'count=%s' % remaining_bytes]
+    RunCommand(dd_command)
+
+
+def GetPartitionStart(disk_path, partition_number):
+  """Returns the starting position in bytes of the partition.
+
+  Args:
+    disk_path: The path to disk device.
+    partition_number: The partition number to lookup. 1 based.
+
+  Returns:
+    The starting position of the first partition in bytes.
+
+  Raises:
+    subprocess.CalledProcessError: If running parted fails.
+    IndexError: If there is no partition at the given number.
+  """
+  parted_cmd = ['parted',
+                disk_path,
+                'unit B',
+                'print']
+  # In case the device is not valid and parted throws the retry/cancel prompt
+  # write c to stdin.
+  output = RunCommand(parted_cmd, input_str='c')
+  for line in output.splitlines():
+    split_line = line.split()
+    if len(split_line) > 4 and split_line[0] == str(partition_number):
+      return int(split_line[1][:-1])
+  raise IndexError()
+
+
+def RemovePartition(disk_path, partition_number):
+  """Removes the partition number from the disk.
+
+  Args:
+    disk_path: The disk to remove the partition from.
+    partition_number: The partition number to remove.
+  """
+  parted_cmd = ['parted',
+                disk_path,
+                'rm',
+                str(partition_number)]
+  # In case the device is not valid and parted throws the retry/cancel prompt
+  # write c to stdin.
+  RunCommand(parted_cmd, input_str='c')
+
+
+def GetDiskSize(disk_file):
+  """Returns the size of the disk device in bytes.
+
+  Args:
+    disk_file: The full path to the disk device.
+
+  Returns:
+    The size of the disk device in bytes.
+
+  Raises:
+    subprocess.CalledProcessError: If fdisk command fails for the disk file.
+  """
+  output = RunCommand(['fdisk', '-s', disk_file])
+  return int(output) * 1024
+
+
+def RunCommand(command, input_str=None):
+  """Runs the command and returns the output printed on stdout.
+
+  Args:
+    command: The command to run.
+    input_str: The input to pass to subprocess via stdin.
+
+  Returns:
+    The stdout from running the command.
+
+  Raises:
+    subprocess.CalledProcessError: if the command fails.
+  """
+  logging.debug('running %s with input=%s', command, input_str)
+  p = subprocess.Popen(command, stdin=subprocess.PIPE,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  output = p.communicate(input_str)
+  logging.debug('stdout from running %s = %s', command, output[0])
+  logging.debug('stderr from running %s = %s', command, output[1])
+  if p.returncode:
+    logging.warning('Error while running %s return_code = %s',
+                    command, p.returncode)
+    raise subprocess.CalledProcessError(p.returncode,
+                                        cmd=command,
+                                        output='%s\n%s' %
+                                        (output[0], output[1]))
+  return output[0]
 
 
 def TarAndGzipFile(src, dest):
@@ -274,9 +355,6 @@ def TarAndGzipFile(src, dest):
     src: A file to archive.
     dest: An archive name. If a file ends with .gz or .tgz an archive is gzipped
       as well.
-
-  Raises:
-    TarAndGzipFileException: If tar encounters an error.
   """
   if dest.endswith('.gz') or dest.endswith('.tgz'):
     mode = 'czSf'
@@ -284,6 +362,5 @@ def TarAndGzipFile(src, dest):
     mode = 'cSf'
   tar_cmd = ['tar', mode, dest, '-C', os.path.dirname(src),
              os.path.basename(src)]
-  retcode = subprocess.call(tar_cmd)
-  if retcode != 0:
-    raise TarAndGzipFileException(src)
+  RunCommand(tar_cmd)
+

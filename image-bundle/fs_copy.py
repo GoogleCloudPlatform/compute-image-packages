@@ -46,6 +46,7 @@ class FsCopy(object):
     self._platform = None
     self._overwrite_list = []
     self._scratch_dir = '/tmp'
+    self._disk = None
 
   def SetTarfile(self, tar_file):
     """Sets tar file which will contain file system copy.
@@ -54,6 +55,14 @@ class FsCopy(object):
       tar_file: path to a tar file.
     """
     self._output_tarfile = tar_file
+
+  def AddDisk(self, disk):
+    """Adds the disk which should be bundled.
+
+    Args:
+      disk: The block disk that needs to be bundled.
+    """
+    self._disk = disk
 
   def AddSource(self, src, arcname='', recursive=True):
     """Adds a source to be copied to the tar file.

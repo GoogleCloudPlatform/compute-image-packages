@@ -52,6 +52,61 @@ class FsRawDisk(fs_copy.FsCopy):
     super(FsRawDisk, self).__init__()
     self._fs_size = fs_size
 
+  def _ResizeFile(self, file_path, file_size):
+    logging.debug('Resizing %s to %s', file_path, file_size)
+    with open(file_path, 'a') as disk_file:
+      disk_file.truncate(file_size)
+
+  def _InitializeDiskFileFromDevice(self, file_path):
+    """Initializes disk file from the device specified in self._disk.
+
+    It preserves whatever may be there on the device prior to the start of the
+    first partition.
+
+    At the moment this method supports devices with a single partition only.
+
+    Args:
+      file_path: The path where the disk file should be created.
+
+    Returns:
+      A tuple with partition_start, uuid. partition_start is the location
+      where the first partition on the disk starts and uuid is the filesystem
+      UUID to use for the first partition.
+
+    Raises:
+      RawDiskError: If there are more than one partition on the disk device.
+    """
+    # Find the disk size
+    disk_size = utils.GetDiskSize(self._disk)
+    logging.debug('Size of disk is %s', disk_size)
+    # Make the disk file big enough to hold the disk
+    self._ResizeFile(file_path, disk_size)
+    # Find the location where the first partition starts
+    partition_start = utils.GetPartitionStart(self._disk, 1)
+    logging.debug('First partition starts at %s', partition_start)
+    # Copy all the bytes as is from the start of the disk to the start of
+    # first partition
+    utils.CopyBytes(self._disk, file_path, partition_start)
+    # Verify there is only 1 partition on the disk
+    with utils.LoadDiskImage(file_path) as devices:
+      # For now we only support disks with a single partition.
+      if len(devices) != 1:
+        raise RawDiskError(
+            'Device %s has more than 1 partition. Only devices '
+            'with a single partition are supported.' % self._disk)
+    # Remove the first partition from the file we are creating. We will
+    # recreate a partition that will fit inside _fs_size later.
+    utils.RemovePartition(file_path, 1)
+    # Resize the disk.raw file down to self._fs_size
+    # We do this after removing the first partition to ensure that an
+    # existing partition doesn't fall outside the boundary of the disk device.
+    self._ResizeFile(file_path, self._fs_size)
+    # Get UUID of the first partition on the disk
+    # TODO(user): This is very hacky and relies on the disk path being
+    # similar to /dev/sda etc which is bad. Need to fix it.
+    uuid = utils.GetUUID(self._disk + '1')
+    return partition_start, uuid
+
   def Bundleup(self):
     """Creates a raw disk copy of OS image and bundles it into gzipped tar.
 
@@ -63,31 +118,52 @@ class FsRawDisk(fs_copy.FsCopy):
                     expected count.
     """
     self._Verify()
+
     # Create sparse file with specified size
     file_path = os.path.join(self._scratch_dir, 'disk.raw')
+    with open(file_path, 'wb') as _:
+      pass
     self._excludes.append(exclude_spec.ExcludeSpec(file_path))
-    with open(file_path, 'wb') as disk_file:
-      disk_file.truncate(self._fs_size)
-    utils.MakePartitionTable(file_path)
-    # Pass 1MB as start to avoid 'Warning: The resulting partition is not
-    # properly aligned for best performance.' from parted.
-    utils.MakePartition(file_path, 'primary', 'ext2', 1024 * 1024,
-                        self._fs_size)
+
+    print 'Initializing disk file'
+    partition_start = None
+    uuid = None
+    if self._disk:
+      # If a disk device has been provided then preserve whatever is there on
+      # the disk before the first partition in case there is an MBR present.
+      partition_start, uuid = self._InitializeDiskFileFromDevice(file_path)
+    else:
+      # User didn't specify a disk device. Initialize a device with a simple
+      # partition table.
+      self._ResizeFile(file_path, self._fs_size)
+      # User didn't specify a disk to copy. Create a new partition table
+      utils.MakePartitionTable(file_path)
+      # Pass 1MB as start to avoid 'Warning: The resulting partition is not
+      # properly aligned for best performance.' from parted.
+      partition_start = 1024 * 1024
+
+    # Create a new partition starting at partition_start of size
+    # self._fs_size - partition_start
+    utils.MakePartition(file_path, 'primary', 'ext2', partition_start,
+                        self._fs_size - partition_start)
     with utils.LoadDiskImage(file_path) as devices:
       # For now we only support disks with a single partition.
       if len(devices) != 1:
         raise RawDiskError(devices)
-      uuid = utils.MakeFileSystem(devices[0], 'ext4')
+      print 'Making filesystem'
+      uuid = utils.MakeFileSystem(devices[0], 'ext4', uuid)
       if uuid is None:
         raise Exception('Could not get uuid from makefilesystem')
       mount_point = tempfile.mkdtemp(dir=self._scratch_dir)
       with utils.MountFileSystem(devices[0], mount_point):
+        print 'Copying contents'
         self._CopySourceFiles(mount_point)
         self._CopyPlatformSpecialFiles(mount_point)
         self._ProcessOverwriteList(mount_point)
         self._CleanupNetwork(mount_point)
         self._UpdateFstab(mount_point, uuid)
 
+    print 'Creating tar.gz archive'
     utils.TarAndGzipFile(file_path, self._output_tarfile)
     os.remove(file_path)
     # TODO(user): It would be better to compute tar.gz file hash during
@@ -202,9 +278,14 @@ class FsRawDisk(fs_copy.FsCopy):
         return line
       return 'UUID=%s / %s\n' % (uuid, g.group(1))
 
-    lines = map(UpdateUUID, lines)
+    logging.debug('Original /etc/fstab contents:\n%s', lines)
+    updated_lines = map(UpdateUUID, lines)
+    if lines == updated_lines:
+      logging.debug('No changes required to /etc/fstab')
+      return
+    logging.debug('Updated /etc/fstab contents:\n%s', updated_lines)
     f = open(fstab_path, 'w')
-    f.write(''.join(lines))
+    f.write(''.join(updated_lines))
     f.close()
 
 
