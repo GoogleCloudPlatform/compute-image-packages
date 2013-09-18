@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -335,17 +334,18 @@ def RunCommand(command, input_str=None):
   logging.debug('running %s with input=%s', command, input_str)
   p = subprocess.Popen(command, stdin=subprocess.PIPE,
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  output = p.communicate(input_str)
-  logging.debug('stdout from running %s = %s', command, output[0])
-  logging.debug('stderr from running %s = %s', command, output[1])
+  cmd_output = p.communicate(input_str)
+  logging.debug('stdout %s', cmd_output[0])
+  logging.debug('stderr %s', cmd_output[1])
+  logging.debug('returncode %s', p.returncode)
   if p.returncode:
     logging.warning('Error while running %s return_code = %s',
                     command, p.returncode)
     raise subprocess.CalledProcessError(p.returncode,
                                         cmd=command,
                                         output='%s\n%s' %
-                                        (output[0], output[1]))
-  return output[0]
+                                        (cmd_output[0], cmd_output[1]))
+  return cmd_output[0]
 
 
 def TarAndGzipFile(src, dest):
