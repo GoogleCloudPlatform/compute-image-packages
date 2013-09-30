@@ -21,6 +21,8 @@ import centos
 import debian
 import gcel
 import logging
+import opensuse
+import sle
 import ubuntu
 
 
@@ -35,11 +37,13 @@ class PlatformFactory(object):
     self.__root = root
     self.__registry = {}
     self.__platform_registry = {}
-    self.Register('Ubuntu', ubuntu.Ubuntu)
-    self.Register('GCEL', gcel.Gcel)
     self.Register('Centos', centos.Centos)
     self.Register('Debian', debian.Debian)
-
+    self.Register('GCEL', gcel.Gcel)
+    self.Register('openSUSE', openSUSE.OpenSUSE)
+    self.Register('SUSE Linux Enterprise', sle.SLE)
+    self.Register('Ubuntu', ubuntu.Ubuntu)
+    
   def Register(self, name, klass):
     self.__registry[name] = klass
 
