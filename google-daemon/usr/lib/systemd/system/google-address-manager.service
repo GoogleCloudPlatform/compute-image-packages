@@ -1,0 +1,13 @@
+[Unit]
+Description= Google Compute Engine Address Manager Deamon
+After=syslog.target
+After=network.target
+
+[Service]
+ExecStart /usr/share/google/google_daemon/manage_addresses.py
+ExecStop=/bin/kill -TERM $MAINPID
+PIDFile=/var/run/google/google_daemon.pid
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
