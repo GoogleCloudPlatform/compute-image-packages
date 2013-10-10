@@ -1,0 +1,10 @@
+[Unit]
+Description=Google Compute Engine user startup scripts
+After=network.target
+
+[Service]
+ExecStart=/usr/share/google/run-startup-scripts
+Type=idle
+
+[Install]
+WantedBy=multi-user.target
