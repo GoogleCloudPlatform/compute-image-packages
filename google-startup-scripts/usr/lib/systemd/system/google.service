@@ -1,0 +1,16 @@
+[Unit]
+Description=Google Compute Engine VM initialization
+After=syslog.target
+After=network.target
+After=local-fs.target
+Before=sshd.service
+Requires=syslog.target
+Requires=network.target
+Requires=local-fs.target
+
+[Service]
+ExecStart=/usr/share/google/onboot
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
