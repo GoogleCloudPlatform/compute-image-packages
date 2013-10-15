@@ -3,4 +3,4 @@ Image Bundle is a python package that allows users to create an image from the c
 
 To run unit tests:
 
-  sudo python /usr/share/imagebundle/block_disk_unittest.py
+    sudo python /usr/share/imagebundle/block_disk_unittest.py
