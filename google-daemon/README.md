@@ -1,4 +1,4 @@
-## google-daemon package for Google Compute Engine
+## google-daemon
 Google daemon runs in the background and provides the following services:
 
 + Creates new accounts based on the instance metadata.
