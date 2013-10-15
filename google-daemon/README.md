@@ -49,7 +49,7 @@ For more information about the metadata server, read the [metadata server](http:
 
 Inside a virtual machine, a cron job runs every minute to check if project or instance metadata was updated with the new sshKeys value, and makes sure those users exist. It also checks that the keys are in the `~$USER/.ssh/authorized_keys` file.
 
-__Note:__ It is recommended that you use a `wait-for-change` request through the metadata server to detect updates. See [metadata server](https://devsite.googleplex.com/compute/docs/metadata#waitforchange) for more information.
+__Note:__ It is recommended that you use a `wait-for-change` request through the metadata server to detect updates. See [metadata server](https://developers.google.com/compute/docs/metadata#waitforchange) for more information.
 
 Other account management software can be used instead of Google Daemon but you will have to configure the software to read user accounts from the metadata server.
 
