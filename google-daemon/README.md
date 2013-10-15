@@ -1,5 +1,5 @@
 ## google-daemon package for Google Compute Engine
-The google-daemon package creates new accounts and configures ssh to accept public keys. Google daemon runs in the background and provides the following services:
+Google daemon runs in the background and provides the following services:
 
 + Creates new accounts based on the instance metadata.
 + Configures ssh to accept the accounts' public keys from the instance metadata.
