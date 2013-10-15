@@ -1,4 +1,4 @@
-## google-startup-scrips for Google Compute Engine
+## Google Startup Scripts
 Google provides a set of startup scripts that interact with the virtual machine environment. On boot, the startup script `/usr/share/google/onboot` queries the instance metadata for a user-provided startup script to run. User-provided startup scripts can be specified in the instance metadata under `startup-script` or, if the metadata is in a small script or a downloadable file, it can be specified `via startup-script-url`. You can use gcutil or the [Google Compute Engine API](https://developers.google.com/compute/docs/reference/latest) to specify a startup script. 
 
 For more information on how to use startup scripts, read the [Using Start Up Scripts documentation](https://devsite.googleplex.com/compute/docs/howtos/startupscript#storescriptremotely).
@@ -16,7 +16,6 @@ Below is an example of metadata that indicates a startup script URL and a startu
       ]
      }
     }
-
     {  // instance
       metadata: {
         "kind": "compute#metadata",
@@ -26,8 +25,8 @@ Below is an example of metadata that indicates a startup script URL and a startu
            "value": "#! /bin/python\nprint ‘startup’\n"
         }
       ]
+     }
     }
-   }
    
    
 Google startup scripts also perform the following actions:
