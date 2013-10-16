@@ -1,4 +1,4 @@
-## google-daemon
+## Google Daemon
 Google daemon runs in the background and provides the following services:
 
 + Creates new accounts based on the instance metadata.
