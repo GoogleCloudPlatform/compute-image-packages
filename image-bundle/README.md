@@ -11,6 +11,10 @@ This will output the image tar in the output directory specified with -o option.
 
 To run unit test:
 
+    sudo python /usr/share/imagebundle/block_disk_unittest.py
+    
+Or, if you are in the package directory:
+
     $ mkdir /tmp/imagebundle
     $ cp * /tmp/imagebundle/
     $ sudo /tmp/imagebundle/block_disk_unittest.py
