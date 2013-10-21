@@ -28,11 +28,10 @@ import shutil
 import subprocess
 import tempfile
 
-import block_disk
-import exclude_spec
-import platform_factory
-import utils
-
+from gcimagebundle import block_disk
+from gcimagebundle import exclude_spec
+from gcimagebundle import platform_factory
+from gcimagebundle import utils
 
 def SetupArgsParser():
   """Sets up the command line flags."""

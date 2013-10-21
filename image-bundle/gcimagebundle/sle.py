@@ -1,4 +1,4 @@
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 SUSE LLC All Rights Reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Image bundling tool for root file system.
 
-To build a root filesystem tar
-$ sudo image_bundle -r /data/myimage/root -o /usr/local/google/home/${USER} \
-  -k 'somekey' --loglevel=DEBUG  --log_file=/tmp/image_bundle.log
+"""SUSE Linux Enterprise (SLE) platform info."""
 
-This will output the image tar in the output directory
-specified with -o option.
+import suse
 
-To run unittest:
-$ mkdir /tmp/imagebundle
-$ cp * /tmp/imagebundle/
-$ sudo /tmp/imagebundle/block_disk_unittest.py
+class SLE(suse.SUSE):
+    """SLE platform info."""
 
-Note that this is copied out file by file into the default google image.
+    def IsThisPlatform(self, root='/'):
+        if re.match(r'SUSE Linux Enterprise', self.distribution):
+            return True
+        return False
