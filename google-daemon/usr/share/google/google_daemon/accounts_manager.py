@@ -15,6 +15,9 @@
 
 """Main driver logic for managing accounts on GCE instances."""
 
+import os
+import time
+
 LOCKFILE = '/var/lock/manage-accounts.lock'
 
 
@@ -22,7 +25,7 @@ class AccountsManager(object):
   """Create accounts on a machine."""
 
   def __init__(self, accounts_module, desired_accounts, system, lock_file,
-               lock_fname):
+               lock_fname, interval=-1):
     """Construct an AccountsFromMetadata with the given module injections."""
     if not lock_fname:
       lock_fname = LOCKFILE
@@ -31,9 +34,36 @@ class AccountsManager(object):
     self.lock_file = lock_file
     self.lock_fname = lock_fname
     self.system = system
+    self.interval = interval
 
   def Main(self):
-    # Make sure that keys have been regenerated and whatnot.
+    # Run this once per interval forever.
+    while True:
+      # If this is a one-shot execution, then this can be run normally.
+      # Otherwise, run the actual operations in a subprocess so that any
+      # errors don't kill the long-lived process.
+      if self.interval == -1:
+        self.RegenerateKeysAndCreateAccounts()
+      else:
+        # Fork and run the key regeneration and account creation while the
+        # parent waits for the subprocess to finish before continuing.
+        pid = os.fork()
+        if pid:
+          os.waitpid(pid, 0)
+        else:
+          self.RegenerateKeysAndCreateAccounts()
+          # The use of os._exit here is recommended for subprocesses spawned
+          # by forking to avoid issues with running the cleanup tasks that
+          # sys.exit() runs by preventing issues from the cleanup being run
+          # once by the subprocess and once by the parent process.
+          os._exit(0)
+
+      if self.interval == -1:
+        break
+      time.sleep(self.interval)
+
+  def RegenerateKeysAndCreateAccounts(self):
+    """Regenerate the keys and create accounts as needed."""
     if self.system.IsExecutable('/usr/share/google/first-boot'):
       self.system.RunCommand('/usr/share/google/first-boot')
 

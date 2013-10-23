@@ -28,13 +28,23 @@ import os_platform
 
 class LinuxPlatform(os_platform.Platform):
   """Base class for all Linux flavors."""
-  EXCLUDE_LIST = [exclude_spec.ExcludeSpec('/tmp', preserve_dir=True),
-                  exclude_spec.ExcludeSpec('/var/log', preserve_dir=True,
-                                           preserve_subdir=True),
-                  exclude_spec.ExcludeSpec('/etc/ssh/.host_key_regenerated'),
-                  exclude_spec.ExcludeSpec('/var/run', preserve_dir=True),
-                  exclude_spec.ExcludeSpec('/var/lib/google/per-instance',
-                                           preserve_dir=True)]
+  EXCLUDE_LIST = [
+      exclude_spec.ExcludeSpec('/etc/ssh/.host_key_regenerated'),
+      exclude_spec.ExcludeSpec('/dev', preserve_dir=True),
+      exclude_spec.ExcludeSpec('/proc', preserve_dir=True),
+      exclude_spec.ExcludeSpec('/run',
+                               preserve_dir=True, preserve_subdir=True),
+      exclude_spec.ExcludeSpec('/selinux'),
+      exclude_spec.ExcludeSpec('/tmp', preserve_dir=True),
+      exclude_spec.ExcludeSpec('/sys', preserve_dir=True),
+      exclude_spec.ExcludeSpec('/var/lib/google/per-instance',
+                               preserve_dir=True),
+      exclude_spec.ExcludeSpec('/var/lock',
+                               preserve_dir=True, preserve_subdir=True),
+      exclude_spec.ExcludeSpec('/var/log',
+                               preserve_dir=True, preserve_subdir=True),
+      exclude_spec.ExcludeSpec('/var/run',
+                               preserve_dir=True, preserve_subdir=True)]
 
   def __init__(self):
     """Populate the uname -a information."""
@@ -110,6 +120,11 @@ class LinuxPlatform(os_platform.Platform):
              stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP |
              stat.S_IROTH | stat.S_IWOTH, zero_dev)
     retval.append((tmpdir + 'zero', 'dev/zero'))
+    # /selinux is deprecated in favor of /sys/fs/selinux, but preserve it on
+    # those OSes where it's present.
+    if os.path.isdir('/selinux'):
+      os.mkdir(tmpdir + 'selinux', 0755)
+      retval.append((tmpdir + 'selinux', 'selinux'))
     return retval
 
   def Overwrite(self, filename, arcname, tmpdir='/tmp'):

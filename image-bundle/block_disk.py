@@ -120,10 +120,10 @@ class FsRawDisk(fs_copy.FsCopy):
     self._Verify()
 
     # Create sparse file with specified size
-    file_path = os.path.join(self._scratch_dir, 'disk.raw')
-    with open(file_path, 'wb') as _:
+    disk_file_path = os.path.join(self._scratch_dir, 'disk.raw')
+    with open(disk_file_path, 'wb') as _:
       pass
-    self._excludes.append(exclude_spec.ExcludeSpec(file_path))
+    self._excludes.append(exclude_spec.ExcludeSpec(disk_file_path))
 
     print 'Initializing disk file'
     partition_start = None
@@ -131,22 +131,22 @@ class FsRawDisk(fs_copy.FsCopy):
     if self._disk:
       # If a disk device has been provided then preserve whatever is there on
       # the disk before the first partition in case there is an MBR present.
-      partition_start, uuid = self._InitializeDiskFileFromDevice(file_path)
+      partition_start, uuid = self._InitializeDiskFileFromDevice(disk_file_path)
     else:
       # User didn't specify a disk device. Initialize a device with a simple
       # partition table.
-      self._ResizeFile(file_path, self._fs_size)
+      self._ResizeFile(disk_file_path, self._fs_size)
       # User didn't specify a disk to copy. Create a new partition table
-      utils.MakePartitionTable(file_path)
+      utils.MakePartitionTable(disk_file_path)
       # Pass 1MB as start to avoid 'Warning: The resulting partition is not
       # properly aligned for best performance.' from parted.
       partition_start = 1024 * 1024
 
     # Create a new partition starting at partition_start of size
     # self._fs_size - partition_start
-    utils.MakePartition(file_path, 'primary', 'ext2', partition_start,
+    utils.MakePartition(disk_file_path, 'primary', 'ext2', partition_start,
                         self._fs_size - partition_start)
-    with utils.LoadDiskImage(file_path) as devices:
+    with utils.LoadDiskImage(disk_file_path) as devices:
       # For now we only support disks with a single partition.
       if len(devices) != 1:
         raise RawDiskError(devices)
@@ -169,9 +169,20 @@ class FsRawDisk(fs_copy.FsCopy):
         self._CleanupNetwork(mount_point)
         self._UpdateFstab(mount_point, uuid)
 
+    tar_entries = []
+
+    manifest_file_path = os.path.join(self._scratch_dir, 'manifest.json')
+    manifest_created = self._manifest.CreateIfNeeded(manifest_file_path)
+    if manifest_created:
+      tar_entries.append(manifest_file_path)
+
+    tar_entries.append(disk_file_path)
     print 'Creating tar.gz archive'
-    utils.TarAndGzipFile(file_path, self._output_tarfile)
-    os.remove(file_path)
+    utils.TarAndGzipFile(tar_entries,
+                         self._output_tarfile)
+    for tar_entry in tar_entries:
+      os.remove(tar_entry)
+
     # TODO(user): It would be better to compute tar.gz file hash during
     # archiving.
     h = hashlib.sha1()
@@ -213,13 +224,13 @@ class FsRawDisk(fs_copy.FsCopy):
           if not dest:
             src += '/'
           utils.Rsync(src, mount_point, rsync_file.name,
-                      self._ignore_hard_links, recursive=True)
+                      self._ignore_hard_links, recursive=True, xattrs=True)
           if dest:
             os.rename(os.path.join(mount_point, os.path.basename(src)),
                       os.path.join(mount_point, dest))
         else:
           utils.Rsync(src, os.path.join(mount_point, dest), rsync_file.name,
-                      self._ignore_hard_links, recursive=False)
+                      self._ignore_hard_links, recursive=False, xattrs=True)
 
   def _CopyPlatformSpecialFiles(self, mount_point):
     """Copies platform special files to a mounted raw disk.
@@ -230,8 +241,11 @@ class FsRawDisk(fs_copy.FsCopy):
     if self._platform:
       special_files = self._platform.GetPlatformSpecialFiles(self._scratch_dir)
       for (src, dest) in special_files:
+        # Ensure we don't use extended attributes here, so that copying /selinux
+        # on Linux doesn't try and fail to preserve the SELinux context. That
+        # doesn't work and causes rsync to return a nonzero status code.
         utils.Rsync(src, os.path.join(mount_point, dest), None,
-                    self._ignore_hard_links, recursive=False)
+                    self._ignore_hard_links, recursive=False, xattrs=False)
 
   def _ProcessOverwriteList(self, mount_point):
     """Overwrites a set of files/directories requested by platform.
@@ -255,7 +269,7 @@ class FsRawDisk(fs_copy.FsCopy):
                                               self._scratch_dir)
           logging.info('rawdisk: modifying %s from %s', file_path, new_file)
           utils.Rsync(new_file, file_path, None, self._ignore_hard_links,
-                      recursive=False)
+                      recursive=False, xattrs=True)
 
 
   def _CleanupNetwork(self, mount_point):

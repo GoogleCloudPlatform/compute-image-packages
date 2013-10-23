@@ -32,11 +32,9 @@ declare -r BOTO_SETUP_SCRIPT=/usr/share/google/boto/boot_setup.py
 declare -r WGET_MAX_RETRIES=10
 declare -r WGET_TIMEOUT=10
 
-declare -r LEGACY_STARTUP_SCRIPT=/var/run/google.startup.script
+declare -r STARTUP_SCRIPT=/var/run/google.startup.script
 
 declare -r GOOGLE_ENVIRONMENT=/var/run/google.environment
-
-declare -r CREATE_ACCOUNTS=/usr/share/google/google_daemon/manage_accounts.py
 
 declare -r CLOUDINIT_UPSTART_JOB=/etc/init/google_cloudinit.conf
 declare -r CLOUDINIT_USER_DATA=/var/run/google.cloudinit.user_data
@@ -140,43 +138,11 @@ function do_environment() {
   echo "INSTANCE_ID=$(get_metadata_value instance-id)" > ${GOOGLE_ENVIRONMENT}
 }
 
-function do_cloudinit() {
-  if [[ ! -e ${CLOUDINIT_UPSTART_JOB} ]]; then
-    get_metadata_attribute cloudinit/upstart-job > ${CLOUDINIT_UPSTART_JOB}
-    [ $? == 0 ] || rm -f ${CLOUDINIT_UPSTART_JOB}
-  fi
-  [[ -e ${CLOUDINIT_UPSTART_JOB} ]] && chmod 700 ${CLOUDINIT_UPSTART_JOB}
-
-  if [[ ! -e ${CLOUDINIT_USER_DATA} ]]; then
-    get_metadata_attribute cloudinit/user-data > ${CLOUDINIT_USER_DATA}
-    [ $? == 0 ] || rm -f ${CLOUDINIT_USER_DATA}
-  fi
-  [[ -e ${CLOUDINIT_USER_DATA} ]] && chmod 700 ${CLOUDINIT_USER_DATA}
-
-  if [[ ! -e ${CLOUDINIT_CLOUD_BOOTHOOK} ]]; then
-    mkdir -p /var/lib/cloud
-    get_metadata_attribute cloudinit/cloud-boothook > ${CLOUDINIT_CLOUD_BOOTHOOK}
-    [ $? == 0 ] || rm -f ${CLOUDINIT_CLOUD_BOOTHOOK}
-  fi
-  [[ -e ${CLOUDINIT_CLOUD_BOOTHOOK} ]] && chmod 700 ${CLOUDINIT_CLOUD_BOOTHOOK}
-
-  # Run the cloud boothook.
-  if [[ -e ${CLOUDINIT_CLOUD_BOOTHOOK} ]]; then
-    INSTANCE_ID=$(get_metadata_value instance-id)
-    env INSTANCE_ID=${INSTANCE_ID} ${CLOUDINIT_CLOUD_BOOTHOOK}
-  fi
-}
-
 function do_init()
 {
   log "onboot initializing"
 
   do_environment
-
-  # Create user accounts if we can.
-  if [ -x ${CREATE_ACCOUNTS} ]; then
-    ${CREATE_ACCOUNTS}
-  fi
 
   # If it exists, run the boto bootstrap script.  This will set things
   # up so that gsutil will just work with any provisioned service
@@ -190,17 +156,17 @@ function do_init()
   # Check the startup script url first.
   local readonly startup_script_url=$(get_metadata_attribute startup-script-url)
   if [[ -n "${startup_script_url}" ]]; then
-    download_url ${startup_script_url} ${LEGACY_STARTUP_SCRIPT}
+    download_url ${startup_script_url} ${STARTUP_SCRIPT}
     if [[ $? != 0 ]]; then
       log "Could not download startup script ${startup_script_url}"
     fi
   else
-    get_metadata_attribute startup-script > ${LEGACY_STARTUP_SCRIPT}
+    get_metadata_attribute startup-script > ${STARTUP_SCRIPT}
     if [[ $? != 0 ]]; then
       log "No startup script found in metadata."
     fi
   fi
-  [[ -e ${LEGACY_STARTUP_SCRIPT} ]] && chmod 700 ${LEGACY_STARTUP_SCRIPT}
+  [[ -e ${STARTUP_SCRIPT} ]] && chmod 700 ${STARTUP_SCRIPT}
 
   return 0
 }
@@ -208,7 +174,6 @@ function do_init()
 virtionet_irq_affinity
 first_boot
 do_init
-do_cloudinit
 
 if [ -x /sbin/initctl ]; then
   /sbin/initctl emit --no-wait google-onboot-has-run
