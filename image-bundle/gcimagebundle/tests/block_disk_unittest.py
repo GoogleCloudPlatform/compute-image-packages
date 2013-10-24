@@ -18,11 +18,13 @@
 
 __pychecker__ = 'no-local'  # for unittest
 
-
+from contextlib import closing
+import json
 import logging
 import os
 import random
 import subprocess
+import tarfile
 import tempfile
 import unittest
 
@@ -46,6 +48,7 @@ class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):
     self._bundle.SetTarfile(self._tar_path)
     self._bundle.AppendExcludes([exclude_spec.ExcludeSpec(self._tar_path)])
     self._bundle.SetKey('key')
+    self._bundle._SetManifest(self._manifest)
 
   def _SetupMbrDisk(self, partition_start, partition_end, fs_uuid):
     """Creates a disk with a fake MBR.
@@ -272,6 +275,50 @@ class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):
                          ['lost+found', 'dir1/', 'dir2/', '/dir2/dir1',
                           '/dir2/sl2', '/dir2/hl1'])
 
+  def testNoManifestCreatedWithZeroLicenses(self):
+    """Tests that no manifest is created when there are 0 licenses."""
+    self._bundle.AddSource(self.tmp_path)
+    self._bundle.Verify()
+    _ = self._bundle.Bundleup()
+    self.assertFalse(self._bundle._manifest._IsManifestNeeded())
+    self._VerifyTarHas(self._tar_path, ['disk.raw'])
+
+  def testManifestWithOneLicense(self):
+    """Tests manifest is populated with 1 license."""
+    self._http._instance_response = ('{"hostname":"test",'
+                                     '"licenses":[{"id":"TEST-LICENSE"}]}')
+    self._bundle.AddSource(self.tmp_path)
+    self._bundle.Verify()
+    _ = self._bundle.Bundleup()
+    manifest_json = self._bundle._manifest._ToJson()
+    manifest_obj = json.loads(manifest_json)
+    self.assertTrue(self._bundle._manifest._IsManifestNeeded())
+    self.assertEqual(1, len(manifest_obj['licenses']))
+    self.assertEqual('TEST-LICENSE', manifest_obj['licenses'][0])
+    self._VerifyTarHas(self._tar_path, ['manifest.json', 'disk.raw'])
+    self._VerifyFileContentsInTarball(self._tar_path,
+                                      'manifest.json',
+                                      '{"licenses": ["TEST-LICENSE"]}')
+
+  def testManifestWithTwoLicenses(self):
+    """Tests manifest is populated with 2 licenses."""
+    self._http._instance_response = ('{"hostname":"test",'
+                                     '"licenses":[{"id":"TEST-1"},'
+                                     '{"id":"TEST-2"}]}')
+    self._bundle.AddSource(self.tmp_path)
+    self._bundle.Verify()
+    _ = self._bundle.Bundleup()
+    manifest_json = self._bundle._manifest._ToJson()
+    manifest_obj = json.loads(manifest_json)
+    self.assertTrue(self._bundle._manifest._IsManifestNeeded())
+    self.assertEqual(2, len(manifest_obj['licenses']))
+    self.assertEqual('TEST-1', manifest_obj['licenses'][0])
+    self.assertEqual('TEST-2', manifest_obj['licenses'][1])
+    self._VerifyTarHas(self._tar_path, ['manifest.json', 'disk.raw'])
+    self._VerifyFileContentsInTarball(self._tar_path,
+                                      'manifest.json',
+                                      '{"licenses": ["TEST-1", "TEST-2"]}')
+
   def _VerifyFilesystemUUID(self, tar, expected_uuid):
     """Verifies UUID of the first partition on disk matches the value."""
     tmp_dir = tempfile.mkdtemp(dir=self.tmp_root)
@@ -334,6 +381,12 @@ class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):
             found.append(os.path.join(root, d))
     self._AssertListEqual(expected, found)
 
+  def _VerifyFileContentsInTarball(self, tar, file_name, expected_content):
+    """Reads the file from the tar file and turns it."""
+    with closing(tarfile.open(tar)) as tar_file:
+      content = tar_file.extractfile(file_name).read()
+      self.assertEqual(content, expected_content)
+
   def _VerifyFileInRawDiskEndsWith(self, tar, filename, text):
     """Tests if a file on raw disk contains ends with a specified text."""
     tmp_dir = tempfile.mkdtemp(dir=self.tmp_root)
@@ -372,6 +425,7 @@ class RootFsRawTest(image_bundle_test_base.ImageBundleTest):
     self._tar_path = self.tmp_path + '/image.tar.gz'
     self._bundle.SetTarfile(self._tar_path)
     self._bundle.AppendExcludes([exclude_spec.ExcludeSpec(self._tar_path)])
+    self._bundle._SetManifest(self._manifest)
 
   def tearDown(self):
     super(RootFsRawTest, self).tearDown()

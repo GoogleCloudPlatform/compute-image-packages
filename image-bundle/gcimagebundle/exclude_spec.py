@@ -68,13 +68,14 @@ class ExcludeSpec(object):
       if self.preserve_dir:
         spec += '+ %s\n' % relative_path
         if self.preserve_file or self.preserve_subdir:
-          for f in os.listdir(self.path):
-            file_path = os.path.join(self.path, f)
-            relative_file_path = os.path.join(relative_path, f)
-            if self.preserve_file and os.path.isfile(file_path):
-              spec += '+ %s\n' % relative_file_path
-            if self.preserve_subdir and os.path.isdir(file_path):
-              spec += '+ %s\n' % relative_file_path
+          if os.path.isdir(self.path):
+            for f in os.listdir(self.path):
+              file_path = os.path.join(self.path, f)
+              relative_file_path = os.path.join(relative_path, f)
+              if self.preserve_file and os.path.isfile(file_path):
+                spec += '+ %s\n' % relative_file_path
+              if self.preserve_subdir and os.path.isdir(file_path):
+                spec += '+ %s\n' % relative_file_path
       else:
         spec += '- %s\n' % relative_path
       spec += '- %s\n' % os.path.join(relative_path, '**')

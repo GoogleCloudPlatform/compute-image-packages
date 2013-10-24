@@ -40,7 +40,7 @@ class PlatformFactory(object):
     self.Register('Centos', centos.Centos)
     self.Register('Debian', debian.Debian)
     self.Register('GCEL', gcel.Gcel)
-    self.Register('openSUSE', openSUSE.OpenSUSE)
+    self.Register('openSUSE', opensuse.OpenSUSE)
     self.Register('SUSE Linux Enterprise', sle.SLE)
     self.Register('Ubuntu', ubuntu.Ubuntu)
     

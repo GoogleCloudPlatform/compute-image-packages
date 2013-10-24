@@ -16,6 +16,7 @@
 """Main driver logic for managing accounts on GCE instances."""
 
 import logging
+import optparse
 import os
 import sys
 
@@ -31,22 +32,39 @@ FixPath()
 
 from accounts import Accounts
 from accounts_manager import AccountsManager
+from accounts_manager_daemon import AccountsManagerDaemon
 from desired_accounts import DesiredAccounts
 from utils import LockFile
 from utils import System
 
 
 def Main(accounts, desired_accounts, system, logger,
-         log_handler, lock_file, lock_fname=None):
+         log_handler, lock_file, lock_fname=None, interval=-1,
+         daemon_mode=False):
   if not log_handler:
     log_handler = system.MakeLoggingHandler(
         'accounts-from-metadata', logging.handlers.SysLogHandler.LOG_AUTH)
   system.SetLoggingHandler(logger, log_handler)
 
-  AccountsManager(
-      accounts, desired_accounts, system, lock_file, lock_fname).Main()
+  accounts_manager = AccountsManager(
+      accounts, desired_accounts, system, lock_file, lock_fname, interval)
+
+  if not daemon_mode:
+    accounts_manager.Main()
+  else:
+    manager_daemon = AccountsManagerDaemon(None, accounts_manager)
+    manager_daemon.StartDaemon()
 
 
 if __name__ == '__main__':
+  parser = optparse.OptionParser()
+  parser.add_option('--daemon', dest='daemon', action='store_true')
+  parser.add_option('--no-daemon', dest='daemon', action='store_false')
+  parser.add_option('--interval', type='int', dest='interval')
+  parser.set_defaults(interval=60)
+  parser.set_defaults(daemon=False)
+  (options, args) = parser.parse_args()
+
   Main(Accounts(system_module=System()), DesiredAccounts(),
-       System(), logging.getLogger(), None, LockFile())
+       System(), logging.getLogger(), None, LockFile(), None, options.interval,
+       options.daemon)

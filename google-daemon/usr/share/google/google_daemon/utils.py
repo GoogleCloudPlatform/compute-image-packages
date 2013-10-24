@@ -32,8 +32,9 @@ class RunCommandException(Exception):
 class System(object):
   """Interface for interacting with the system."""
 
-  def __init__(self, subprocess_module=subprocess):
+  def __init__(self, subprocess_module=subprocess, os_module=os):
     self.subprocess = subprocess_module
+    self.os = os_module
 
   def MakeLoggingHandler(self, prefix, facility):
     """Make a logging handler to send logs to syslog."""
@@ -78,7 +79,7 @@ class System(object):
 
   def IsExecutable(self, path):
     """Return whether path exists and is an executable binary."""
-    return os.path.isfile(path) and os.access(path, os.X_OK)
+    return self.os.path.isfile(path) and self.os.access(path, os.X_OK)
 
   def RunCommand(self, args):
     """Run a command, return a retcode, stdout, stderr tuple."""
@@ -109,6 +110,16 @@ class UnexpectedLockException(Exception):
   pass
 
 
+class CouldNotUnlockException(Exception):
+  """Someone else seems to be holding the lock."""
+  pass
+
+
+class UnexpectedUnlockException(Exception):
+  """We genuinely failed to unlock the file."""
+  pass
+
+
 class LockFile(object):
   """Lock a file to prevent multiple concurrent executions."""
 
@@ -119,6 +130,7 @@ class LockFile(object):
     try:
       self.Lock(lock_fname)
       method()
+      self.Unlock()
     except CouldNotLockException:
       logging.warning(
           'Could not lock %s.  Is it locked by another program?',
@@ -126,13 +138,29 @@ class LockFile(object):
     except UnexpectedLockException as e:
       logging.warning(
           'Could not lock %s due to %s', lock_fname, e)
+    except CouldNotUnlockException:
+      logging.warning(
+          'Could not unlock %s. Is it locked by another program?',
+          lock_fname)
+    except UnexpectedUnlockException as e:
+      logging.warning(
+          'Could not unlock %s due to %s', lock_fname, e)
 
   def Lock(self, lock_fname):
     """Lock the lock file."""
     try:
       self.fh = open(lock_fname, 'w+b')
-      self.fcntl_module.lockf(self.fh.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
+      self.fcntl_module.flock(self.fh.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
     except IOError as e:
-      if e.errno == errno.EACCES or e.errno == errno.EAGAIN:
+      if e.errno == errno.EWOULDBLOCK:
         raise CouldNotLockException()
       raise UnexpectedLockException('Failed to lock: %s' % e)
+
+  def Unlock(self):
+    """Unlock the lock file."""
+    try:
+      self.fcntl_module.flock(self.fh.fileno(), fcntl.LOCK_UN|fcntl.LOCK_NB)
+    except IOError as e:
+      if e.errno == errno.EWOULDBLOCK:
+        raise CouldNotUnlockException()
+      raise UnexpectedUnlockException('Failed to unlock: %s' % e)

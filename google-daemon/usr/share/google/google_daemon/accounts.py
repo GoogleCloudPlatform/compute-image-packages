@@ -236,19 +236,14 @@ class Accounts(object):
     ssh_dir = os.path.join(home_dir, '.ssh')
 
     if not self.os.path.isdir(ssh_dir):
-      # Create a user's ssh directory.
-      try:
-        if not self.EnsureHomeDir(home_dir, uid, gid):
-          return False
+      # Create a user's ssh directory, with u+rwx as the only permissions.
+      # There's proper handling and logging of OSError within EnsureDir(),
+      # so neither of these calls needs th handle that.
+      if not self.EnsureHomeDir(home_dir, uid, gid):
+        return False
 
-        # Make sure the ssh dir is u+rwx.
-        self.os.mkdir(ssh_dir, 0700)
-        self.os.chown(ssh_dir, uid, gid)
-      except OSError as e:
-        logging.warning('Could not mkdir %s: %s', ssh_dir, e)
-
-    if not self.os.path.isdir(ssh_dir):
-      return False
+      if not self.EnsureDir(ssh_dir, uid, gid, 0700):
+        return False
 
     # Not all sshd's support mulitple authorized_keys files.  We have to
     # share one with the user.  We add our entries as follows:
@@ -260,10 +255,41 @@ class Accounts(object):
     except IOError as e:
       logging.warning('Could not update %s due to %s', authorized_keys_file, e)
 
+  def SetSELinuxContext(self, path):
+    """Set the appropriate SELinux context, if SELinux tools are installed.
+
+    Calls /sbin/restorecon on the provided path to set the SELinux context as
+    specified by policy. This call does not operate recursively.
+
+    Only some OS configurations use SELinux. It is therefore acceptable for
+    restorecon to be missing, in which case we do nothing.
+
+    Arguments:
+      path: The path on which to fix the SELinux context.
+
+    Returns:
+      True if successful or if restorecon is missing, False in case of error.
+    """
+
+    if self.system.IsExecutable('/sbin/restorecon'):
+      result = self.system.RunCommand(['/sbin/restorecon', path])
+      if self.system.RunCommandFailed(result):
+        logging.error('Unable to set SELinux context for %s', path)
+        return False
+      else:
+        return True
+    else:
+      logging.debug('restorecon missing; not setting SELinux context for %s',
+                    path)
+      return True
+
   def EnsureHomeDir(self, home_dir, uid, gid):
     """Make sure user's home directory exists.
 
     Create the directory and its ancestor directories if necessary.
+
+    No changes are made to the ownership or permissions of a directory which
+    already exists.
 
     Arguments:
       home_dir: The path to the home directory.
@@ -278,21 +304,25 @@ class Accounts(object):
       return True
 
     # Use root as owner when creating ancestor directories.
-    if not self.EnsureDir(home_dir, 0, 0):
+    if not self.EnsureDir(home_dir, 0, 0, 0755):
       return False
 
     self.os.chown(home_dir, uid, gid)
     return True
 
-  def EnsureDir(self, dir_path, uid, gid):
+  def EnsureDir(self, dir_path, uid, gid, mode):
     """Make sure the specified directory exists.
 
     If dir doesn't exist, create it and its ancestor directories, if necessary.
+
+    No changes are made to the ownership or permissions of a directory which
+    already exists.
 
     Arguments:
       dir_path: The path to the dir.
       uid: user ID of the owner.
       gid: group ID of the owner.
+      mode: Permissions for the dir, as an integer (e.g. 0755).
 
     Returns:
       True if successful, False if not.
@@ -301,18 +331,20 @@ class Accounts(object):
     if self.os.path.isdir(dir_path):
       return True    # We are done
 
-    parent_dir = os.path.dirname(dir_path)
+    parent_dir = self.os.path.dirname(dir_path)
     if not parent_dir == dir_path:
-      if not self.EnsureDir(parent_dir, uid, gid):
+      if not self.EnsureDir(parent_dir, uid, gid, 0755):
         return False
 
     try:
-      self.os.mkdir(dir_path, 0755)
+      self.os.mkdir(dir_path, mode)
       self.os.chown(dir_path, uid, gid)
+      self.SetSELinuxContext(dir_path)
     except OSError as e:
       if self.os.path.isdir(dir_path):
+        logging.warning('Could not prepare %s: %s', dir_path, e)
         return True
-      logging.error('Could not create %s because %s', dir_path, e)
+      logging.error('Could not create %s: %s', dir_path, e)
       return False
 
     return True
@@ -361,3 +393,6 @@ class Accounts(object):
 
     # Override the old authorized keys file with the new one.
     self.system.MoveFile(new_keys_path, authorized_keys_file)
+
+    # Set SELinux context, if applicable to this system
+    self.SetSELinuxContext(authorized_keys_file)

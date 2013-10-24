@@ -21,6 +21,8 @@ import logging
 import os
 import re
 
+import manifest
+
 
 class FsCopyError(Exception):
   """Error occured in fs copy operation."""
@@ -46,6 +48,7 @@ class FsCopy(object):
     self._overwrite_list = []
     self._scratch_dir = '/tmp'
     self._disk = None
+    self._manifest = manifest.ImageManifest()
 
   def SetTarfile(self, tar_file):
     """Sets tar file which will contain file system copy.
@@ -111,6 +114,10 @@ class FsCopy(object):
                     ' '.join(platform.GetOverwriteList()))
     self._overwrite_list = [re.sub('^/', '', x)
                             for x in platform.GetOverwriteList()]
+
+  def _SetManifest(self, image_manifest):
+    """For test only, allows to set a test manifest object."""
+    self._manifest = image_manifest
 
   def SetScratchDirectory(self, directory):
     """Sets a directory used for storing intermediate results.

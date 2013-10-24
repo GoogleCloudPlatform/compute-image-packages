@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# Copyright 2013 SUSE LLC
+#!/usr/bin/python
+# Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,22 +15,48 @@
 
 """Setup installation module for image-bundle"""
 
-import setuptools
+"""Setup installation module for Image Bundle."""
 
-def readme():
-    with open('README') as f:
-        return f.read()
+import os
+from setuptools import find_packages
+from setuptools import setup
 
-setuptools.setup(
-    name = 'gce_image_bundle',
-    version = '1.0.7',
-    url = 'https://github.com/GoogleCloudPlatform/compute-image-packages',
-    license = 'Apache 2.0',
-    author = 'Google Inc.',
-    author_email = 'gc-team@google.com',
-    description = ('A command line tool to cretae an image bundle from an '
-                   'existing image.'),
-    long_description = readme(),
-    packages = setuptools.find_packages(),
-    scripts = ['image_bundle',]
+CURDIR = os.path.abspath(os.path.dirname(__file__))
+VERSION = '1.1.0'
+
+
+def Read(file_name):
+  with open(os.path.join(CURDIR, file_name), 'r') as f:
+    return f.read().strip()
+
+setup(
+    name='image_bundle',
+    version=VERSION,
+    url='https://github.com/GoogleCloudPlatform/compute-image-packages/tree/master/image-bundle',
+    download_url='https://github.com/GoogleCloudPlatform/compute-image-packages/releases',
+    license='Apache 2.0',
+    author='Google Inc.',
+    author_email='gc-team@google.com',
+    description=('Image bundling tool for root file system.'),
+    long_description=Read('README.md'),
+    zip_safe=False,
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: Apache Software License',
+        'Natural Language :: English',
+        'Topic :: System :: Filesystems',
+        'Topic :: Utilities',
+    ],
+    platforms='any',
+    include_package_data=True,
+    packages=find_packages(),
+    entry_points={
+        'console_scripts': [
+            'gcimagebundle = image_bundle:main',
+        ],
+    },
+    scripts = ['image_bundle'],
 )

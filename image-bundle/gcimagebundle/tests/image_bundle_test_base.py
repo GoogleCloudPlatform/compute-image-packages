@@ -26,8 +26,11 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
+import urllib2
 
+import manifest
 from os_platform import Platform
+import utils
 
 
 class InvalidOverwriteFileException(Exception):
@@ -53,12 +56,29 @@ class MockPlatform(Platform):
     return temp
 
 
+class MockHttp(utils.Http):
+
+  def __init__(self):
+    self._instance_response = '{"hostname":"test"}'
+
+  def Get(self, url):
+    if url == 'http://metadata/computeMetadata/':
+      return 'v1beta1/'
+    elif url.startswith('http://metadata/computeMetadata/v1beta1/'):
+      url = url.replace('http://metadata/computeMetadata/v1beta1/', '')
+      if url == 'instance/?recursive=true':
+        return self._instance_response
+    raise urllib2.HTTPError
+
+
 class ImageBundleTest(unittest.TestCase):
   """ImageBundle Unit Test Base Class."""
 
   def setUp(self):
     self.tmp_root = tempfile.mkdtemp(dir='/tmp')
     self.tmp_path = tempfile.mkdtemp(dir=self.tmp_root)
+    self._http = MockHttp()
+    self._manifest = manifest.ImageManifest(http=self._http)
     self._SetupFilesystemToTar()
 
   def tearDown(self):

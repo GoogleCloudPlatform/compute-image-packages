@@ -30,9 +30,8 @@ function die() {
   exit 1
 }
 
-declare -r LEGACY_STARTUP_SCRIPT=/var/run/google.startup.script
+declare -r STARTUP_SCRIPT=/var/run/google.startup.script
 declare -r GOOGLE_ENVIRONMENT=/var/run/google.environment
-declare -r CLOUDINIT_USER_DATA=/var/run/google.cloudinit.user_data
 
 # Make sure all udev changes settle before running startup scripts.
 udevadm settle
@@ -49,16 +48,9 @@ function copy_and_run() {
   rm -f ${dest}
 }
 
-if [[ -e ${LEGACY_STARTUP_SCRIPT} ]]; then
+if [[ -e ${STARTUP_SCRIPT} ]]; then
   (
     [ -r ${GOOGLE_ENVIRONMENT} ] && source ${GOOGLE_ENVIRONMENT};
-    copy_and_run ${LEGACY_STARTUP_SCRIPT}
-  )
-fi
-
-if [[ -e ${CLOUDINIT_USER_DATA} ]]; then
-  (
-    [ -r ${GOOGLE_ENVIRONMENT} ] && source ${GOOGLE_ENVIRONMENT};
-    copy_and_run ${LEGACY_STARTUP_SCRIPT}
+    copy_and_run ${STARTUP_SCRIPT}
   )
 fi

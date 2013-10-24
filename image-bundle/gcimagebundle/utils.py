@@ -20,11 +20,15 @@
 import logging
 import os
 import subprocess
-import time
+import urllib2
 
 
 class MakeFileSystemException(Exception):
   """Error occurred in file system creation."""
+
+
+class TarAndGzipFileException(Exception):
+  """Error occurred in creating the tarball."""
 
 
 class LoadDiskImage(object):
@@ -175,7 +179,7 @@ def MakeFileSystem(dev_path, fs_type, uuid=None):
   return uuid
 
 
-def Rsync(src, dest, exclude_file, ignore_hard_links, recursive):
+def Rsync(src, dest, exclude_file, ignore_hard_links, recursive, xattrs):
   """Copy files from specified directory using rsync.
 
   Args:
@@ -186,15 +190,18 @@ def Rsync(src, dest, exclude_file, ignore_hard_links, recursive):
     ignore_hard_links: If True a hard links are copied as a separate files. If
       False, hard link are recreated in dest.
     recursive: Specifies if directories are copied recursively or not.
+    xattrs: Specifies if extended attributes are preserved or not.
   """
   rsync_cmd = ['rsync', '--times', '--perms', '--owner', '--group', '--links',
-               '--devices', '--sparse']
+               '--devices', '--acls', '--sparse']
   if not ignore_hard_links:
     rsync_cmd.append('--hard-links')
   if recursive:
     rsync_cmd.append('--recursive')
   else:
     rsync_cmd.append('--dirs')
+  if xattrs:
+    rsync_cmd.append('--xattrs')
   if exclude_file:
     rsync_cmd.append('--exclude-from=' + exclude_file)
   rsync_cmd.extend([src, dest])
@@ -348,19 +355,54 @@ def RunCommand(command, input_str=None):
   return cmd_output[0]
 
 
-def TarAndGzipFile(src, dest):
+def TarAndGzipFile(src_paths, dest):
   """Pack file in tar archive and optionally gzip it.
 
   Args:
-    src: A file to archive.
+    src_paths: A list of files that will be archived.
+               (Must be in the same directory.)
     dest: An archive name. If a file ends with .gz or .tgz an archive is gzipped
       as well.
+
+  Raises:
+    TarAndGzipFileException: If tar encounters an error.
   """
   if dest.endswith('.gz') or dest.endswith('.tgz'):
     mode = 'czSf'
   else:
     mode = 'cSf'
-  tar_cmd = ['tar', mode, dest, '-C', os.path.dirname(src),
-             os.path.basename(src)]
-  RunCommand(tar_cmd)
+  src_names = [os.path.basename(src_path) for src_path in src_paths]
+  # Take the directory of the first file in the list, all files are expected
+  # to be in the same directory.
+  src_dir = os.path.dirname(src_paths[0])
+  tar_cmd = ['tar', mode, dest, '-C', src_dir] + src_names
+  retcode = subprocess.call(tar_cmd)
+  if retcode:
+    raise TarAndGzipFileException(','.join(src_paths))
 
+
+class Http(object):
+  def Get(self, url):
+    return urllib2.urlopen(url).read()
+
+  def GetMetadata(self, url_path, recursive=False):
+    """Retrieves instance metadata.
+
+    Args:
+      url_path: The path of the metadata url after the api version.
+                http://metadata/computeMetadata/v1beta1/url_path
+      recursive: If set, returns the tree of metadata starting at url_path as
+                 a json string.
+    Returns:
+      The metadata returned based on the url path.
+
+    """
+    # Use the latest version of the metadata.
+    base_url = 'http://metadata/computeMetadata/'
+    versions = self.Get(base_url).splitlines()
+    latest_version = versions[-1]
+    suffix = ''
+    if recursive:
+      suffix = '?recursive=true'
+    url = '{0}{1}{2}{3}'.format(base_url, latest_version, url_path, suffix)
+    return self.Get(url)
