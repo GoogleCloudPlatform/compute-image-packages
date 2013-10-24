@@ -24,7 +24,6 @@ from setuptools import setup
 CURDIR = os.path.abspath(os.path.dirname(__file__))
 VERSION = '1.1.0'
 
-
 def Read(file_name):
   with open(os.path.join(CURDIR, file_name), 'r') as f:
     return f.read().strip()
@@ -53,10 +52,5 @@ setup(
     platforms='any',
     include_package_data=True,
     packages=find_packages(),
-    entry_points={
-        'console_scripts': [
-            'gcimagebundle = image_bundle:main',
-        ],
-    },
     scripts = ['image_bundle'],
 )
