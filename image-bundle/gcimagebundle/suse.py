@@ -24,65 +24,66 @@ import linux
 class SUSE(linux.LinuxPlatform):
   """openSUSE and SUSE generic platform info."""
 
+  def __init__(self):
+    super(SUSE, self).__init__()
+    self.distribution_codename = None
+    self.ParseOSRelease()
+    if not self.distribution:
+      self.ParseSUSERelease()
+
   def ParseOSRelease(self):
-      """Parse the /etc/os-release file."""
-      release_file = '/etc/os-release'
-      if not os.path.isfile(release_file):
-          self.distribution = None
-          return
-      lines = open(release_file, 'r').readlines()
-      for ln in lines:
-          if not ln:
-              continue
-          if re.match(r'^NAME=', ln):
-              self.distribution = self.__getData(ln)
-          if re.match(r'^VERSION_ID=', ln):
-              self.distribution_version = self.__getData(ln)
-          if re.match(r'^VERSION=', ln):
-              data = self.__getData(ln)
-              self.distribution_codename = data.split('(')[-1][:-1]
+    """Parse the /etc/os-release file."""
+    release_file = '/etc/os-release'
+    if not os.path.isfile(release_file):
+      self.distribution = None
       return
+    lines = open(release_file, 'r').readlines()
+    for ln in lines:
+      if not ln:
+        continue
+      if re.match(r'^NAME=', ln):
+        self.distribution = self.__getData(ln)
+      if re.match(r'^VERSION_ID=', ln):
+        self.distribution_version = self.__getData(ln)
+      if re.match(r'^VERSION=', ln):
+        data = self.__getData(ln)
+        self.distribution_codename = data.split('(')[-1][:-1]
+    return
 
   def ParseSUSERelease(self):
-      """Parse /etc/SuSE-release file."""
-      release_file = '/etc/SuSE-release'
-      if not os.path.isfile(release_file):
-          self.distribution = None
-          return
-      lines = open(release_file, 'r').readlines()
-      prts = lines[0].split()
-      cnt = 0
-      self.distribution = ''
-      while 1:
-          item = prts[cnt]
-          if re.match('\d', item):
-              item = None
-              break
-          elif cnt > 0:
-              self.distribution += ' '              
-          self.distribution += item
-          cnt += 1
-          
-      for ln in lines:
-          if re.match(r'^VERSION =', ln):
-              self.distribution_version = self.__getData(ln)
-          if re.match(r'^CODENAME =', ln):
-              self.distribution_codename = self.__getData(ln)
+    """Parse /etc/SuSE-release file."""
+    release_file = '/etc/SuSE-release'
+    if not os.path.isfile(release_file):
+      self.distribution = None
       return
-
-  def __init__(self):
-      linux.LinuxPlatform.__init__(self)
-      self.distribution_codename = None
-      self.ParseOSRelease()
-      if not self.distribution:
-          self.ParseSUSERelease()
+    lines = open(release_file, 'r').readlines()
+    prts = lines[0].split()
+    cnt = 0
+    self.distribution = ''
+    while 1:
+      item = prts[cnt]
+      if re.match('\d', item):
+        item = None
+        break
+      elif cnt > 0:
+        self.distribution += ' '              
+      self.distribution += item
+      cnt += 1
+        
+    for ln in lines:
+      if re.match(r'^VERSION =', ln):
+        self.distribution_version = self.__getData(ln)
+      if re.match(r'^CODENAME =', ln):
+        self.distribution_codename = self.__getData(ln)
+    return
           
   def __getData(self, ln):
-      """Extract data from a line in a file. Either returns data inside the
-         first double quotes ("a b"; a b in this example) or if no double
-         quotes exist, returns the data after the first = sign. Leading
-         and trailing whitspace are stripped."""
-      if ln.find('"') != -1:
-          return ln.split('"')[1]
-      else:
-          return ln.split('=')[-1].strip()
+    """Extract data from a line in a file. Either returns data inside the
+       first double quotes ("a b"; a b in this example) or if no double
+       quotes exist, returns the data after the first = sign. Leading
+       and trailing whitspace are stripped."""
+    if ln.find('"') != -1:
+      return ln.split('"')[1]
+    else:
+      return ln.split('=')[-1].strip()
+
