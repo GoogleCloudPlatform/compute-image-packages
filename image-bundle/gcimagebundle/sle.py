@@ -15,12 +15,17 @@
 
 """SUSE Linux Enterprise (SLE) platform info."""
 
+import re
 import suse
 
 class SLE(suse.SUSE):
-    """SLE platform info."""
+  """SLE platform info."""
 
-    def IsThisPlatform(self, root='/'):
-        if re.match(r'SUSE Linux Enterprise', self.distribution):
-            return True
-        return False
+  @staticmethod
+  def IsThisPlatform(self, root='/'):
+    if re.match(r'SUSE Linux Enterprise', suse.SUSE().distribution):
+      return True
+    return False
+  
+  def __init__(self):
+    super(SLE, self).__init__()

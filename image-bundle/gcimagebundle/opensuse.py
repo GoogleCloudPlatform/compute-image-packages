@@ -18,7 +18,12 @@
 import suse
 
 class OpenSUSE(suse.SUSE):
-    """openSUSE platform info."""
+  """openSUSE platform info."""
 
-    def IsThisPlatform(self, root='/'):
-        return 'openSUSE' == self.distribution
+  @staticmethod
+  def IsThisPlatform(root='/'):
+    return 'openSUSE' == suse.SUSE().distribution
+
+  def __init__(self):
+    super(OpenSUSE, self).__init__()
+

@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,24 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Setup installation module for image-bundle"""
-
 """Setup installation module for Image Bundle."""
 
 import os
+import distribute_setup
+distribute_setup.use_setuptools()
+
 from setuptools import find_packages
 from setuptools import setup
 
 CURDIR = os.path.abspath(os.path.dirname(__file__))
-VERSION = '1.1.0'
 
 def Read(file_name):
   with open(os.path.join(CURDIR, file_name), 'r') as f:
     return f.read().strip()
 
 setup(
-    name='image_bundle',
-    version=VERSION,
+    name='gcimagebundle',
+    version=Read('VERSION'),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages/tree/master/image-bundle',
     download_url='https://github.com/GoogleCloudPlatform/compute-image-packages/releases',
     license='Apache 2.0',
@@ -51,6 +52,6 @@ setup(
     ],
     platforms='any',
     include_package_data=True,
-    packages=find_packages(),
+    packages=find_packages(exclude=['distribute_setup']),
     scripts = ['image_bundle'],
 )

@@ -25,3 +25,13 @@ Or, if you are in the package directory:
     $ sudo /tmp/imagebundle/block_disk_unittest.py
 
 Note that this is copied out file by file into the default google image.
+
+To create DEB package:
+
+    $ python setup.py --command-packages=stdeb.command bdist_deb
+    
+To create RPM package:
+
+    $ python setup.py bdist_rpm
+    
+
