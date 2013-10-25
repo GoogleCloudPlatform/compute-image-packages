@@ -155,7 +155,10 @@ def main():
   bundle = block_disk.RootFsRaw(options.fs_size)
   bundle.SetTarfile(temp_file_name)
   if options.disk:
-    bundle.AddDisk(options.disk)
+    readlink_command = ['readlink', '-f', options.disk]
+    final_path = utils.RunCommand(readlink_command).strip()
+    logging.info('Resolved %s to %s', options.disk, final_path)
+    bundle.AddDisk(final_path)
     # TODO(user): Find the location where the first partition of the disk
     # is mounted and add it as the source instead of relying on the source
     # param flag
