@@ -27,6 +27,12 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 declare -r LOGFILE=/var/log/google.log
 
+if [ -x /usr/bin/logger ]; then
+    declare -r LOGGER=/usr/bin/logger
+else
+    declare -r LOGGER=/bin/logger
+fi
+
 declare -r BOTO_SETUP_SCRIPT=/usr/share/google/boto/boot_setup.py
 
 declare -r WGET_MAX_RETRIES=10
@@ -41,12 +47,12 @@ declare -r CLOUDINIT_USER_DATA=/var/run/google.cloudinit.user_data
 declare -r CLOUDINIT_CLOUD_BOOTHOOK=/var/lib/cloud/cloud.boothook
 
 function log() {
-  echo $* | /usr/bin/logger -t google -p daemon.info
+  echo $* | ${LOGGER} -t google -p daemon.info
   echo $* >> ${LOGFILE}
 }
 
 function log_file() {
-  cat $* | /usr/bin/logger -t google -p daemon.info
+  cat $* | ${LOGGER} -t google -p daemon.info
   cat $* >> ${LOGFILE}
 }
 
@@ -149,7 +155,7 @@ function do_init()
   # account.
   if [ -x ${BOTO_SETUP_SCRIPT} ]; then
     log "Running Boto setup script at ${BOTO_SETUP_SCRIPT}"
-    ${BOTO_SETUP_SCRIPT} &>> $LOGFILE
+    ${BOTO_SETUP_SCRIPT} >> ${LOGFILE} 2&1
   fi
 
   # Try to use the startup-script-url, then the startup-script metadata.

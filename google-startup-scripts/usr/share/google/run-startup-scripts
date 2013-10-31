@@ -19,7 +19,13 @@
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
-LOG_CMD="/usr/bin/logger -t startupscript -p daemon.info"
+if [ -x /usr/bin/logger ]; then
+    declare -r LOGGER=/usr/bin/logger
+else
+    declare -r LOGGER=/bin/logger
+fi
+
+LOG_CMD="${LOGGER} -t startupscript -p daemon.info"
 
 function log() {
   echo $* | ${LOG_CMD}
