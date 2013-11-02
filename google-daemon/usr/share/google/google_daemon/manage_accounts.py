@@ -40,20 +40,25 @@ from utils import System
 
 def Main(accounts, desired_accounts, system, logger,
          log_handler, lock_file, lock_fname=None, interval=-1,
-         daemon_mode=False):
+         daemon_mode=False, debug_mode=False):
+  
   if not log_handler:
     log_handler = system.MakeLoggingHandler(
         'accounts-from-metadata', logging.handlers.SysLogHandler.LOG_AUTH)
   system.SetLoggingHandler(logger, log_handler)
+  
+  if debug_mode:
+    system.EnableDebugLogging(logger)
+    logging.debug('Running in Debug Mode')
 
   accounts_manager = AccountsManager(
       accounts, desired_accounts, system, lock_file, lock_fname, interval)
-
-  if not daemon_mode:
-    accounts_manager.Main()
-  else:
+  
+  if daemon_mode:
     manager_daemon = AccountsManagerDaemon(None, accounts_manager)
     manager_daemon.StartDaemon()
+  else:
+    accounts_manager.Main()
 
 
 if __name__ == '__main__':
@@ -61,10 +66,12 @@ if __name__ == '__main__':
   parser.add_option('--daemon', dest='daemon', action='store_true')
   parser.add_option('--no-daemon', dest='daemon', action='store_false')
   parser.add_option('--interval', type='int', dest='interval')
+  parser.add_option('--debug', dest='debug', action='store_true')
   parser.set_defaults(interval=60)
   parser.set_defaults(daemon=False)
+  parser.set_defaults(debug=False)
   (options, args) = parser.parse_args()
 
   Main(Accounts(system_module=System()), DesiredAccounts(),
        System(), logging.getLogger(), None, LockFile(), None, options.interval,
-       options.daemon)
+       options.daemon, options.debug)

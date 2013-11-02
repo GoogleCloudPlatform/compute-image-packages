@@ -16,6 +16,7 @@
 """Tool for running account manager as a daemon."""
 
 import fcntl
+import logging
 import os
 import signal
 
@@ -26,6 +27,7 @@ class AccountsManagerDaemon(object):
   """Creates a daemon process to run the accounts manager in."""
 
   def __init__(self, pidfile, accounts_manager, fcntl_module=fcntl):
+    logging.debug('Initializing Daemon Module')
     if not pidfile:
       pidfile = PIDFILE
 
@@ -43,6 +45,7 @@ class AccountsManagerDaemon(object):
     # This is a very simplified (with significantly reduced features) version of
     # the python-daemon library at https://pypi.python.org/pypi/python-daemon/.
     pid = os.fork()
+    logging.debug('Forked new process, pid= {0}'.format(pid))
     if pid == 0:
       os.setsid()
       pid = os.fork()
@@ -64,6 +67,7 @@ class AccountsManagerDaemon(object):
     pidf.write(str(os.getpid()))
     pidf.close()
 
+    logging.debug('Sending signal SIGTERM to shutdown daemon')
     signal.signal(signal.SIGTERM, self.ShutdownDaemon)
 
     self.accounts_manager.Main()
@@ -74,9 +78,11 @@ class AccountsManagerDaemon(object):
     # that the lock can only be grabbed once the accounts manager is done with
     # it and holding it guarantees that the accounts manager won't start up
     # again while shutting down.
+    logging.debug('Acquiring Daemon lock.')
     lockfile = open(self.accounts_manager.lock_fname, 'r')
     self.fcntl_module.flock(lockfile.fileno(), fcntl.LOCK_EX)
 
+    logging.debug('Shutting down Daemon module.')
     # Clean up pidfile and terminate. Lock will be released with termination.
     os.remove(self.pidfile)
     exception = SystemExit('Terminating on signal number %d' % signal_number)
