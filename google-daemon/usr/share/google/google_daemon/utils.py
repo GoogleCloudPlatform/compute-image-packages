@@ -46,10 +46,9 @@ class System(object):
     return handler
 
   def SetLoggingHandler(self, logger, handler):
-    """Setup logging w/ a specifc handler."""
-    # TODO Change back to INFO
-    handler.setLevel(logging.DEBUG)
-    logger.setLevel(logging.DEBUG)
+    """Setup logging w/ a specific handler."""
+    handler.setLevel(logging.INFO)
+    logger.setLevel(logging.INFO)
     logger.addHandler(handler)
 
   def EnableDebugLogging(self, logger):
