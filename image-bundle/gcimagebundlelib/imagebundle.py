@@ -141,7 +141,6 @@ def main():
   if options.display_version:
     PrintVersionInfo()
     return 0
-  return 1
 
   scratch_dir = tempfile.mkdtemp(dir=options.output_directory)
   SetupLogging(options, scratch_dir)
