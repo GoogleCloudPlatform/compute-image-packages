@@ -1,4 +1,4 @@
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 SUSE LLC All Rights Reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,24 +13,19 @@
 # limitations under the License.
 
 
-"""Debian Linux specific platform info."""
+"""SUSE Linux Enterprise (SLE) platform info."""
 
+import re
+from gcimagebundlelib import suse
 
-
-import platform
-
-import linux
-
-
-class Debian(linux.LinuxPlatform):
-  """Debian Linux specific information."""
+class SLE(suse.SUSE):
+  """SLE platform info."""
 
   @staticmethod
-  def IsThisPlatform(root='/'):
-    (distribution, _, _) = platform.linux_distribution()
-    if distribution and distribution.lower() == 'debian':
+  def IsThisPlatform(self, root='/'):
+    if re.match(r'SUSE Linux Enterprise', suse.SUSE().distribution):
       return True
     return False
-
+  
   def __init__(self):
-    super(Debian, self).__init__()
+    super(SLE, self).__init__()

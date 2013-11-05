@@ -28,9 +28,9 @@ import tempfile
 import unittest
 import urllib2
 
-import manifest
-from os_platform import Platform
-import utils
+from gcimagebundlelib import manifest
+from gcimagebundlelib.os_platform import Platform
+from gcimagebundlelib import utils
 
 
 class InvalidOverwriteFileException(Exception):

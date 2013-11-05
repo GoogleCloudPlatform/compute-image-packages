@@ -16,9 +16,8 @@
 """Image manifest."""
 
 
-
 import json
-import utils
+from gcimagebundlelib import utils
 
 
 class ImageManifest(object):

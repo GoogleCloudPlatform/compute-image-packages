@@ -22,7 +22,7 @@ import subprocess
 import unittest
 import uuid
 
-import utils
+from gcimagebundle import utils
 
 
 class ImageBundleTest(unittest.TestCase):

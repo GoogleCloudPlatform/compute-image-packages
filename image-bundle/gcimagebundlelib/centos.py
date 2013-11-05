@@ -20,7 +20,7 @@
 import os
 import re
 
-import linux
+from gcimagebundlelib import linux
 
 
 class Centos(linux.LinuxPlatform):

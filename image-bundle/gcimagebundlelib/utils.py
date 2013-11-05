@@ -15,8 +15,6 @@
 
 """Utilities for image bundling tool."""
 
-
-
 import logging
 import os
 import subprocess

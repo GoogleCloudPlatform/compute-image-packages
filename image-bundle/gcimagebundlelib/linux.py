@@ -22,8 +22,8 @@ import platform
 import stat
 import tempfile
 
-import exclude_spec
-import os_platform
+from gcimagebundlelib import exclude_spec
+from gcimagebundlelib import os_platform
 
 
 class LinuxPlatform(os_platform.Platform):

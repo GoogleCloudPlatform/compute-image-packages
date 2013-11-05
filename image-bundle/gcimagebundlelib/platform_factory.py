@@ -15,15 +15,14 @@
 
 """Factory that guesses the correct platform and creates it."""
 
-
-
-import centos
-import debian
-import gcel
 import logging
-import opensuse
-import sle
-import ubuntu
+
+from gcimagebundlelib import centos
+from gcimagebundlelib import debian
+from gcimagebundlelib import gcel
+from gcimagebundlelib import opensuse
+from gcimagebundlelib import sle
+from gcimagebundlelib import ubuntu
 
 
 class UnknownPlatformException(Exception):

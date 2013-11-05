@@ -1,4 +1,6 @@
-# Copyright 2013 SUSE LLC All Rights Reserved
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,19 +15,13 @@
 # limitations under the License.
 
 
-"""SUSE Linux Enterprise (SLE) platform info."""
+"""Wrapper for gcimagebundle main."""
 
-import re
-import suse
+from gcimagebundlelib import imagebundle
 
-class SLE(suse.SUSE):
-  """SLE platform info."""
+def main():
+  imagebundle.main()
 
-  @staticmethod
-  def IsThisPlatform(self, root='/'):
-    if re.match(r'SUSE Linux Enterprise', suse.SUSE().distribution):
-      return True
-    return False
-  
-  def __init__(self):
-    super(SLE, self).__init__()
+
+if __name__ == '__main__':
+  main()

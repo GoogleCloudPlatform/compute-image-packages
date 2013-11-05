@@ -27,9 +27,9 @@ import re
 import tempfile
 import time
 
-import exclude_spec
-import fs_copy
-import utils
+from gcimagebundlelib import exclude_spec
+from gcimagebundlelib import fs_copy
+from gcimagebundlelib import utils
 
 
 class RawDiskError(Exception):

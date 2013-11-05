@@ -29,10 +29,10 @@ import shutil
 import subprocess
 import tempfile
 
-from gcimagebundle import block_disk
-from gcimagebundle import exclude_spec
-from gcimagebundle import platform_factory
-from gcimagebundle import utils
+from gcimagebundlelib import block_disk
+from gcimagebundlelib import exclude_spec
+from gcimagebundlelib import platform_factory
+from gcimagebundlelib import utils
 
 def SetupArgsParser():
   """Sets up the command line flags."""
@@ -141,6 +141,7 @@ def main():
   if options.display_version:
     PrintVersionInfo()
     return 0
+  return 1
 
   scratch_dir = tempfile.mkdtemp(dir=options.output_directory)
   SetupLogging(options, scratch_dir)
@@ -228,7 +229,3 @@ def main():
 
   if options.cleanup:
     shutil.rmtree(scratch_dir)
-
-
-if __name__ == '__main__':
-  main()
