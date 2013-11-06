@@ -1,5 +1,5 @@
 [Unit]
-Description=Google Compute Engine Address Manager Deamon
+Description=Google Compute Engine Address Manager Daemon
 After=network.target
 Requires=network.target
 
