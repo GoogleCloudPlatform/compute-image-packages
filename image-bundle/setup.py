@@ -53,5 +53,6 @@ setup(
     platforms='any',
     include_package_data=True,
     packages=find_packages(exclude=['distribute_setup']),
-    scripts = ['gcimagebundle'],
+    scripts=['gcimagebundle'],
+    test_suite='gcimagebundlelib.tests',
 )

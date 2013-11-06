@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Image bundling tool for root file system.
-
-To build a root filesystem tar
-$ sudo gcimagebundle -d /dev/sda -r /  -o /tmp \
-  --loglevel=DEBUG  --log_file=/tmp/gcimagebundle.log
-
-This will output the image tar in the output directory
-specified with -o option.
-
-Note that this is copied out file by file into the default google image.
-
-To run unittest:
-$ sudo python setup.py test
+"""Unit tests module for Image Bundle."""

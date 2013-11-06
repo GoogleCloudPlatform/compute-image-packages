@@ -30,7 +30,7 @@ import unittest
 
 from gcimagebundlelib import block_disk
 from gcimagebundlelib import exclude_spec
-from gcimagebundlelib import image_bundle_test_base
+from gcimagebundlelib.tests import image_bundle_test_base
 from gcimagebundlelib import utils
 
 
