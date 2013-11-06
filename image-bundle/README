@@ -15,15 +15,13 @@
 Image bundling tool for root file system.
 
 To build a root filesystem tar
-$ sudo image_bundle -r /data/myimage/root -o /usr/local/google/home/${USER} \
+$ sudo gcimagebundle -r /dev/sda  -o /usr/local/google/home/${USER} \
   -k 'somekey' --loglevel=DEBUG  --log_file=/tmp/image_bundle.log
 
 This will output the image tar in the output directory
 specified with -o option.
 
-To run unittest:
-$ mkdir /tmp/imagebundle
-$ cp * /tmp/imagebundle/
-$ sudo /tmp/imagebundle/block_disk_unittest.py
-
 Note that this is copied out file by file into the default google image.
+
+To run unittest:
+$ sudo python setup.py test

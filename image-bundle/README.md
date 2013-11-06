@@ -1,37 +1,46 @@
-##Image Bundle
+Image Bundle
+============
 
 Image Bundle is a python package that allows users to create an image from the current state of the running virtual machine. Image Bundle creates the image with the recommended packaging format and also allows you to run unit tests to verify that image bundle works properly on your operating system. See [Custom Images](https://developers.google.com/compute/docs/images#bundle_image) for more information.
 
-To install:
+### Installation
 
     $ sudo python setup.py install
 
+### Usage
 
 To build a root filesystem tar:
 
-    $ sudo image_bundle -r /data/myimage/root -o /usr/local/google/home/${USER} \
+    $ sudo gcimagebundle -r /dev/sda  -o /usr/local/google/home/${USER} \
     -k 'somekey' --loglevel=DEBUG  --log_file=/tmp/image_bundle.log
 
 This will output the image tar in the output directory specified with -o option.
 
-To run unit test:
+For details on all the parameters use...
 
-    sudo python /usr/share/imagebundle/block_disk_unittest.py
-    
-Or, if you are in the package directory:
+    $ sudo gcimagebundle --help
 
-    $ mkdir /tmp/imagebundle
-    $ cp * /tmp/imagebundle/
-    $ sudo /tmp/imagebundle/block_disk_unittest.py
+### Unit Tests
 
-Note that this is copied out file by file into the default google image.
+Image Bundle includes unit tests that should be run if you make any changes. These tests perform mount operations so root access is required.
 
-To create DEB package:
+    $ sudo python setup.py test
+
+### Packaging
+
+Since Image Bundle uses setuptools it can be packaged into a DEB or RPM.
+
+Install the required dependencies:
+
+    # For Debian based distributions
+    $ sudo apt-get install python-stdeb rpm
+    # For Red-Hat based distributions
+    $ sudo yum install rpmbuild 
+
+DEB package:
 
     $ python setup.py --command-packages=stdeb.command bdist_deb
     
-To create RPM package:
+RPM package:
 
     $ python setup.py bdist_rpm
-    
-

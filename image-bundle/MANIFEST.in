@@ -1,4 +1,4 @@
 include *.md
-include VERSION
 include distribute_setup.py
-
+include LICENSE
+include VERSION
