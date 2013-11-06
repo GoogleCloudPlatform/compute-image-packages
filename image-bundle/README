@@ -15,7 +15,7 @@
 Image bundling tool for root file system.
 
 To build a root filesystem tar
-$ sudo gcimagebundle -r /dev/sda  -o /tmp \
+$ sudo gcimagebundle -d /dev/sda -r /  -o /tmp \
   --loglevel=DEBUG  --log_file=/tmp/gcimagebundle.log
 
 This will output the image tar in the output directory

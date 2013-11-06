@@ -11,7 +11,7 @@ Image Bundle is a python package that allows users to create an image from the c
 
 To build a root filesystem tar:
 
-    $ sudo gcimagebundle -r /dev/sda  -o /tmp \
+    $ sudo gcimagebundle -d /dev/sda -r / -o /tmp \
     --loglevel=DEBUG  --log_file=/tmp/image_bundle.log
 
 This will output the image tar in the output directory specified with -o option.
