@@ -16,8 +16,6 @@
 """Base class for platform specific information."""
 
 
-
-
 class Platform(object):
   """Base class for platform information."""
   EXCLUDE_LIST = []

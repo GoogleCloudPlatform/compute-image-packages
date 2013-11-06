@@ -1,4 +1,4 @@
-# Copyright 2013 SUSE LLC All Rights Reserved
+# Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,24 @@
 # limitations under the License.
 
 
-"""openSUSE platform info."""
+"""Debian Linux specific platform info."""
 
-import suse
 
-class OpenSUSE(suse.SUSE):
-  """openSUSE platform info."""
+
+import platform
+
+from gcimagebundlelib import linux
+
+
+class Debian(linux.LinuxPlatform):
+  """Debian Linux specific information."""
 
   @staticmethod
   def IsThisPlatform(root='/'):
-    return 'openSUSE' == suse.SUSE().distribution
+    (distribution, _, _) = platform.linux_distribution()
+    if distribution and distribution.lower() == 'debian':
+      return True
+    return False
 
   def __init__(self):
-    super(OpenSUSE, self).__init__()
-
+    super(Debian, self).__init__()

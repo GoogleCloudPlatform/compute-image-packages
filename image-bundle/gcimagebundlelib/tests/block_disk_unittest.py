@@ -28,10 +28,10 @@ import tarfile
 import tempfile
 import unittest
 
-import block_disk
-import exclude_spec
-import image_bundle_test_base
-import utils
+from gcimagebundlelib import block_disk
+from gcimagebundlelib import exclude_spec
+from gcimagebundlelib import image_bundle_test_base
+from gcimagebundlelib import utils
 
 
 class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):

@@ -21,7 +21,7 @@ import logging
 import os
 import re
 
-import manifest
+from gcimagebundlelib import manifest
 
 
 class FsCopyError(Exception):

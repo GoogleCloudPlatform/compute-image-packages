@@ -22,6 +22,7 @@ import logging.handlers
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 
 class RunCommandException(Exception):
@@ -45,9 +46,16 @@ class System(object):
     return handler
 
   def SetLoggingHandler(self, logger, handler):
-    """Setup logging w/ a specifc handler."""
+    """Setup logging w/ a specific handler."""
+    handler.setLevel(logging.INFO)
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
+
+  def EnableDebugLogging(self, logger):
+    debug_handler = logging.StreamHandler(sys.stdout)
+    debug_handler.setLevel(logging.DEBUG)
+    logger.addHandler(debug_handler)
+    logger.setLevel(logging.DEBUG)
 
   def OpenFile(self, *args, **kwargs):
     return open(*args, **kwargs)

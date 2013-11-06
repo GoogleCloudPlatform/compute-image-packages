@@ -14,6 +14,7 @@
 
 """Main driver logic for managing accounts on GCE instances."""
 
+import logging
 import os
 import time
 
@@ -36,6 +37,7 @@ class AccountsManager(object):
     self.interval = interval
 
   def Main(self):
+    logging.debug('AccountsManager main loop')
     # Run this once per interval forever.
     while True:
       # If this is a one-shot execution, then this can be run normally.
@@ -63,6 +65,7 @@ class AccountsManager(object):
 
   def RegenerateKeysAndCreateAccounts(self):
     """Regenerate the keys and create accounts as needed."""
+    logging.debug('RegenerateKeysAndCreateAccounts')
     if self.system.IsExecutable('/usr/share/google/first-boot'):
       self.system.RunCommand('/usr/share/google/first-boot')
 
