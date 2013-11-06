@@ -54,5 +54,5 @@ setup(
     include_package_data=True,
     packages=find_packages(exclude=['distribute_setup']),
     scripts=['gcimagebundle'],
-    tests_suite='gcimagebundlelib.tests',
+    test_suite='gcimagebundlelib.tests',
 )
