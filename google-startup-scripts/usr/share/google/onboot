@@ -155,7 +155,7 @@ function do_init()
   # account.
   if [ -x ${BOTO_SETUP_SCRIPT} ]; then
     log "Running Boto setup script at ${BOTO_SETUP_SCRIPT}"
-    ${BOTO_SETUP_SCRIPT} >> ${LOGFILE} 2&1
+    ${BOTO_SETUP_SCRIPT} >> ${LOGFILE} 2>&1
   fi
 
   # Try to use the startup-script-url, then the startup-script metadata.
