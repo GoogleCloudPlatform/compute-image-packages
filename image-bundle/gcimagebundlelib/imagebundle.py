@@ -129,7 +129,7 @@ def SetupLogging(options, log_dir='/tmp'):
 
 def PrintVersionInfo():
   #TODO(user): fix up the version string
-  print 'version 1.0'
+  print 'version 1.1.0'
 
 
 def main():
