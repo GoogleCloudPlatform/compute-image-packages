@@ -344,12 +344,12 @@ def RunCommand(command, input_str=None):
   logging.debug('stderr %s', cmd_output[1])
   logging.debug('returncode %s', p.returncode)
   if p.returncode:
-    logging.warning('Error while running %s return_code = %s',
-                    command, p.returncode)
+    logging.warning('Error while running %s return_code = %s\n'
+                    'stdout=%s\nstderr=%s',
+                    command, p.returncode, cmd_output[0],
+                    cmd_output[1])
     raise subprocess.CalledProcessError(p.returncode,
-                                        cmd=command,
-                                        output='%s\n%s' %
-                                        (cmd_output[0], cmd_output[1]))
+                                        cmd=command)
   return cmd_output[0]
 
 
