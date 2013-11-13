@@ -19,7 +19,7 @@
 # Required-Start:    $local_fs $network $named $syslog
 # Required-Stop:
 # Default-Start:     2 3 4 5
-# Default-Stop:
+# Default-Stop:      0 1 6
 # Short-Description: Google Compute Engine accounts manager service
 # Description:       This launches the Google Compute Engine accounts manager
 #        daemon.
