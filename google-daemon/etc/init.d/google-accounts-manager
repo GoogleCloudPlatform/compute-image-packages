@@ -16,7 +16,7 @@
 ### BEGIN INIT INFO
 # Provides:    gce_manage_accounts
 # X-Start-Before:    ssh
-# Required-Start:    $network
+# Required-Start:    $local_fs $network $named $syslog
 # Required-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:
