@@ -146,6 +146,7 @@ class FsRawDisk(fs_copy.FsCopy):
     # self._fs_size - partition_start
     utils.MakePartition(disk_file_path, 'primary', 'ext2', partition_start,
                         self._fs_size - partition_start)
+    uuid = None
     with utils.LoadDiskImage(disk_file_path) as devices:
       # For now we only support disks with a single partition.
       if len(devices) != 1:
@@ -158,6 +159,7 @@ class FsRawDisk(fs_copy.FsCopy):
       utils.RunCommand(['ls', '/dev/mapper'])
       print 'Making filesystem'
       uuid = utils.MakeFileSystem(devices[0], 'ext4', uuid)
+    with utils.LoadDiskImage(disk_file_path) as devices:
       if uuid is None:
         raise Exception('Could not get uuid from makefilesystem')
       mount_point = tempfile.mkdtemp(dir=self._scratch_dir)
@@ -168,6 +170,8 @@ class FsRawDisk(fs_copy.FsCopy):
         self._ProcessOverwriteList(mount_point)
         self._CleanupNetwork(mount_point)
         self._UpdateFstab(mount_point, uuid)
+    # Sleep for two seconds. Give time for the unmount to finish.
+    time.sleep(2)
 
     tar_entries = []
 
