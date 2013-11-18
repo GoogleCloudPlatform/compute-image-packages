@@ -18,6 +18,7 @@
 import logging
 import os
 import subprocess
+import time
 import urllib2
 
 
@@ -53,6 +54,9 @@ class LoadDiskImage(object):
       if (len(split_line) > 2 and split_line[0] == 'add'
           and split_line[1] == 'map'):
         devs.append('/dev/mapper/' + split_line[2])
+    # Sleep for two seconds. At times the loopback device is not ready
+    # instantly. Sleeping for two seconds solves it.
+    time.sleep(2)
     return devs
 
   def __exit__(self, unused_exc_type, unused_exc_value, unused_exc_tb):
@@ -63,6 +67,8 @@ class LoadDiskImage(object):
       unused_exc_value: unused.
       unused_exc_tb: unused.
     """
+    # Sleep for two seconds. Give time for the unmount to finish.
+    time.sleep(2)
     kpartx_cmd = ['kpartx', '-d', self._file_path]
     RunCommand(kpartx_cmd)
 

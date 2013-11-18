@@ -25,7 +25,6 @@ import logging
 import os
 import re
 import tempfile
-import time
 
 from gcimagebundlelib import exclude_spec
 from gcimagebundlelib import fs_copy
@@ -150,9 +149,6 @@ class FsRawDisk(fs_copy.FsCopy):
       # For now we only support disks with a single partition.
       if len(devices) != 1:
         raise RawDiskError(devices)
-      # Sleep for two seconds. At times the loopback device is not ready
-      # instantly. Sleeping for two seconds solves it.
-      time.sleep(2)
       # List contents of /dev/mapper to help with debugging. Contents will
       # be listed in debug log only
       utils.RunCommand(['ls', '/dev/mapper'])
@@ -169,8 +165,6 @@ class FsRawDisk(fs_copy.FsCopy):
         self._ProcessOverwriteList(mount_point)
         self._CleanupNetwork(mount_point)
         self._UpdateFstab(mount_point, uuid)
-      # Sleep for two seconds. Give time for the unmount to finish.
-      time.sleep(2)
 
     tar_entries = []
 
