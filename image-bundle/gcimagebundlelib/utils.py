@@ -153,7 +153,7 @@ def MakeFileSystem(dev_path, fs_type, uuid=None):
     dev_path: A path to a device.
     fs_type: A type of a file system to be created. For example ext2, ext3, etc.
     uuid: The value to use as the UUID for the filesystem. If none, a random
-        UUID will be generated and used.
+          UUID will be generated and used.
 
   Returns:
     The uuid of the filesystem. This will be the same as the passed value if
