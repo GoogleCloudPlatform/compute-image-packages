@@ -25,7 +25,6 @@ import logging
 import os
 import re
 import tempfile
-import time
 
 from gcimagebundlelib import exclude_spec
 from gcimagebundlelib import fs_copy
@@ -150,16 +149,14 @@ class FsRawDisk(fs_copy.FsCopy):
       # For now we only support disks with a single partition.
       if len(devices) != 1:
         raise RawDiskError(devices)
-      # Sleep for two seconds. At times the loopback device is not ready
-      # instantly. Sleeping for two seconds solves it.
-      time.sleep(2)
-      # List contencts of /dev/mapper to help with debugging. Contents will
+      # List contents of /dev/mapper to help with debugging. Contents will
       # be listed in debug log only
       utils.RunCommand(['ls', '/dev/mapper'])
       print 'Making filesystem'
       uuid = utils.MakeFileSystem(devices[0], 'ext4', uuid)
+    with utils.LoadDiskImage(disk_file_path) as devices:
       if uuid is None:
-        raise Exception('Could not get uuid from makefilesystem')
+        raise Exception('Could not get uuid from MakeFileSystem')
       mount_point = tempfile.mkdtemp(dir=self._scratch_dir)
       with utils.MountFileSystem(devices[0], mount_point):
         print 'Copying contents'

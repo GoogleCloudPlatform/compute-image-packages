@@ -1,3 +1,7 @@
 *.pyc
 *.pyo
 .DS_Store
+.idea
+
+# emacs backup files
+*.*~
