@@ -67,10 +67,9 @@ class LoadDiskImage(object):
       unused_exc_value: unused.
       unused_exc_tb: unused.
     """
-    # Sleep for two seconds. Give time for the unmount to finish.
-    time.sleep(2)
     kpartx_cmd = ['kpartx', '-d', self._file_path]
     RunCommand(kpartx_cmd)
+    RunCommand(['sync'])
 
 
 class MountFileSystem(object):
@@ -91,6 +90,7 @@ class MountFileSystem(object):
     """
     mount_cmd = ['mount', self._dev_path, self._dir_path]
     RunCommand(mount_cmd)
+    RunCommand(['sync'])
 
   def __exit__(self, unused_exc_type, unused_exc_value, unused_exc_tb):
     """Unmounts a file system.
@@ -102,6 +102,10 @@ class MountFileSystem(object):
     """
     umount_cmd = ['umount', self._dir_path]
     RunCommand(umount_cmd)
+    RunCommand(['sync'])
+    # Sleep for two seconds. At times the loopback device is not ready
+    # instantly. Sleeping for two seconds solves it.
+    time.sleep(2)
 
 
 def GetMounts(root='/'):
