@@ -29,17 +29,22 @@ gcutil=/google/data/ro/projects/cloud/cluster/gcutil
 # Enable exit on error
 set -e
 
-function cleanup () {
-  if ! $do_not_delete_instance; then
-     echo 'skipping delete'
-     return
-  fi
+function deleteinstance () {
+  no_delete_bood_pd = $1
   if [ -n $temp_instance_zone ];
     then
       # Delete the instance
-      $gcutil --project=$project_name deleteinstance $temp_instance_name --zone=$temp_instance_zone --nodelete_boot_pd --force
+      $gcutil --project=$project_name deleteinstance $temp_instance_name --zone=$temp_instance_zone $nodelete_boot_pd --force
     temp_instance_zone=''
   fi
+}
+
+function cleanup () {
+  if $do_not_delete_instance; then
+     echo 'skipping delete'
+     return
+  fi
+  deleteinstance $1
   if [ -n $debian_embedd_script ];
     then
       rm $debian_embedd_script
@@ -74,16 +79,12 @@ function embeddKernel() {
   export centos_embedd_script=$centos_embedd_script
   # Run the script to embedd the kernel
   runRemoteScript 'chmod +x /home/'$USER'/'$centos_embedd_script_filename
-  runRemoteScript 'sudo /home/'$USER'/'$centos_embedd_script_filename
-
-  
-  # Delete the instance
-  cleanup
+  #runRemoteScript 'sudo /home/'$USER'/'$centos_embedd_script_filename
 
 }
 
 function embeddKernelOnImage() {
-  # Check if there is a disk that needs to be migrated
+  # Check if the image has been specified or not
   if [ -z $source_image_name ];
     then
        echo 'No image specified'
@@ -100,6 +101,15 @@ function embeddKernelOnImage() {
   fi
 
   embeddKernel
+  
+  # Delete the instance but keep the PD
+  deleteinstance '--nodelete_boot_pd'
+
+  # Create the instance again with the disk as the boot disk using v1
+  $gcutil --project=$project_name --service_version=v1b addinstance $temp_instance_name --disk=$temp_instance_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type --persistent_boot_disk
+
+  # Run gcimagebundle to create an image
+  runRemoteScript 'sudo gcimagebundle -d /dev/sda -o /tmp |grep tar'
 }
 
 function embeddKernelOnDisk() {
@@ -124,6 +134,9 @@ function embeddKernelOnDisk() {
   sleep 10s
 
   embeddKernel
+  
+  # Delete the instance
+  cleanup '--nodelete_boot_pd'
 }
 
 # List of options for gce subcommand
@@ -176,18 +189,22 @@ EOF
 centos_embedd_script_filename=centos$RANDOM.bash
 centos_embedd_script=/tmp/$centos_embedd_script_filename
 cat >> $centos_embedd_script << 'EOF'
-echo 'y' > sudo yum install kernel-xen
+echo 'y' | sudo yum install kernel-xen
 UUID=`sudo tune2fs -l /dev/sda1 | grep UUID | awk '{ print $3 }'`
 echo $UUID
+INITRAM=`ls /boot/init* | grep init | awk '{ print $1 }'`
+echo $INITRAM
+KERNEL=`ls /boot/vmlinuz* | grep vmlinuz | awk '{ print $1 }'`
+echo $KERNEL
 sudo mkdir /boot/grub
 sudo bash -c "echo \"default
 timeout=2
 
 title CentOS
     root (hd0,0)
-    kernel /boot/vmlinuz-2.6.32-358.18.1.el6.x86_64 ro root=UUID=$UUID noquiet earlyprintk=ttyS0 loglevel=8
-    initrd /boot/initramfs-2.6.32-358.18.1.el6.x86_64.img\" > /boot/grub/grub.conf"
-echo 'y' > sudo yum install grub
+    kernel $KERNEL ro root=UUID=$UUID noquiet earlyprintk=ttyS0 loglevel=8
+    initrd $INITRAM\" > /boot/grub/grub.conf"
+echo 'y' | sudo yum install grub
 sudo grub-install /dev/sda1
 sudo bash -c "echo \"
 find /boot/grub/stage1
@@ -195,14 +212,15 @@ root (hd0,0)
 setup (hd0)
 quit\" | grub"
 
-echo 'y' > sudo yum install https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-compute-daemon-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/gcimagebundle-1.1.0-3.noarch.rpm
+echo 'y' | sudo yum install https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0/google-compute-daemon-1.1.0-3.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/gcimagebundle-1.1.0-3.noarch.rpm
 
 sudo ln -s /dev/null /etc/udev/rules.d/75-persistent-net-generator.rules
-sudo chattr -i /dev/null /etc/udev/rules.d/70-persistent-net.rules
+sudo chattr -i /etc/udev/rules.d/70-persistent-net.rules
 sudo rm -f /dev/null /etc/udev/rules.d/70-persistent-net.rules
 sudo mkdir /var/lock/subsys
 sudo chmod 755 /var/lock/subsys
 sudo /etc/init.d/sshd restart
+sudo shutdown -h now
 EOF
 
 
