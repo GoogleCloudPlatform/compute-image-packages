@@ -1,0 +1,14 @@
+[Unit]
+Description=Google Compute Engine User Accounts Manager Daemon
+After=network.target
+Before=sshd.service
+Requires=network.target
+
+[Service]
+ExecStart=/usr/share/google/google_daemon/manage_accounts.py --daemon
+ExecStop=/bin/kill -TERM $MAINPID
+PIDFile=/var/run/google_daemon.pid
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
