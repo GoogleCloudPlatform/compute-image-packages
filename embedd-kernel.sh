@@ -20,8 +20,9 @@ do_not_delete_instance=false
 skip_instance_creation=false
 debian_embedd_script=
 centos_embedd_script=
-debian_embedd_script_filename=
-centos_embedd_script_filename=
+run_gcimagebundle_script=
+tarfile_location=
+no_delete_boot_pd=
 machine_type=n1-standard-1
 gcg_kernel=projects/google/global/kernels/gce-no-conn-track-v20130813
 gcutil=/google/data/ro/projects/cloud/cluster/gcutil
@@ -30,13 +31,8 @@ gcutil=/google/data/ro/projects/cloud/cluster/gcutil
 set -e
 
 function deleteinstance () {
-  no_delete_bood_pd = $1
-  if [ -n $temp_instance_zone ];
-    then
-      # Delete the instance
-      $gcutil --project=$project_name deleteinstance $temp_instance_name --zone=$temp_instance_zone $nodelete_boot_pd --force
-    temp_instance_zone=''
-  fi
+  # Delete the instance
+  $gcutil --project=$project_name deleteinstance $temp_instance_name --zone=$temp_instance_zone $1 --force
 }
 
 function cleanup () {
@@ -44,7 +40,7 @@ function cleanup () {
      echo 'skipping delete'
      return
   fi
-  deleteinstance $1
+  deleteinstance
   if [ -n $debian_embedd_script ];
     then
       rm $debian_embedd_script
@@ -52,6 +48,10 @@ function cleanup () {
   if [ -n $centos_embedd_script ];
     then
       rm $centos_embedd_script
+  fi
+  if [ -n $run_gcimagebundle_script ];
+    then
+      rm $run_gcimagebundle_script
   fi
 }
 
@@ -67,20 +67,95 @@ function runRemoteScript () {
 }
 
 function embeddKernel() {
-  # sleep for 10 seconds to ensure the instance is sshable
+  # sleep for 30 seconds to ensure the instance is sshable
   if ! $skip_instance_creation;
     then
       echo 'sleeping'
-      sleep 20s
+      sleep 30s
   fi
 
-  # push the script to the instance
-  $gcutil --project=$project_name push $temp_instance_name $centos_embedd_script /home/$USER/
-  export centos_embedd_script=$centos_embedd_script
-  # Run the script to embedd the kernel
-  runRemoteScript 'chmod +x /home/'$USER'/'$centos_embedd_script_filename
-  #runRemoteScript 'sudo /home/'$USER'/'$centos_embedd_script_filename
+debian_embedd_script=/tmp/debian$RANDOM.bash
+cat >> $debian_embedd_script << EOF
+sudo apt-get install linux-image-amd64
+sudo apt-get install grub-pc
+EOF
 
+centos_embedd_script=/tmp/centos$RANDOM.bash
+cat >> $centos_embedd_script << 'EOF'
+set -x
+echo 'y' | sudo yum install kernel-xen
+UUID=`sudo /sbin/tune2fs -l /dev/sda1 | grep UUID | awk '{ print $3 }'`
+echo $UUID
+if [ -z $UUID ];
+  then
+     echo 'unable to determine UUID'
+     exit 1
+fi
+INITRAM=`ls /boot/init* | grep init | awk '{ print $1 }'`
+echo $INITRAM
+if [ -z $INITRAM ];
+  then
+     echo 'unable to determine INITRAM'
+     exit 1
+fi
+KERNEL=`ls /boot/vmlinuz* | grep vmlinuz | awk '{ print $1 }'`
+echo $KERNEL
+if [ -z $KERNEL ];
+  then
+     echo 'unable to determine KERNEL'
+     exit 1
+fi
+sudo mkdir /boot/grub
+sudo bash -c "echo \"default
+timeout=0
+
+title CentOS
+    root (hd0,0)
+    kernel $KERNEL ro root=UUID=$UUID noquiet earlyprintk=ttyS0 loglevel=8
+    initrd $INITRAM\" > /boot/grub/grub.conf"
+echo 'y' | sudo yum install grub
+sudo /sbin/grub-install /dev/sda1
+sudo bash -c "echo \"
+find /boot/grub/stage1
+root (hd0,0)
+setup (hd0)
+quit\" | /sbin/grub"
+
+echo 'y' | sudo yum install https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-compute-daemon-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/gcimagebundle-1.1.0-3.noarch.rpm
+
+sudo ln -s /dev/null /etc/udev/rules.d/75-persistent-net-generator.rules
+sudo chattr -i /etc/udev/rules.d/70-persistent-net.rules
+sudo rm -f /dev/null /etc/udev/rules.d/70-persistent-net.rules
+sudo mkdir /var/lock/subsys
+sudo chmod 755 /var/lock/subsys
+EOF
+
+  # push the script to the instance
+  $gcutil --project=$project_name push $temp_instance_name $centos_embedd_script $centos_embedd_script
+
+  # Run the script to embedd the kernel
+  runRemoteScript 'chmod +x '$centos_embedd_script
+  runRemoteScript 'sudo '$centos_embedd_script
+}
+
+function rungcImageBundle() {
+
+  run_gcimagebundle_script=/tmp/rungcimagebundle$RANDOM.bash
+  cat >> $run_gcimagebundle_script << 'EOF'
+TARFILE=`sudo gcimagebundle -d /dev/sda -o /tmp |grep tar.gz`
+cp $TARFILE $tarfile_location
+EOF
+
+  # push the script to the instance and run it
+  $gcutil --project=$project_name push $temp_instance_name $run_gcimagebundle_script $run_gcimagebundle_script
+  runRemoteScript 'chmod +x '$run_gcimagebundle_script
+  runRemoteScript 'sudo '$run_gcimagebundle_script
+
+  # download the image file
+  tarfile_location=/tmp/imagefile$RANDOM.tar.gz
+  $gcutil --project=$project_name pull $temp_instance_name $tarfile_location $tarfile_location
+
+  echo 'Image file located at '$tarfile_location
 }
 
 function embeddKernelOnImage() {
@@ -101,15 +176,23 @@ function embeddKernelOnImage() {
   fi
 
   embeddKernel
-  
+
   # Delete the instance but keep the PD
   deleteinstance '--nodelete_boot_pd'
 
   # Create the instance again with the disk as the boot disk using v1
-  $gcutil --project=$project_name --service_version=v1b addinstance $temp_instance_name --disk=$temp_instance_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type --persistent_boot_disk
+  $gcutil --project=$project_name --service_version=v1 addinstance $temp_instance_name --disk=$temp_instance_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type
 
-  # Run gcimagebundle to create an image
-  runRemoteScript 'sudo gcimagebundle -d /dev/sda -o /tmp |grep tar'
+  # Wait for the instance to become sshable
+  echo 'waiting for instance to become sshable'
+  sleep 80s
+
+  # Run gcimagebundle to create an image. This method will create the tar.gz
+  # file, download it to local /tmp, and then print out the location.
+  rungcImageBundle
+  
+  # Delete the instance and the pd since it was created by us
+  deleteinstance
 }
 
 function embeddKernelOnDisk() {
@@ -130,9 +213,6 @@ function embeddKernelOnDisk() {
   # Create an instance in the same zone with the disk as the boot disk
   $gcutil --project=$project_name --service_version=v1beta16 addinstance $temp_instance_name --disk=$source_disk_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type --kernel=$gcg_kernel
 
-  # sleep for 10 seconds to ensure the instance is sshable
-  sleep 10s
-
   embeddKernel
   
   # Delete the instance
@@ -152,7 +232,8 @@ ${txtund}Bootstrapping${txtdef}
     --source-disk-name 	SOURCE-DISK     Source disk in which to embedd the kernel (${txtbld}${arch}${txtdef})
     --source-disk-zone	SOURCE-DISK-ZONE Zone of source disk (${txtbld}${arch}${txtdef})
     --temp-instance-name TEMP-INSTANCE-NAME The name for the instance that the tool will create to embedd the kernel (${txtbld}${arch}${txtdef})
-    --do-not-delete-instance [true|false] True if instance should not be deleted. defaults to true (${txtbld}${arch}${txtdef})
+    --do-not-delete-instance [true|false] True if temporary instance should not be deleted. defaults to true (${txtbld}${arch}${txtdef})
+    --skip-instance-creation [true|false] True if temporary instance used for embedding already exists. defaults to false (${txtbld}${arch}${txtdef})
 
 ${txtund}Other options${txtdef}
     --debug                       Print debugging information
@@ -178,51 +259,6 @@ while [ $# -gt 0 ]; do
 done
 
 echo $project_name $source_image_name $destination_image_name $source_disk_name $source_disk_zone $temp_instance_name
-
-debian_embedd_script_filename=debian$RANDOM.bash
-debian_embedd_script=/tmp/$debian_embedd_script_filename
-cat >> $debian_embedd_script << EOF
-sudo apt-get install linux-image-amd64
-sudo apt-get install grub-pc
-EOF
-
-centos_embedd_script_filename=centos$RANDOM.bash
-centos_embedd_script=/tmp/$centos_embedd_script_filename
-cat >> $centos_embedd_script << 'EOF'
-echo 'y' | sudo yum install kernel-xen
-UUID=`sudo tune2fs -l /dev/sda1 | grep UUID | awk '{ print $3 }'`
-echo $UUID
-INITRAM=`ls /boot/init* | grep init | awk '{ print $1 }'`
-echo $INITRAM
-KERNEL=`ls /boot/vmlinuz* | grep vmlinuz | awk '{ print $1 }'`
-echo $KERNEL
-sudo mkdir /boot/grub
-sudo bash -c "echo \"default
-timeout=2
-
-title CentOS
-    root (hd0,0)
-    kernel $KERNEL ro root=UUID=$UUID noquiet earlyprintk=ttyS0 loglevel=8
-    initrd $INITRAM\" > /boot/grub/grub.conf"
-echo 'y' | sudo yum install grub
-sudo grub-install /dev/sda1
-sudo bash -c "echo \"
-find /boot/grub/stage1
-root (hd0,0)
-setup (hd0)
-quit\" | grub"
-
-echo 'y' | sudo yum install https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0/google-compute-daemon-1.1.0-3.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/gcimagebundle-1.1.0-3.noarch.rpm
-
-sudo ln -s /dev/null /etc/udev/rules.d/75-persistent-net-generator.rules
-sudo chattr -i /etc/udev/rules.d/70-persistent-net.rules
-sudo rm -f /dev/null /etc/udev/rules.d/70-persistent-net.rules
-sudo mkdir /var/lock/subsys
-sudo chmod 755 /var/lock/subsys
-sudo /etc/init.d/sshd restart
-sudo shutdown -h now
-EOF
-
 
 # Ensure cleanup gets called on error
 trap cleanup ERR EXIT
