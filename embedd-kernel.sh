@@ -142,6 +142,7 @@ function rungcImageBundle() {
 
   run_gcimagebundle_script=/tmp/rungcimagebundle$RANDOM.bash
   cat >> $run_gcimagebundle_script << 'EOF'
+export PATH=$PATH:/sbin
 TARFILE=`sudo gcimagebundle -d /dev/sda -o /tmp |grep tar.gz`
 cp $TARFILE $tarfile_location
 EOF
@@ -185,7 +186,9 @@ function embeddKernelOnImage() {
 
   # Wait for the instance to become sshable
   echo 'waiting for instance to become sshable'
-  sleep 80s
+  date
+  sleep 120s
+  date
 
   # Run gcimagebundle to create an image. This method will create the tar.gz
   # file, download it to local /tmp, and then print out the location.
