@@ -23,7 +23,7 @@ centos_embedd_script=
 run_gcimagebundle_script=
 tarfile_location=
 no_delete_boot_pd=
-machine_type=n1-standard-1
+machine_type=n1-standard-8
 gcg_kernel=projects/google/global/kernels/gce-no-conn-track-v20130813
 gcutil=/google/data/ro/projects/cloud/cluster/gcutil
 
@@ -40,7 +40,9 @@ function cleanup () {
      echo 'skipping delete'
      return
   fi
-  deleteinstance
+  # Delete the instance
+  deleteinstance '--nodelete_boot_pd'
+
   if [ -n $debian_embedd_script ];
     then
       rm $debian_embedd_script
@@ -76,6 +78,7 @@ function embeddKernel() {
 
 debian_embedd_script=/tmp/debian$RANDOM.bash
 cat >> $debian_embedd_script << EOF
+set -x
 sudo apt-get install linux-image-amd64
 sudo apt-get install grub-pc
 EOF
@@ -140,11 +143,14 @@ EOF
 
 function rungcImageBundle() {
 
+  tarfile_location=/tmp/imagefile$RANDOM.tar.gz
   run_gcimagebundle_script=/tmp/rungcimagebundle$RANDOM.bash
   cat >> $run_gcimagebundle_script << 'EOF'
+set -x
 export PATH=$PATH:/sbin
-TARFILE=`sudo gcimagebundle -d /dev/sda -o /tmp |grep tar.gz`
-cp $TARFILE $tarfile_location
+TARFILE=`sudo gcimagebundle -d /dev/sda -o /tmp |grep tar.gz| awk '{ print $5 }'`
+echo $TARFILE
+cp $TARFILE /tmp/imagewithkernel.tar.gz
 EOF
 
   # push the script to the instance and run it
@@ -153,10 +159,17 @@ EOF
   runRemoteScript 'sudo '$run_gcimagebundle_script
 
   # download the image file
-  tarfile_location=/tmp/imagefile$RANDOM.tar.gz
-  $gcutil --project=$project_name pull $temp_instance_name $tarfile_location $tarfile_location
+  $gcutil --project=$project_name pull $temp_instance_name /tmp/imagewithkernel.tar.gz $tarfile_location
 
   echo 'Image file located at '$tarfile_location
+}
+
+function addInstanceWithV1 () {
+  $gcutil --project=$project_name --service_version=v1 addinstance $temp_instance_name --disk=$1,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type
+
+  # Wait for the instance to become sshable
+  echo 'waiting for instance to become sshable'
+  sleep 120s
 }
 
 function embeddKernelOnImage() {
@@ -182,13 +195,7 @@ function embeddKernelOnImage() {
   deleteinstance '--nodelete_boot_pd'
 
   # Create the instance again with the disk as the boot disk using v1
-  $gcutil --project=$project_name --service_version=v1 addinstance $temp_instance_name --disk=$temp_instance_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type
-
-  # Wait for the instance to become sshable
-  echo 'waiting for instance to become sshable'
-  date
-  sleep 120s
-  date
+  addInstanceWithV1 $temp_instance_name
 
   # Run gcimagebundle to create an image. This method will create the tar.gz
   # file, download it to local /tmp, and then print out the location.
@@ -213,13 +220,27 @@ function embeddKernelOnDisk() {
   fi
 
   temp_instance_zone=$source_disk_zone
+
+  # Create a snapshot before we update the disk
+
   # Create an instance in the same zone with the disk as the boot disk
   $gcutil --project=$project_name --service_version=v1beta16 addinstance $temp_instance_name --disk=$source_disk_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type --kernel=$gcg_kernel
 
   embeddKernel
   
+  # Delete the temporary instance
+  deleteinstance '--nodelete_boot_pd'
+
+  # Re-create the instance using the kernel on the disk
+  addInstanceWithV1 $source_disk_name
+
+  # Verify that the instance is sshable
+  runRemoteScript '/bin/uname -a'
+
   # Delete the instance
-  cleanup '--nodelete_boot_pd'
+  deleteinstance '--nodelete_boot_pd'
+
+  echo 'Kernel has been embedded in the disk -'$source_disk_name
 }
 
 # List of options for gce subcommand
