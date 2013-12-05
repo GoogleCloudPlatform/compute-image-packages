@@ -10,8 +10,8 @@
 #   temp_
 
 project_name=
+resource_type=
 source_image_name=
-destination_image_name=
 source_disk_name=
 source_disk_zone=
 temp_instance_name=
@@ -40,8 +40,16 @@ function cleanup () {
      echo 'skipping delete'
      return
   fi
-  # Delete the instance
-  deleteinstance '--nodelete_boot_pd'
+  if [ $resource_type == 'Image' ];
+    then
+      # Delete the instance and the disk attached to it
+      deleteinstance '--delete_boot_pd'
+  fi
+  if [ $resource_type == 'Disk' ];
+    then
+      # Delete the instance but not the disk
+      deleteinstance '--nodelete_boot_pd'
+  fi
 
   if [ -n $debian_embedd_script ];
     then
@@ -202,7 +210,7 @@ function embeddKernelOnImage() {
   rungcImageBundle
   
   # Delete the instance and the pd since it was created by us
-  deleteinstance
+  deleteinstance '--delete_boot_pd'
 }
 
 function embeddKernelOnDisk() {
@@ -251,10 +259,10 @@ Options (defaults in ${txtbld}bold${txtdef}):
 
 ${txtund}Bootstrapping${txtdef}
     --project-name 	NAME     	Name of the project (${txtbld}${arch}${txtdef})
-    --source-image-name	SOURCE-Image    Source image in which to embedd the kernel (${txtbld}${arch}${txtdef})
-    --dest-image-name   DEST-IMAGE      Destination image name (${txtbld}${arch}${txtdef})
-    --source-disk-name 	SOURCE-DISK     Source disk in which to embedd the kernel (${txtbld}${arch}${txtdef})
-    --source-disk-zone	SOURCE-DISK-ZONE Zone of source disk (${txtbld}${arch}${txtdef})
+    --resource-type [Image|Disk]  Type of resource to update (${txtbld}${arch}${txtdef})
+    --image-name	SOURCE-Image    Source image in which to embedd the kernel (${txtbld}${arch}${txtdef})
+    --disk-name 	SOURCE-DISK     Source disk in which to embedd the kernel (${txtbld}${arch}${txtdef})
+    --disk-zone	SOURCE-DISK-ZONE Zone of source disk (${txtbld}${arch}${txtdef})
     --temp-instance-name TEMP-INSTANCE-NAME The name for the instance that the tool will create to embedd the kernel (${txtbld}${arch}${txtdef})
     --do-not-delete-instance [true|false] True if temporary instance should not be deleted. defaults to true (${txtbld}${arch}${txtdef})
     --skip-instance-creation [true|false] True if temporary instance used for embedding already exists. defaults to false (${txtbld}${arch}${txtdef})
@@ -268,10 +276,10 @@ ${txtund}Other options${txtdef}
 while [ $# -gt 0 ]; do
         case $1 in
                 --project-name)         project_name=$2;               shift 2 ;;
-                --source-image-name)             source_image_name=$2;                   shift 2 ;;
-                --dest-image-name)           destination_image_name=$2;                 shift 2 ;;
-                --source-disk-name)          source_disk_name=$2;                shift 2 ;;
-                --source-disk-zone)                 source_disk_zone=$2;                shift 2 ;;
+                --resource-type)             resource_type=$2;                   shift 2 ;;
+                --image-name)             source_image_name=$2;                   shift 2 ;;
+                --disk-name)          source_disk_name=$2;                shift 2 ;;
+                --disk-zone)                 source_disk_zone=$2;                shift 2 ;;
                 --temp-instance-name)          temp_instance_name=$2;                shift 2 ;;
                 --do-not-delete-instance)          do_not_delete_instance=$2;                shift 2 ;;
                 --skip-instance-creation)          skip_instance_creation=$2;                shift 2 ;;
@@ -282,13 +290,34 @@ while [ $# -gt 0 ]; do
         esac
 done
 
-echo $project_name $source_image_name $destination_image_name $source_disk_name $source_disk_zone $temp_instance_name
+if [ -z $resource_type ];
+  then
+    die 'Must specify the resource-type'
+fi
+
+if [ $resource_type != 'Image' ];
+  then
+    if [ $resource_type != 'Disk' ];
+      then
+        die 'resource-type must be one of Image or Disk'
+    fi
+fi
 
 # Ensure cleanup gets called on error
 trap cleanup ERR EXIT
 
-# Embedd kernel in the disk
-embeddKernelOnDisk
+if [ $resource_type == 'Image' ]
+  then
+    # Embedd kernel in the image
+    embeddKernelOnImage    
+    exit 0
+fi
 
-# Embedd kernel in the image
-embeddKernelOnImage
+if [ $resource_type == 'Disk' ]
+  then
+    # Embedd kernel in the disk
+    embeddKernelOnDisk
+    exit 0
+fi
+
+die 'Error'
