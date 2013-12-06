@@ -26,7 +26,7 @@ centos_embed_script=
 run_gcimagebundle_script=
 tarfile_location=
 no_delete_boot_pd=
-cleanup_required=true
+cleanup_required=false
 machine_type=n1-standard-8
 gcg_kernel=projects/google/global/kernels/gce-no-conn-track-v20130813
 gcutil=gcutil # replace with path to gcutil
@@ -40,6 +40,23 @@ function deleteinstance () {
 }
 
 function cleanup () {
+  if $do_not_delete_instance; then
+     echo 'skipping delete'
+     return
+  fi
+  if $cleanup_required;
+    then
+      if [ $resource_type == 'Image' ];
+        then
+          # Delete the instance and the disk attached to it
+          deleteinstance '--delete_boot_pd'
+      fi
+      if [ $resource_type == 'Disk' ];
+        then
+          # Delete the instance but not the disk
+          deleteinstance '--nodelete_boot_pd'
+      fi
+  fi
   if [ -n "$debian_embed_script" ];
     then
       rm $debian_embed_script
@@ -235,6 +252,8 @@ function embedKernelOnImage() {
 
   fi
 
+  cleanup_required=true
+
   embedKernel
 
   # Delete the instance but keep the PD
@@ -279,6 +298,7 @@ function embedKernelOnDisk() {
   echo 'Creating instance using v1beta16'
   $gcutil --project=$project_name --service_version=v1beta16 addinstance $temp_instance_name --disk=$source_disk_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type --kernel=$gcg_kernel
 
+  cleanup_required=true
   embedKernel
   
   # Delete the temporary instance
