@@ -335,6 +335,14 @@ ${txtund}Bootstrapping${txtdef}
 ${txtund}Other options${txtdef}
     --debug                       Print debugging information
     --help                        Prints this help message
+
+${txtund}Examples ${txtdef}
+Migrating a disk named mydisk in us-central1-a zone in project named myprojec
+    embedd-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a --temp-instance-name temp --resource-type Disk
+
+Migrating an imag named myimage in project named myprojec
+    embedd-kernel.sh --project-name myproject --image-name myimage --temp-instance-name temp --resource-type Image
+
 "
 
 # Run through the parameters and save them to variables.
@@ -357,14 +365,14 @@ done
 
 if [ -z $resource_type ];
   then
-    die 'Must specify the resource-type'
+    die 'Must specify the resource-type. Run embedd-kernel --help to get help'
 fi
 
 if [ $resource_type != 'Image' ];
   then
     if [ $resource_type != 'Disk' ];
       then
-        die 'resource-type must be one of Image or Disk'
+        die 'resource-type must be one of Image or Disk. Run embedd-kernel --help to get help'
     fi
 fi
 
