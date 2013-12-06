@@ -149,19 +149,23 @@ EOF
 
 embedd_script=/tmp/embedd$RANDOM.bash
 cat >> $embedd_script << 'EOF'
+set -x
 RELEASE_FILE=`ls /etc/*-release`
+echo $RELEASE_FILE
 CENTOS=`cat $RELEASE_FILE |grep CentOS`
 WHEEZY=`cat $RELEASE_FILE |grep wheezy`
-if [ -n $CENTOS ] && [ -n $WHEEZY ];
+echo $CENTOS
+echo $WHEEZY
+if [ -n "${CENTOS}" ] && [ -n "${WHEEZY}" ];
   then
     echo 'Error in detecting OS'
     exit 1
 fi
-if [ -n $CENTOS ];
+if [ -n "${CENTOS}" ];
   then
     sh /tmp/centos-embedd-kernel.bash
 fi
-if [ -n $WHEEZY ];
+if [ -n "${WHEEZY}" ];
   then
     sh /tmp/debian-embedd-kernel.bash
 fi
