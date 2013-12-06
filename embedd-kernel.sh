@@ -18,6 +18,7 @@ temp_instance_name=
 temp_instance_zone=
 do_not_delete_instance=false
 skip_instance_creation=false
+embedd_script=
 debian_embedd_script=
 centos_embedd_script=
 run_gcimagebundle_script=
@@ -76,6 +77,11 @@ function runRemoteScript () {
   echo $1 | $gcutil --project=$project_name ssh $temp_instance_name 'bash -s'
 }
 
+function pushScript() {
+  $gcutil --project=$project_name push $temp_instance_name $1 $1
+  runRemoteScript 'chmod +x '$1
+}
+
 function embeddKernel() {
   # sleep for 30 seconds to ensure the instance is sshable
   if ! $skip_instance_creation;
@@ -84,14 +90,14 @@ function embeddKernel() {
       sleep 30s
   fi
 
-debian_embedd_script=/tmp/debian$RANDOM.bash
+debian_embedd_script=/tmp/debian-embedd-kernel.bash
 cat >> $debian_embedd_script << EOF
 set -x
 sudo apt-get install linux-image-amd64
 sudo apt-get install grub-pc
 EOF
 
-centos_embedd_script=/tmp/centos$RANDOM.bash
+centos_embedd_script=/tmp/centos-embedd-kernel.bash
 cat >> $centos_embedd_script << 'EOF'
 set -x
 echo 'y' | sudo yum install kernel-xen
@@ -141,12 +147,34 @@ sudo mkdir /var/lock/subsys
 sudo chmod 755 /var/lock/subsys
 EOF
 
-  # push the script to the instance
-  $gcutil --project=$project_name push $temp_instance_name $centos_embedd_script $centos_embedd_script
+embedd_script=/tmp/embedd$RANDOM.bash
+cat >> $embedd_script << 'EOF'
+RELEASE_FILE=`ls /etc/*-release`
+CENTOS=`cat $RELEASE_FILE |grep CentOS`
+WHEEZY=`cat $RELEASE_FILE |grep wheezy`
+if [ -n $CENTOS ] && [ -n $WHEEZY ];
+  then
+    echo 'Error in detecting OS'
+    exit 1
+fi
+if [ -n $CENTOS ];
+  then
+    sh /tmp/centos-embedd-kernel.bash
+fi
+if [ -n $WHEEZY ];
+  then
+    sh /tmp/debian-embedd-kernel.bash
+fi
+EOF
+
+
+  # push the scripts to the instance
+  pushScript $embedd_script
+  pushScript $centos_embedd_script
+  pushScript $debian_embedd_script
 
   # Run the script to embedd the kernel
-  runRemoteScript 'chmod +x '$centos_embedd_script
-  runRemoteScript 'sudo '$centos_embedd_script
+  runRemoteScript 'sudo '$embedd_script
 }
 
 function rungcImageBundle() {
@@ -162,8 +190,7 @@ cp $TARFILE /tmp/imagewithkernel.tar.gz
 EOF
 
   # push the script to the instance and run it
-  $gcutil --project=$project_name push $temp_instance_name $run_gcimagebundle_script $run_gcimagebundle_script
-  runRemoteScript 'chmod +x '$run_gcimagebundle_script
+  pushScript $run_gcimagebundle_script
   runRemoteScript 'sudo '$run_gcimagebundle_script
 
   # download the image file
