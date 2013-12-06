@@ -2,12 +2,7 @@
 #
 #
 # Embedds a kernel into disk or image if it doesn't have one.
-# Arguments:
-#   project_name       : Name of the project in which the resource lives
-#   Disk/image         : Disk if a disk needs to be updated, or else image
-#   resource_name      : Name of the disk/resource that needs to be updated
-#   temp_instance_name : Name of the instance that can be created by the tool to update the disk/image
-#   temp_
+# Example usage - embedd-kernel.sh --project-name myproject --disk-name mydisk --disk-zone=us-central1-a --temp-instance-name temp --resource-type Disk
 
 project_name=
 resource_type=
