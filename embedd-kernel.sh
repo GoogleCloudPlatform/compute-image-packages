@@ -11,6 +11,7 @@
 #    embedd-kernel.sh --project-name myproject --image-name myimage \
 #        --temp-instance-name temp --resource-type Image
 
+gcutil=gcutil # Replace with path to gcutil
 project_name=
 resource_type=
 source_image_name=
@@ -28,7 +29,6 @@ tarfile_location=
 no_delete_boot_pd=
 machine_type=n1-standard-8
 gcg_kernel=projects/google/global/kernels/gce-no-conn-track-v20130813
-gcutil=gcutil # Replace with path to gcutil
 
 # Enable exit on error
 set -e
@@ -172,6 +172,11 @@ echo $WHEEZY
 if [ -n "${CENTOS}" ] && [ -n "${WHEEZY}" ];
   then
     echo 'Error in detecting OS'
+    exit 1
+fi
+if [ -z "${CENTOS}" ] && [ -z "${WHEEZY}" ];
+  then
+    echo 'Only CentOS 6 and Debian 7 Wheezy are supported'
     exit 1
 fi
 if [ -n "${CENTOS}" ];
