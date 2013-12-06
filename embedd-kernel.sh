@@ -21,7 +21,7 @@ tarfile_location=
 no_delete_boot_pd=
 machine_type=n1-standard-8
 gcg_kernel=projects/google/global/kernels/gce-no-conn-track-v20130813
-gcutil=/google/data/ro/projects/cloud/cluster/gcutil
+gcutil=gcutil # Replace with path to gcutil
 
 # Enable exit on error
 set -e
@@ -256,6 +256,7 @@ function embeddKernelOnDisk() {
   temp_instance_zone=$source_disk_zone
 
   # Create a snapshot before we update the disk
+  $gcutil --project=$project_name addsnapshot $source_disk_name-migrate-backup --source_disk=$source_disk_name
 
   # Create an instance in the same zone with the disk as the boot disk
   $gcutil --project=$project_name --service_version=v1beta16 addinstance $temp_instance_name --disk=$source_disk_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type --kernel=$gcg_kernel
@@ -284,11 +285,11 @@ This script embedds a kernel into an image or disk
 Options (defaults in ${txtbld}bold${txtdef}):
 
 ${txtund}Bootstrapping${txtdef}
-    --project-name 	NAME     	Name of the project (${txtbld}${arch}${txtdef})
+    --project-name         NAME             Name of the project (${txtbld}${arch}${txtdef})
     --resource-type [Image|Disk]  Type of resource to update (${txtbld}${arch}${txtdef})
-    --image-name	SOURCE-Image    Source image in which to embedd the kernel (${txtbld}${arch}${txtdef})
-    --disk-name 	SOURCE-DISK     Source disk in which to embedd the kernel (${txtbld}${arch}${txtdef})
-    --disk-zone	SOURCE-DISK-ZONE Zone of source disk (${txtbld}${arch}${txtdef})
+    --image-name        SOURCE-Image    Source image in which to embedd the kernel (${txtbld}${arch}${txtdef})
+    --disk-name         SOURCE-DISK     Source disk in which to embedd the kernel (${txtbld}${arch}${txtdef})
+    --disk-zone        SOURCE-DISK-ZONE Zone of source disk (${txtbld}${arch}${txtdef})
     --temp-instance-name TEMP-INSTANCE-NAME The name for the instance that the tool will create to embedd the kernel (${txtbld}${arch}${txtdef})
     --do-not-delete-instance [true|false] True if temporary instance should not be deleted. defaults to true (${txtbld}${arch}${txtdef})
     --skip-instance-creation [true|false] True if temporary instance used for embedding already exists. defaults to false (${txtbld}${arch}${txtdef})
