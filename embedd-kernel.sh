@@ -66,6 +66,10 @@ function cleanup () {
     then
       rm $run_gcimagebundle_script
   fi
+  if [ -n $tarfile_location ];
+    then
+      echo 'Image tar archive with kernel located at '$tarfile_location
+  fi
 }
 
 function die () {
@@ -103,6 +107,7 @@ echo 'y' | sudo apt-get install grub-pc
 curl -L --remote-name-all https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts_1.1.0-4_all.deb https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-compute-daemon_1.1.0-4_all.deb https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/python-gcimagebundle_1.1.0-3_all.deb
 sudo dpkg -i google-startup-scripts_1.1.0-4_all.deb google-compute-daemon_1.1.0-4_all.deb python-gcimagebundle_1.1.0-3_all.deb
 sudo apt-get -f -y install
+sudo shutdown -h now
 EOF
 
 centos_embedd_script=/tmp/centos-embedd-kernel.bash
