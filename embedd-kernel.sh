@@ -2,7 +2,7 @@
 #
 #
 # Embedds a kernel into disk or image if it doesn't have one.
-# Example usage - embedd-kernel.sh --project-name myproject --disk-name mydisk --disk-zone=us-central1-a --temp-instance-name temp --resource-type Disk
+# Example usage - embedd-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a --temp-instance-name temp --resource-type Disk
 
 project_name=
 resource_type=
