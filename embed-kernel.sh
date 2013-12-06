@@ -40,36 +40,19 @@ function deleteinstance () {
 }
 
 function cleanup () {
-  if $do_not_delete_instance; then
-     echo 'skipping delete'
-     return
-  fi
-  if $cleanup_required;
-    then
-      if [ $resource_type == 'Image' ];
-        then
-          # Delete the instance and the disk attached to it
-          deleteinstance '--delete_boot_pd'
-      fi
-      if [ $resource_type == 'Disk' ];
-        then
-          # Delete the instance but not the disk
-          deleteinstance '--nodelete_boot_pd'
-      fi
-  fi
-  if [ -n $debian_embed_script ];
+  if [ -n "$debian_embed_script" ];
     then
       rm $debian_embed_script
   fi
-  if [ -n $centos_embed_script ];
+  if [ -n "$centos_embed_script" ];
     then
       rm $centos_embed_script
   fi
-  if [ -n $run_gcimagebundle_script ];
+  if [ -n "$run_gcimagebundle_script" ];
     then
       rm $run_gcimagebundle_script
   fi
-  if [ -n $tarfile_location ];
+  if [ -n "$tarfile_location" ];
     then
       echo 'Image tar archive with kernel located at '$tarfile_location
   fi
