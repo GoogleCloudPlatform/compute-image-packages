@@ -290,7 +290,7 @@ function embedKernelOnDisk() {
 
   # Create a snapshot before we update the disk
   echo 'Creating snapshot '$source_disk_name-migrate-backup
-  $gcutil --project=$project_name addsnapshot $source_disk_name-migrate-backup --source_disk=$source_disk_name
+  $gcutil --project=$project_name --service_version=v1 addsnapshot $source_disk_name-migrate-backup --source_disk=$source_disk_name
 
   # Create an instance in the same zone with the disk as the boot disk
   echo 'Creating instance using v1beta16'
