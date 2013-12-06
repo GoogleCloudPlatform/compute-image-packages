@@ -319,7 +319,8 @@ function embedKernelOnDisk() {
   # Delete the instance
   deleteinstance '--nodelete_boot_pd'
 
-  echo 'Kernel has been embeded in the disk -'$source_disk_name
+  echo 'A snapshot ('$source_disk_name-migrate-backup') was created as part of running this script. Since you are charged for snapshot storage, you may want to delete this snapshot once you are satisfied that the migration is complete.'
+  echo 'Kernel has been embedded in the disk -'$source_disk_name
 
   cleanup_required=false
 }
