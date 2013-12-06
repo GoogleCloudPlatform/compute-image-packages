@@ -27,6 +27,7 @@ centos_embedd_script=
 run_gcimagebundle_script=
 tarfile_location=
 no_delete_boot_pd=
+cleanup_required=true
 machine_type=n1-standard-8
 gcg_kernel=projects/google/global/kernels/gce-no-conn-track-v20130813
 
@@ -43,17 +44,19 @@ function cleanup () {
      echo 'skipping delete'
      return
   fi
-  if [ $resource_type == 'Image' ];
+  if $cleanup_required;
     then
-      # Delete the instance and the disk attached to it
-      deleteinstance '--delete_boot_pd'
+      if [ $resource_type == 'Image' ];
+        then
+          # Delete the instance and the disk attached to it
+          deleteinstance '--delete_boot_pd'
+      fi
+      if [ $resource_type == 'Disk' ];
+        then
+          # Delete the instance but not the disk
+          deleteinstance '--nodelete_boot_pd'
+      fi
   fi
-  if [ $resource_type == 'Disk' ];
-    then
-      # Delete the instance but not the disk
-      deleteinstance '--nodelete_boot_pd'
-  fi
-
   if [ -n $debian_embedd_script ];
     then
       rm $debian_embedd_script
@@ -179,6 +182,7 @@ if [ -z "${CENTOS}" ] && [ -z "${WHEEZY}" ];
     echo 'Only CentOS 6 and Debian 7 Wheezy are supported'
     exit 1
 fi
+
 if [ -n "${CENTOS}" ];
   then
     sh /tmp/centos-embedd-kernel.bash
@@ -196,6 +200,7 @@ EOF
   pushScript $debian_embedd_script
 
   # Run the script to embedd the kernel
+  echo 'Embedding Kernel'
   runRemoteScript 'sudo '$embedd_script
 }
 
@@ -212,6 +217,7 @@ cp $TARFILE /tmp/imagewithkernel.tar.gz
 EOF
 
   # push the script to the instance and run it
+  echo 'Running gcimagebundle'
   pushScript $run_gcimagebundle_script
   runRemoteScript 'sudo '$run_gcimagebundle_script
 
@@ -239,7 +245,7 @@ function embeddKernelOnImage() {
 
   if ! $skip_instance_creation;
     then
-      echo 'Creating instance'
+      echo 'Creating instance with v1beta16'
       temp_instance_zone='us-central1-a'
       # Create an instance with the image
       $gcutil --project=$project_name --service_version=v1beta16 addinstance $temp_instance_name --image=$source_image_name --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type --kernel=$gcg_kernel --persistent_boot_disk
@@ -249,9 +255,11 @@ function embeddKernelOnImage() {
   embeddKernel
 
   # Delete the instance but keep the PD
+  echo 'Deleting instance which was created v1beta16'
   deleteinstance '--nodelete_boot_pd'
 
   # Create the instance again with the disk as the boot disk using v1
+  echo 'Adding instance with v1'
   addInstanceWithV1 $temp_instance_name
 
   # Run gcimagebundle to create an image. This method will create the tar.gz
@@ -260,6 +268,8 @@ function embeddKernelOnImage() {
   
   # Delete the instance and the pd since it was created by us
   deleteinstance '--delete_boot_pd'
+
+  cleanup_required=false
 }
 
 function embeddKernelOnDisk() {
@@ -279,26 +289,33 @@ function embeddKernelOnDisk() {
   temp_instance_zone=$source_disk_zone
 
   # Create a snapshot before we update the disk
+  echo 'Creating snapshot '$source_disk_name-migrate-backup
   $gcutil --project=$project_name addsnapshot $source_disk_name-migrate-backup --source_disk=$source_disk_name
 
   # Create an instance in the same zone with the disk as the boot disk
+  echo 'Creating instance using v1beta16'
   $gcutil --project=$project_name --service_version=v1beta16 addinstance $temp_instance_name --disk=$source_disk_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type --kernel=$gcg_kernel
 
   embeddKernel
   
   # Delete the temporary instance
+  echo 'Deleting instance which was created v1beta16'
   deleteinstance '--nodelete_boot_pd'
 
   # Re-create the instance using the kernel on the disk
+  echo 'Adding instance with v1'
   addInstanceWithV1 $source_disk_name
 
   # Verify that the instance is sshable
+  echo 'Verifying kernel on the instance'
   runRemoteScript '/bin/uname -a'
 
   # Delete the instance
   deleteinstance '--nodelete_boot_pd'
 
   echo 'Kernel has been embedded in the disk -'$source_disk_name
+
+  cleanup_required=false
 }
 
 # List of options for gce subcommand
