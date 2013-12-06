@@ -3,11 +3,11 @@
 #
 # embeds a kernel into disk or image if it doesn't have one.
 # Example usage
-# Migrating a disk named mydisk in us-central1-a zone in project named myprojec
+# Migrating a disk named mydisk in us-central1-a zone in project named myproject
 #    embed-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a \
 #        --temp-instance-name temp --resource-type Disk
 #
-# Migrating an imag named myimage in project named myprojec
+# Migrating an image named myimage in project named myproject
 #    embed-kernel.sh --project-name myproject --image-name myimage \
 #        --temp-instance-name temp --resource-type Image
 
@@ -103,10 +103,10 @@ debian_embed_script=/tmp/debian-embed-kernel.bash
 cat > $debian_embed_script << EOF
 set -x
 export PATH=$PATH:/usr/sbin
-echo 'y' | sudo apt-get install linux-image-amd64
-echo 'y' | sudo apt-get install debconf-utils
+sudo apt-get -y install linux-image-amd64
+sudo apt-get -y install debconf-utils
 echo 'grub-pc grub-pc/install_devices multiselect /dev/sda' |debconf-set-selections
-echo 'y' | sudo apt-get install grub-pc
+sudo apt-get -y install grub-pc
 curl -L --remote-name-all https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts_1.1.0-4_all.deb https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-compute-daemon_1.1.0-4_all.deb https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/python-gcimagebundle_1.1.0-3_all.deb
 sudo dpkg -i google-startup-scripts_1.1.0-4_all.deb google-compute-daemon_1.1.0-4_all.deb python-gcimagebundle_1.1.0-3_all.deb
 sudo apt-get -f -y install
@@ -116,7 +116,7 @@ EOF
 centos_embed_script=/tmp/centos-embed-kernel.bash
 cat > $centos_embed_script << 'EOF'
 set -x
-echo 'y' | sudo yum install kernel-xen
+sudo yum -y install kernel-xen
 UUID=`sudo /sbin/tune2fs -l /dev/sda1 | grep UUID | awk '{ print $3 }'`
 echo $UUID
 if [ -z $UUID ];
@@ -146,7 +146,7 @@ title CentOS
     root (hd0,0)
     kernel $KERNEL ro root=UUID=$UUID noquiet earlyprintk=ttyS0 loglevel=8
     initrd $INITRAM\" > /boot/grub/grub.conf"
-echo 'y' | sudo yum install grub
+sudo yum -y install grub
 sudo /sbin/grub-install /dev/sda1
 sudo bash -c "echo \"
 find /boot/grub/stage1
@@ -154,7 +154,7 @@ root (hd0,0)
 setup (hd0)
 quit\" | /sbin/grub"
 
-echo 'y' | sudo yum install https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-compute-daemon-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/gcimagebundle-1.1.0-3.noarch.rpm
+sudo yum -y install https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-compute-daemon-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts-1.1.0-4.noarch.rpm https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/gcimagebundle-1.1.0-3.noarch.rpm
 
 sudo ln -s /dev/null /etc/udev/rules.d/75-persistent-net-generator.rules
 sudo chattr -i /etc/udev/rules.d/70-persistent-net.rules
