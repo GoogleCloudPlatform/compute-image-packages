@@ -314,8 +314,6 @@ ${txtund}Bootstrapping${txtdef}
     --disk-name         SOURCE-DISK     Source disk in which to embedd the kernel (${txtbld}${arch}${txtdef})
     --disk-zone        SOURCE-DISK-ZONE Zone of source disk (${txtbld}${arch}${txtdef})
     --temp-instance-name TEMP-INSTANCE-NAME The name for the instance that the tool will create to embedd the kernel (${txtbld}${arch}${txtdef})
-    --do-not-delete-instance [true|false] True if temporary instance should not be deleted. defaults to true (${txtbld}${arch}${txtdef})
-    --skip-instance-creation [true|false] True if temporary instance used for embedding already exists. defaults to false (${txtbld}${arch}${txtdef})
 
 ${txtund}Other options${txtdef}
     --debug                       Print debugging information
