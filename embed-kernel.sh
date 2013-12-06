@@ -29,7 +29,7 @@ no_delete_boot_pd=
 cleanup_required=true
 machine_type=n1-standard-8
 gcg_kernel=projects/google/global/kernels/gce-no-conn-track-v20130813
-gcutil=/google/data/ro/projects/cloud/cluster/gcutil
+gcutil=gcutil # replace with path to gcutil
 
 # Enable exit on error
 set -e
