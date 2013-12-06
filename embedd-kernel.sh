@@ -1,17 +1,16 @@
 #!/bin/bash
 #
 #
-# Embedds a kernel into disk or image if it doesn't have one.
+# embeds a kernel into disk or image if it doesn't have one.
 # Example usage
 # Migrating a disk named mydisk in us-central1-a zone in project named myprojec
-#    embedd-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a \
+#    embed-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a \
 #        --temp-instance-name temp --resource-type Disk
 #
 # Migrating an imag named myimage in project named myprojec
-#    embedd-kernel.sh --project-name myproject --image-name myimage \
+#    embed-kernel.sh --project-name myproject --image-name myimage \
 #        --temp-instance-name temp --resource-type Image
 
-gcutil=gcutil # Replace with path to gcutil
 project_name=
 resource_type=
 source_image_name=
@@ -21,15 +20,16 @@ temp_instance_name=
 temp_instance_zone=
 do_not_delete_instance=false
 skip_instance_creation=false
-embedd_script=
-debian_embedd_script=
-centos_embedd_script=
+embed_script=
+debian_embed_script=
+centos_embed_script=
 run_gcimagebundle_script=
 tarfile_location=
 no_delete_boot_pd=
 cleanup_required=true
 machine_type=n1-standard-8
 gcg_kernel=projects/google/global/kernels/gce-no-conn-track-v20130813
+gcutil=/google/data/ro/projects/cloud/cluster/gcutil
 
 # Enable exit on error
 set -e
@@ -57,13 +57,13 @@ function cleanup () {
           deleteinstance '--nodelete_boot_pd'
       fi
   fi
-  if [ -n $debian_embedd_script ];
+  if [ -n $debian_embed_script ];
     then
-      rm $debian_embedd_script
+      rm $debian_embed_script
   fi
-  if [ -n $centos_embedd_script ];
+  if [ -n $centos_embed_script ];
     then
-      rm $centos_embedd_script
+      rm $centos_embed_script
   fi
   if [ -n $run_gcimagebundle_script ];
     then
@@ -91,7 +91,7 @@ function pushScript() {
   runRemoteScript 'chmod +x '$1
 }
 
-function embeddKernel() {
+function embedKernel() {
   # sleep for 30 seconds to ensure the instance is sshable
   if ! $skip_instance_creation;
     then
@@ -99,8 +99,8 @@ function embeddKernel() {
       sleep 30s
   fi
 
-debian_embedd_script=/tmp/debian-embedd-kernel.bash
-cat > $debian_embedd_script << EOF
+debian_embed_script=/tmp/debian-embed-kernel.bash
+cat > $debian_embed_script << EOF
 set -x
 export PATH=$PATH:/usr/sbin
 echo 'y' | sudo apt-get install linux-image-amd64
@@ -113,8 +113,8 @@ sudo apt-get -f -y install
 sudo shutdown -h now
 EOF
 
-centos_embedd_script=/tmp/centos-embedd-kernel.bash
-cat > $centos_embedd_script << 'EOF'
+centos_embed_script=/tmp/centos-embed-kernel.bash
+cat > $centos_embed_script << 'EOF'
 set -x
 echo 'y' | sudo yum install kernel-xen
 UUID=`sudo /sbin/tune2fs -l /dev/sda1 | grep UUID | awk '{ print $3 }'`
@@ -163,8 +163,8 @@ sudo mkdir /var/lock/subsys
 sudo chmod 755 /var/lock/subsys
 EOF
 
-embedd_script=/tmp/embedd$RANDOM.bash
-cat > $embedd_script << 'EOF'
+embed_script=/tmp/embed$RANDOM.bash
+cat > $embed_script << 'EOF'
 set -x
 RELEASE_FILE=`ls /etc/*-release`
 echo $RELEASE_FILE
@@ -185,23 +185,23 @@ fi
 
 if [ -n "${CENTOS}" ];
   then
-    sh /tmp/centos-embedd-kernel.bash
+    sh /tmp/centos-embed-kernel.bash
 fi
 if [ -n "${WHEEZY}" ];
   then
-    sh /tmp/debian-embedd-kernel.bash
+    sh /tmp/debian-embed-kernel.bash
 fi
 EOF
 
 
   # push the scripts to the instance
-  pushScript $embedd_script
-  pushScript $centos_embedd_script
-  pushScript $debian_embedd_script
+  pushScript $embed_script
+  pushScript $centos_embed_script
+  pushScript $debian_embed_script
 
-  # Run the script to embedd the kernel
-  echo 'Embedding Kernel'
-  runRemoteScript 'sudo '$embedd_script
+  # Run the script to embed the kernel
+  echo 'embeding Kernel'
+  runRemoteScript 'sudo '$embed_script
 }
 
 function rungcImageBundle() {
@@ -235,7 +235,7 @@ function addInstanceWithV1 () {
   sleep 120s
 }
 
-function embeddKernelOnImage() {
+function embedKernelOnImage() {
   # Check if the image has been specified or not
   if [ -z $source_image_name ];
     then
@@ -252,7 +252,7 @@ function embeddKernelOnImage() {
 
   fi
 
-  embeddKernel
+  embedKernel
 
   # Delete the instance but keep the PD
   echo 'Deleting instance which was created v1beta16'
@@ -272,7 +272,7 @@ function embeddKernelOnImage() {
   cleanup_required=false
 }
 
-function embeddKernelOnDisk() {
+function embedKernelOnDisk() {
   # Check if there is a disk that needs to be migrated
   if [ -z $source_disk_name ];
     then
@@ -296,7 +296,7 @@ function embeddKernelOnDisk() {
   echo 'Creating instance using v1beta16'
   $gcutil --project=$project_name --service_version=v1beta16 addinstance $temp_instance_name --disk=$source_disk_name,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type --kernel=$gcg_kernel
 
-  embeddKernel
+  embedKernel
   
   # Delete the temporary instance
   echo 'Deleting instance which was created v1beta16'
@@ -313,24 +313,24 @@ function embeddKernelOnDisk() {
   # Delete the instance
   deleteinstance '--nodelete_boot_pd'
 
-  echo 'Kernel has been embedded in the disk -'$source_disk_name
+  echo 'Kernel has been embeded in the disk -'$source_disk_name
 
   cleanup_required=false
 }
 
 # List of options for gce subcommand
-help="embedd-kernel
-This script embedds a kernel into an image or disk
+help="embed-kernel
+This script embeds a kernel into an image or disk
 
 Options (defaults in ${txtbld}bold${txtdef}):
 
 ${txtund}Bootstrapping${txtdef}
     --project-name         NAME             Name of the project (${txtbld}${arch}${txtdef})
     --resource-type [Image|Disk]  Type of resource to update (${txtbld}${arch}${txtdef})
-    --image-name        SOURCE-Image    Source image in which to embedd the kernel (${txtbld}${arch}${txtdef})
-    --disk-name         SOURCE-DISK     Source disk in which to embedd the kernel (${txtbld}${arch}${txtdef})
+    --image-name        SOURCE-Image    Source image in which to embed the kernel (${txtbld}${arch}${txtdef})
+    --disk-name         SOURCE-DISK     Source disk in which to embed the kernel (${txtbld}${arch}${txtdef})
     --disk-zone        SOURCE-DISK-ZONE Zone of source disk (${txtbld}${arch}${txtdef})
-    --temp-instance-name TEMP-INSTANCE-NAME The name for the instance that the tool will create to embedd the kernel (${txtbld}${arch}${txtdef})
+    --temp-instance-name TEMP-INSTANCE-NAME The name for the instance that the tool will create to embed the kernel (${txtbld}${arch}${txtdef})
 
 ${txtund}Other options${txtdef}
     --debug                       Print debugging information
@@ -338,10 +338,10 @@ ${txtund}Other options${txtdef}
 
 ${txtund}Examples ${txtdef}
 Migrating a disk named mydisk in us-central1-a zone in project named myprojec
-    embedd-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a --temp-instance-name temp --resource-type Disk
+    embed-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a --temp-instance-name temp --resource-type Disk
 
 Migrating an imag named myimage in project named myprojec
-    embedd-kernel.sh --project-name myproject --image-name myimage --temp-instance-name temp --resource-type Image
+    embed-kernel.sh --project-name myproject --image-name myimage --temp-instance-name temp --resource-type Image
 
 "
 
@@ -365,14 +365,14 @@ done
 
 if [ -z $resource_type ];
   then
-    die 'Must specify the resource-type. Run embedd-kernel --help to get help'
+    die 'Must specify the resource-type. Run embed-kernel --help to get help'
 fi
 
 if [ $resource_type != 'Image' ];
   then
     if [ $resource_type != 'Disk' ];
       then
-        die 'resource-type must be one of Image or Disk. Run embedd-kernel --help to get help'
+        die 'resource-type must be one of Image or Disk. Run embed-kernel --help to get help'
     fi
 fi
 
@@ -381,15 +381,15 @@ trap cleanup ERR EXIT
 
 if [ $resource_type == 'Image' ]
   then
-    # Embedd kernel in the image
-    embeddKernelOnImage    
+    # embed kernel in the image
+    embedKernelOnImage    
     exit 0
 fi
 
 if [ $resource_type == 'Disk' ]
   then
-    # Embedd kernel in the disk
-    embeddKernelOnDisk
+    # embed kernel in the disk
+    embedKernelOnDisk
     exit 0
 fi
 
