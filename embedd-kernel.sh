@@ -2,7 +2,14 @@
 #
 #
 # Embedds a kernel into disk or image if it doesn't have one.
-# Example usage - embedd-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a --temp-instance-name temp --resource-type Disk
+# Example usage
+# Migrating a disk named mydisk in us-central1-a zone in project named myprojec
+#    embedd-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a \
+#        --temp-instance-name temp --resource-type Disk
+#
+# Migrating an imag named myimage in project named myprojec
+#    embedd-kernel.sh --project-name myproject --image-name myimage \
+#        --temp-instance-name temp --resource-type Image
 
 project_name=
 resource_type=
@@ -86,14 +93,20 @@ function embeddKernel() {
   fi
 
 debian_embedd_script=/tmp/debian-embedd-kernel.bash
-cat >> $debian_embedd_script << EOF
+cat > $debian_embedd_script << EOF
 set -x
-sudo apt-get install linux-image-amd64
-sudo apt-get install grub-pc
+export PATH=$PATH:/usr/sbin
+echo 'y' | sudo apt-get install linux-image-amd64
+echo 'y' | sudo apt-get install debconf-utils
+echo 'grub-pc grub-pc/install_devices multiselect /dev/sda' |debconf-set-selections
+echo 'y' | sudo apt-get install grub-pc
+curl -L --remote-name-all https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts_1.1.0-4_all.deb https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-compute-daemon_1.1.0-4_all.deb https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/python-gcimagebundle_1.1.0-3_all.deb
+sudo dpkg -i google-startup-scripts_1.1.0-4_all.deb google-compute-daemon_1.1.0-4_all.deb python-gcimagebundle_1.1.0-3_all.deb
+sudo apt-get -f -y install
 EOF
 
 centos_embedd_script=/tmp/centos-embedd-kernel.bash
-cat >> $centos_embedd_script << 'EOF'
+cat > $centos_embedd_script << 'EOF'
 set -x
 echo 'y' | sudo yum install kernel-xen
 UUID=`sudo /sbin/tune2fs -l /dev/sda1 | grep UUID | awk '{ print $3 }'`
@@ -143,7 +156,7 @@ sudo chmod 755 /var/lock/subsys
 EOF
 
 embedd_script=/tmp/embedd$RANDOM.bash
-cat >> $embedd_script << 'EOF'
+cat > $embedd_script << 'EOF'
 set -x
 RELEASE_FILE=`ls /etc/*-release`
 echo $RELEASE_FILE
