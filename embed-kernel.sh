@@ -37,6 +37,7 @@ set -e
 function deleteinstance () {
   # Delete the instance
   $gcutil --project=$project_name deleteinstance $temp_instance_name --zone=$temp_instance_zone $1 --force
+  cleanup_required=false  
 }
 
 function cleanup () {
@@ -229,6 +230,8 @@ EOF
 
 function addInstanceWithV1 () {
   $gcutil --project=$project_name --service_version=v1 addinstance $temp_instance_name --disk=$1,boot --zone=$temp_instance_zone --wait_until_running --machine_type=$machine_type
+
+  cleanup_required=true
 
   # Wait for the instance to become sshable
   echo 'waiting for instance to become sshable'
