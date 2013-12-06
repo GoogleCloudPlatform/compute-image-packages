@@ -95,7 +95,7 @@ function embeddKernel() {
   # sleep for 30 seconds to ensure the instance is sshable
   if ! $skip_instance_creation;
     then
-      echo 'sleeping'
+      echo 'waiting for instance to become sshable'
       sleep 30s
   fi
 
