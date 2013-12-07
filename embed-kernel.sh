@@ -357,10 +357,10 @@ ${txtund}Other options${txtdef}
     --help                        Prints this help message
 
 ${txtund}Examples ${txtdef}
-Migrating a disk named mydisk in us-central1-a zone in project named myprojec
+Migrating a disk named mydisk in us-central1-a zone in project named myproject
     embed-kernel.sh --project-name myproject --disk-name mydisk --disk-zone us-central1-a --temp-instance-name temp --resource-type Disk
 
-Migrating an imag named myimage in project named myprojec
+Migrating an image named myimage in project named myproject
     embed-kernel.sh --project-name myproject --image-name myimage --temp-instance-name temp --resource-type Image
 
 "
