@@ -16,6 +16,7 @@ resource_type=
 source_image_name=
 source_disk_name=
 source_disk_zone=
+running_instance_name=
 temp_instance_name=
 temp_instance_zone=
 do_not_delete_instance=false
@@ -293,6 +294,11 @@ function embedKernelOnDisk() {
 
   temp_instance_zone=$source_disk_zone
 
+  if [ -n "$running_instance_name" ]; then
+    temp_instance_name=$running_instance_name
+    deleteinstance '--nodelete_boot_pd'
+  fi
+
   # Create a snapshot before we update the disk
   echo 'Creating snapshot '$source_disk_name-migrate-backup
   $gcutil --project=$project_name --service_version=v1 addsnapshot $source_disk_name-migrate-backup --source_disk=$source_disk_name
@@ -317,7 +323,9 @@ function embedKernelOnDisk() {
   runRemoteScript '/bin/uname -a'
 
   # Delete the instance
-  deleteinstance '--nodelete_boot_pd'
+  if [ -z "$running_instance_name" ]; then
+    deleteinstance '--nodelete_boot_pd'
+  fi
 
   echo 'A snapshot ('$source_disk_name-migrate-backup') was created as part of running this script. Since you are charged for snapshot storage, you may want to delete this snapshot once you are satisfied that the migration is complete.'
   echo 'Kernel has been embedded in the disk -'$source_disk_name
@@ -338,6 +346,11 @@ ${txtund}Bootstrapping${txtdef}
     --disk-name         SOURCE-DISK     Source disk in which to embed the kernel (${txtbld}${arch}${txtdef})
     --disk-zone        SOURCE-DISK-ZONE Zone of source disk (${txtbld}${arch}${txtdef})
     --temp-instance-name TEMP-INSTANCE-NAME The name for the instance that the tool will create to embed the kernel (${txtbld}${arch}${txtdef})
+    --running-instance-name INSTANCE-NAME The name for the instance which is currently running to 
+                                          which a disk is attached. When specified the script will
+                                          install kernel on the disk attached to this instance, will
+                                          delete the instance and will re-create it. Cannot be specified
+                                          with temp-instance-name or when resource-type is Image
 
 ${txtund}Other options${txtdef}
     --debug                       Print debugging information
@@ -360,6 +373,7 @@ while [ $# -gt 0 ]; do
                 --image-name)             source_image_name=$2;                   shift 2 ;;
                 --disk-name)          source_disk_name=$2;                shift 2 ;;
                 --disk-zone)                 source_disk_zone=$2;                shift 2 ;;
+                --running-instance-name)                 running_instance_name=$2;                shift 2 ;;
                 --temp-instance-name)          temp_instance_name=$2;                shift 2 ;;
                 --do-not-delete-instance)          do_not_delete_instance=$2;                shift 2 ;;
                 --skip-instance-creation)          skip_instance_creation=$2;                shift 2 ;;
@@ -382,6 +396,11 @@ if [ $resource_type != 'Image' ];
         die 'resource-type must be one of Image or Disk. Run embed-kernel --help to get help'
     fi
 fi
+
+if [ $resource_type == 'Disk' ] && [ -n "$temp_instance_name" ] && [ -n "$running_instance_name" ]; then
+  die 'temp-instance-name and running-instance-name can not be specified together'
+fi
+
 
 # Ensure cleanup gets called on error
 trap cleanup ERR EXIT
