@@ -42,7 +42,7 @@ class InvalidRawDiskError(Exception):
 class FsRawDisk(fs_copy.FsCopy):
   """Creates a raw disk copy of OS image and bundles it into gzipped tar."""
 
-  def __init__(self, fs_size):
+  def __init__(self, fs_size, fs_type):
     """Constructor for FsRawDisk class.
 
     Args:
@@ -50,6 +50,7 @@ class FsRawDisk(fs_copy.FsCopy):
     """
     super(FsRawDisk, self).__init__()
     self._fs_size = fs_size
+    self._fs_type = fs_type
 
   def _ResizeFile(self, file_path, file_size):
     logging.debug('Resizing %s to %s', file_path, file_size)
@@ -153,7 +154,7 @@ class FsRawDisk(fs_copy.FsCopy):
       # be listed in debug log only
       utils.RunCommand(['ls', '/dev/mapper'])
       print 'Making filesystem'
-      uuid = utils.MakeFileSystem(devices[0], 'ext4', uuid)
+      uuid = utils.MakeFileSystem(devices[0], self._fs_type, uuid)
     with utils.LoadDiskImage(disk_file_path) as devices:
       if uuid is None:
         raise Exception('Could not get uuid from MakeFileSystem')
@@ -312,8 +313,8 @@ class RootFsRaw(FsRawDisk):
   Takes care of additional checks for a root file system.
   """
 
-  def __init__(self, fs_size):
-    super(RootFsRaw, self).__init__(fs_size)
+  def __init__(self, fs_size, fs_type):
+    super(RootFsRaw, self).__init__(fs_size, fs_type)
 
   def _Verify(self):
     super(RootFsRaw, self)._Verify()

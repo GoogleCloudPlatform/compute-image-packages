@@ -37,6 +37,7 @@ def SetupArgsParser():
   """Sets up the command line flags."""
   parser = OptionParser()
   parser.add_option('-d', '--disk', dest='disk',
+                    default='/dev/sda',
                     help='Disk to bundle.')
   parser.add_option('-r', '--root', dest='root_directory',
                     default='/', metavar='ROOT',
@@ -73,6 +74,9 @@ def SetupArgsParser():
                     type='int', help='File system size in bytes')
   parser.add_option('-b', '--bucket', dest='bucket',
                     help='Destination storage bucket')
+  parser.add_option('-f', '--filesystem', dest='file_system',
+                    default='ext4',
+                    help='File system type for the image.')
   return parser
 
 
@@ -128,18 +132,18 @@ def SetupLogging(options, log_dir='/tmp'):
 
 
 def PrintVersionInfo():
-  #TODO(user): fix up the version string
+  #TODO: Should read from the VERSION file instead.
   print 'version 1.1.0'
 
 
 def main():
-  EnsureSuperUser()
   parser = SetupArgsParser()
   (options, _) = parser.parse_args()
   VerifyArgs(parser, options)
   if options.display_version:
     PrintVersionInfo()
     return 0
+  EnsureSuperUser()
 
   scratch_dir = tempfile.mkdtemp(dir=options.output_directory)
   SetupLogging(options, scratch_dir)
@@ -147,12 +151,13 @@ def main():
     guest_platform = platform_factory.PlatformFactory(
         options.root_directory).GetPlatform()
   except platform_factory.UnknownPlatformException:
-    print 'Could not determine host platform try -s option.'
+    logging.critical('Platform is not supported.'
+                     ' Platform rules can be added to platform_factory.py.')
     return -1
 
   temp_file_name = tempfile.mktemp(dir=scratch_dir, suffix='.tar.gz')
 
-  bundle = block_disk.RootFsRaw(options.fs_size)
+  bundle = block_disk.RootFsRaw(options.fs_size, options.file_system)
   bundle.SetTarfile(temp_file_name)
   if options.disk:
     readlink_command = ['readlink', '-f', options.disk]
