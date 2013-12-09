@@ -18,6 +18,7 @@
 import logging
 
 from gcimagebundlelib import centos
+from gcimagebundlelib import fedora
 from gcimagebundlelib import debian
 from gcimagebundlelib import gcel
 from gcimagebundlelib import opensuse
@@ -37,6 +38,7 @@ class PlatformFactory(object):
     self.__registry = {}
     self.__platform_registry = {}
     self.Register('Centos', centos.Centos)
+    self.Register('Fedora', fedora.Fedora)
     self.Register('Debian', debian.Debian)
     self.Register('GCEL', gcel.Gcel)
     self.Register('openSUSE', opensuse.OpenSUSE)
