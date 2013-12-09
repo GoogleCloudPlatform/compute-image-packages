@@ -129,8 +129,8 @@ function run_command_with_retry() {
 }
 
 function first_boot() {
-  if [[ -x /usr/google/share/first-boot ]]; then
-    /usr/google/share/first-boot
+  if [[ -x /usr/share/google/first-boot ]]; then
+    /usr/share/google/first-boot
   fi
 }
 
