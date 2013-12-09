@@ -127,7 +127,7 @@ def SetupLogging(options, log_dir='/tmp'):
   print 'Starting logging in %s' % logfile
   logging.basicConfig(filename=logfile, level=GetLogLevel(options))
   console = logging.StreamHandler()
-  console.setLevel(logging.INFO)
+  console.setLevel(GetLogLevel(options))
   logging.getLogger().addHandler(console)
 
 
