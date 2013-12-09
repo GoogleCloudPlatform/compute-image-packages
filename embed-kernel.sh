@@ -105,11 +105,15 @@ debian_embed_script=/tmp/debian-embed-kernel.bash
 cat > $debian_embed_script << EOF
 set -x
 export PATH=$PATH:/usr/sbin
+echo '### Migrate disk step 5b'
 sudo apt-get -y install linux-image-amd64
 sudo apt-get -y install debconf-utils
 echo 'grub-pc grub-pc/install_devices multiselect /dev/sda' |debconf-set-selections
+echo '### Migrate disk step 5c'
 sudo apt-get -y install grub-pc
+echo '### Migrate disk step 5d'
 curl -L --remote-name-all https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-startup-scripts_1.1.0-4_all.deb https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/google-compute-daemon_1.1.0-4_all.deb https://github.com/GoogleCloudPlatform/compute-image-packages/releases/download/1.1.0.1/python-gcimagebundle_1.1.0-3_all.deb
+echo '### Migrate disk step 5e'
 sudo dpkg -i google-startup-scripts_1.1.0-4_all.deb google-compute-daemon_1.1.0-4_all.deb python-gcimagebundle_1.1.0-3_all.deb
 sudo apt-get -f -y install
 sudo shutdown -h now
@@ -167,6 +171,7 @@ EOF
 
 embed_script=/tmp/embed$RANDOM.bash
 cat > $embed_script << 'EOF'
+echo '### Migrate disk step 5a'
 set -x
 RELEASE_FILE=`ls /etc/*-release`
 echo $RELEASE_FILE
@@ -201,6 +206,7 @@ EOF
   pushScript $centos_embed_script
   pushScript $debian_embed_script
 
+  echo '### Migrate disk step 4'
   # Run the script to embed the kernel
   echo 'embeding Kernel'
   runRemoteScript 'sudo '$embed_script
@@ -295,10 +301,12 @@ function embedKernelOnDisk() {
   temp_instance_zone=$source_disk_zone
 
   if [ -n "$running_instance_name" ]; then
+    echo '### Migrate disk step 2'
     temp_instance_name=$running_instance_name
     deleteinstance '--nodelete_boot_pd'
   fi
 
+  echo '### Migrate disk step 3'
   # Create a snapshot before we update the disk
   echo 'Creating snapshot '$source_disk_name-migrate-backup
   $gcutil --project=$project_name --service_version=v1 addsnapshot $source_disk_name-migrate-backup --source_disk=$source_disk_name
@@ -310,14 +318,17 @@ function embedKernelOnDisk() {
   cleanup_required=true
   embedKernel
   
+  echo '### Migrate disk step 6'
   # Delete the temporary instance
   echo 'Deleting instance which was created v1beta16'
   deleteinstance '--nodelete_boot_pd'
 
+  echo '### Migrate disk step 7'
   # Re-create the instance using the kernel on the disk
   echo 'Adding instance with v1'
   addInstanceWithV1 $source_disk_name
 
+  echo '### Migrate disk step 8'
   # Verify that the instance is sshable
   echo 'Verifying kernel on the instance'
   runRemoteScript '/bin/uname -a'
@@ -327,8 +338,9 @@ function embedKernelOnDisk() {
     deleteinstance '--nodelete_boot_pd'
   fi
 
+  echo '### Migrate disk step 9'
   echo 'A snapshot ('$source_disk_name-migrate-backup') was created as part of running this script. Since you are charged for snapshot storage, you may want to delete this snapshot once you are satisfied that the migration is complete.'
-  echo 'Kernel has been embedded in the disk -'$source_disk_name
+  echo 'Kernel has been embedded in the disk: '$source_disk_name
 
   cleanup_required=false
 }
@@ -401,6 +413,9 @@ if [ $resource_type == 'Disk' ] && [ -n "$temp_instance_name" ] && [ -n "$runnin
   die 'temp-instance-name and running-instance-name can not be specified together'
 fi
 
+
+echo '### Begining disk migration script based on steps from: '
+echo '### https://developers.google.com/compute/docs/transition-v1#customkernelbinaries'
 
 # Ensure cleanup gets called on error
 trap cleanup ERR EXIT
