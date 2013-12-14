@@ -428,15 +428,15 @@ def TarAndGzipFile(src_paths, dest):
 
 
 class Http(object):
-  def Get(self, url):
-    return urllib2.urlopen(url).read()
+  def Get(self, request):
+    return urllib2.urlopen(request).read()
 
   def GetMetadata(self, url_path, recursive=False):
     """Retrieves instance metadata.
 
     Args:
       url_path: The path of the metadata url after the api version.
-                http://metadata/computeMetadata/v1beta1/url_path
+                http://metadata/computeMetadata/v1/url_path
       recursive: If set, returns the tree of metadata starting at url_path as
                  a json string.
     Returns:
@@ -444,11 +444,11 @@ class Http(object):
 
     """
     # Use the latest version of the metadata.
-    base_url = 'http://metadata/computeMetadata/'
-    versions = self.Get(base_url).splitlines()
-    latest_version = versions[-1]
+    base_url = 'http://metadata/computeMetadata/v1/'
     suffix = ''
     if recursive:
       suffix = '?recursive=true'
-    url = '{0}{1}{2}{3}'.format(base_url, latest_version, url_path, suffix)
-    return self.Get(url)
+    url = '{0}{1}{2}'.format(base_url, url_path, suffix)
+    request = urllib2.Request(url)
+    request.add_unredirected_header('X-Google-Metadata-Request', 'True')
+    return self.Get(request)
