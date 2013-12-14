@@ -91,12 +91,14 @@ def VerifyArgs(parser, options):
   if not source_disk_fs:
     parser.error(('Source disk %s does not exist,'
                   'check via "df -T" command.' % options.disk))
+  # Assume the first entry is the best one.
+  source_disk_fs = source_disk_fs[0]
   dest_fs = utils.GetFilesystemForFile(absolute_output_directory)
   if not dest_fs:
     parser.error(('Output directory has no associated filesystem,'
                   'check via "df -T" command.' % options.disk))
   # Require another 128 MB extra.
-  required_kb = source_disk_fs['used'] + 1024 * 128
+  required_kb = int(source_disk_fs['used']) + 1024 * 128
   if options.fs_size <= required_kb:
     parser.error(('Size of disk image is too small. Increase --fssize.'
                   '--fssize=%s , %s required.' % (options.fs_size, required_kb)))
@@ -187,8 +189,10 @@ def main():
 
   temp_file_name = tempfile.mktemp(dir=scratch_dir, suffix='.tar.gz')
 
-
-  bundle = block_disk.RootFsRaw(options.fs_size, GetTargetFilesystem(options))
+  file_system = GetTargetFilesystem(options)
+  logging.info('file system = %s', file_system)
+  logging.info('disk size = %s bytes', options.fs_size)
+  bundle = block_disk.RootFsRaw(options.fs_size, file_system)
   bundle.SetTarfile(temp_file_name)
   if options.disk:
     readlink_command = ['readlink', '-f', options.disk]

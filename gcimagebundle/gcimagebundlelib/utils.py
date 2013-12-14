@@ -46,7 +46,7 @@ class LoadDiskImage(object):
 
   def __enter__(self):
     """Map disk image as a device."""
-    kpartx_cmd = ['kpartx', '-av', self._file_path]
+    kpartx_cmd = ['kpartx', '-a', '-v', '-s', self._file_path]
     output = RunCommand(kpartx_cmd)
     devs = []
     for line in output.splitlines():
@@ -70,7 +70,7 @@ class LoadDiskImage(object):
     # Sleep for two seconds. At times the loopback device is not ready
     # instantly. Sleeping for two seconds solves it.
     time.sleep(2)
-    kpartx_cmd = ['kpartx', '-d', self._file_path]
+    kpartx_cmd = ['kpartx', '-d', '-v', '-s', self._file_path]
     RunCommand(kpartx_cmd)
 
 
