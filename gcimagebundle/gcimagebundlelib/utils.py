@@ -364,6 +364,43 @@ def RunCommand(command, input_str=None):
   return cmd_output[0]
 
 
+def ExpandPath(relative_path):
+  return os.path.abspath(os.path.expandvars(os.path.expanduser(relative_path)))
+
+def GetFilesystemForFile(file_path):
+  fs_table = GetFilesystemTable()
+  best_entry = None
+  for entry in fs_table:
+    if file_path.startswith(entry['mounted']):
+      if not best_entry or (best_entry and (len(best_entry['mounted']) < len(best_entry['mounted']))):
+        best_entry = entry
+
+  return best_entry
+
+
+def GetFilesystemTable(fs_path_filter=None):
+  out = RunCommand(['df', '-T'])
+  fs_table = TableToDict(out)
+  if fs_path_filter:
+    fs_table = [x for x in fs_table if x['filesystem'].startswith(fs_path_filter)]
+  return fs_table
+
+
+def TableToDict(stdout_table):
+  """Converts a table typically from a command's stdout to a dictionary set."""
+  items = []
+  lines = stdout_table.splitlines()
+  keys = [x.lower() for x in lines[0]]
+  for line in lines[1:]:
+    item = {}
+    i = 0
+    for line_item in line.split():
+      item[keys[i]] = line_item
+      i += 1
+      items.append(item)
+  return items
+
+
 def TarAndGzipFile(src_paths, dest):
   """Pack file in tar archive and optionally gzip it.
 

@@ -20,7 +20,6 @@
 import os
 import platform
 import stat
-import tempfile
 
 from gcimagebundlelib import exclude_spec
 from gcimagebundlelib import os_platform

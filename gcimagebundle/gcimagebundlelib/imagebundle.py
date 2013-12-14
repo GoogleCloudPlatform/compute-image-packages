@@ -75,24 +75,35 @@ def SetupArgsParser():
   parser.add_option('-b', '--bucket', dest='bucket',
                     help='Destination storage bucket')
   parser.add_option('-f', '--filesystem', dest='file_system',
-                    default='ext4',
+                    default=None,
                     help='File system type for the image.')
   return parser
 
 
 def VerifyArgs(parser, options):
   """Verifies that commandline flags are consistent."""
-  if not options.output_directory:
+  absolute_output_directory = utils.ExpandPath(options.output_directory)
+  if not absolute_output_directory:
     parser.error('output bundle directory must be specified.')
-  if not os.path.exists(options.output_directory):
+  if not os.path.exists(absolute_output_directory):
     parser.error('output bundle directory does not exist.')
-  # TODO(user): add more verification as needed
+  source_disk_fs = utils.GetFilesystemTable(fs_path_filter=options.disk)
+  if not source_disk_fs:
+    parser.error(('Source disk %s does not exist,'
+                  'check via "df -T" command.' % options.disk))
+  dest_fs = utils.GetFilesystemForFile(absolute_output_directory)
+  if not dest_fs:
+    parser.error(('Output directory has no associated filesystem,'
+                  'check via "df -T" command.' % options.disk))
+  if dest_fs['available'] <= source_disk_fs['used']:
+    parser.error(('output directory does not have enough space,'
+                  '%s available, %s required.' % (dest_fs['available'], source_disk_fs['used'])))
 
 
 def EnsureSuperUser():
   """Ensures that current user has super user privileges."""
   if os.getuid() != 0:
-    print 'Tool must be run as root.'
+    logging.warning('Tool must be run as root.')
     exit(-1)
 
 
@@ -133,7 +144,15 @@ def SetupLogging(options, log_dir='/tmp'):
 
 def PrintVersionInfo():
   #TODO: Should read from the VERSION file instead.
-  print 'version 1.1.0'
+  logging.info('version 1.1.0')
+
+
+def GetTargetFilesystem(options):
+  if options.file_system:
+    return options.file_system
+  else:
+    fs_table = utils.GetFilesystemTable(fs_path_filter=options.disk)
+    return fs_table[0]['type']
 
 
 def main():
@@ -157,7 +176,8 @@ def main():
 
   temp_file_name = tempfile.mktemp(dir=scratch_dir, suffix='.tar.gz')
 
-  bundle = block_disk.RootFsRaw(options.fs_size, options.file_system)
+
+  bundle = block_disk.RootFsRaw(options.fs_size, GetTargetFilesystem(options))
   bundle.SetTarfile(temp_file_name)
   if options.disk:
     readlink_command = ['readlink', '-f', options.disk]
@@ -206,7 +226,7 @@ def main():
         options.output_directory, '%s.image.tar.gz' % digest)
 
   os.rename(temp_file_name, output_file)
-  print 'Created tar.gz file at %s' % output_file
+  logging.info('Created tar.gz file at %s' % output_file)
 
   if options.bucket:
     bucket = options.bucket
