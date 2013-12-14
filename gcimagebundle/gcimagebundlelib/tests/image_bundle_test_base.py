@@ -61,11 +61,12 @@ class MockHttp(utils.Http):
   def __init__(self):
     self._instance_response = '{"hostname":"test"}'
 
-  def Get(self, url):
+  def Get(self, request):
+    url = request.get_full_url()
     if url == 'http://metadata/computeMetadata/':
-      return 'v1beta1/'
-    elif url.startswith('http://metadata/computeMetadata/v1beta1/'):
-      url = url.replace('http://metadata/computeMetadata/v1beta1/', '')
+      return 'v1/'
+    elif url.startswith('http://metadata/computeMetadata/v1/'):
+      url = url.replace('http://metadata/computeMetadata/v1/', '')
       if url == 'instance/?recursive=true':
         return self._instance_response
     raise urllib2.HTTPError

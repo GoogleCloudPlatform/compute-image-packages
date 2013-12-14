@@ -169,11 +169,11 @@ def GetTargetFilesystem(options):
 def main():
   parser = SetupArgsParser()
   (options, _) = parser.parse_args()
-  VerifyArgs(parser, options)
   if options.display_version:
     PrintVersionInfo()
     return 0
   EnsureSuperUser()
+  VerifyArgs(parser, options)
 
   scratch_dir = tempfile.mkdtemp(dir=options.output_directory)
   SetupLogging(options, scratch_dir)

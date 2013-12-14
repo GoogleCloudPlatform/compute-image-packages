@@ -379,7 +379,7 @@ def GetFilesystemForFile(file_path):
 
 
 def GetFilesystemTable(fs_path_filter=None):
-  out = RunCommand(['df', '-T', '-BK'])
+  out = RunCommand(['df', '-T'])
   fs_table = TableToDict(out)
   if fs_path_filter:
     fs_table = [x for x in fs_table if x['filesystem'].startswith(fs_path_filter)]
@@ -390,7 +390,7 @@ def TableToDict(stdout_table):
   """Converts a table typically from a command's stdout to a dictionary set."""
   items = []
   lines = stdout_table.splitlines()
-  keys = [x.lower() for x in lines[0]]
+  keys = [x.lower() for x in lines[0].split()]
   for line in lines[1:]:
     item = {}
     i = 0
