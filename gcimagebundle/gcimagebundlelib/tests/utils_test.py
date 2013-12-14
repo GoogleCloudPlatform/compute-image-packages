@@ -43,9 +43,11 @@ class ImageBundleTest(unittest.TestCase):
 
   def testRunCommandThatFails(self):
     """Run a command that will fail and verify it raises the correct error."""
-    non_existent_path = '/' + uuid.uuid4().hex
-    with self.assertRaises(subprocess.CalledProcessError):
+    def RunCommandUnderTest():
+      non_existent_path = '/' + uuid.uuid4().hex
       utils.RunCommand(['mkfs', '-t', 'ext4', non_existent_path])
+    self.assertRaises(subprocess.CalledProcessError, RunCommandUnderTest)
+
 
   def testTableToDict(self):
     fs_table = utils.TableToDict(DF_T_TEST_OUTPUT)

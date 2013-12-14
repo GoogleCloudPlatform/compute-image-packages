@@ -18,7 +18,6 @@
 import logging
 import os
 import subprocess
-import sys
 import time
 import urllib2
 
@@ -360,12 +359,8 @@ def RunCommand(command, input_str=None):
                     'stdout=%s\nstderr=%s',
                     command, p.returncode, cmd_output[0],
                     cmd_output[1])
-    if sys.version_info >= (2, 7):
-      raise subprocess.CalledProcessError(p.returncode,
-                                          cmd=command)
-    else:
-      raise subprocess.CalledProcessError()
-
+    raise subprocess.CalledProcessError(p.returncode,
+                                        cmd=command)
   return cmd_output[0]
 
 
