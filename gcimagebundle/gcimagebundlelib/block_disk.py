@@ -125,7 +125,7 @@ class FsRawDisk(fs_copy.FsCopy):
       pass
     self._excludes.append(exclude_spec.ExcludeSpec(disk_file_path))
 
-    print 'Initializing disk file'
+    logging.info('Initializing disk file')
     partition_start = None
     uuid = None
     if self._disk:
@@ -153,14 +153,14 @@ class FsRawDisk(fs_copy.FsCopy):
       # List contents of /dev/mapper to help with debugging. Contents will
       # be listed in debug log only
       utils.RunCommand(['ls', '/dev/mapper'])
-      print 'Making filesystem'
+      logging.info('Making filesystem')
       uuid = utils.MakeFileSystem(devices[0], self._fs_type, uuid)
     with utils.LoadDiskImage(disk_file_path) as devices:
       if uuid is None:
         raise Exception('Could not get uuid from MakeFileSystem')
       mount_point = tempfile.mkdtemp(dir=self._scratch_dir)
       with utils.MountFileSystem(devices[0], mount_point):
-        print 'Copying contents'
+        logging.info('Copying contents')
         self._CopySourceFiles(mount_point)
         self._CopyPlatformSpecialFiles(mount_point)
         self._ProcessOverwriteList(mount_point)
@@ -175,7 +175,7 @@ class FsRawDisk(fs_copy.FsCopy):
       tar_entries.append(manifest_file_path)
 
     tar_entries.append(disk_file_path)
-    print 'Creating tar.gz archive'
+    logging.info('Creating tar.gz archive')
     utils.TarAndGzipFile(tar_entries,
                          self._output_tarfile)
     for tar_entry in tar_entries:
@@ -282,7 +282,7 @@ class FsRawDisk(fs_copy.FsCopy):
     """Update /etc/fstab with the new root fs UUID."""
     fstab_path = os.path.join(mount_point, 'etc/fstab')
     if not os.path.exists(fstab_path):
-      print 'etc/fstab does not exist.  Not updating fstab uuid'
+      logging.warning('etc/fstab does not exist.  Not updating fstab uuid')
       return
 
     f = open(fstab_path, 'r')
