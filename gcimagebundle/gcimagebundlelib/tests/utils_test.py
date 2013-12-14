@@ -54,14 +54,14 @@ class ImageBundleTest(unittest.TestCase):
     self.assertEqual(7, len(fs_table))
     for item in fs_table:
       self.assertEqual(7, len(item.keys()))
-      self.assertListEqual(item.keys(),
-                           ['fileystem',
-                            'type',
-                            '1k-blocks',
-                            'used',
-                            'available',
-                            'use%',
-                            'mounted'])
+      self.assertSetEqual(set(item.keys()),
+                          set(['filesystem',
+                               'type',
+                               '1k-blocks',
+                               'used',
+                               'available',
+                               'use%',
+                               'mounted']))
 
 def main():
   logging.basicConfig(level=logging.DEBUG)
