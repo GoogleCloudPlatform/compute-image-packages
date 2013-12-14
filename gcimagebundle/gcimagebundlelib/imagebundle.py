@@ -95,9 +95,14 @@ def VerifyArgs(parser, options):
   if not dest_fs:
     parser.error(('Output directory has no associated filesystem,'
                   'check via "df -T" command.' % options.disk))
-  if dest_fs['available'] <= source_disk_fs['used']:
+  # Require another 128 MB extra.
+  required_kb = source_disk_fs['used'] + 1024 * 128
+  if options.fs_size <= required_kb:
+    parser.error(('Size of disk image is too small. Increase --fssize.'
+                  '--fssize=%s , %s required.' % (options.fs_size, required_kb)))
+  if dest_fs['available'] <= required_kb:
     parser.error(('output directory does not have enough space,'
-                  '%s available, %s required.' % (dest_fs['available'], source_disk_fs['used'])))
+                  '%s available, %s required.' % (dest_fs['available'], required_kb)))
 
 
 def EnsureSuperUser():

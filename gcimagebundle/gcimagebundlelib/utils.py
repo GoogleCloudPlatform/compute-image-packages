@@ -379,7 +379,7 @@ def GetFilesystemForFile(file_path):
 
 
 def GetFilesystemTable(fs_path_filter=None):
-  out = RunCommand(['df', '-T'])
+  out = RunCommand(['df', '-T', '-BK'])
   fs_table = TableToDict(out)
   if fs_path_filter:
     fs_table = [x for x in fs_table if x['filesystem'].startswith(fs_path_filter)]
