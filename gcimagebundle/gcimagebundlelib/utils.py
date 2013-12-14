@@ -397,7 +397,7 @@ def TableToDict(stdout_table):
     for line_item in line.split():
       item[keys[i]] = line_item
       i += 1
-      items.append(item)
+    items.append(item)
   return items
 
 
