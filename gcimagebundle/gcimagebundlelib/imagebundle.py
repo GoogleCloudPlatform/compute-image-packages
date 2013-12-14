@@ -103,7 +103,13 @@ def VerifyArgs(parser, options):
   if dest_fs['available'] <= required_kb:
     parser.error(('output directory does not have enough space,'
                   '%s available, %s required.' % (dest_fs['available'], required_kb)))
-
+  try:
+    utils.Http().GetMetadata('instance/')
+  except BaseException:
+    parser.error(('Cannot access metadata server.'
+                  ' Are you running within a Google Compute Engine instance?'
+                  ' Check your /etc/hosts file for an entry for metadata/'
+                  ' See https://developers.google.com/compute/docs/building-image for more details.'))
 
 def EnsureSuperUser():
   """Ensures that current user has super user privileges."""
