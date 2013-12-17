@@ -24,16 +24,6 @@ import uuid
 
 from gcimagebundlelib import utils
 
-DF_T_TEST_OUTPUT = '''Filesystem     Type     1K-blocks    Used Available Use% Mounted on
-/dev/sda1      ext4      94824284 5804652  84179800   7% /
-none           tmpfs            4       0         4   0% /sys/fs/cgroup
-udev           devtmpfs   4078660       4   4078656   1% /dev
-tmpfs          tmpfs       817748     896    816852   1% /run
-none           tmpfs         5120       0      5120   0% /run/lock
-none           tmpfs      4088732     212   4088520   1% /run/shm
-none           tmpfs       102400      52    102348   1% /run/user
-'''
-
 
 class ImageBundleTest(unittest.TestCase):
 
@@ -48,20 +38,6 @@ class ImageBundleTest(unittest.TestCase):
       utils.RunCommand(['mkfs', '-t', 'ext4', non_existent_path])
     self.assertRaises(subprocess.CalledProcessError, RunCommandUnderTest)
 
-
-  def testTableToDict(self):
-    fs_table = utils.TableToDict(DF_T_TEST_OUTPUT)
-    self.assertEqual(7, len(fs_table))
-    for item in fs_table:
-      self.assertEqual(7, len(item.keys()))
-      self.assertEqual(set(item.keys()),
-                       set(['filesystem',
-                            'type',
-                            '1k-blocks',
-                            'used',
-                            'available',
-                            'use%',
-                            'mounted']))
 
 def main():
   logging.basicConfig(level=logging.DEBUG)
