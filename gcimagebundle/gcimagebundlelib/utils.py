@@ -56,7 +56,7 @@ class LoadDiskImage(object):
         devs.append('/dev/mapper/' + split_line[2])
     # Sleep for two seconds. At times the loopback device is not ready
     # instantly. Sleeping for two seconds solves it.
-    time.sleep(2)
+    #time.sleep(2)
     return devs
 
   def __exit__(self, unused_exc_type, unused_exc_value, unused_exc_tb):
@@ -69,7 +69,7 @@ class LoadDiskImage(object):
     """
     # Sleep for two seconds. At times the loopback device is not ready
     # instantly. Sleeping for two seconds solves it.
-    time.sleep(2)
+    #time.sleep(2)
     kpartx_cmd = ['kpartx', '-d', '-v', '-s', self._file_path]
     RunCommand(kpartx_cmd)
 
