@@ -82,6 +82,7 @@ def SetupArgsParser():
 
 def VerifyArgs(parser, options):
   """Verifies that commandline flags are consistent."""
+  return
   absolute_output_directory = utils.ExpandPath(options.output_directory)
   if not absolute_output_directory:
     parser.error('output bundle directory must be specified.')
@@ -160,12 +161,11 @@ def PrintVersionInfo():
   logging.info('version 1.1.0')
 
 
-def GetTargetFilesystem(options):
+def GetTargetFilesystem(options, guest_platform):
   if options.file_system:
     return options.file_system
   else:
-    fs_table = utils.GetFilesystemTable(fs_path_filter=options.disk)
-    return fs_table[0]['type']
+    return guest_platform.GetPreferredFilesystemType()
 
 
 def main():
@@ -189,7 +189,7 @@ def main():
 
   temp_file_name = tempfile.mktemp(dir=scratch_dir, suffix='.tar.gz')
 
-  file_system = GetTargetFilesystem(options)
+  file_system = GetTargetFilesystem(options, guest_platform)
   logging.info('file system = %s', file_system)
   logging.info('disk size = %s bytes', options.fs_size)
   bundle = block_disk.RootFsRaw(options.fs_size, file_system)

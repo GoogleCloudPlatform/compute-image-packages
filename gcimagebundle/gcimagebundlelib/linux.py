@@ -129,3 +129,7 @@ class LinuxPlatform(os_platform.Platform):
   def Overwrite(self, filename, arcname, tmpdir='/tmp'):
     """Overwrites specified file if needed for the Linux platform."""
     pass
+
+  def GetPreferredFilesystemType(self):
+    """Return the optimal filesystem supported for the platform."""
+    return 'ext4'
