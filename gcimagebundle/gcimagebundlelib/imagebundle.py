@@ -82,37 +82,12 @@ def SetupArgsParser():
 
 def VerifyArgs(parser, options):
   """Verifies that commandline flags are consistent."""
-  return
-  absolute_output_directory = utils.ExpandPath(options.output_directory)
-  if not absolute_output_directory:
+  if not options.output_directory:
     parser.error('output bundle directory must be specified.')
-  if not os.path.exists(absolute_output_directory):
+  if not os.path.exists(options.output_directory):
     parser.error('output bundle directory does not exist.')
-  source_disk_fs = utils.GetFilesystemTable(fs_path_filter=options.disk)
-  if not source_disk_fs:
-    parser.error(('Source disk %s does not exist,'
-                  'check via "df -T" command.' % options.disk))
-  # Assume the first entry is the best one.
-  source_disk_fs = source_disk_fs[0]
-  dest_fs = utils.GetFilesystemForFile(absolute_output_directory)
-  if not dest_fs:
-    parser.error(('Output directory has no associated filesystem,'
-                  'check via "df -T" command.' % options.disk))
-  # Require another 128 MB extra.
-  required_kb = int(source_disk_fs['used']) + 1024 * 128
-  if options.fs_size <= required_kb:
-    parser.error(('Size of disk image is too small. Increase --fssize.'
-                  '--fssize=%s , %s required.' % (options.fs_size, required_kb)))
-  if dest_fs['available'] <= required_kb:
-    parser.error(('output directory does not have enough space,'
-                  '%s available, %s required.' % (dest_fs['available'], required_kb)))
-  try:
-    utils.Http().GetMetadata('instance/')
-  except BaseException:
-    parser.error(('Cannot access metadata server.'
-                  ' Are you running within a Google Compute Engine instance?'
-                  ' Check your /etc/hosts file for an entry for metadata/'
-                  ' See https://developers.google.com/compute/docs/building-image for more details.'))
+
+  # TODO(user): add more verification as needed
 
 def EnsureSuperUser():
   """Ensures that current user has super user privileges."""
@@ -190,8 +165,8 @@ def main():
   temp_file_name = tempfile.mktemp(dir=scratch_dir, suffix='.tar.gz')
 
   file_system = GetTargetFilesystem(options, guest_platform)
-  logging.info('file system = %s', file_system)
-  logging.info('disk size = %s bytes', options.fs_size)
+  logging.info('File System: %s', file_system)
+  logging.info('Disk Size: %s bytes', options.fs_size)
   bundle = block_disk.RootFsRaw(options.fs_size, file_system)
   bundle.SetTarfile(temp_file_name)
   if options.disk:

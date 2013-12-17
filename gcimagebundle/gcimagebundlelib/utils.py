@@ -18,7 +18,6 @@
 import logging
 import os
 import subprocess
-import time
 import urllib2
 
 
@@ -54,9 +53,6 @@ class LoadDiskImage(object):
       if (len(split_line) > 2 and split_line[0] == 'add'
           and split_line[1] == 'map'):
         devs.append('/dev/mapper/' + split_line[2])
-    # Sleep for two seconds. At times the loopback device is not ready
-    # instantly. Sleeping for two seconds solves it.
-    #time.sleep(2)
     return devs
 
   def __exit__(self, unused_exc_type, unused_exc_value, unused_exc_tb):
@@ -67,9 +63,6 @@ class LoadDiskImage(object):
       unused_exc_value: unused.
       unused_exc_tb: unused.
     """
-    # Sleep for two seconds. At times the loopback device is not ready
-    # instantly. Sleeping for two seconds solves it.
-    #time.sleep(2)
     kpartx_cmd = ['kpartx', '-d', '-v', '-s', self._file_path]
     RunCommand(kpartx_cmd)
 
@@ -362,43 +355,6 @@ def RunCommand(command, input_str=None):
     raise subprocess.CalledProcessError(p.returncode,
                                         cmd=command)
   return cmd_output[0]
-
-
-def ExpandPath(relative_path):
-  return os.path.abspath(os.path.expandvars(os.path.expanduser(relative_path)))
-
-def GetFilesystemForFile(file_path):
-  fs_table = GetFilesystemTable()
-  best_entry = None
-  for entry in fs_table:
-    if file_path.startswith(entry['mounted']):
-      if not best_entry or (best_entry and (len(best_entry['mounted']) < len(best_entry['mounted']))):
-        best_entry = entry
-
-  return best_entry
-
-
-def GetFilesystemTable(fs_path_filter=None):
-  out = RunCommand(['df', '-T'])
-  fs_table = TableToDict(out)
-  if fs_path_filter:
-    fs_table = [x for x in fs_table if x['filesystem'].startswith(fs_path_filter)]
-  return fs_table
-
-
-def TableToDict(stdout_table):
-  """Converts a table typically from a command's stdout to a dictionary set."""
-  items = []
-  lines = stdout_table.splitlines()
-  keys = [x.lower() for x in lines[0].split()]
-  for line in lines[1:]:
-    item = {}
-    i = 0
-    for line_item in line.split():
-      item[keys[i]] = line_item
-      i += 1
-    items.append(item)
-  return items
 
 
 def TarAndGzipFile(src_paths, dest):
