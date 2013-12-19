@@ -57,11 +57,12 @@ class MockPlatform(Platform):
 
 
 class MockHttp(utils.Http):
-
+  """Fake implementation of the utils.Http client. Used for metadata queries."""
   def __init__(self):
     self._instance_response = '{"hostname":"test"}'
 
   def Get(self, request):
+    """Accepts an Http request and returns a precanned response."""
     url = request.get_full_url()
     if url == 'http://metadata/computeMetadata/':
       return 'v1/'
