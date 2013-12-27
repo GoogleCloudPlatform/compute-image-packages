@@ -29,3 +29,6 @@ class SLE(suse.SUSE):
   
   def __init__(self):
     super(SLE, self).__init__()
+
+  def GetPreferredFilesystemType(self):
+    return 'ext3'
