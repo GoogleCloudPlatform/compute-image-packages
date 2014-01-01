@@ -17,6 +17,7 @@
 
 
 import json
+from urllib2 import URLError
 from gcimagebundlelib import utils
 
 
@@ -52,11 +53,15 @@ class ImageManifest(object):
 
   def _LoadLicenses(self):
     """Loads the licenses from the metadata server if they exist."""
-    response = self._http.GetMetadata('instance/', recursive=True)
-    instance_metadata = json.loads(response)
-    if 'licenses' in instance_metadata:
-      for license_obj in instance_metadata['licenses']:
-        self._licenses.append(license_obj['id'])
+    try:
+      response = self._http.GetMetadata('instance/', recursive=True)
+      instance_metadata = json.loads(response)
+      if 'licenses' in instance_metadata:
+        for license_obj in instance_metadata['licenses']:
+          self._licenses.append(license_obj['id'])
+    except URLError:
+      # Metadata server is not reachable (probably we are not within GCE)
+      pass
 
   def _ToJson(self):
     """Formats the image metadata as a JSON object."""
