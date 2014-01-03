@@ -21,7 +21,7 @@ from boto.auth_handler import AuthHandler
 from boto.auth_handler import NotReadyToAuthenticate
 
 META_DATA_SERVER_BASE_URL=(
-    'http://metadata.google.internal/computeMetadata/v1beta1')
+    'http://metadata.google.internal/computeMetadata/v1')
 
 SERVICE_ACCOUNT_SCOPES_URL=(META_DATA_SERVER_BASE_URL +
     '/instance/service-accounts/%s/scopes?alt=json')
@@ -57,7 +57,9 @@ class ComputeAuth(AuthHandler):
 
   def __GetJSONMetadataValue(self, url):
     try:
-      data = urllib2.urlopen(url).read()
+      request = urllib2.Request(url)
+      request.add_unredirected_header('X-Google-Metadata-Request', 'True')
+      data = urllib2.urlopen(request).read()
       return json.loads(data)
     except (urllib2.URLError, urllib2.HTTPError, IOError), e:
       return None

@@ -35,7 +35,7 @@ Google startup scripts also perform the following actions:
 
     Startup scripts check the value of the instance ID at:
 
-        http://metadata/computeMetadata/v1beta1/instance/id
+        http://metadata/computeMetadata/v1/instance/id
     
     and compares it to the last instance ID the disk booted on.
     

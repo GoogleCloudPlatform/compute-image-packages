@@ -36,7 +36,7 @@ import time
 import urllib2
 
 PUBLIC_ENDPOINT_URL_PREFIX = (
-'http://metadata/computeMetadata/v1beta1/instance/network-interfaces/0/forwarded-ips/?recursive=true&alt=text&wait_for_change=true&timeout_sec=60&last_etag=')
+'http://metadata/computeMetadata/v1/instance/network-interfaces/0/forwarded-ips/?recursive=true&alt=text&wait_for_change=true&timeout_sec=60&last_etag=')
 GOOGLE_PROTO_ID = 66  # "GG"
 
 class InputError(Exception):
@@ -88,7 +88,9 @@ class AddressManager(object):
       # If the connection gets abandoned, ensure we don't hang more than
       # 70 seconds.
       url = PUBLIC_ENDPOINT_URL_PREFIX + self.last_etag
-      u = self.urllib2.urlopen(urllib2.Request(url), timeout=70)
+      request = urllib2.Request(url)
+      request.add_unredirected_header('X-Google-Metadata-Request', 'True')
+      u = self.urllib2.urlopen(request, timeout=70)
       addrs_data = u.read()
       headers = u.info().dict
       self.last_etag = headers.get('etag', self.default_last_etag)
