@@ -30,7 +30,7 @@ import textwrap
 import urllib2
 
 NUMERIC_PROJECT_ID_URL=('http://metadata.google.internal/'
-                        'computeMetadata/v1beta1/project/numeric-project-id')
+                        'computeMetadata/v1/project/numeric-project-id')
 SYSTEM_BOTO_CONFIG_TEMPLATE='/etc/boto.cfg.template'
 SYSTEM_BOTO_CONFIG='/etc/boto.cfg'
 AUTH_PLUGIN_DIR='/usr/share/google/boto/boto_plugins'
@@ -39,8 +39,9 @@ AUTH_PLUGIN_DIR='/usr/share/google/boto/boto_plugins'
 def GetNumericProjectId():
   """Get the numeric project ID for this VM."""
   try:
-    req = urllib2.Request(NUMERIC_PROJECT_ID_URL)
-    return urllib2.urlopen(req).read()
+    request = urllib2.Request(NUMERIC_PROJECT_ID_URL)
+    request.add_unredirected_header('X-Google-Metadata-Request', 'True')
+    return urllib2.urlopen(request).read()
   except (urllib2.URLError, urllib2.HTTPError, IOError), e:
     return None
 
