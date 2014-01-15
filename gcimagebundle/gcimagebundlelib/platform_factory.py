@@ -22,6 +22,7 @@ from gcimagebundlelib import fedora
 from gcimagebundlelib import debian
 from gcimagebundlelib import gcel
 from gcimagebundlelib import opensuse
+from gcimagebundlelib import rhel
 from gcimagebundlelib import sle
 from gcimagebundlelib import ubuntu
 
@@ -42,9 +43,10 @@ class PlatformFactory(object):
     self.Register('Debian', debian.Debian)
     self.Register('GCEL', gcel.Gcel)
     self.Register('openSUSE', opensuse.OpenSUSE)
+    self.Register('Red Hat Enterprise Linux', rhel.RHEL)
     self.Register('SUSE Linux Enterprise', sle.SLE)
     self.Register('Ubuntu', ubuntu.Ubuntu)
-    
+
   def Register(self, name, klass):
     self.__registry[name] = klass
 
