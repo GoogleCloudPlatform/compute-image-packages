@@ -27,12 +27,9 @@ class SUSE(linux.LinuxPlatform):
   def __init__(self):
     super(SUSE, self).__init__()
     self.distribution_codename = None
-    try:
-      self.ParseOSRelease()
-      if not self.distribution:
-        self.ParseSUSERelease()
-    except:
-      pass
+    self.ParseOSRelease()
+    if not self.distribution:
+      self.ParseSUSERelease()
     if not self.distribution:
       self.distribution = ''
 
