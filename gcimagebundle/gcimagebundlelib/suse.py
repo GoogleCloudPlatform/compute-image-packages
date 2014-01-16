@@ -27,9 +27,12 @@ class SUSE(linux.LinuxPlatform):
   def __init__(self):
     super(SUSE, self).__init__()
     self.distribution_codename = None
-    self.ParseOSRelease()
-    if not self.distribution:
-      self.ParseSUSERelease()
+    try:
+      self.ParseOSRelease()
+      if not self.distribution:
+        self.ParseSUSERelease()
+    except:
+      pass
     if not self.distribution:
       self.distribution = ''
 
@@ -39,7 +42,7 @@ class SUSE(linux.LinuxPlatform):
     if not os.path.isfile(release_file):
       self.distribution = None
       return
-    lines = self._ReadFile(release_file)
+    lines = open(release_file, 'r').readlines()
     for ln in lines:
       if not ln:
         continue
@@ -58,19 +61,20 @@ class SUSE(linux.LinuxPlatform):
     if not os.path.isfile(release_file):
       self.distribution = None
       return
-    lines = self._ReadFile(release_file)
+    lines = open(release_file, 'r').readlines()
     prts = lines[0].split()
     cnt = 0
     self.distribution = ''
-    while 1:
-      item = prts[cnt]
-      if re.match('\d', item):
-        item = None
-        break
-      elif cnt > 0:
-        self.distribution += ' '              
-      self.distribution += item
-      cnt += 1
+    if len(prts):
+      while 1:
+        item = prts[cnt]
+        if re.match('\d', item):
+          item = None
+          break
+        elif cnt > 0:
+          self.distribution += ' '              
+        self.distribution += item
+        cnt += 1
 
     for ln in lines:
       if re.match(r'^VERSION =', ln):
@@ -78,13 +82,6 @@ class SUSE(linux.LinuxPlatform):
       if re.match(r'^CODENAME =', ln):
         self.distribution_codename = self.__getData(ln)
     return
-
-  def _ReadFile(self, file_path):
-    file = open(file_path, 'r')
-    try:
-      return file.readlines()
-    finally:
-      file.close()
 
   def __getData(self, ln):
     """Extract data from a line in a file. Either returns data inside the
