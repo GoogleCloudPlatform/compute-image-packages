@@ -39,7 +39,7 @@ class SUSE(linux.LinuxPlatform):
     if not os.path.isfile(release_file):
       self.distribution = None
       return
-    lines = self._readfile(release_file)
+    lines = self._ReadFile(release_file)
     for ln in lines:
       if not ln:
         continue
@@ -58,7 +58,7 @@ class SUSE(linux.LinuxPlatform):
     if not os.path.isfile(release_file):
       self.distribution = None
       return
-    lines = self._readfile(release_file)
+    lines = self._ReadFile(release_file)
     prts = lines[0].split()
     cnt = 0
     self.distribution = ''
@@ -79,7 +79,7 @@ class SUSE(linux.LinuxPlatform):
         self.distribution_codename = self.__getData(ln)
     return
 
-  def _readfile(self, file_path):
+  def _ReadFile(self, file_path):
     file = open(file_path, 'r')
     try:
       return file.readlines()
