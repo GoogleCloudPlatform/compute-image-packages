@@ -15,12 +15,17 @@
 
 """Get the accounts desired to be present on the VM."""
 
+import ast
 import logging
 import time
 import urllib2
 
+
+ATTRIBUTES_URL = (
+    'http://metadata/computeMetadata/v1/project/attributes/?recursive=true&%s')
 ACCOUNTS_URL = (
-    'http://metadata.google.internal/0.1/meta-data/attributes/sshKeys')
+    'http://metadata/computeMetadata/v1/project/attributes/sshKeys?%s')
+WAIT_FOR_CHANGE = 'wait_for_change=true&last_etag=%s&timeout_sec=%s'
 
 
 def AccountDataToDictionary(data):
@@ -55,6 +60,44 @@ class DesiredAccounts(object):
     self.urllib2 = urllib2_module
     self.time = time_module
 
+  def _MakeHangingGetRequest(self, url, etag=0, timeout_secs=10):
+    """Makes a get request for the url and specifies wait_for_change.
+    """
+    wait_for_change_query = WAIT_FOR_CHANGE % (etag, timeout_secs)
+    request_url = url % wait_for_change_query
+    logging.debug('Getting url: %s', request_url)
+    request = urllib2.Request(request_url)
+    request.add_header('X-Google-Metadata-Request', 'True')
+    return self.urllib2.urlopen(request)
+
+  def _WaitForSshKeysAttribute(self, timeout_secs=10):
+    """Waits for sshKeys attribute to be created.
+
+    Returns:
+      true if the sshKeys attribute exists, or else false.
+    """
+    logging.debug('Checking if sshKeys attribute exists.')
+    etag = 0
+    start_time = self.time.time()
+    while self.time.time() - start_time < timeout_secs:
+      try:
+        response = self._MakeHangingGetRequest(
+            ATTRIBUTES_URL, etag=0)
+        response_info = response.info()
+        if response_info and response_info.has_key('etag'):
+          etag = response_info.getheader('etag')
+        attributes_string = response.read()
+        logging.debug('project attributes: %s', attributes_string)
+        attributes = ast.literal_eval(attributes_string)
+        if attributes and attributes.has_key('sshKeys'):
+          return True
+      except (urllib2.URLError, ValueError) as e:
+        logging.warning(
+            'Error while trying to fetch attributes list: %s',
+            e)
+    logging.debug('Unable to find sshKeys attribute')
+    return False
+
   def GetDesiredAccounts(self):
     """Get a list of the accounts desired on the system.
 
@@ -62,22 +105,20 @@ class DesiredAccounts(object):
       A dict of the form: {'username': ['sshkey1, 'sshkey2', ...]}.
     """
     logging.debug('Getting desired accounts from metadata.')
-    attempt_failures = []
     start_time = self.time.time()
+    etag = 0
     while self.time.time() - start_time < 10:  # Try for 10 seconds.
       try:
-        logging.debug('Getting SSH Accounts from {0}'.format(ACCOUNTS_URL))
-        account_data = self.urllib2.urlopen(
-            urllib2.Request(ACCOUNTS_URL)).read()
-        if attempt_failures:
-          logging.warning(
-              'Encountered %s failures when fetching desired accounts: %s',
-              len(attempt_failures), attempt_failures)
+        self._WaitForSshKeysAttribute()
+        response = self._MakeHangingGetRequest(ACCOUNTS_URL, etag=etag)
+        account_data = response.read()
+        if response.info() and response.info().has_key('etag'):
+          etag = response.info().getheader('etag')
         if not account_data:
           return {}
         return AccountDataToDictionary(account_data)
       except urllib2.URLError as e:
-        attempt_failures.append(e)
+        logging.debug('error while trying to fetch ssh keys: %s', e)
       self.time.sleep(0.5)
     logging.warning('Could not fetch accounts from metadata server: %s',
                     attempt_failures)
