@@ -25,7 +25,7 @@ class AccountsManager(object):
   """Create accounts on a machine."""
 
   def __init__(self, accounts_module, desired_accounts, system, lock_file,
-               lock_fname, interval=-1):
+               lock_fname, single_attempt=true):
     """Construct an AccountsFromMetadata with the given module injections."""
     if not lock_fname:
       lock_fname = LOCKFILE
@@ -34,7 +34,7 @@ class AccountsManager(object):
     self.lock_file = lock_file
     self.lock_fname = lock_fname
     self.system = system
-    self.interval = interval
+    self.single_attempt = single_attempt
 
   def Main(self):
     logging.debug('AccountsManager main loop')
@@ -43,7 +43,7 @@ class AccountsManager(object):
       # If this is a one-shot execution, then this can be run normally.
       # Otherwise, run the actual operations in a subprocess so that any
       # errors don't kill the long-lived process.
-      if self.interval == -1:
+      if self.single_attempt:
         self.RegenerateKeysAndCreateAccounts()
       else:
         # Fork and run the key regeneration and account creation while the
@@ -59,9 +59,8 @@ class AccountsManager(object):
           # once by the subprocess and once by the parent process.
           os._exit(0)
 
-      if self.interval == -1:
+      if self.single_attempt:
         break
-      time.sleep(self.interval)
 
   def RegenerateKeysAndCreateAccounts(self):
     """Regenerate the keys and create accounts as needed."""
