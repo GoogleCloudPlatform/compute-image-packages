@@ -58,6 +58,8 @@ class AccountsManager(object):
           os.close(w)
           r = os.fdopen(r) # turn r into a file object
           self.desired_accounts.ssh_keys_etag = r.read()
+          r.close()
+          logging.debug('New etag: %s', self.desired_accounts.ssh_keys_etag)
           os.waitpid(pid, 0)
         else:
           # we are the child
