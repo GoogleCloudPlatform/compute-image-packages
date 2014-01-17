@@ -39,7 +39,7 @@ from utils import System
 
 
 def Main(accounts, desired_accounts, system, logger,
-         log_handler, lock_file, lock_fname=None, interval=-1,
+         log_handler, lock_file, lock_fname=None, single_pass=True,
          daemon_mode=False, debug_mode=False):
   
   if not log_handler:
@@ -52,7 +52,8 @@ def Main(accounts, desired_accounts, system, logger,
     logging.debug('Running in Debug Mode')
 
   accounts_manager = AccountsManager(
-      accounts, desired_accounts, system, lock_file, lock_fname, interval)
+      accounts, desired_accounts, system, lock_file, lock_fname,
+      single_pass)
   
   if daemon_mode:
     manager_daemon = AccountsManagerDaemon(None, accounts_manager)
@@ -65,13 +66,22 @@ if __name__ == '__main__':
   parser = optparse.OptionParser()
   parser.add_option('--daemon', dest='daemon', action='store_true')
   parser.add_option('--no-daemon', dest='daemon', action='store_false')
+  # Leaving --interval flag for now to allow some time for each platform to move to
+  # new flag
   parser.add_option('--interval', type='int', dest='interval')
+  parser.add_option('--single-pass', dest='single_pass', action='store_true')
+  parser.add_option('--no-single-pass', dest='single_pass', action='store_false')
   parser.add_option('--debug', dest='debug', action='store_true')
   parser.set_defaults(interval=60)
+  parser.set_defaults(single_pass=False)
   parser.set_defaults(daemon=False)
   parser.set_defaults(debug=False)
   (options, args) = parser.parse_args()
 
+  # set single_pass to True if interval is -1.
+  if options.interval == -1:
+    options.single_pass = True
+
   Main(Accounts(system_module=System()), DesiredAccounts(),
-       System(), logging.getLogger(), None, LockFile(), None, options.interval,
+       System(), logging.getLogger(), None, LockFile(), None, options.single_pass,
        options.daemon, options.debug)
