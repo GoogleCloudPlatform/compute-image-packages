@@ -25,7 +25,7 @@ class AccountsManager(object):
   """Create accounts on a machine."""
 
   def __init__(self, accounts_module, desired_accounts, system, lock_file,
-               lock_fname, single_pass=true):
+               lock_fname, single_pass=True):
     """Construct an AccountsFromMetadata with the given module injections."""
     if not lock_fname:
       lock_fname = LOCKFILE
