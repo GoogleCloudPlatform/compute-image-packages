@@ -45,7 +45,7 @@ class LoadDiskImage(object):
 
   def __enter__(self):
     """Map disk image as a device."""
-    kpartx_cmd = ['kpartx', '-av', self._file_path]
+    kpartx_cmd = ['kpartx', '-a', '-v', '-s', self._file_path]
     output = RunCommand(kpartx_cmd)
     devs = []
     for line in output.splitlines():
@@ -63,7 +63,7 @@ class LoadDiskImage(object):
       unused_exc_value: unused.
       unused_exc_tb: unused.
     """
-    kpartx_cmd = ['kpartx', '-d', self._file_path]
+    kpartx_cmd = ['kpartx', '-d', '-v', '-s', self._file_path]
     RunCommand(kpartx_cmd)
 
 
@@ -96,7 +96,11 @@ class MountFileSystem(object):
     """
     umount_cmd = ['umount', self._dir_path]
     RunCommand(umount_cmd)
+    SyncFileSystem()
 
+
+def SyncFileSystem():
+  RunCommand(['sync'])
 
 def GetMounts(root='/'):
   """Find all mount points under the specified root.
@@ -153,7 +157,7 @@ def MakeFileSystem(dev_path, fs_type, uuid=None):
     dev_path: A path to a device.
     fs_type: A type of a file system to be created. For example ext2, ext3, etc.
     uuid: The value to use as the UUID for the filesystem. If none, a random
-        UUID will be generated and used.
+          UUID will be generated and used.
 
   Returns:
     The uuid of the filesystem. This will be the same as the passed value if
@@ -380,15 +384,15 @@ def TarAndGzipFile(src_paths, dest):
 
 
 class Http(object):
-  def Get(self, url):
-    return urllib2.urlopen(url).read()
+  def Get(self, request):
+    return urllib2.urlopen(request).read()
 
   def GetMetadata(self, url_path, recursive=False):
     """Retrieves instance metadata.
 
     Args:
       url_path: The path of the metadata url after the api version.
-                http://metadata/computeMetadata/v1beta1/url_path
+                http://metadata/computeMetadata/v1/url_path
       recursive: If set, returns the tree of metadata starting at url_path as
                  a json string.
     Returns:
@@ -396,11 +400,11 @@ class Http(object):
 
     """
     # Use the latest version of the metadata.
-    base_url = 'http://metadata/computeMetadata/'
-    versions = self.Get(base_url).splitlines()
-    latest_version = versions[-1]
+    base_url = 'http://metadata/computeMetadata/v1/'
     suffix = ''
     if recursive:
       suffix = '?recursive=true'
-    url = '{0}{1}{2}{3}'.format(base_url, latest_version, url_path, suffix)
-    return self.Get(url)
+    url = '{0}{1}{2}'.format(base_url, url_path, suffix)
+    request = urllib2.Request(url)
+    request.add_unredirected_header('X-Google-Metadata-Request', 'True')
+    return self.Get(request)

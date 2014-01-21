@@ -37,6 +37,7 @@ def SetupArgsParser():
   """Sets up the command line flags."""
   parser = OptionParser()
   parser.add_option('-d', '--disk', dest='disk',
+                    default='/dev/sda',
                     help='Disk to bundle.')
   parser.add_option('-r', '--root', dest='root_directory',
                     default='/', metavar='ROOT',
@@ -73,6 +74,9 @@ def SetupArgsParser():
                     type='int', help='File system size in bytes')
   parser.add_option('-b', '--bucket', dest='bucket',
                     help='Destination storage bucket')
+  parser.add_option('-f', '--filesystem', dest='file_system',
+                    default=None,
+                    help='File system type for the image.')
   return parser
 
 
@@ -82,13 +86,13 @@ def VerifyArgs(parser, options):
     parser.error('output bundle directory must be specified.')
   if not os.path.exists(options.output_directory):
     parser.error('output bundle directory does not exist.')
-  # TODO(user): add more verification as needed
 
+  # TODO(user): add more verification as needed
 
 def EnsureSuperUser():
   """Ensures that current user has super user privileges."""
   if os.getuid() != 0:
-    print 'Tool must be run as root.'
+    logging.warning('Tool must be run as root.')
     exit(-1)
 
 
@@ -123,23 +127,30 @@ def SetupLogging(options, log_dir='/tmp'):
   print 'Starting logging in %s' % logfile
   logging.basicConfig(filename=logfile, level=GetLogLevel(options))
   console = logging.StreamHandler()
-  console.setLevel(logging.INFO)
+  console.setLevel(GetLogLevel(options))
   logging.getLogger().addHandler(console)
 
 
 def PrintVersionInfo():
-  #TODO(user): fix up the version string
-  print 'version 1.0'
+  #TODO: Should read from the VERSION file instead.
+  logging.info('version 1.1.0')
+
+
+def GetTargetFilesystem(options, guest_platform):
+  if options.file_system:
+    return options.file_system
+  else:
+    return guest_platform.GetPreferredFilesystemType()
 
 
 def main():
-  EnsureSuperUser()
   parser = SetupArgsParser()
   (options, _) = parser.parse_args()
-  VerifyArgs(parser, options)
   if options.display_version:
     PrintVersionInfo()
     return 0
+  EnsureSuperUser()
+  VerifyArgs(parser, options)
 
   scratch_dir = tempfile.mkdtemp(dir=options.output_directory)
   SetupLogging(options, scratch_dir)
@@ -147,12 +158,16 @@ def main():
     guest_platform = platform_factory.PlatformFactory(
         options.root_directory).GetPlatform()
   except platform_factory.UnknownPlatformException:
-    print 'Could not determine host platform try -s option.'
+    logging.critical('Platform is not supported.'
+                     ' Platform rules can be added to platform_factory.py.')
     return -1
 
   temp_file_name = tempfile.mktemp(dir=scratch_dir, suffix='.tar.gz')
 
-  bundle = block_disk.RootFsRaw(options.fs_size)
+  file_system = GetTargetFilesystem(options, guest_platform)
+  logging.info('File System: %s', file_system)
+  logging.info('Disk Size: %s bytes', options.fs_size)
+  bundle = block_disk.RootFsRaw(options.fs_size, file_system)
   bundle.SetTarfile(temp_file_name)
   if options.disk:
     readlink_command = ['readlink', '-f', options.disk]
@@ -201,7 +216,7 @@ def main():
         options.output_directory, '%s.image.tar.gz' % digest)
 
   os.rename(temp_file_name, output_file)
-  print 'Created tar.gz file at %s' % output_file
+  logging.info('Created tar.gz file at %s' % output_file)
 
   if options.bucket:
     bucket = options.bucket

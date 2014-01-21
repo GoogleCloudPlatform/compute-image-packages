@@ -43,7 +43,7 @@ class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):
   def setUp(self):
     super(FsRawDiskTest, self).setUp()
     self._fs_size = 10* FsRawDiskTest._MEGABYTE
-    self._bundle = block_disk.FsRawDisk(self._fs_size)
+    self._bundle = block_disk.FsRawDisk(self._fs_size, 'ext4')
     self._tar_path = self.tmp_path + '/image.tar.gz'
     self._bundle.SetTarfile(self._tar_path)
     self._bundle.AppendExcludes([exclude_spec.ExcludeSpec(self._tar_path)])
@@ -421,7 +421,7 @@ class RootFsRawTest(image_bundle_test_base.ImageBundleTest):
 
   def setUp(self):
     super(RootFsRawTest, self).setUp()
-    self._bundle = block_disk.RootFsRaw(10*1024*1024)
+    self._bundle = block_disk.RootFsRaw(10*1024*1024, 'ext4')
     self._tar_path = self.tmp_path + '/image.tar.gz'
     self._bundle.SetTarfile(self._tar_path)
     self._bundle.AppendExcludes([exclude_spec.ExcludeSpec(self._tar_path)])

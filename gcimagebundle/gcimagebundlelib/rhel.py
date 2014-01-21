@@ -1,4 +1,4 @@
-# Copyright 2013 SUSE LLC All Rights Reserved
+# Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,19 +13,24 @@
 # limitations under the License.
 
 
-"""SUSE Linux Enterprise (SLE) platform info."""
+"""Red Hat Enterprise Linux Linux specific platform info."""
 
-import re
-from gcimagebundlelib import suse
 
-class SLE(suse.SUSE):
-  """SLE platform info."""
+
+import platform
+
+from gcimagebundlelib import linux
+
+
+class RHEL(linux.LinuxPlatform):
+  """Red Hat Enterprise Linux specific information."""
 
   @staticmethod
-  def IsThisPlatform(self, root='/'):
-    if re.match(r'SUSE Linux Enterprise', suse.SUSE().distribution):
+  def IsThisPlatform(root='/'):
+    (distribution, _, _) = platform.linux_distribution()
+    if distribution == 'Red Hat Enterprise Linux Server':
       return True
     return False
-  
+
   def __init__(self):
-    super(SLE, self).__init__()
+    super(RHEL, self).__init__()

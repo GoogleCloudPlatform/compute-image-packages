@@ -35,8 +35,36 @@ function log() {
   fi
 }
 
+function is_decimal_int() {
+  [ "${1}" -eq "${1}" ] > /dev/null 2>&1
+}
+
+function set_channels() {
+  ethtool -L "${1}" combined "${2}" > /dev/null 2>&1
+}
+
 log "Running $(basename $0)"
 NET_DEVS=/sys/bus/virtio/drivers/virtio_net/virtio*
+
+# Loop through all the virtionet devices and enable multi-queue
+if [ -x /sbin/ethtool ]; then
+  for dev in $NET_DEVS; do
+    ETH_DEVS=${dev}/net/*
+    for eth_dev in $ETH_DEVS; do
+      eth_dev=$(basename "$eth_dev")
+      num_max_channels=$(ethtool -l "$eth_dev" | grep -m 1 Combined | cut -f2)
+      [ "${num_max_channels}" -eq "1" ] && continue
+      if is_decimal_int "$num_max_channels" && \
+        set_channels "$eth_dev" "$num_max_channels"; then
+        log "Set channels for $eth_dev to $num_max_channels"
+      else
+        log "Could not set channels for $eth_dev to $num_max_channels"
+      fi
+    done
+  done
+else
+  log "/sbin/ethtool not found: cannot configure virtionet multiqueue"
+fi
 
 for dev in $NET_DEVS
 do

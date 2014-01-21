@@ -30,6 +30,8 @@ class SUSE(linux.LinuxPlatform):
     self.ParseOSRelease()
     if not self.distribution:
       self.ParseSUSERelease()
+    if not self.distribution:
+      self.distribution = ''
 
   def ParseOSRelease(self):
     """Parse the /etc/os-release file."""
@@ -60,23 +62,24 @@ class SUSE(linux.LinuxPlatform):
     prts = lines[0].split()
     cnt = 0
     self.distribution = ''
-    while 1:
-      item = prts[cnt]
-      if re.match('\d', item):
-        item = None
-        break
-      elif cnt > 0:
-        self.distribution += ' '              
-      self.distribution += item
-      cnt += 1
-        
+    if len(prts):
+      while 1:
+        item = prts[cnt]
+        if re.match('\d', item):
+          item = None
+          break
+        elif cnt > 0:
+          self.distribution += ' '              
+        self.distribution += item
+        cnt += 1
+
     for ln in lines:
       if re.match(r'^VERSION =', ln):
         self.distribution_version = self.__getData(ln)
       if re.match(r'^CODENAME =', ln):
         self.distribution_codename = self.__getData(ln)
     return
-          
+
   def __getData(self, ln):
     """Extract data from a line in a file. Either returns data inside the
        first double quotes ("a b"; a b in this example) or if no double
@@ -86,4 +89,3 @@ class SUSE(linux.LinuxPlatform):
       return ln.split('"')[1]
     else:
       return ln.split('=')[-1].strip()
-
