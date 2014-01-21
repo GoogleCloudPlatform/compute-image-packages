@@ -51,25 +51,25 @@ class AccountsManager(object):
         # parent waits for the subprocess to finish before continuing.
         
         # Create a pipe used to get the new etag value from child
-        r, w = os.pipe() # these are file descriptors, not file objects        
+        reader, writer = os.pipe() # these are file descriptors, not file objects        
         pid = os.fork()
         if pid:
           # we are the parent
-          os.close(w)
-          r = os.fdopen(r) # turn r into a file object
-          self.desired_accounts.ssh_keys_etag = r.read()
-          r.close()
+          os.close(writer)
+          reader = os.fdopen(reader) # turn r into a file object
+          self.desired_accounts.ssh_keys_etag = reader.read()
+          reader.close()
           logging.debug('New etag: %s', self.desired_accounts.ssh_keys_etag)
           os.waitpid(pid, 0)
         else:
           # we are the child
-          os.close(r)
-          w = os.fdopen(w, 'w')
+          os.close(reader)
+          writer = os.fdopen(writer, 'w')
           self.RegenerateKeysAndCreateAccounts()
 
           # Write the etag to pass to parent
-          w.write(self.desired_accounts.ssh_keys_etag)
-          w.close()
+          writer.write(self.desired_accounts.ssh_keys_etag)
+          writer.close()
 
           # The use of os._exit here is recommended for subprocesses spawned
           # by forking to avoid issues with running the cleanup tasks that
