@@ -25,7 +25,7 @@ class AccountsManager(object):
   """Create accounts on a machine."""
 
   def __init__(self, accounts_module, desired_accounts, system, lock_file,
-               lock_fname, interval=-1):
+               lock_fname, single_pass=True):
     """Construct an AccountsFromMetadata with the given module injections."""
     if not lock_fname:
       lock_fname = LOCKFILE
@@ -34,7 +34,7 @@ class AccountsManager(object):
     self.lock_file = lock_file
     self.lock_fname = lock_fname
     self.system = system
-    self.interval = interval
+    self.single_pass = single_pass
 
   def Main(self):
     logging.debug('AccountsManager main loop')
@@ -43,25 +43,39 @@ class AccountsManager(object):
       # If this is a one-shot execution, then this can be run normally.
       # Otherwise, run the actual operations in a subprocess so that any
       # errors don't kill the long-lived process.
-      if self.interval == -1:
+      if self.single_pass:
         self.RegenerateKeysAndCreateAccounts()
+        break
       else:
         # Fork and run the key regeneration and account creation while the
         # parent waits for the subprocess to finish before continuing.
+        
+        # Create a pipe used to get the new etag value from child
+        reader, writer = os.pipe() # these are file descriptors, not file objects        
         pid = os.fork()
         if pid:
+          # we are the parent
+          os.close(writer)
+          reader = os.fdopen(reader) # turn r into a file object
+          self.desired_accounts.ssh_keys_etag = reader.read()
+          reader.close()
+          logging.debug('New etag: %s', self.desired_accounts.ssh_keys_etag)
           os.waitpid(pid, 0)
         else:
+          # we are the child
+          os.close(reader)
+          writer = os.fdopen(writer, 'w')
           self.RegenerateKeysAndCreateAccounts()
+
+          # Write the etag to pass to parent
+          writer.write(self.desired_accounts.ssh_keys_etag)
+          writer.close()
+
           # The use of os._exit here is recommended for subprocesses spawned
           # by forking to avoid issues with running the cleanup tasks that
           # sys.exit() runs by preventing issues from the cleanup being run
           # once by the subprocess and once by the parent process.
           os._exit(0)
-
-      if self.interval == -1:
-        break
-      time.sleep(self.interval)
 
   def RegenerateKeysAndCreateAccounts(self):
     """Regenerate the keys and create accounts as needed."""

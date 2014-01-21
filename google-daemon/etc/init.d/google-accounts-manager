@@ -69,7 +69,7 @@ fi
 do_start()
 {
   # One-shot run prior to daemonizing.
-  $DAEMON --interval=-1
+  $DAEMON --single-pass
 
   # Return
   #   0 if daemon has been started
