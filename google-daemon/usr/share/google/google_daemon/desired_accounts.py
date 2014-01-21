@@ -83,7 +83,7 @@ class DesiredAccounts(object):
     while self.time.time() - start_time < timeout_secs:
       try:
         response = self._MakeHangingGetRequest(
-            ATTRIBUTES_URL, etag=0)
+            ATTRIBUTES_URL, etag=etag)
         response_info = response.info()
         if response_info and response_info.has_key('etag'):
           etag = response_info.getheader('etag')
