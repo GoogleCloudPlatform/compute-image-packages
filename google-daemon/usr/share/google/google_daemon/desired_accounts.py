@@ -15,7 +15,7 @@
 
 """Get the accounts desired to be present on the VM."""
 
-import ast
+import json
 import logging
 import time
 import urllib2
@@ -89,7 +89,7 @@ class DesiredAccounts(object):
           etag = response_info.getheader('etag')
         attributes_string = response.read()
         logging.debug('project attributes: %s', attributes_string)
-        attributes = ast.literal_eval(attributes_string)
+        attributes = json.loads(attributes_string)
         if attributes and attributes.has_key('sshKeys'):
           return True
       except (urllib2.URLError, ValueError) as e:
