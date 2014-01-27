@@ -97,18 +97,12 @@ class DesiredAccounts(object):
         response_info = response.info()
         if response_info and response_info.has_key('etag'):
           etag = response_info.getheader('etag')
-        attribute_value = response.read()
-        logging.debug('response: %s', attribute_value)
-        return (attribute_value, etag)
-      except urllib2.URLError as e:
-        if e.code == 404:
-          # The attribute doesn't exist. Return None. 
-          # No need to log a warning.
-          return None
-        logging.warning(
-            'Error while trying to fetch attribute: %s',
-            e)
-      except ValueError as e:
+        attributes_string = response.read()
+        logging.debug('project attributes: %s', attributes_string)
+        attributes = json.loads(attributes_string)
+        if attributes and attributes.has_key('sshKeys'):
+          return True
+      except (urllib2.URLError, ValueError) as e:
         logging.warning(
             'Error while trying to fetch attribute: %s',
             e)
