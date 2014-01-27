@@ -57,9 +57,14 @@ class AccountsManager(object):
           # we are the parent
           os.close(writer)
           reader = os.fdopen(reader) # turn r into a file object
-          self.desired_accounts.ssh_keys_etag = reader.read()
+          etags = reader.read()
+          if etags:
+            etags_list = etags.split(',')
+            if etags_list:
+              self.desired_accounts.attributes_etag = etags_list[0]
+              self.desired_accounts.instance_sshkeys_etag = etags_list[1]
           reader.close()
-          logging.debug('New etag: %s', self.desired_accounts.ssh_keys_etag)
+          logging.debug('New etag: %s', self.desired_accounts.attributes_etag)
           os.waitpid(pid, 0)
         else:
           # we are the child
@@ -68,7 +73,9 @@ class AccountsManager(object):
           self.RegenerateKeysAndCreateAccounts()
 
           # Write the etag to pass to parent
-          writer.write(self.desired_accounts.ssh_keys_etag)
+          writer.write(
+              '%s,%s' % (self.desired_accounts.attributes_etag,
+                         self.desired_accounts.instance_sshkeys_etag))
           writer.close()
 
           # The use of os._exit here is recommended for subprocesses spawned
