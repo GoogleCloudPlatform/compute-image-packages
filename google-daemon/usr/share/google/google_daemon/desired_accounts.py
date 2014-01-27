@@ -15,7 +15,6 @@
 
 """Get the accounts desired to be present on the VM."""
 
-import ast
 import logging
 import time
 import urllib2
