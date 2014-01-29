@@ -35,8 +35,8 @@ fi
 
 declare -r BOTO_SETUP_SCRIPT=/usr/share/google/boto/boot_setup.py
 
-declare -r WGET_MAX_RETRIES=10
-declare -r WGET_TIMEOUT=10
+declare -r CURL_RETRY_LIMIT=10
+declare -r CURL_TIMEOUT=10
 
 declare -r STARTUP_SCRIPT=/var/run/google.startup.script
 
@@ -86,8 +86,8 @@ function download_url_with_logfile() {
 
   # Unauthenticated download of the object.
   log "Downloading url from ${url} to ${dest} using wget"
-  wget -T ${WGET_TIMEOUT} -t ${WGET_MAX_RETRIES} -o ${logfile} -O ${dest} -- \
-    ${url} && return 0;
+  curl --max-time "${CURL_TIMEOUT}" --retry "${CURL_RETRY_LIMIT}" \
+    2> "${logfile}" -o ${dest} -- "${url}" && return 0;
 
   log "Failed to download $url"
   return 1
