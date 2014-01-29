@@ -37,6 +37,6 @@ if [[ -n "$new_host_name" ]]; then
   hostname ${new_host_name%%.*}
 
   # Let syslogd know we've changed the hostname.
-  killall -HUP syslogd
+  pkill -HUP syslogd
 fi
 
