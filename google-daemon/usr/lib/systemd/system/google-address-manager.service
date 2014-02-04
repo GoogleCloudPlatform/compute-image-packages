@@ -4,10 +4,8 @@ After=network.target
 Requires=network.target
 
 [Service]
-ExecStart=/usr/share/google/google_daemon/manage_addresses.py
-ExecStop=/bin/kill -TERM $MAINPID
-PIDFile=/var/run/google/google_daemon.pid
 Type=simple
+ExecStart=/usr/share/google/google_daemon/manage_addresses.py
 
 [Install]
 WantedBy=multi-user.target
