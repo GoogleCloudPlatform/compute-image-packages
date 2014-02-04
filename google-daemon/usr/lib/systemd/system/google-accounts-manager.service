@@ -7,7 +7,6 @@ Requires=network.target
 [Service]
 Type=simple
 ExecStart=/usr/share/google/google_daemon/manage_accounts.py
-PIDFile=/var/run/manage_accounts.pid
 
 [Install]
 WantedBy=multi-user.target
