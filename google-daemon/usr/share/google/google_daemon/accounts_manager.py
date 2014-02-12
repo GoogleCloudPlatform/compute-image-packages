@@ -14,6 +14,7 @@
 
 """Main driver logic for managing accounts on GCE instances."""
 
+import json
 import logging
 import os
 import time
@@ -57,9 +58,14 @@ class AccountsManager(object):
           # we are the parent
           os.close(writer)
           reader = os.fdopen(reader) # turn r into a file object
-          self.desired_accounts.ssh_keys_etag = reader.read()
+          json_tags = reader.read()
+          if json_tags:
+            etags = json.loads(json_tags)
+            if etags:
+              self.desired_accounts.attributes_etag = etags[0]
+              self.desired_accounts.instance_sshkeys_etag = etags[1]
           reader.close()
-          logging.debug('New etag: %s', self.desired_accounts.ssh_keys_etag)
+          logging.debug('New etag: %s', self.desired_accounts.attributes_etag)
           os.waitpid(pid, 0)
         else:
           # we are the child
@@ -68,7 +74,10 @@ class AccountsManager(object):
           self.RegenerateKeysAndCreateAccounts()
 
           # Write the etag to pass to parent
-          writer.write(self.desired_accounts.ssh_keys_etag)
+          json_tags = json.dumps(
+              [self.desired_accounts.attributes_etag,
+               self.desired_accounts.instance_sshkeys_etag])
+          writer.write(json_tags)
           writer.close()
 
           # The use of os._exit here is recommended for subprocesses spawned
