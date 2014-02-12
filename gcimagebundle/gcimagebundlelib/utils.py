@@ -45,6 +45,7 @@ class LoadDiskImage(object):
 
   def __enter__(self):
     """Map disk image as a device."""
+    SyncFileSystem()
     kpartx_cmd = ['kpartx', '-a', '-v', '-s', self._file_path]
     output = RunCommand(kpartx_cmd)
     devs = []
@@ -63,6 +64,7 @@ class LoadDiskImage(object):
       unused_exc_value: unused.
       unused_exc_tb: unused.
     """
+    SyncFileSystem()
     kpartx_cmd = ['kpartx', '-d', '-v', '-s', self._file_path]
     RunCommand(kpartx_cmd)
 
