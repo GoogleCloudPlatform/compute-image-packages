@@ -164,6 +164,9 @@ def main():
 
   temp_file_name = tempfile.mktemp(dir=scratch_dir, suffix='.tar.gz')
 
+  # Make sure all the data is written to the file system before bundling the disk.
+  utils.SyncFileSystem()
+  
   file_system = GetTargetFilesystem(options, guest_platform)
   logging.info('File System: %s', file_system)
   logging.info('Disk Size: %s bytes', options.fs_size)
