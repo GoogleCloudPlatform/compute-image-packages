@@ -77,6 +77,10 @@ def SetupArgsParser():
   parser.add_option('-f', '--filesystem', dest='file_system',
                     default=None,
                     help='File system type for the image.')
+  parser.add_option('--skip_disk_space_check', dest='skip_disk_space_check',
+                    default=False, action='store_true',
+                    help='Skip the disk space requirement check.')
+
   return parser
 
 
@@ -167,7 +171,8 @@ def main():
   file_system = GetTargetFilesystem(options, guest_platform)
   logging.info('File System: %s', file_system)
   logging.info('Disk Size: %s bytes', options.fs_size)
-  bundle = block_disk.RootFsRaw(options.fs_size, file_system)
+  bundle = block_disk.RootFsRaw(
+      options.fs_size, file_system, options.skip_disk_space_check)
   bundle.SetTarfile(temp_file_name)
   if options.disk:
     readlink_command = ['readlink', '-f', options.disk]

@@ -72,6 +72,13 @@ class MockHttp(utils.Http):
         return self._instance_response
     raise urllib2.HTTPError
 
+class StatvfsResult:
+  """ A struct for partial os.statvfs result, used to mock the result. """
+
+  def __init__(self, f_bsize, f_blocks, f_bfree):
+    self.f_bsize = f_bsize
+    self.f_blocks = f_blocks
+    self.f_bfree = f_bfree
 
 class ImageBundleTest(unittest.TestCase):
   """ImageBundle Unit Test Base Class."""
