@@ -378,10 +378,6 @@ class Accounts(object):
       user_lines = [
           lines[i] for i in range(len(lines)) if i not in google_added_ixs]
 
-      # Make sure the keys_file has the right perms (u+rw).
-      self.os.fchmod(keys_file.fileno(), 0600)
-      self.os.fchown(keys_file.fileno(), uid, gid)
-
       # First write user's entries.
       for user_line in user_lines:
         keys_file.write(EnsureTrailingNewline(user_line))
@@ -393,6 +389,10 @@ class Accounts(object):
 
     # Override the old authorized keys file with the new one.
     self.system.MoveFile(new_keys_path, authorized_keys_file)
+
+    # Make sure the authorized_keys_file has the right perms (u+rw).
+    self.os.chmod(authorized_keys_file, 0600)
+    self.os.chown(authorized_keys_file, uid, gid)
 
     # Set SELinux context, if applicable to this system
     self.SetSELinuxContext(authorized_keys_file)
