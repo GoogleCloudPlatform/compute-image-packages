@@ -421,7 +421,8 @@ class RootFsRawTest(image_bundle_test_base.ImageBundleTest):
 
   def setUp(self):
     super(RootFsRawTest, self).setUp()
-    self._bundle = block_disk.RootFsRaw(10*1024*1024, 'ext4')
+    self._bundle = block_disk.RootFsRaw(
+        10*1024*1024, 'ext4', False, self._MockStatvfs)
     self._tar_path = self.tmp_path + '/image.tar.gz'
     self._bundle.SetTarfile(self._tar_path)
     self._bundle.AppendExcludes([exclude_spec.ExcludeSpec(self._tar_path)])
@@ -451,6 +452,38 @@ class RootFsRawTest(image_bundle_test_base.ImageBundleTest):
       return
     self.fail()
 
+  def testRootRawDiskNotEnoughFreeSpace(self):
+    """Tests that there is not enough disk space to complete the operation."""
+    self._statvfs_map = {
+      "/" : image_bundle_test_base.StatvfsResult(1024, 500, 100),
+      "/tmp" : image_bundle_test_base.StatvfsResult(1024, 500, 100)
+      }
+    self._bundle.AddSource("/")
+    self._bundle.SetKey('key')
+    try:
+      self._bundle.Verify()
+    except block_disk.InvalidRawDiskError as e:
+      print str(e)
+      return
+    self.fail()
+
+  def testRootFilesExceedDiskSize(self):
+    """Tests that source files may exceed the raw disk file size limit."""
+    self._statvfs_map = {
+      "/" : image_bundle_test_base.StatvfsResult(1024, 50000, 20000),
+      "/tmp" : image_bundle_test_base.StatvfsResult(1024, 100000, 90000)
+      }
+    self._bundle.AddSource("/")
+    self._bundle.SetKey('key')
+    try:
+      self._bundle.Verify()
+    except block_disk.InvalidRawDiskError as e:
+      print str(e)
+      return
+    self.fail()
+
+  def _MockStatvfs(self, file_path):
+      return self._statvfs_map[file_path] 
 
 def main():
   logging.basicConfig(level=logging.DEBUG)

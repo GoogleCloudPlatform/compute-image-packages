@@ -117,7 +117,6 @@ class FsRawDisk(fs_copy.FsCopy):
       RawDiskError: If number of partitions in a created image doesn't match
                     expected count.
     """
-    self._Verify()
 
     # Create sparse file with specified size
     disk_file_path = os.path.join(self._scratch_dir, 'disk.raw')
@@ -313,8 +312,12 @@ class RootFsRaw(FsRawDisk):
   Takes care of additional checks for a root file system.
   """
 
-  def __init__(self, fs_size, fs_type):
+  def __init__(
+      self, fs_size, fs_type, skip_disk_space_check, statvfs = os.statvfs):
+    # statvfs parameter is for unit test to mock out os.statvfs call.
     super(RootFsRaw, self).__init__(fs_size, fs_type)
+    self._skip_disk_space_check = skip_disk_space_check
+    self._statvfs = statvfs
 
   def _Verify(self):
     super(RootFsRaw, self)._Verify()
@@ -324,3 +327,60 @@ class RootFsRaw(FsRawDisk):
     # check that destination field is empty.
     if self._srcs[0][1]:
       raise InvalidRawDiskError('Root filesystems must be copied as /')
+    if (not self._skip_disk_space_check and
+        self._srcs[0][0] == '/'):
+      self._VerifyDiskSpace()
+
+  def _VerifyDiskSpace(self):
+    """Verify that there is enough free disk space to generate the image file"""
+    # We use a very quick and simplistic check, 
+    # DiskSpaceNeeded = disk.raw + image.tar.gz + LogFile
+    # disk.raw = PartitionTable + AllFilesCopied
+    # AllFilesCopied = RootDiskSize - RootDiskFreeSize - ExcludedFiles
+    # We ignore LogFile, PartitionTable, and ExcludedFiles.
+    # Some empirical experience showed that the compression ratio of the
+    # tar.gz file is about 1/3. To be conservative, we assume image.tar.gz is
+    # about 40% of disk.raw file.
+    # As a result, DiskSpaceNeeded=1.4*(RootDiskSize - RootDiskFreeSize)
+    # TODO(user): Make this check more accurate because ignoring ExcludedFiles 
+    # can result in significant overestimation of disk
+    # space needed if the user has large disk space used in /tmp, for example.
+    root_fs = self._statvfs(self._srcs[0][0])
+    disk_space_needed = long(1.4 * root_fs.f_bsize * (root_fs.f_blocks -
+        root_fs.f_bfree))
+    logging.info(("Root disk on %s: f_bsize=%d f_blocks=%d f_bfree=%d. "
+                  "Estimated space needed is %d (may be overestimated)."), 
+                 self._srcs[0][0], 
+                 root_fs.f_bsize, 
+                 root_fs.f_blocks,
+                 root_fs.f_bfree,
+                 disk_space_needed)
+
+    # self._scratch_dir is where we will put the disk.raw and *.tar.gz file.
+    scratch_fs = self._statvfs(self._scratch_dir)
+    free_space = scratch_fs.f_bsize * scratch_fs.f_bfree
+    logging.info("Free disk space for %s is %d bytes.", 
+                 self._scratch_dir, 
+                 free_space)
+
+    if disk_space_needed > free_space:
+      errorMessage = ("The operation may require up to %d bytes of disk space. "
+        "However, the free disk space for %s is %d bytes.  Please consider "
+        "freeing more disk space.  Note that the disk space required may "
+        "be overestimated because it does not exclude temporary files that "
+        "will not be copied.  You may use --skip_disk_space_check to disable "
+        "this check.") % (disk_space_needed, self._scratch_dir, free_space)
+      raise InvalidRawDiskError(errorMessage)
+    if disk_space_needed > self._fs_size:
+      errorMessage = ("The root disk files to be copied may require up to %d "
+          "bytes. However, the limit on the image disk file is %d bytes.  "
+          "Please consider deleting unused files from root disk, "
+          "or increasing the image disk file limit with --fssize option.  "
+          "Note that the disk space required may "
+          "be overestimated because it does not exclude temporary files that "
+          "will not be copied.  You may use --skip_disk_space_check to disable "
+          "this check.") % (disk_space_needed, self._fs_size)
+      raise InvalidRawDiskError(errorMessage)
+    
+
+
