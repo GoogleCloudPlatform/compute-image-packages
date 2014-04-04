@@ -166,4 +166,3 @@ class DesiredAccounts(object):
     
     self.attributes_etag = attributes_etag_cache
     return AccountDataToDictionary(account_data)
-
