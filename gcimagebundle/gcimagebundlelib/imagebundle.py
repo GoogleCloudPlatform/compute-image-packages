@@ -27,6 +27,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 
 from gcimagebundlelib import block_disk
 from gcimagebundlelib import exclude_spec
@@ -129,7 +130,11 @@ def SetupLogging(options, log_dir='/tmp'):
   else:
     logfile = tempfile.mktemp(dir=log_dir, prefix='bundle_log_')
   print 'Starting logging in %s' % logfile
-  logging.basicConfig(filename=logfile, level=GetLogLevel(options))
+  logging.basicConfig(filename=logfile,
+                      level=GetLogLevel(options),
+                      format='%(asctime)s %(levelname)s:%(name)s:%(message)s')
+  # Use GMT timestamp in logging.
+  logging.Formatter.converter=time.gmtime
   console = logging.StreamHandler()
   console.setLevel(GetLogLevel(options))
   logging.getLogger().addHandler(console)
