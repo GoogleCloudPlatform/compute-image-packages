@@ -101,7 +101,7 @@ class DesiredAccounts(object):
       logging.debug('response: %s', attribute_value)
       return (attribute_value, etag)
     except urllib2.HTTPError as e:
-      if e.code == 401:
+      if e.code == 404:
         # The attribute doesn't exist. Return None. 
         # No need to log a warning.
         return None
