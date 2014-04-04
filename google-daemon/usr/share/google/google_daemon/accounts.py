@@ -76,7 +76,7 @@ class Accounts(object):
     self.urllib2 = urllib2_module
 
     self.default_user_groups = self.GroupsThatExist(
-        ['adm', 'video', 'dip', 'plugdev'])
+        ['adm', 'video', 'dip', 'plugdev', 'sudo'])
 
   def CreateUser(self, username, ssh_keys):
     """Create username on the system, with authorized ssh_keys."""
