@@ -37,6 +37,8 @@ def AccountDataToDictionary(data):
   Returns:
     A map of {'username': ssh_keys_list}.
   """
+  if not data:
+    return {}
   lines = [line for line in data.splitlines() if line]
   usermap = {}
   for line in lines:
@@ -89,29 +91,23 @@ class DesiredAccounts(object):
       Tuple containing the string value of attribute and new etag.
       If attribute doesn't exist, None.
     """
-    start_time = self.time.time()
-    while self.time.time() - start_time < timeout_secs:
-      try:
-        response = self._MakeHangingGetRequest(
-            attribute_url, etag=etag, timeout_secs=timeout_secs)
-        response_info = response.info()
-        if response_info and response_info.has_key('etag'):
-          etag = response_info.getheader('etag')
-        attribute_value = response.read()
-        logging.debug('response: %s', attribute_value)
-        return (attribute_value, etag)
-      except urllib2.URLError as e:
-        if e.code == 404:
-          # The attribute doesn't exist. Return None. 
-          # No need to log a warning.
-          return None
-        logging.warning(
-            'Error while trying to fetch attribute: %s',
-            e)
-      except ValueError as e:
-        logging.warning(
-            'Error while trying to fetch attribute: %s',
-            e)
+    try:
+      response = self._MakeHangingGetRequest(
+          attribute_url, etag=etag, timeout_secs=timeout_secs)
+      response_info = response.info()
+      if response_info and response_info.has_key('etag'):
+        etag = response_info.getheader('etag')
+      attribute_value = response.read()
+      logging.debug('response: %s', attribute_value)
+      return (attribute_value, etag)
+    except urllib2.HTTPError as e:
+      if e.code == 404:
+        # The attribute doesn't exist. Return None. 
+        # No need to log a warning.
+        return None
+      # rethrow the exception since we don't know what it is. Let the
+      # top layer handle it
+      raise
     return None
 
   def GetDesiredAccounts(self):
@@ -121,53 +117,52 @@ class DesiredAccounts(object):
       A dict of the form: {'username': ['sshkey1, 'sshkey2', ...]}.
     """
     logging.debug('Getting desired accounts from metadata.')
-    try:
-      # Fetch the top level attribute with a hanging get
-      attribute_data = self._GetAttribute(
-          ATTRIBUTES_URL,
-          etag=self.attributes_etag)
-      if attribute_data:
-        self.attributes_etag = attribute_data[1]
+    # Fetch the top level attribute with a hanging get
+    attribute_data = self._GetAttribute(
+        ATTRIBUTES_URL,
+        etag=self.attributes_etag)
+    if attribute_data:
+      # Store the project level attributes etag value. If
+      # we are able to successfully fetch the attributes we will
+      # update the class member with this value.
+      attributes_etag_cache = attribute_data[1]
 
-      # Something has changed. Assume it is the sshKeys. This is not
-      # ideal, however, given that metadata updates are rare
-      # making this assumption simplifies the code complexity.
-      #
-      # sshKeys attribute can exist in either the instance attributes
-      # collection or the project attributes collection. If it is present
-      # in the instance attributes collection, then that value is used
-      # and the project level value is ignored.
-      # Check if instance attributes collection has sshKeys attribute.
-      # We can run this call as a hanging get since if the instance
-      # level attribute exists we can ignore any changes to the project
-      # level key.
-      attribute_data = self._GetAttribute(
-          INSTANCE_SSHKEYS_URL,
-          etag = self.instance_sshkeys_etag)
+    # Something has changed. Assume it is the sshKeys. This is not
+    # ideal, however, given that metadata updates are not common
+    # making this assumption simplifies the code complexity.
+    #
+    # sshKeys attribute can exist in either the instance attributes
+    # collection or the project attributes collection. If it is present
+    # in the instance attributes collection, then that value is used
+    # and the project level value is ignored.
+    # Check if instance attributes collection has sshKeys attribute.
+    # We can run this call as a hanging get since if the instance
+    # level attribute exists we can ignore any changes to the project
+    # level key.
+    attribute_data = self._GetAttribute(
+        INSTANCE_SSHKEYS_URL,
+        etag = self.instance_sshkeys_etag)
+    if attribute_data:
+      logging.info('Found instance sshKeys attribute.')
+      # There is an sshKeys attribute on the instance. Use it
+      account_data = attribute_data[0]
+      self.instance_sshkeys_etag = attribute_data[1]
+    else:
+      # Fetch the sshKeys attribute from project collection. We cannot
+      # use a hanging get here since it is possible this call may take
+      # a long time and during that the instance metadata can change which
+      # we will miss.
+      logging.info(
+          'Instance sshKeys attribute not found. Falling back to project')
+      attribute_data = self._GetAttribute(PROJECT_SSHKEYS_URL)
       if attribute_data:
-        logging.debug('Found instance sshKeys attribute.')
-        # There is an sshKeys attribute on the instance. Use it
+        logging.info('Project sshKeys attribute found.')
+        # There is an sshKeys attribute. Use it
         account_data = attribute_data[0]
-        self.instance_sshkeys_etag = attribute_data[1]
       else:
-        # Fetch the sshKeys attribute from project collection. We cannot
-        # use a hanging get here since it is possible this call may take
-        # a long time and during that the instance metadata can change which
-        # we will miss.
-        logging.debug(
-            'Instance sshKeys attribute not found. Falling back to project')
-        attribute_data = self._GetAttribute(PROJECT_SSHKEYS_URL)
-        if attribute_data:
-          logging.debug('Project sshKeys attribute found. %s',
-                        attribute_data[0])
-          # There is an sshKeys attribute. Use it
-          account_data = attribute_data[0]
-        else:
-          logging.debug('Project sshKeys attribute not found.')
-          # sshKeys doesn't exist for either project or instance.
-          return {}
-      return AccountDataToDictionary(account_data)
-    except urllib2.URLError as e:
-      logging.debug('error while trying to fetch accounts: %s', e)
-    return {}  # No desired accounts at this time.
-
+        logging.info('Project sshKeys attribute not found.')
+        # sshKeys doesn't exist for either project or instance.
+        account_data = None
+    
+    self.attributes_etag = attributes_etag_cache
+    return AccountDataToDictionary(account_data)

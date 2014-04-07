@@ -39,52 +39,57 @@ class AccountsManager(object):
 
   def Main(self):
     logging.debug('AccountsManager main loop')
-    # Run this once per interval forever.
+    # If this is a one-shot execution, then this can be run normally.
+    # Otherwise, run the actual operations in a subprocess so that any
+    # errors don't kill the long-lived process.
+    if self.single_pass:
+      self.RegenerateKeysAndCreateAccounts()
+      return
+    # Run this forever in a loop.
     while True:
-      # If this is a one-shot execution, then this can be run normally.
-      # Otherwise, run the actual operations in a subprocess so that any
-      # errors don't kill the long-lived process.
-      if self.single_pass:
-        self.RegenerateKeysAndCreateAccounts()
-        break
+      # Fork and run the key regeneration and account creation while the
+      # parent waits for the subprocess to finish before continuing.
+      
+      # Create a pipe used to get the new etag value from child
+      reader, writer = os.pipe() # these are file descriptors, not file objects        
+      pid = os.fork()
+      if pid:
+        # we are the parent
+        os.close(writer)
+        reader = os.fdopen(reader) # turn r into a file object
+        json_tags = reader.read()
+        if json_tags:
+          etags = json.loads(json_tags)
+          if etags:
+            self.desired_accounts.attributes_etag = etags[0]
+            self.desired_accounts.instance_sshkeys_etag = etags[1]
+        reader.close()
+        logging.debug('New etag: %s', self.desired_accounts.attributes_etag)
+        os.waitpid(pid, 0)
       else:
-        # Fork and run the key regeneration and account creation while the
-        # parent waits for the subprocess to finish before continuing.
-        
-        # Create a pipe used to get the new etag value from child
-        reader, writer = os.pipe() # these are file descriptors, not file objects        
-        pid = os.fork()
-        if pid:
-          # we are the parent
-          os.close(writer)
-          reader = os.fdopen(reader) # turn r into a file object
-          json_tags = reader.read()
-          if json_tags:
-            etags = json.loads(json_tags)
-            if etags:
-              self.desired_accounts.attributes_etag = etags[0]
-              self.desired_accounts.instance_sshkeys_etag = etags[1]
-          reader.close()
-          logging.debug('New etag: %s', self.desired_accounts.attributes_etag)
-          os.waitpid(pid, 0)
-        else:
-          # we are the child
-          os.close(reader)
-          writer = os.fdopen(writer, 'w')
+        # we are the child
+        os.close(reader)
+        writer = os.fdopen(writer, 'w')
+        try:
           self.RegenerateKeysAndCreateAccounts()
+        except Exception as e:
+          logging.warning('error while trying to create accounts: %s', e)
+          # An error happened while trying to create the accounts. Lets sleep a
+          # bit to avoid getting stuck in a loop for intermittent errors.
+          time.sleep(5)
 
-          # Write the etag to pass to parent
-          json_tags = json.dumps(
-              [self.desired_accounts.attributes_etag,
-               self.desired_accounts.instance_sshkeys_etag])
-          writer.write(json_tags)
-          writer.close()
+        # Write the etag to pass to parent
+        json_tags = json.dumps(
+            [self.desired_accounts.attributes_etag,
+             self.desired_accounts.instance_sshkeys_etag])
+        writer.write(json_tags)
+        writer.close()
 
-          # The use of os._exit here is recommended for subprocesses spawned
-          # by forking to avoid issues with running the cleanup tasks that
-          # sys.exit() runs by preventing issues from the cleanup being run
-          # once by the subprocess and once by the parent process.
-          os._exit(0)
+        # The use of os._exit here is recommended for subprocesses spawned
+        # by forking to avoid issues with running the cleanup tasks that
+        # sys.exit() runs by preventing issues from the cleanup being run
+        # once by the subprocess and once by the parent process.
+        os._exit(0)
 
   def RegenerateKeysAndCreateAccounts(self):
     """Regenerate the keys and create accounts as needed."""
@@ -97,6 +102,7 @@ class AccountsManager(object):
   def CreateAccounts(self):
     """Create all accounts that should be present."""
     desired_accounts = self.desired_accounts.GetDesiredAccounts()
+    
     if not desired_accounts:
       return
 
