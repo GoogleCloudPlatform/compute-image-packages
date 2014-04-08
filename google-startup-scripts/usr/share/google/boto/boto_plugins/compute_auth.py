@@ -21,7 +21,7 @@ from boto.auth_handler import AuthHandler
 from boto.auth_handler import NotReadyToAuthenticate
 
 META_DATA_SERVER_BASE_URL=(
-    'http://metadata.google.internal/computeMetadata/v1')
+    'http://169.254.169.254/computeMetadata/v1')
 
 SERVICE_ACCOUNT_SCOPES_URL=(META_DATA_SERVER_BASE_URL +
     '/instance/service-accounts/%s/scopes?alt=json')

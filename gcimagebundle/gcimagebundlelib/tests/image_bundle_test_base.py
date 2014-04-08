@@ -64,10 +64,10 @@ class MockHttp(utils.Http):
   def Get(self, request):
     """Accepts an Http request and returns a precanned response."""
     url = request.get_full_url()
-    if url == 'http://metadata/computeMetadata/':
+    if url == 'http://169.254.169.254/computeMetadata/':
       return 'v1/'
-    elif url.startswith('http://metadata/computeMetadata/v1/'):
-      url = url.replace('http://metadata/computeMetadata/v1/', '')
+    elif url.startswith('http://169.254.169.254/computeMetadata/v1/'):
+      url = url.replace('http://169.254.169.254/computeMetadata/v1/', '')
       if url == 'instance/?recursive=true':
         return self._instance_response
     raise urllib2.HTTPError

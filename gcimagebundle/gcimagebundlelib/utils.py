@@ -397,7 +397,7 @@ class Http(object):
 
     Args:
       url_path: The path of the metadata url after the api version.
-                http://metadata/computeMetadata/v1/url_path
+                http://169.254.169.254/computeMetadata/v1/url_path
       recursive: If set, returns the tree of metadata starting at url_path as
                  a json string.
     Returns:
@@ -405,7 +405,7 @@ class Http(object):
 
     """
     # Use the latest version of the metadata.
-    base_url = 'http://metadata/computeMetadata/v1/'
+    base_url = 'http://169.254.169.254/computeMetadata/v1/'
     suffix = ''
     if recursive:
       suffix = '?recursive=true'
