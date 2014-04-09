@@ -20,12 +20,12 @@ import time
 import urllib2
 
 
-ATTRIBUTES_URL = (
-    'http://169.254.169.254/computeMetadata/v1/?recursive=true&%s')
+METADATA_V1_URL_PREFIX = 'http://169.254.169.254/computeMetadata/v1/'
+ATTRIBUTES_URL = METADATA_V1_URL_PREFIX + '?recursive=true&%s'
 INSTANCE_SSHKEYS_URL = (
-    'http://169.254.169.254/computeMetadata/v1/instance/attributes/sshKeys?%s')
+    METADATA_V1_URL_PREFIX + 'instance/attributes/sshKeys?%s')
 PROJECT_SSHKEYS_URL = (
-    'http://169.254.169.254/computeMetadata/v1/project/attributes/sshKeys?%s')
+    METADATA_V1_URL_PREFIX + 'project/attributes/sshKeys?%s')
 WAIT_FOR_CHANGE = 'wait_for_change=true&last_etag=%s&timeout_sec=%s'
 
 
