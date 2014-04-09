@@ -21,6 +21,9 @@ import subprocess
 import time
 import urllib2
 
+METADATA_URL_PREFIX = 'http://169.254.169.254/computeMetadata/'
+METADATA_V1_URL_PREFIX = METADATA_URL_PREFIX + 'v1/'
+
 
 class MakeFileSystemException(Exception):
   """Error occurred in file system creation."""
@@ -397,7 +400,7 @@ class Http(object):
 
     Args:
       url_path: The path of the metadata url after the api version.
-                http://metadata/computeMetadata/v1/url_path
+                http://169.254.169.254/computeMetadata/v1/url_path
       recursive: If set, returns the tree of metadata starting at url_path as
                  a json string.
     Returns:
@@ -405,11 +408,10 @@ class Http(object):
 
     """
     # Use the latest version of the metadata.
-    base_url = 'http://metadata/computeMetadata/v1/'
     suffix = ''
     if recursive:
       suffix = '?recursive=true'
-    url = '{0}{1}{2}'.format(base_url, url_path, suffix)
+    url = '{0}{1}{2}'.format(METADATA_V1_URL_PREFIX, url_path, suffix)
     request = urllib2.Request(url)
     request.add_unredirected_header('X-Google-Metadata-Request', 'True')
     return self.Get(request)

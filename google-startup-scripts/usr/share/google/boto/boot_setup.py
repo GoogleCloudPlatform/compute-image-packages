@@ -29,7 +29,7 @@ import sys
 import textwrap
 import urllib2
 
-NUMERIC_PROJECT_ID_URL=('http://metadata.google.internal/'
+NUMERIC_PROJECT_ID_URL=('http://169.254.169.254/'
                         'computeMetadata/v1/project/numeric-project-id')
 SYSTEM_BOTO_CONFIG_TEMPLATE='/etc/boto.cfg.template'
 SYSTEM_BOTO_CONFIG='/etc/boto.cfg'

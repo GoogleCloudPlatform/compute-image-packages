@@ -36,7 +36,7 @@ import time
 import urllib2
 
 PUBLIC_ENDPOINT_URL_PREFIX = (
-'http://metadata/computeMetadata/v1/instance/network-interfaces/0/forwarded-ips/?recursive=true&alt=text&wait_for_change=true&timeout_sec=60&last_etag=')
+'http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/forwarded-ips/?recursive=true&alt=text&wait_for_change=true&timeout_sec=60&last_etag=')
 GOOGLE_PROTO_ID = 66  # "GG"
 
 class InputError(Exception):

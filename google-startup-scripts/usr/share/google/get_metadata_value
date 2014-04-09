@@ -16,7 +16,7 @@
 # Get a metadata value from the metadata server.
 
 declare -r VARNAME=$1
-declare -r MDS=http://metadata.google.internal/0.1/meta-data
+declare -r MDS=http://169.254.169.254/0.1/meta-data
 declare -r MDS_TRIES=${MDS_TRIES:-100}
 
 function get_metadata_value() {
