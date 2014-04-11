@@ -92,7 +92,7 @@ class FsRawDisk(fs_copy.FsCopy):
       # For now we only support disks with a single partition.
       if len(devices) == 0:
         raise RawDiskError(
-            'Device %s should be a disk not a partition!' % self._disk)
+            'Device %s should be a disk not a partition.' % self._disk)
       elif len(devices) != 1:
         raise RawDiskError(
             'Device %s has more than 1 partition. Only devices '
