@@ -177,9 +177,38 @@ function do_init()
   return 0
 }
 
+function print_ssh_key_fingerprints()
+{
+  log "Outputting SSH public key fingerprints"
+  
+  if [ -x /etc/ssh/ssh_host_rsa_key ]; then
+    echo "RSA"
+    ssh-keygen -l /etc/ssh/ssh_host_rsa_key
+  else
+    echo "No RSA public key found."
+  fi
+  
+  if [ -x /etc/ssh/ssh_host_dsa_key ]; then
+    echo "DSA"
+    ssh-keygen -l /etc/ssh/ssh_host_dsa_key
+  else
+    echo "No DSA public key found."
+  fi
+  
+  if [ -x /etc/ssh/ssh_host_ecdsa_key ]; then
+    echo "ECDSA"
+    ssh-keygen -l /etc/ssh/ssh_host_ecdsa_key
+  else
+    echo "No ECDSA public key found."
+  fi
+  
+  return 0
+}
+
 virtionet_irq_affinity
 first_boot
 do_init
+print_ssh_key_fingerprints
 
 if [ -x /sbin/initctl ]; then
   /sbin/initctl emit --no-wait google-onboot-has-run
