@@ -181,23 +181,23 @@ function print_ssh_key_fingerprints()
 {
   log "Outputting SSH public key fingerprints"
   
-  if [ -x /etc/ssh/ssh_host_rsa_key ]; then
+  if [ -x /etc/ssh/ssh_host_rsa_key.pub ]; then
     echo "RSA"
-    ssh-keygen -l /etc/ssh/ssh_host_rsa_key
+    ssh-keygen -l /etc/ssh/ssh_host_rsa_key.pub
   else
     echo "No RSA public key found."
   fi
   
-  if [ -x /etc/ssh/ssh_host_dsa_key ]; then
+  if [ -x /etc/ssh/ssh_host_dsa_key.pub ]; then
     echo "DSA"
-    ssh-keygen -l /etc/ssh/ssh_host_dsa_key
+    ssh-keygen -l /etc/ssh/ssh_host_dsa_key.pub
   else
     echo "No DSA public key found."
   fi
   
-  if [ -x /etc/ssh/ssh_host_ecdsa_key ]; then
+  if [ -x /etc/ssh/ssh_host_ecdsa_key.pub ]; then
     echo "ECDSA"
-    ssh-keygen -l /etc/ssh/ssh_host_ecdsa_key
+    ssh-keygen -l /etc/ssh/ssh_host_ecdsa_key.pub
   else
     echo "No ECDSA public key found."
   fi
