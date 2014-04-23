@@ -179,7 +179,7 @@ function do_init()
 
 function print_ssh_key_fingerprints()
 {
-  log "Outputting SSH public key fingerprints"
+  log "SSH public key fingerprints"
   
   if [ -e /etc/ssh/ssh_host_rsa_key.pub ]; then
     log "RSA public key"
