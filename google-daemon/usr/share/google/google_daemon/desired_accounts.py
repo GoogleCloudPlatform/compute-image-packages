@@ -144,7 +144,7 @@ class DesiredAccounts(object):
         INSTANCE_SSHKEYS_URL,
         etag = self.instance_sshkeys_etag)
     if attribute_data:
-      logging.info('Found instance sshKeys attribute.')
+      logging.debug('Found instance sshKeys attribute.')
       # There is an sshKeys attribute on the instance. Use it
       account_data = attribute_data[0]
       self.instance_sshkeys_etag = attribute_data[1]
@@ -153,15 +153,15 @@ class DesiredAccounts(object):
       # use a hanging get here since it is possible this call may take
       # a long time and during that the instance metadata can change which
       # we will miss.
-      logging.info(
+      logging.debug(
           'Instance sshKeys attribute not found. Falling back to project')
       attribute_data = self._GetAttribute(PROJECT_SSHKEYS_URL)
       if attribute_data:
-        logging.info('Project sshKeys attribute found.')
+        logging.debug('Project sshKeys attribute found.')
         # There is an sshKeys attribute. Use it
         account_data = attribute_data[0]
       else:
-        logging.info('Project sshKeys attribute not found.')
+        logging.debug('Project sshKeys attribute not found.')
         # sshKeys doesn't exist for either project or instance.
         account_data = None
     
