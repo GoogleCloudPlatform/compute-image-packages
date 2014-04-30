@@ -22,7 +22,7 @@
 
 FSCK=fsck.ext4
 MOUNT_OPTIONS="defaults"
-MKFS="mkfs.ext4 -F"
+MKFS="mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 -F"
 
 LOGTAG=safe_format_and_mount
 LOGFACILITY=user
