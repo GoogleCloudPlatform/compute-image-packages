@@ -85,7 +85,7 @@ function download_url_with_logfile() {
   fi
 
   # Unauthenticated download of the object.
-  log "Downloading url from ${url} to ${dest} using wget"
+  log "Downloading url from ${url} to ${dest} using curl"
   curl --max-time "${CURL_TIMEOUT}" --retry "${CURL_RETRY_LIMIT}" \
     2> "${logfile}" -o ${dest} -- "${url}" && return 0;
 
@@ -99,7 +99,13 @@ function download_url() {
   local readonly logfile=$(mktemp)
   download_url_with_logfile ${url} ${dest} ${logfile}
   return_code=$?
-  rm -f ${logfile}
+  # If the script was unable to download then report to the syslog.
+  if [ "${return_code}" != "0" ]
+  then
+    log $(<${logfile})
+  else
+    rm -f ${logfile}
+  fi
   return ${return_code}
 }
 
