@@ -21,6 +21,9 @@ import subprocess
 import time
 import urllib2
 
+from urllib2 import URLError
+
+
 METADATA_URL_PREFIX = 'http://169.254.169.254/computeMetadata/'
 METADATA_V1_URL_PREFIX = METADATA_URL_PREFIX + 'v1/'
 
@@ -392,10 +395,10 @@ def TarAndGzipFile(src_paths, dest):
 
 
 class Http(object):
-  def Get(self, request):
-    return urllib2.urlopen(request).read()
+  def Get(self, request, timeout_secs=None):
+    return urllib2.urlopen(request, timeout=timeout_secs).read()
 
-  def GetMetadata(self, url_path, recursive=False):
+  def GetMetadata(self, url_path, recursive=False, timeout_secs=None):
     """Retrieves instance metadata.
 
     Args:
@@ -403,6 +406,8 @@ class Http(object):
                 http://169.254.169.254/computeMetadata/v1/url_path
       recursive: If set, returns the tree of metadata starting at url_path as
                  a json string.
+      timeout_secs: How long to wait for blocking operations. A value of None
+                    uses urllib2's default timeout.
     Returns:
       The metadata returned based on the url path.
 
@@ -414,4 +419,32 @@ class Http(object):
     url = '{0}{1}{2}'.format(METADATA_V1_URL_PREFIX, url_path, suffix)
     request = urllib2.Request(url)
     request.add_unredirected_header('X-Google-Metadata-Request', 'True')
-    return self.Get(request)
+    return self.Get(request, timeout_secs=timeout_secs)
+
+
+def IsProviderGCE():
+  """Detect if we are running on GCE.
+
+  Returns:
+      True if we are running on GCE.
+      False otherwise.
+  """
+  # Try the bios first
+  try:
+    output = RunCommand(["dmidecode", "-s", "bios-vendor"])
+    return ("Google" in output)
+  except subprocess.CalledProcessError:
+    # We likely failed in one of the following two ways:
+    #   1. dmidecode doesn't exist
+    #   2. We have insufficient privileges
+    # Swallow the error and try another method.
+    pass
+
+  # Try the metadata server
+  try:
+    Http().GetMetadata("/id", timeout_secs=1)
+    return True
+  except URLError:
+    pass
+
+  return False
