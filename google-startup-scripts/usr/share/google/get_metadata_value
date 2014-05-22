@@ -16,13 +16,13 @@
 # Get a metadata value from the metadata server.
 
 declare -r VARNAME=$1
-declare -r MDS=http://169.254.169.254/0.1/meta-data
+declare -r MDS=http://169.254.169.254/computeMetadata/v1/instance/attributes
 declare -r MDS_TRIES=${MDS_TRIES:-100}
 
 function get_metadata_value() {
   local readonly varname=$1
   local readonly tmpfile=$(mktemp)
-  curl -f ${MDS}/${varname} > ${tmpfile} 2>/dev/null
+  curl -f ${MDS}/${varname} -H "Metadata-Flavor: Google" > ${tmpfile} 2>/dev/null
   local return_code=$?
   if [[ ${return_code} == 0 ]]; then
     cat ${tmpfile}
