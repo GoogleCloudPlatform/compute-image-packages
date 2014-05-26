@@ -1,0 +1,177 @@
+#!/bin/bash
+# Copyright 2013 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+################################################################################
+# This script is freely inspired by this great article by F. Voznika: [1].
+#
+# It tries to take a snapshot from a live VM by stopping the services that most
+# likely impact its disk usage. Please remember that a safe bit-a-bit copy of a
+# disk is guaranteed only on an unattached disk (or disk attached to a VM which
+# is not in state RUNNING).
+#
+# To give you full control, it just outputs what it would do, so you can cut/paste
+# and maybe add additional scripts to the naive "service start/stop" provided here.
+#
+# Note that so far the '/' is prohibited, as this would require part of the code to
+# be executed on another machine (freezing I/O on root disk makes the VM unusable
+# until a reboot is issued)
+#
+# *** ACHTUNG *** THIS SCRIPT IS PROVIDED AS IS. USE AT YOUR OWN RISK.
+#
+# [1] http://googlecloudplatform.blogspot.ch/2013/10/persistent-disk-backups-using-snapshots.html
+################################################################################
+
+VERSION=0.9
+
+set -e
+
+_usage() {
+  echo "Usage: `basename $0` [-s <COMMA_SEPARATED_SERVICES> ] <disk-name> <disk-path> [snapshot-name]"
+  echo "  eg:  `basename $0` -s mysqld,apache2 my-disk /mnt/my-disk"
+  echo
+  echo " disk-name:   The disk name which appears in 'gcutil listdisks'"
+  echo " disk-path:   Physical disk mount-path (NOT root: '/')"
+  echo
+  echo "This script is intended to backup a disk from within a VM. VM has to have"
+  echo "gcutil enable to work. Try gcutil 'listdisks' in advance. It prints out what"
+  echo "it would do and create a script for you to edit and tweak at your will."
+  echo
+  echo "Note. This DOESN'T work for / disk, as fsfreeze tends to prevent everything else"
+  echo " (backup included) from working."
+  echo
+  echo "Disks in /dev/disk/by-id/google-*:"
+  ls /dev/disk/by-id/google-* 2>/dev/null | sed -e "s:/dev/disk/by-id/google-:+ :" | while read D; do echo "- $D"; done
+  echo
+  echo "FATAL: $1"
+}
+
+service_stop() {
+  echo sudo service stop $*
+}
+service_start() {
+  echo sudo service start $*
+}
+
+manage_services() {
+  # accept in $1 the function to start or stop services..
+  CMD="$1"
+  if [ '' != "$SERVICES" ] ; then
+    # I have some services...
+    echo "$SERVICES" | sed -e "s/,/\n/g" | while read S ; do
+      $CMD "$S"
+    done
+  else
+    echo echo No $CMD required. Make sure this is what you want.
+  fi
+}
+
+SERVICES=""
+
+while getopts "hs:" opt; do
+  case $opt in
+    h)
+      _usage "Help option called"
+      shift;;
+    s)
+      SERVICES="$OPTARG";
+      shift 2;; 
+    \?) echo "Invalid option: -"$OPTARG"" >&2
+      exit 1;;
+    : ) echo "Option -"$OPTARG" requires an argument." >&2
+      exit 1;;
+  esac
+done
+
+################################################################################
+# Main function
+################################################################################
+# ARG1: disk          (mandatory)
+# ARG2: DISK_PATH     (mandatory)
+# ARG3: SNPASHOT_NAME (optional)
+MIN_ARGS=2
+MAX_ARGS=3
+if [ $# -lt $MIN_ARGS -o $# -gt $MAX_ARGS ]; then
+  _usage "ARGs=$# (not $MIN_ARGS..$MAX_ARGS)"
+  exit 11
+fi
+
+
+DISK="$1"
+DISK_PATH="$2"
+SNAPSHOT_NAME="${3:-$DISK-safe-snapshot}"
+OUTFILE=/tmp/gce-safe-snapshot-of-disk.$DISK.sh
+
+
+# verifying that the disk exists
+if gcutil listdisks --format csv | egrep "^$DISK," ; then
+  echo "# disk '$DISK' found."
+else
+  _usage "Disk '$DISK' not found with 'gcutil listdisks'"
+fi
+
+# TODO(ricc)
+# verify that mountpoint exists
+
+if [ "$2" = '/' ] ; then
+  _usage "root file system is not possible. fsfreeze would cause everything to freeze."
+   # TODO(ricc): implement a --no-freeze option or alternatively restructure this way:
+   #             allow local freeze, then from other machine create snapshot and resetinstance
+fi
+
+#####################################################################################
+# All good here. Starting to execute
+
+#exec >$OUTFILE 2>&1
+exec > >(tee $OUTFILE)
+
+
+# MAIN
+echo "#!/bin/bash"
+echo
+echo "# The following script takes a snapshot of disk '$DISK' (in '$DISK_PATH')"
+echo "# preventively stopping some services ('$SERVICES') which potentially affect"
+echo "# that disk and creates a snapshot called '$SNAPSHOT_NAME'. Feel free to"
+echo "# copy this output to a file and edit according to your needs."
+echo
+echo "# Disk Name: '$DISK'"
+echo "# Disk Path: '$DISK_PATH'"
+echo
+
+# die at first error
+echo set -e
+echo set -x
+echo "gcutil whoami                                 # checks that gcutil is installed and working, or exits"
+manage_services service_stop
+echo sudo sync
+echo "trap 'sudo fsfreeze -u $DISK_PATH' 0          # the UNFREEZE will be executed anyway"
+echo sudo fsfreeze -f $DISK_PATH
+echo gcutil addsnapshot --source_disk=$DISK $SNAPSHOT_NAME --nosynchronous_mode
+
+echo "while gcutil getsnapshot '$SNAPSHOT_NAME' | grep 'status' | egrep -v 'UPLOADING|READY' ; do"
+echo "  echo 'Waiting for Snapshot to be uploading or finished. Please be patient'"
+echo "  sleep 0.5"
+echo "done"
+echo "# Snapshot '$SNAPSHOT_NAME' appears to have been created"
+
+echo sudo fsfreeze -u $DISK_PATH
+manage_services service_start
+echo echo Snapshot done. Services restarted. All seems good.
+echo
+echo "# File also written here for your convenience: '$OUTFILE'"
+chmod 755 "$OUTFILE"
+
+sync
+exit 0
+
