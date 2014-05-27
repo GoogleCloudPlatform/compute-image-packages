@@ -43,7 +43,8 @@ class ImageManifest(object):
       True Manifest was written to file_path.
       False Manifest was not created.
     """
-    self._LoadLicenses()
+    if utils.IsRunningOnGCE():
+      self._LoadLicenses()
     if self._IsManifestNeeded():
       with open(file_path, 'w') as manifest_file:
         self._WriteToFile(manifest_file)

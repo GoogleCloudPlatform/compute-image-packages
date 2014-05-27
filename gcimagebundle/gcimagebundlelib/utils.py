@@ -392,10 +392,10 @@ def TarAndGzipFile(src_paths, dest):
 
 
 class Http(object):
-  def Get(self, request):
-    return urllib2.urlopen(request).read()
+  def Get(self, request, timeout=None):
+    return urllib2.urlopen(request, timeout=timeout).read()
 
-  def GetMetadata(self, url_path, recursive=False):
+  def GetMetadata(self, url_path, recursive=False, timeout=None):
     """Retrieves instance metadata.
 
     Args:
@@ -403,6 +403,8 @@ class Http(object):
                 http://169.254.169.254/computeMetadata/v1/url_path
       recursive: If set, returns the tree of metadata starting at url_path as
                  a json string.
+      timeout: How long to wait for blocking operations (in seconds).
+               A value of None uses urllib2's default timeout.
     Returns:
       The metadata returned based on the url path.
 
@@ -413,5 +415,32 @@ class Http(object):
       suffix = '?recursive=true'
     url = '{0}{1}{2}'.format(METADATA_V1_URL_PREFIX, url_path, suffix)
     request = urllib2.Request(url)
-    request.add_unredirected_header('X-Google-Metadata-Request', 'True')
-    return self.Get(request)
+    request.add_unredirected_header('Metadata-Flavor', 'Google')
+    return self.Get(request, timeout=timeout)
+
+
+def IsRunningOnGCE():
+  """Detect if we are running on GCE.
+
+  Returns:
+    True if we are running on GCE, False otherwise.
+  """
+  # Try accessing DMI/SMBIOS informations through dmidecode first
+  try:
+    dmidecode_cmd = ['dmidecode', '-s', 'bios-vendor']
+    output = RunCommand(dmidecode_cmd)
+    return 'Google' in output
+  except subprocess.CalledProcessError:
+    # We fail if dmidecode doesn't exist or we have insufficient privileges
+    pass
+
+  # If dmidecode is not working, fallback to contacting the metadata server
+  try:
+    Http().GetMetadata('instance/id', timeout=1)
+    return True
+  except urllib2.HTTPError as e:
+    logging.warning('HTTP error: %s (http status code=%s)' % (e.reason, e.code))
+  except urllib2.URLError as e:
+    logging.warning('Cannot reach metadata server: %s' % e.reason)
+
+  return False

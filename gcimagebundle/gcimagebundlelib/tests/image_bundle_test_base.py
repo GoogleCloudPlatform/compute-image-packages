@@ -61,7 +61,7 @@ class MockHttp(utils.Http):
   def __init__(self):
     self._instance_response = '{"hostname":"test"}'
 
-  def Get(self, request):
+  def Get(self, request, timeout=None):
     """Accepts an Http request and returns a precanned response."""
     url = request.get_full_url()
     if url == utils.METADATA_URL_PREFIX:
