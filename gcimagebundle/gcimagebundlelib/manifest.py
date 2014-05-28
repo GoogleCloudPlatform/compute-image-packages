@@ -29,9 +29,10 @@ class ImageManifest(object):
   - Licenses
   """
 
-  def __init__(self, http=utils.Http()):
+  def __init__(self, http=utils.Http(), isProviderGCE=utils.IsRunningOnGCE):
     self._http = http
     self._licenses = []
+    self._isProviderGCE = isProviderGCE
 
   def CreateIfNeeded(self, file_path):
     """Creates the manifest file to the specified path if it's needed.
@@ -43,7 +44,7 @@ class ImageManifest(object):
       True Manifest was written to file_path.
       False Manifest was not created.
     """
-    if utils.IsRunningOnGCE():
+    if self._isProviderGCE():
       self._LoadLicenses()
     if self._IsManifestNeeded():
       with open(file_path, 'w') as manifest_file:

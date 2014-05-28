@@ -87,7 +87,7 @@ class ImageBundleTest(unittest.TestCase):
     self.tmp_root = tempfile.mkdtemp(dir='/tmp')
     self.tmp_path = tempfile.mkdtemp(dir=self.tmp_root)
     self._http = MockHttp()
-    self._manifest = manifest.ImageManifest(http=self._http)
+    self._manifest = manifest.ImageManifest(http=self._http, isProviderGCE=lambda: True)
     self._SetupFilesystemToTar()
 
   def tearDown(self):
