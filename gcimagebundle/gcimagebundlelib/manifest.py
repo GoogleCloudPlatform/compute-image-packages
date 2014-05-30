@@ -29,10 +29,10 @@ class ImageManifest(object):
   - Licenses
   """
 
-  def __init__(self, isGceInstance, http=utils.Http()):
+  def __init__(self, http=utils.Http(), is_gce_instance=True):
     self._http = http
     self._licenses = []
-    self._is_gce_instance = isGceInstance
+    self._is_gce_instance = is_gce_instance
 
   def CreateIfNeeded(self, file_path):
     """Creates the manifest file to the specified path if it's needed.
