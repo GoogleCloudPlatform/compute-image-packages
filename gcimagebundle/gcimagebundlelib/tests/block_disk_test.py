@@ -285,7 +285,7 @@ class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):
 
     self._http = MockHttp()
     self._manifest._http = self._http
-    self._manifest._isProviderGCE = lambda: False
+    self._manifest._is_gce_instance = False
 
     self._bundle.AddSource(self.tmp_path)
     self._bundle.Verify()

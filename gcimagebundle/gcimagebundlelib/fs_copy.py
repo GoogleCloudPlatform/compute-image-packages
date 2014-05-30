@@ -22,6 +22,7 @@ import os
 import re
 
 from gcimagebundlelib import manifest
+from gcimagebundlelib import utils
 
 
 class FsCopyError(Exception):
@@ -48,7 +49,8 @@ class FsCopy(object):
     self._overwrite_list = []
     self._scratch_dir = '/tmp'
     self._disk = None
-    self._manifest = manifest.ImageManifest()
+    is_running_on_gce = utils.IsRunningOnGCE()
+    self._manifest = manifest.ImageManifest(is_running_on_gce)
 
   def SetTarfile(self, tar_file):
     """Sets tar file which will contain file system copy.
