@@ -89,7 +89,7 @@ class AddressManager(object):
       # 70 seconds.
       url = PUBLIC_ENDPOINT_URL_PREFIX + self.last_etag
       request = urllib2.Request(url)
-      request.add_unredirected_header('X-Google-Metadata-Request', 'True')
+      request.add_unredirected_header('Metadata-Flavor', 'Google')
       u = self.urllib2.urlopen(request, timeout=70)
       addrs_data = u.read()
       headers = u.info().dict

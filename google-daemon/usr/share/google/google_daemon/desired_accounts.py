@@ -72,7 +72,7 @@ class DesiredAccounts(object):
     request_url = url % wait_for_change_query
     logging.debug('Getting url: %s', request_url)
     request = urllib2.Request(request_url)
-    request.add_header('X-Google-Metadata-Request', 'True')
+    request.add_header('Metadata-Flavor', 'Google')
     return self.urllib2.urlopen(request)
 
   def _GetAttribute(self,

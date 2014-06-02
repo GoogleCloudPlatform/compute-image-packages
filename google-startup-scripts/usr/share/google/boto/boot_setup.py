@@ -40,7 +40,7 @@ def GetNumericProjectId():
   """Get the numeric project ID for this VM."""
   try:
     request = urllib2.Request(NUMERIC_PROJECT_ID_URL)
-    request.add_unredirected_header('X-Google-Metadata-Request', 'True')
+    request.add_unredirected_header('Metadata-Flavor', 'Google')
     return urllib2.urlopen(request).read()
   except (urllib2.URLError, urllib2.HTTPError, IOError), e:
     return None
