@@ -58,7 +58,7 @@ class ComputeAuth(AuthHandler):
   def __GetJSONMetadataValue(self, url):
     try:
       request = urllib2.Request(url)
-      request.add_unredirected_header('X-Google-Metadata-Request', 'True')
+      request.add_unredirected_header('Metadata-Flavor', 'Google')
       data = urllib2.urlopen(request).read()
       return json.loads(data)
     except (urllib2.URLError, urllib2.HTTPError, IOError), e:
