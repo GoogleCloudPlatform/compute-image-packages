@@ -16,20 +16,45 @@
 # Get a metadata value from the metadata server.
 
 declare -r VARNAME=$1
-declare -r MDS=http://169.254.169.254/0.1/meta-data
+declare -r MDS_PREFIX=http://169.254.169.254/computeMetadata/v1
 declare -r MDS_TRIES=${MDS_TRIES:-100}
+
+function metadata_get_url_code() {
+  return $(curl "${1}" -H "Metadata-Flavor: Google" -s \
+      -w "%{http_code}" -o /dev/null)
+}
+
+function print_metadata_value() {
+  local readonly response=$(curl "${1}" -H "Metadata-Flavor: Google" -s)
+  local readonly return_code=$?
+  # If the command completed successfully, print the metadata value to stdout.
+  if [[ ${return_code} == 0 ]]; then
+    printf "${response}"
+  fi
+  return ${return_code}
+}
+
+function print_metadata_value_if_exists() {
+  local readonly url=$1
+  metadata_get_url_code ${url}
+  http_code=$?
+  # Test the instance metadata value.
+  if test ${http_code} -eq 200; then
+    print_metadata_value ${url}
+    return_code=$?
+  fi
+}
 
 function get_metadata_value() {
   local readonly varname=$1
-  local readonly tmpfile=$(mktemp)
-  curl -f ${MDS}/${varname} > ${tmpfile} 2>/dev/null
-  local return_code=$?
-  if [[ ${return_code} == 0 ]]; then
-    cat ${tmpfile}
-  else
-    echo "curl for ${varname} returned ${return_code}" > /dev/console
+  # Print the instance metadata value.
+  print_metadata_value_if_exists ${MDS_PREFIX}/instance/${varname}
+  return_code=$?
+  # If the instance doesn't have the value, try the project.
+  if [[ ${return_code} != 0 ]]; then
+    print_metadata_value_if_exists ${MDS_PREFIX}/project/${varname}
+    return_code=$?
   fi
-  rm -f ${tmpfile}
   return ${return_code}
 }
 
