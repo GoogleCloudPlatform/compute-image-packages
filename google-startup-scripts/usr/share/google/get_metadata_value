@@ -29,7 +29,7 @@ function print_metadata_value() {
   local readonly return_code=$?
   # If the command completed successfully, print the metadata value to stdout.
   if [[ ${return_code} == 0 ]]; then
-    printf ${response}
+    printf "${response}"
   fi
   return ${return_code}
 }
