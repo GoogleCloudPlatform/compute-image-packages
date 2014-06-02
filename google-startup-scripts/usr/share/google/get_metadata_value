@@ -35,6 +35,7 @@ function print_metadata_value() {
 }
 
 function print_metadata_value_if_exists() {
+  local return_code=1
   local readonly url=$1
   metadata_get_url_code ${url}
   http_code=$?
@@ -43,6 +44,7 @@ function print_metadata_value_if_exists() {
     print_metadata_value ${url}
     return_code=$?
   fi
+  return ${return_code}
 }
 
 function get_metadata_value() {
