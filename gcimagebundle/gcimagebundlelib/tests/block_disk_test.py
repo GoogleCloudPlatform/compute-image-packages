@@ -27,6 +27,7 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
+import urllib2
 
 from gcimagebundlelib import block_disk
 from gcimagebundlelib import exclude_spec
@@ -274,6 +275,23 @@ class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):
     self._VerifyImageHas(self._tar_path,
                          ['lost+found', 'dir1/', 'dir2/', '/dir2/dir1',
                           '/dir2/sl2', '/dir2/hl1'])
+
+  def testSkipLicenseCheckIfNotOnGCE(self):
+    """Tests that no licenses are loaded if gcimagebundle is not run on GCE."""
+    class MockHttp(utils.Http):
+      def Get(self, request, timeout=None):
+        # if gcimagebundle is not run on GCE the metadata server will be unreachable
+        raise urllib2.URLError("urlopen error timed out")
+
+    self._http = MockHttp()
+    self._manifest._http = self._http
+    self._manifest._is_gce_instance = False
+
+    self._bundle.AddSource(self.tmp_path)
+    self._bundle.Verify()
+    _ = self._bundle.Bundleup()
+    self.assertFalse(self._bundle._manifest._IsManifestNeeded())
+    self._VerifyTarHas(self._tar_path, ['disk.raw'])
 
   def testNoManifestCreatedWithZeroLicenses(self):
     """Tests that no manifest is created when there are 0 licenses."""

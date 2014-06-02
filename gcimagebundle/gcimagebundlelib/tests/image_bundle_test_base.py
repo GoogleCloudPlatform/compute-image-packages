@@ -61,7 +61,7 @@ class MockHttp(utils.Http):
   def __init__(self):
     self._instance_response = '{"hostname":"test"}'
 
-  def Get(self, request):
+  def Get(self, request, timeout=None):
     """Accepts an Http request and returns a precanned response."""
     url = request.get_full_url()
     if url == utils.METADATA_URL_PREFIX:
@@ -87,7 +87,7 @@ class ImageBundleTest(unittest.TestCase):
     self.tmp_root = tempfile.mkdtemp(dir='/tmp')
     self.tmp_path = tempfile.mkdtemp(dir=self.tmp_root)
     self._http = MockHttp()
-    self._manifest = manifest.ImageManifest(http=self._http)
+    self._manifest = manifest.ImageManifest(http=self._http, is_gce_instance=True)
     self._SetupFilesystemToTar()
 
   def tearDown(self):
