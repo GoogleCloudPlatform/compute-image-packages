@@ -387,6 +387,15 @@ class Accounts(object):
         keys_file.write('# Added by Google\n')
         keys_file.write(EnsureTrailingNewline(ssh_key))
 
+      # Check that we have enough disk space to move the file.
+      stat = self.os.statvfs(self.os.path.dirname(authorized_keys_file))
+      available_space = stat.f_bavail * stat.f_bsize
+      required_space = self.os.path.getsize(new_keys_path) + 1024 * 1024
+      logging.info('Writing keys file: %s bytes required; %s available.',
+                   required_space, available_space)
+      if available_space < required_space:
+        raise IOError('Disk is too full')
+
     # Override the old authorized keys file with the new one.
     self.system.MoveFile(new_keys_path, authorized_keys_file)
 
