@@ -27,39 +27,39 @@ stop_cmd=":"
 
 gce_logins_start()
 {
-echo -n 'Creating Google Compute Engine logins:'
-        _tmp=$(mktemp gcelogins.XXXXXX) || exit 3
-        # This netcat use is pretty fragile. We output with a tab since
-        # that makes the later cut and read more straightforward.
-        (echo GET /computeMetadata/v1/project/attributes/sshKeys HTTP/1.1
-         echo Host: metadata
-         echo Metadata-Flavor: Google
-         echo User-Agent: rc-shell-script
-         echo Connection: close
-         echo) | nc metadata 80 | grep :ssh | sed -e 's/:/      /' > $_tmp
+	echo -n 'Creating Google Compute Engine logins:'
+	_tmp=$(mktemp gcelogins.XXXXXX) || exit 3
+	# This netcat use is pretty fragile. We output with a tab since
+	# that makes the later cut and read more straightforward.
+	(echo GET /computeMetadata/v1/project/attributes/sshKeys HTTP/1.1
+	 echo Host: metadata
+	 echo Metadata-Flavor: Google
+	 echo User-Agent: rc-shell-script
+	 echo Connection: close
+	 echo) | nc metadata 80 | grep :ssh | sed -e 's/:/      /' > $_tmp
 
-        accounts_to_create=$(cut -w -f 1 $_tmp | sort -u)
-        for user in ${accounts_to_create}; do
-echo -n "" ${user}
-id ${user} > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-                README.md pw useradd ${user} -g wheel -m  -h -
-fi
-userhome=$(pw usershow ${user} | cut -d: -f9)
-                mkdir -p -m 755 ${userhome}/.ssh
-truncate -s 0 ${userhome}/.ssh/authorized_keys
-chmod 644 ${userhome}/.ssh/authorized_keys
-                chown ${user} ${userhome}/.ssh ${userhome}/.ssh/authorized_keys
-        done
-echo "."
-echo -n 'Populating Google Compute Engine ssh keys:'
-        while read user ssh_key; do
-echo -n "" ${user}
-userhome=$(pw usershow ${user} | cut -d: -f9)
-                echo ${ssh_key} >> ${userhome}/.ssh/authorized_keys
-        done < $_tmp
-rm -f $_tmp
-echo "."
+	accounts_to_create=$(cut -w -f 1 $_tmp | sort -u)
+	for user in ${accounts_to_create}; do
+		echo -n "" ${user}
+		id ${user} > /dev/null 2>&1
+		if [ $? -ne 0 ]; then
+			pw useradd ${user} -g wheel -m  -h -
+		fi
+		userhome=$(pw usershow ${user} | cut -d: -f9)
+		mkdir -p -m 755 ${userhome}/.ssh
+		truncate -s 0 ${userhome}/.ssh/authorized_keys
+		chmod 644 ${userhome}/.ssh/authorized_keys
+		chown ${user} ${userhome}/.ssh ${userhome}/.ssh/authorized_keys
+	done
+	echo "."
+	echo -n 'Populating Google Compute Engine ssh keys:'
+	while read user ssh_key; do
+		echo -n "" ${user}
+		userhome=$(pw usershow ${user} | cut -d: -f9)
+		echo ${ssh_key} >> ${userhome}/.ssh/authorized_keys
+	done < $_tmp
+	rm -f $_tmp
+	echo "."
 }
 
 load_rc_config $name
