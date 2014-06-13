@@ -25,12 +25,14 @@ function metadata_get_url_code() {
 }
 
 function print_metadata_value() {
-  local readonly response=$(curl "${1}" -H "Metadata-Flavor: Google" -s)
+  local readonly tmpfile=$(mktemp)
+  curl -f "${1}" -H "Metadata-Flavor: Google" > ${tmpfile} 2>/dev/null
   local readonly return_code=$?
   # If the command completed successfully, print the metadata value to stdout.
   if [[ ${return_code} == 0 ]]; then
-    printf "${response}"
+    cat ${tmpfile}
   fi
+  rm -f ${tmpfile}
   return ${return_code}
 }
 
