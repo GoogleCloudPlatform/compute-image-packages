@@ -1,0 +1,227 @@
+#!/bin/sh
+# Copyright 2013 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# headless usage:
+# gcutil addinstance [instance_name] --metadata=startup-script:'//usr/share/google/diagnostics'
+#
+# To check what sort of information will be logged have a look at the sample logfile:
+# http://storage.googleapis.com/gce-scripts/gee_sample_log.txt
+# WARNING! this tool by default exposing potentially sensitive data to Google Support
+# use the --skip flag to supress some sections of the output or change logging $OUTPUT
+#
+# the flags are not handled with getops to remain POSIX and portable
+OUTPUT=default
+FORCE=0
+VERBOSE=0
+while test $# -gt 0 ; do
+
+  # switches
+  if test "$1" = "-h" ; then
+     echo "Usage: "
+     echo "-h This help"
+     echo "-f force to run without UID 0 (root)"
+     echo "-v verbose output of each command"
+     echo "--out=/tmp/logfile full path of the output file,"
+     echo "      /dev/kmesg console if unspecified."
+     echo "--skip=[network,metadata,authkeys,sshdconf,sshd,sys,usersec,traceroute]"
+     echo "      comma separated list of tests to skip."
+     exit
+  fi;
+  if test "$1" = "-f" ; then FORCE=1 ; shift ; continue; fi;
+  if test "$1" = "-v" ; then VERBOSE=1 ; shift ; continue; fi;
+
+  # options with arguments
+  case "$1" in
+  --out=*) OUTPUT="${1##--out=}" ; shift; continue; break ;;
+  --skip=*) SKIP="${1##--skip=}" ; shift; continue; break ;;
+  esac
+
+  # unknown argument: error
+  echo "Unknown option $1"
+  exit 1
+done
+
+if [ $(/usr/bin/id -u) -ne 0 ] && [ "$FORCE" != "1" ]; then
+  echo -n "This script is designed to run as user id 0 (root). Current UID: "
+  /usr/bin/id -u
+  echo "Try sudo $0 or run it after sudo su -"
+  echo "Alternatively rerun with -f flag to ignore this check."
+  echo "Some tests will fail due to lack of permission!"
+  exit
+fi;
+
+if [ "$OUTPUT" = "default" ]; then
+  exec >/dev/kmsg 2>&1
+else
+  exec >$OUTPUT 2>&1
+fi;
+TAG=`cut -d ' ' -f1 /proc/uptime`
+
+if [ -f /bin/traceroute ]; then
+  TRACEROUTE=/bin/traceroute
+elif [ -f /usr/sbin/traceroute ]; then
+  TRACEROUTE=/usr/sbin/traceroute
+else
+  echo "no traceroute in /usr/sbin or /bin relying on PATH"
+  TRACEROUTE=traceroute
+fi;
+if [ "$VERBOSE" = "1" ]; then
+   PS4='$LINENO :'
+   set -x;
+fi;
+
+doit(){
+  echo \# $@
+  $@
+}
+
+echo '####### GEE #########'
+echo $SKIP | grep -qw "network"
+if [ $? = 1 ]; then
+  echo '### Network'
+  doit /sbin/ifconfig
+  doit cat /etc/resolv.conf
+  doit /sbin/iptables-save | egrep -v 'Generated|Completed'
+  doit /bin/netstat -rn
+  doit cat /etc/hosts.deny  | grep -v ^#
+  echo
+fi;
+echo '### SSH and meta server reach'
+doit md5sum /usr/bin/ssh
+cat << EOF | /usr/bin/env python
+import socket
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+result = s.connect_ex(('127.0.0.1', 22))
+
+if(result == 0):
+    print 'tcp port 22 connected:',
+    print(s.recv(4096)),
+    s.close()
+else:
+    print 'could not connect to port 22'
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+result = s.connect_ex(('169.254.169.254', 80))
+if(result == 0):
+    print 'metaserver 169.254.169.254:80 connected'
+    s.close()
+else:
+    print 'metaserver 169.254.169.254:80 connection failed'
+EOF
+# netstat -n no name resolution -t tpc -p pids
+doit /bin/netstat -lntpA inet | egrep 'sshd|:22|PID'
+# this is without -n to check name lookup as well should complete in 1 hop
+doit ${TRACEROUTE} apis.google.com&
+echo
+echo $SKIP | grep -qw "metadata"
+if [ $? = 1 ]; then
+  echo '### Authorized meta'
+  META1=/tmp/authkeys1-${TAG}
+  META2=/tmp/authkeys2-${TAG}
+  doit /usr/bin/curl -Sso ${META1} http://metadata.google.internal/0.1/meta-data/authorized-keys
+  doit cat ${META1}
+  doit /usr/share/google/get_metadata_value authorized_keys >${META2}
+  doit /usr/bin/diff -su ${META1} ${META2}
+  doit rm -f ${META1} ${META2}
+fi;
+echo $SKIP | grep -qw "authkeys"
+if [ $? = 1 ]; then
+  echo '### Authorized keys'
+  l=$(grep "^UID_MIN" /etc/login.defs)
+  l1=$(grep "^UID_MAX" /etc/login.defs)
+  HOMEDIRS=$(awk -F':' -v "min=${l##UID_MIN}" -v "max=${l1##UID_MAX}" '{ if ( $3 >= min && $3 <= max ) print $0}' /etc/passwd | cut -d ':' -f 6)
+  echo "$HOMEDIRS" | while read homedir; do
+    doit ssh-keygen -lf $homedir/.ssh/authorized_keys;
+    if [ -f $homedir/.ssh/authorized_keys2 ]; then
+      doit ssh-keygen -lf $homedir/.ssh/authorized_keys2;
+    fi;
+  done;
+fi;
+echo $SKIP | grep -qw "sshdconf"
+if [ $? = 1 ]; then
+  echo '/etc/ssh/sshd_config'
+  # open a secondary ssh daeomon in debug mode for 5 minutes on port 3562
+  # this exits either after 5 minutes or on first connection
+  SSHD_CONFIG=$(egrep -v '^#|^$' /etc/ssh/sshd_config)
+  SSHD_OPTIONS="-d -f /dev/null -o 'Port 3562' -o 'PermitRootLogin yes' "
+  SSHD_OPTIONS=${SSHD_OPTIONS}$(echo "$SSHD_CONFIG" | grep -v Port | grep -v PermitRootLogin | while read config; do echo "-o '$config' "; done;)
+  echo $SSHD_OPTIONS | xargs timeout 5m /usr/sbin/sshd 2>&1 | grep -v 'debug1: rexec_argv' &
+fi;
+echo $SKIP | grep -qw "sshd"
+if [ $? = 1 ]; then
+  ### consider this OPTIONAL as it touches  ~/.ssh/authorized_keys2
+  ### however this is considered to be a safe operation as the
+  ### default file is is  ~/.ssh/authorized_keys
+  ### this checks the complete ssh functionality on localhost
+  ### alternatively the project firewall needs to be open on this port
+  ### and attempt to connect by a standard user remotely within 5 minutes
+  doit ls -ldZ ~/.ssh
+  doit ls -lZ ~/.ssh
+  doit mkdir -p ~/.ssh
+  doit chmod 0700 ~/.ssh
+  KEY=/tmp/test-key-${TAG}
+  doit echo -e '\n\n' | ssh-keygen -q -f ${KEY} -N '' -t dsa -V +2m
+  doit touch  ~/.ssh/authorized_keys2
+  doit cp ~/.ssh/authorized_keys2 ~/.ssh/authorized_keys2_bak && rm -f ~/.ssh/authorized_keys2
+  doit cp ${KEY}.pub ~/.ssh/authorized_keys2
+  doit chmod 0600 ~/.ssh/authorized_keys2
+  doit ssh -p 3562 -i ${KEY} -o StrictHostKeyChecking=no localhost echo "2>&1" && echo "SSH localhost login succcess" || echo "ssh on localhost failed"
+  doit mv ~/.ssh/authorized_keys2_bak ~/.ssh/authorized_keys2
+  doit rm -f ${KEY} ${KEY}.pub
+  echo
+fi;
+echo $SKIP | grep -qw "sys"
+if [ $? = 1 ]; then
+  echo '### System, filesystem, memory'
+  # OS version info
+  if [ -f /usr/bin/lsb_release ]; then
+    doit /usr/bin/lsb_release -a
+  else
+    doit find /etc -name "*release" -type f -exec cat {} \;
+  fi;
+  doit /bin/uname -a
+  doit /bin/mount
+  doit cat /etc/fstab
+  doit /bin/mount -fav
+  echo
+  doit /bin/df -l -x tmpfs -P
+  doit ls /
+  doit free -k
+  # load averages
+  doit /usr/bin/uptime
+  echo
+fi;
+echo $SKIP | grep -qw "usersec"
+if [ $? = 1 ]; then
+  echo '### Users and security'
+  doit cat /etc/passwd
+  doit md5sum /usr/share/google/google_daemon/manage_accounts.py
+  doit ps -C manage_accounts.py -C startpar uw
+  doit /usr/sbin/visudo -c
+  doit cat /etc/sudoers | egrep -v '^#|^$'
+  doit cat /etc/selinux/semanage.conf | egrep -v '^#|^$'
+  if [ -f /usr/bin/faillog ]; then
+    doit /usr/bin/faillog -a -u ${l##UID_MIN}-$(echo ${l1##UID_MAX}) | grep -v '^$'
+  fi;
+fi;
+# this should be in the network section however since it takes a while
+# it is started in the background, the output however gets scattered otherwise
+# ie. if it is an earlier command
+echo $SKIP | grep -qw "traceroute"
+if [ $? = 1 ]; then
+  doit ${TRACEROUTE} -n au.pool.ntp.org
+  echo
+fi;
+echo "### == DONE =="
