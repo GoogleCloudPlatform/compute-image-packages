@@ -15,6 +15,8 @@
 
 """Get the accounts desired to be present on the VM."""
 
+import datetime
+import json
 import logging
 import time
 import urllib2
@@ -27,6 +29,67 @@ INSTANCE_SSHKEYS_URL = (
 PROJECT_SSHKEYS_URL = (
     METADATA_V1_URL_PREFIX + 'project/attributes/sshKeys?%s')
 WAIT_FOR_CHANGE = 'wait_for_change=true&last_etag=%s&timeout_sec=%s'
+
+
+def KeyHasExpired(key):
+  """ Check to see whether an SSH key has expired.
+
+  Uses Google-specific (for now) semantics of the OpenSSH public key format's
+  comment field to determine if an SSH key is past its expiration timestamp, and
+  therefore no longer to be trusted. This format is still subject to change.
+  Reliance on it in any way is at your own risk.
+
+  Args:
+    key: A single public key entry in OpenSSH public key file format. This will
+      be checked for Google-specific comment semantics, and if present, those
+      will be analysed.
+
+  Returns:
+    True if the key has Google-specific comment semantics and has an expiration
+    timestamp in the past, or False otherwise."""
+
+  logging.debug('Processing key: %s', key)
+
+  try:
+    schema, json_str = key.split(None, 3)[2:]
+  except ValueError:
+    logging.debug('Key does not seem to have a schema identifier.')
+    logging.debug('Not expiring key.')
+    return False
+
+  if schema != 'google-ssh':
+    logging.debug('Rejecting %s as potential key schema identifier.', schema)
+    return False
+
+  logging.info('Google SSH key schema identifier found.')
+  logging.debug('JSON string detected: %s', json_str)
+
+  try:
+    json_obj = json.loads(json_str)
+  except ValueError:
+    logging.error('Invalid JSON. Not expiring key.')
+    return False
+
+  if 'expireOn' not in json_obj:
+    # Use warning instead of error for this failure mode in case we
+    # add future use cases for this JSON which are unrelated to expiration.
+    logging.warning('No expiration timestamp. Not expiring key.')
+    return False
+
+  expire_str = json_obj['expireOn']
+
+  try:
+    expire_time = datetime.datetime.strptime(expire_str,
+                                             '%Y-%m-%dT%H:%M:%S+0000')
+  except ValueError:
+    logging.error(
+        'Expiration timestamp "%s" not in format %Y-%m-%dT%H:%M:%S+0000.',
+        expire_str)
+    logging.error('Not expiring key.')
+    return False
+  
+  # Expire the key if and only if we have exceeded the expiration timestamp.
+  return (datetime.datetime.utcnow() > expire_time)
 
 
 def AccountDataToDictionary(data):
@@ -49,6 +112,10 @@ def AccountDataToDictionary(data):
           'sshKey is not a complete entry: %s', split_line)
       continue
     user, key = split_line
+    if KeyHasExpired(key):
+      logging.info(
+          'Skipping expired SSH key for user %s: %s', user, key)
+      continue
     if not user in usermap:
       usermap[user] = []
     usermap[user].append(key)
