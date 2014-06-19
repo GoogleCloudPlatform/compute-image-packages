@@ -17,6 +17,7 @@
 import json
 import logging
 import os
+import pwd
 import time
 
 LOCKFILE = '/var/lock/manage-accounts.lock'
@@ -43,11 +44,11 @@ class AccountsManager(object):
     # Otherwise, run the actual operations in a subprocess so that any
     # errors don't kill the long-lived process.
     if self.single_pass:
-      self.RegenerateKeysAndCreateAccounts()
+      self.RegenerateKeysAndUpdateAccounts()
       return
     # Run this forever in a loop.
     while True:
-      # Fork and run the key regeneration and account creation while the
+      # Fork and run the key regeneration and account update while the
       # parent waits for the subprocess to finish before continuing.
       
       # Create a pipe used to get the new etag value from child
@@ -71,10 +72,10 @@ class AccountsManager(object):
         os.close(reader)
         writer = os.fdopen(writer, 'w')
         try:
-          self.RegenerateKeysAndCreateAccounts()
+          self.RegenerateKeysAndUpdateAccounts()
         except Exception as e:
-          logging.warning('error while trying to create accounts: %s', e)
-          # An error happened while trying to create the accounts. Lets sleep a
+          logging.warning('error while trying to update accounts: %s', e)
+          # An error happened while trying to update the accounts. Lets sleep a
           # bit to avoid getting stuck in a loop for intermittent errors.
           time.sleep(5)
 
@@ -91,23 +92,42 @@ class AccountsManager(object):
         # once by the subprocess and once by the parent process.
         os._exit(0)
 
-  def RegenerateKeysAndCreateAccounts(self):
-    """Regenerate the keys and create accounts as needed."""
-    logging.debug('RegenerateKeysAndCreateAccounts')
+  def RegenerateKeysAndUpdateAccounts(self):
+    """Regenerate the keys and update accounts as needed."""
+    logging.debug('RegenerateKeysAndUpdateAccounts')
     if self.system.IsExecutable('/usr/share/google/first-boot'):
       self.system.RunCommand('/usr/share/google/first-boot')
 
-    self.lock_file.RunExclusively(self.lock_fname, self.CreateAccounts)
+    self.lock_file.RunExclusively(self.lock_fname, self.UpdateAccounts)
 
-  def CreateAccounts(self):
-    """Create all accounts that should be present."""
+  def UpdateAccounts(self):
+    """Update all accounts that should be present or exist already."""
+
+    # Note GetDesiredAccounts() returns a dict of username->sshKeys mappings.
     desired_accounts = self.desired_accounts.GetDesiredAccounts()
+
+    # Plan a processing pass for extra accounts existing on the system with a
+    # ~/.ssh/authorized_keys file, even if they're not otherwise in the metadata
+    # server; this will only ever remove the last added-by-Google key from
+    # accounts which were formerly in the metadata server but are no longer.
+    all_accounts = pwd.getpwall()
+    keyfile_suffix = os.path.join('.ssh', 'authorized_keys')
+    sshable_usernames = [
+        entry.pw_name
+        for entry in all_accounts
+        if os.path.isfile(os.path.join(entry.pw_dir, keyfile_suffix))]
+    extra_usernames = set(sshable_usernames) - set(desired_accounts.keys())
     
-    if not desired_accounts:
-      return
+    if desired_accounts:
+      for username, ssh_keys in desired_accounts.iteritems():
+        if not username:
+          continue
 
-    for username, ssh_keys in desired_accounts.iteritems():
-      if not username:
-        continue
+        self.accounts.UpdateUser(username, ssh_keys)
 
-      self.accounts.CreateUser(username, ssh_keys)
+    for username in extra_usernames:
+      # If a username is present in extra_usernames, it is no longer reflected
+      # in the metadata server but has an authorized_keys file. Therefore, we
+      # should pass the empty list for sshKeys to ensure that any Google-managed
+      # keys are no longer authorized.
+      self.accounts.UpdateUser(username, [])

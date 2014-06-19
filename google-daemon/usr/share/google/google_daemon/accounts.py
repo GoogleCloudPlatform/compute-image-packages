@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Create accounts needed on this GCE instance.
+"""Update accounts needed on this GCE instance.
 
-Creates accounts based on the contents of ACCOUNTS_URL, which should contain a
+Update accounts based on the contents of ACCOUNTS_URL, which should contain a
 newline-delimited file of accounts and SSH public keys. Each line represents a
 SSH public key which should be allowed to log in to that account.
 
@@ -78,7 +78,7 @@ class Accounts(object):
     self.default_user_groups = self.GroupsThatExist(
         ['adm', 'video', 'dip', 'plugdev', 'sudo'])
 
-  def CreateUser(self, username, ssh_keys):
+  def UpdateUser(self, username, ssh_keys):
     """Create username on the system, with authorized ssh_keys."""
 
     if not self.IsValidUsername(username):
@@ -91,7 +91,11 @@ class Accounts(object):
       self.system.UserAdd(username, self.default_user_groups)
 
     if self.UserExists(username):
-      self.MakeUserSudoer(username)
+      # If we're just removing keys from a user who may have been in the
+      # metadata server but isn't currently, we should never increase their
+      # privileges. Therefore, only grant sudo access if we have ssh keys.
+      if ssh_keys:
+        self.MakeUserSudoer(username)
       self.AuthorizeSshKeys(username, ssh_keys)
 
   def IsValidUsername(self, username):
