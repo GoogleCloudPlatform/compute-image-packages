@@ -70,19 +70,16 @@ function download_url_with_logfile() {
   # TODO: Many other Google Storage URLs are possible for objects.  Rather
   # than support them all here, customers should specify their object using
   # its gs://<bucket>/<object> url.
-  gsutil ls >/dev/null 2>/dev/null
-  if [[ $? == 0 ]]; then
-    case ${url} in
-      http://commondatastorage.googleapis.com/*)
-        log "Downloading url from ${url} to ${dest} using gsutil";
-        gsurl=gs://${url#http://commondatastorage.googleapis.com/};
-        gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
-      https://commondatastorage.googleapis.com/*)
-        log "Downloading url from ${url} to ${dest} using gsutil";
-        gsurl=gs://${url#https://commondatastorage.googleapis.com/};
-        gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
-    esac
-  fi
+  case ${url} in
+    http://commondatastorage.googleapis.com/*)
+      log "Downloading url from ${url} to ${dest} using gsutil";
+      gsurl=gs://${url#http://commondatastorage.googleapis.com/};
+      gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
+    https://commondatastorage.googleapis.com/*)
+      log "Downloading url from ${url} to ${dest} using gsutil";
+      gsurl=gs://${url#https://commondatastorage.googleapis.com/};
+      gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
+  esac
 
   # Unauthenticated download of the object.
   log "Downloading url from ${url} to ${dest} using curl"
