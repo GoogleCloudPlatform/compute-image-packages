@@ -395,8 +395,8 @@ class Accounts(object):
       stat = self.os.statvfs(self.os.path.dirname(authorized_keys_file))
       available_space = stat.f_bavail * stat.f_bsize
       required_space = self.os.path.getsize(new_keys_path) + 1024 * 1024
-      logging.info('Writing keys file: %s bytes required; %s available.',
-                   required_space, available_space)
+      logging.debug('Writing keys file: %s bytes required; %s available.',
+                    required_space, available_space)
       if available_space < required_space:
         raise IOError('Disk is too full')
 
