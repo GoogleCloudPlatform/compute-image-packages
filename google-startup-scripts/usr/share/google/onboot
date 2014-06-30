@@ -60,6 +60,8 @@ function download_url_with_logfile() {
   local readonly url=$1
   local readonly dest=$2
   local readonly logfile=$3
+      
+  log "The url is ${url}";
 
   case ${url} in
     gs://*)
@@ -71,11 +73,11 @@ function download_url_with_logfile() {
   # than support them all here, customers should specify their object using
   # its gs://<bucket>/<object> url.
   case ${url} in
-    http://commondatastorage.googleapis.com/*)
+    http://[^/]*storage.googleapis.com/*)
       log "Downloading url from ${url} to ${dest} using gsutil";
       gsurl=gs://${url#http://commondatastorage.googleapis.com/};
       gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
-    https://commondatastorage.googleapis.com/*)
+    https://[^/]*storage.googleapis.com/*)
       log "Downloading url from ${url} to ${dest} using gsutil";
       gsurl=gs://${url#https://commondatastorage.googleapis.com/};
       gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
