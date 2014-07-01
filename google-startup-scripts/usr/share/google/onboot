@@ -57,6 +57,9 @@ function log_file() {
 }
 
 function download_url_with_logfile() {
+  # Enable extglob for pattern matching
+  shopt -s extglob
+
   local readonly url=$1
   local readonly dest=$2
   local readonly logfile=$3
@@ -71,13 +74,16 @@ function download_url_with_logfile() {
   # than support them all here, customers should specify their object using
   # its gs://<bucket>/<object> url.
   case ${url} in
+    # Match any string before storage that does not contain "/"
+    # Which requests should be matched?
     http://*[!/]storage.googleapis.com/*)
       log "Downloading url from ${url} to ${dest} using gsutil";
-      gsurl=gs://${url#http://storage.googleapis.com/};
+      # Convert http to gsurl- can gsutil be passed an http url?
+      # gsurl=gs://${url#http://storage.googleapis.com/};
       gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
     https://*[!/]storage.googleapis.com/*)
       log "Downloading url from ${url} to ${dest} using gsutil";
-      gsurl=gs://${url#https://storage.googleapis.com/};
+      # gsurl=gs://${url#https://storage.googleapis.com/};
       gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
   esac
 
