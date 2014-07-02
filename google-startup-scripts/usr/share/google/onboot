@@ -57,8 +57,6 @@ function log_file() {
 }
 
 function download_url_with_logfile() {
-  # Enable extglob for pattern matching
-  shopt -s extglob
 
   local readonly url=$1
   local readonly dest=$2
@@ -70,22 +68,42 @@ function download_url_with_logfile() {
       gsutil cp ${url} ${dest} >${logfile} 2>&1 && return 0;;
   esac
 
-  # TODO: Many other Google Storage URLs are possible for objects.  Rather
-  # than support them all here, customers should specify their object using
+  # Many of the Google Storage URLs are supported below. 
+  # It is prefered that customers specify their object using
   # its gs://<bucket>/<object> url.
-  case ${url} in
-    # Match any string before storage that does not contain "/"
-    # Which requests should be matched?
-    http://*[!/]storage.googleapis.com/*)
-      log "Downloading url from ${url} to ${dest} using gsutil";
-      # Convert http to gsurl- can gsutil be passed an http url?
-      # gsurl=gs://${url#http://storage.googleapis.com/};
-      gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
-    https://*[!/]storage.googleapis.com/*)
-      log "Downloading url from ${url} to ${dest} using gsutil";
-      # gsurl=gs://${url#https://storage.googleapis.com/};
-      gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0;;
-  esac
+
+  bucket="[a-z0-9][-.a-z0-9]*[a-z0-9]"
+
+  # Accept any non-empty string that doesn't contain a wildcard character
+  object="[^\&\*\?][^\&\*\?]*"
+
+  # Check for the Google Storage URLs:
+  # http://<bucket>.storage.googleapis.com/<object>/
+  # https://<bucket>.storage.googleapis.com/<object>/
+  if [[ $(echo $url | grep -E \
+      "http[s]?://${bucket}\.storage\.googleapis\.com/${object}") != "" ]];
+  then
+    log "Downloading url from ${url} to ${dest} using gsutil"
+    # Create a url that can be interpreted by gsutil
+    gsurl=$(echo $url | sed "s/^https\{0,1\}:\/\/\($bucket\)\.storage\.googleapis\.com\/\($object\)$/gs:\/\/\1\/\2/")
+    gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0
+  # Check for the other possible Google Storage URLS: 
+  # http://storage.googleapis.com/<bucket>/<object>/
+  # https://storage.googleapis.com/<bucket>/<object>/
+  #
+  # The following are depricated but checked
+  # http://commondatastorage.googleapis.com/<bucket>/<object>/
+  # https://commondatastorage.googleapis.com/<bucket>/<object>/
+  elif [[ $(echo $url | grep -E \
+      "http[s]?://(commondata|)?storage\.googleapis\.com/${bucket}/${object}") != "" ]];
+  then
+    log "Downloading url from ${url} to ${dest} using gsutil"
+    # Create a url that can be interpreted by gsutil
+    gsurl=$(echo $url | sed "s/^https\{0,1\}:\/\/\(commondata\|\)storage\.googleapis\.com\/\($bucket\)\/\($object\)$/gs:\/\/\2\/\3/")
+    gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0
+  else
+    log "URL ${url} is not located in Google Storage"
+  fi
 
   # Unauthenticated download of the object.
   log "Downloading url from ${url} to ${dest} using curl"
