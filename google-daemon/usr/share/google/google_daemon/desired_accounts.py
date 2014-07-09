@@ -140,12 +140,12 @@ class DesiredAccounts(object):
     logging.debug('Getting url: %s', request_url)
     request = urllib2.Request(request_url)
     request.add_header('Metadata-Flavor', 'Google')
-    return self.urllib2.urlopen(request)
+    return self.urllib2.urlopen(request, timeout=timeout_secs*1.1)
 
   def _GetAttribute(self,
                    attribute_url,
                    etag=0,
-                   timeout_secs=300):
+                   timeout_secs=60):
     """Fetches the attribute available at the attribute_url.
 
     Args:
