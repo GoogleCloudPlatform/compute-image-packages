@@ -44,7 +44,10 @@ class Centos(linux.LinuxPlatform):
     if not lines:
       return (None, None, None, None)
     line0 = lines[0]
-    g = re.match(r'(\S+) release (\d+\.\d+) \(([^)]*)\)', line0)
+    # Matches both CentOS 6 and CentOS 7 formats.
+    # CentOS 6: CentOS release 6.5 (Final)
+    # CentOS 7: CentOS Linux release 7.0.1406 (Core)
+    g = re.match(r'(\S+)( Linux)? release (\d+(\.\d+)+) \(([^)]*)\)', line0)
     if not g:
       return (None, None, None, None)
     (osname, version, label) = (g.group(1), g.group(2), g.group(3))
