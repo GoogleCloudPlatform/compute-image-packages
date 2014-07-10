@@ -50,7 +50,7 @@ class Centos(linux.LinuxPlatform):
     g = re.match(r'(\S+)( Linux)? release (\d+(\.\d+)+) \(([^)]*)\)', line0)
     if not g:
       return (None, None, None, None)
-    (osname, version, label) = (g.group(1), g.group(2), g.group(3))
+    (osname, version, label) = (g.group(1), g.group(3), g.group(5))
     return (osname, label, osname, version)
 
   def __init__(self):
