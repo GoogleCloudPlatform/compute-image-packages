@@ -75,31 +75,33 @@ function download_url_with_logfile() {
   bucket="[a-z0-9][-.a-z0-9]*[a-z0-9]"
 
   # Accept any non-empty string that doesn't contain a wildcard character
-  object="[^\&\*\?][^\&\*\?]*"
+  # gsutil interprets some characters as wildcards
+  # These characters in object names make it difficult or impossible
+  # to perform various wildcard operations using gsutil
+  # For a complete list use "gsutil help naming"
+  object="[^\*\?][^\*\?]*"
 
   # Check for the Google Storage URLs:
   # http://<bucket>.storage.googleapis.com/<object>/
   # https://<bucket>.storage.googleapis.com/<object>/
-  if [[ $(echo $url | grep -E \
-      "http[s]?://${bucket}\.storage\.googleapis\.com/${object}") != "" ]];
+  if [[ $url =~ http[s]?://${bucket}\.storage\.googleapis\.com/${object} ]];
   then
     log "Downloading url from ${url} to ${dest} using gsutil"
     # Create a url that can be interpreted by gsutil
-    gsurl=$(echo $url | sed "s/^https\{0,1\}:\/\/\($bucket\)\.storage\.googleapis\.com\/\($object\)$/gs:\/\/\1\/\2/")
+    gsurl=$(echo $url | sed "s/^https\?:\/\/\($bucket\)\.storage\.googleapis\.com\/\($object\)$/gs:\/\/\1\/\2/")
     gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0
   # Check for the other possible Google Storage URLS: 
   # http://storage.googleapis.com/<bucket>/<object>/
   # https://storage.googleapis.com/<bucket>/<object>/
   #
-  # The following are depricated but checked
+  # The following are deprecated but checked
   # http://commondatastorage.googleapis.com/<bucket>/<object>/
   # https://commondatastorage.googleapis.com/<bucket>/<object>/
-  elif [[ $(echo $url | grep -E \
-      "http[s]?://(commondata|)?storage\.googleapis\.com/${bucket}/${object}") != "" ]];
+  elif [[ $url =~ http[s]?://(commondata|)?storage\.googleapis\.com/${bucket}/${object} ]];
   then
     log "Downloading url from ${url} to ${dest} using gsutil"
     # Create a url that can be interpreted by gsutil
-    gsurl=$(echo $url | sed "s/^https\{0,1\}:\/\/\(commondata\|\)storage\.googleapis\.com\/\($bucket\)\/\($object\)$/gs:\/\/\2\/\3/")
+    gsurl=$(echo $url | sed "s/^https\?:\/\/\(commondata\|\)storage\.googleapis\.com\/\($bucket\)\/\($object\)$/gs:\/\/\2\/\3/")
     gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0
   else
     log "URL ${url} is not located in Google Storage"
