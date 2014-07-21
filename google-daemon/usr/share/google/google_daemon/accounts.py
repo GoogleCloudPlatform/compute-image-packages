@@ -91,8 +91,11 @@ class Accounts(object):
       self.system.UserAdd(username, self.default_user_groups)
 
     if self.UserExists(username):
+      # Don't try to manage the sshkeys of an account with a shell set to
+      # disable logins.  Helps avoid problems caused by operator and root
+      # sharing a home directory in CentOS and RHEL
       if self.UserNoLogin(username):
-        logging.warning(
+        logging.debug(
             'Not processing account for user %s.  User has /sbin/nologin'
             ' set as login shell', username)
         return
