@@ -113,7 +113,7 @@ def AccountDataToDictionary(data):
       continue
     user, key = split_line
     if KeyHasExpired(key):
-      logging.info(
+      logging.debug(
           'Skipping expired SSH key for user %s: %s', user, key)
       continue
     if not user in usermap:
