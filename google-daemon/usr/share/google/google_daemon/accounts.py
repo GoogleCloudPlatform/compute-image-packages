@@ -91,6 +91,13 @@ class Accounts(object):
       self.system.UserAdd(username, self.default_user_groups)
 
     if self.UserExists(username):
+      
+      if self.UserNoLogin(username):
+        logging.warning(
+            'Not processing account for user %s.  User has /sbin/nologin'
+            ' set as login shell', username)
+        return
+
       # If we're just removing keys from a user who may have been in the
       # metadata server but isn't currently, we should never increase their
       # privileges. Therefore, only grant sudo access if we have ssh keys.
@@ -137,6 +144,11 @@ class Accounts(object):
       return True
     except KeyError:
       return False
+
+  def UserNoLogin(self, user):
+    """Test whether a user's shell is /sbin/nologin."""
+    pwent = self.pwd.getpwnam(user)
+    return pwent.pw_shell == '/sbin/nologin'
 
   def LockSudoers(self):
     """Create an advisory lock on /etc/sudoers.tmp.
