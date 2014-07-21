@@ -91,7 +91,6 @@ class Accounts(object):
       self.system.UserAdd(username, self.default_user_groups)
 
     if self.UserExists(username):
-      
       if self.UserNoLogin(username):
         logging.warning(
             'Not processing account for user %s.  User has /sbin/nologin'
