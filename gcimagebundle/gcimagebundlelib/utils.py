@@ -184,6 +184,9 @@ def MakeFileSystem(dev_path, fs_type, uuid=None):
   RunCommand(mkfs_cmd)
 
   if fs_type is 'xfs':
+    # XFS complains if there is a duplicate UUID so we need to generate a new
+    # one. The new uuid will later be updated in the image's /etc/fstab
+    uuid = RunCommand(['uuidgen']).strip()
     set_uuid_cmd = ['xfs_admin', '-U', uuid, dev_path]
   else:
     set_uuid_cmd = ['tune2fs', '-U', uuid, dev_path]
