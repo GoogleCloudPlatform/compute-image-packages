@@ -183,7 +183,10 @@ def MakeFileSystem(dev_path, fs_type, uuid=None):
   mkfs_cmd = ['mkfs', '-t', fs_type, dev_path]
   RunCommand(mkfs_cmd)
 
-  set_uuid_cmd = ['tune2fs', '-U', uuid, dev_path]
+  if fs_type is 'xfs':
+    set_uuid_cmd = ['xfs_admin', '-U', uuid, dev_path]
+  else:
+    set_uuid_cmd = ['tune2fs', '-U', uuid, dev_path]
   RunCommand(set_uuid_cmd)
 
   return uuid
