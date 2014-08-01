@@ -18,6 +18,7 @@
 
 
 import os
+import platform
 import re
 
 from gcimagebundlelib import linux
@@ -57,3 +58,9 @@ class Centos(linux.LinuxPlatform):
     super(Centos, self).__init__()
     (self.distribution_codename, _, self.distribution,
      self.distribution_version) = Centos.ParseRedhatRelease()
+
+  def GetPreferredFilesystemType(self):
+    (_,version,_) = platform.linux_distribution()
+    if version.startswith('7'):
+      return 'xfs'
+    return 'ext4'

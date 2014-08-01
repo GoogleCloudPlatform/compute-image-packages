@@ -34,3 +34,9 @@ class RHEL(linux.LinuxPlatform):
 
   def __init__(self):
     super(RHEL, self).__init__()
+
+  def GetPreferredFilesystemType(self):
+    (_,version,_) = platform.linux_distribution()
+    if version.startswith('7'):
+      return 'xfs'
+    return 'ext4'
