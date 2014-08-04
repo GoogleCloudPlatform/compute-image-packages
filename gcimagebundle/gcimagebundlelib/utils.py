@@ -78,7 +78,7 @@ class LoadDiskImage(object):
 class MountFileSystem(object):
   """Mounts a file system."""
 
-  def __init__(self, dev_path, dir_path):
+  def __init__(self, dev_path, dir_path, fs_type):
     """Initializes MountFileSystem object.
 
     Args:
@@ -87,11 +87,17 @@ class MountFileSystem(object):
     """
     self._dev_path = dev_path
     self._dir_path = dir_path
+    self._fs_type = fs_type
 
   def __enter__(self):
     """Mounts a device.
     """
-    mount_cmd = ['mount', self._dev_path, self._dir_path]
+    # Since the bundled image can have the same uuid as the root disk,
+    # we should prevent uuid conflicts for xfs mounts.
+    if self._fs_type is 'xfs':
+      mount_cmd = ['mount', '-o', 'nouuid', self._dev_path, self._dir_path]
+    else:
+      mount_cmd = ['mount', self._dev_path, self._dir_path]
     RunCommand(mount_cmd)
 
   def __exit__(self, unused_exc_type, unused_exc_value, unused_exc_tb):
@@ -184,9 +190,6 @@ def MakeFileSystem(dev_path, fs_type, uuid=None):
   RunCommand(mkfs_cmd)
 
   if fs_type is 'xfs':
-    # XFS complains if there is a duplicate UUID so we need to generate a new
-    # one. The new uuid will later be updated in the image's /etc/fstab
-    uuid = RunCommand(['uuidgen']).strip()
     set_uuid_cmd = ['xfs_admin', '-U', uuid, dev_path]
   else:
     set_uuid_cmd = ['tune2fs', '-U', uuid, dev_path]
