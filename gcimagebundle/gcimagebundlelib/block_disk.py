@@ -161,7 +161,7 @@ class FsRawDisk(fs_copy.FsCopy):
       if uuid is None:
         raise Exception('Could not get uuid from MakeFileSystem')
       mount_point = tempfile.mkdtemp(dir=self._scratch_dir)
-      with utils.MountFileSystem(devices[0], mount_point):
+      with utils.MountFileSystem(devices[0], mount_point, self._fs_type):
         logging.info('Copying contents')
         self._CopySourceFiles(mount_point)
         self._CopyPlatformSpecialFiles(mount_point)
