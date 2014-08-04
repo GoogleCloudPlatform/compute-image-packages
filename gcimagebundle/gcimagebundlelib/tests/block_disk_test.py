@@ -389,7 +389,7 @@ class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):
     with utils.LoadDiskImage(disk_path) as devices:
       self.assertEqual(len(devices), 1)
       mnt_dir = tempfile.mkdtemp(dir=self.tmp_root)
-      with utils.MountFileSystem(devices[0], mnt_dir):
+      with utils.MountFileSystem(devices[0], mnt_dir, 'ext4'):
         found = []
         for root, dirs, files in os.walk(mnt_dir):
           root = root.replace(mnt_dir, '')
@@ -414,7 +414,7 @@ class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):
     with utils.LoadDiskImage(disk_path) as devices:
       self.assertEqual(len(devices), 1)
       mnt_dir = tempfile.mkdtemp(dir=self.tmp_root)
-      with utils.MountFileSystem(devices[0], mnt_dir):
+      with utils.MountFileSystem(devices[0], mnt_dir, 'ext4'):
         f = open(os.path.join(mnt_dir, filename), 'r')
         file_content = f.read()
         f.close()
@@ -429,7 +429,7 @@ class FsRawDiskTest(image_bundle_test_base.ImageBundleTest):
     with utils.LoadDiskImage(disk_path) as devices:
       self.assertEqual(len(devices), 1)
       mnt_dir = tempfile.mkdtemp(dir=self.tmp_root)
-      with utils.MountFileSystem(devices[0], mnt_dir):
+      with utils.MountFileSystem(devices[0], mnt_dir, 'ext4'):
         self.assertEqual(os.stat(os.path.join(mnt_dir, filename)).st_nlink,
                          count)
 
