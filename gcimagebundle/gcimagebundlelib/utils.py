@@ -50,6 +50,11 @@ class LoadDiskImage(object):
   def __enter__(self):
     """Map disk image as a device."""
     SyncFileSystem()
+
+    # In the new kernel loop is compiled as a module.
+    # set up loop to mount
+    RunCommand(["modprobe", "loop"])
+
     kpartx_cmd = ['kpartx', '-a', '-v', '-s', self._file_path]
     output = RunCommand(kpartx_cmd)
     devs = []
