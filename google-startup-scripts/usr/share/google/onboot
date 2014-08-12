@@ -39,6 +39,7 @@ declare -r CURL_RETRY_LIMIT=10
 declare -r CURL_TIMEOUT=10
 
 declare -r STARTUP_SCRIPT=/var/run/google.startup.script
+declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 
 declare -r GOOGLE_ENVIRONMENT=/var/run/google.environment
 
@@ -61,14 +62,14 @@ function download_url_with_logfile() {
   local readonly url=$1
   local readonly dest=$2
   local readonly logfile=$3
-      
+
   case ${url} in
     gs://*)
       log "Downloading url from ${url} to ${dest} using gsutil";
       gsutil cp ${url} ${dest} >${logfile} 2>&1 && return 0;;
   esac
 
-  # Many of the Google Storage URLs are supported below. 
+  # Many of the Google Storage URLs are supported below.
   # It is prefered that customers specify their object using
   # its gs://<bucket>/<object> url.
 
@@ -90,7 +91,7 @@ function download_url_with_logfile() {
     # Create a url that can be interpreted by gsutil
     gsurl=$(echo $url | sed "s/^https\?:\/\/\($bucket\)\.storage\.googleapis\.com\/\($object\)$/gs:\/\/\1\/\2/")
     gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0
-  # Check for the other possible Google Storage URLS: 
+  # Check for the other possible Google Storage URLS:
   # http://storage.googleapis.com/<bucket>/<object>/
   # https://storage.googleapis.com/<bucket>/<object>/
   #
@@ -173,6 +174,29 @@ function do_environment() {
   echo "INSTANCE_ID=$(get_metadata_value instance-id)" > ${GOOGLE_ENVIRONMENT}
 }
 
+function set_scripts() {
+  # Try to use the script-url, then the script metadata.
+  # Check the script url first.
+  url=$1
+  script=$2
+  script_type=$3
+  local readonly script_url=$(get_metadata_attribute url)
+  if [[ -n "${script_url}" ]]; then
+    download_url ${script_url} ${script}
+    if [[ $? != 0 ]]; then
+      log "Could not download ${script_type} script ${script_url}"
+    fi
+  else
+    get_metadata_attribute startup-script > ${script}
+    if [[ $? != 0 ]]; then
+      log "No ${script_type} script found in metadata."
+    fi
+  fi
+  [[ -e ${script} ]] && chmod 700 ${script}
+
+  return 0
+}
+
 function do_init()
 {
   log "onboot initializing"
@@ -187,21 +211,8 @@ function do_init()
     ${BOTO_SETUP_SCRIPT} >> ${LOGFILE} 2>&1
   fi
 
-  # Try to use the startup-script-url, then the startup-script metadata.
-  # Check the startup script url first.
-  local readonly startup_script_url=$(get_metadata_attribute startup-script-url)
-  if [[ -n "${startup_script_url}" ]]; then
-    download_url ${startup_script_url} ${STARTUP_SCRIPT}
-    if [[ $? != 0 ]]; then
-      log "Could not download startup script ${startup_script_url}"
-    fi
-  else
-    get_metadata_attribute startup-script > ${STARTUP_SCRIPT}
-    if [[ $? != 0 ]]; then
-      log "No startup script found in metadata."
-    fi
-  fi
-  [[ -e ${STARTUP_SCRIPT} ]] && chmod 700 ${STARTUP_SCRIPT}
+  set_scripts "startup-script-url" "STARTUP_SCRIPT" "startup"
+  set_scripts "shutdown-script-url" "SHUTDOWN_SCRIPT" "shutdown"
 
   return 0
 }
@@ -209,28 +220,28 @@ function do_init()
 function print_ssh_key_fingerprints()
 {
   log "SSH public key fingerprints"
-  
+
   if [ -e /etc/ssh/ssh_host_rsa_key.pub ]; then
     log "RSA public key"
     ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub
   else
     log "No RSA public key found."
   fi
-  
+
   if [ -e /etc/ssh/ssh_host_dsa_key.pub ]; then
     log "DSA public key"
     ssh-keygen -lf /etc/ssh/ssh_host_dsa_key.pub
   else
     log "No DSA public key found."
   fi
-  
+
   if [ -e /etc/ssh/ssh_host_ecdsa_key.pub ]; then
     log "ECDSA public key"
     ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub
   else
     log "No ECDSA public key found."
   fi
-  
+
   return 0
 }
 
