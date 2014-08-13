@@ -111,7 +111,7 @@ function get_metadata_attribute() {
   return $?
 }
 
-function fetch_scripts() {
+function fetch_script() {
   # Try to use the script-url, then the script metadata.
   # Check the script url first.
   url=$1
@@ -134,4 +134,4 @@ function fetch_scripts() {
   return 0
 }
 
-fetch_scripts $1 $2 $3
+fetch_script $1 $2 $3
