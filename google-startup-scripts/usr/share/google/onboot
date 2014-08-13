@@ -174,13 +174,13 @@ function do_environment() {
   echo "INSTANCE_ID=$(get_metadata_value instance-id)" > ${GOOGLE_ENVIRONMENT}
 }
 
-function set_scripts() {
+function fetch_scripts() {
   # Try to use the script-url, then the script metadata.
   # Check the script url first.
   url=$1
   script=$2
   script_type=$3
-  local readonly script_url=$(get_metadata_attribute url)
+  local readonly script_url=$(get_metadata_attribute ${url})
   if [[ -n "${script_url}" ]]; then
     download_url ${script_url} ${script}
     if [[ $? != 0 ]]; then
@@ -211,8 +211,8 @@ function do_init()
     ${BOTO_SETUP_SCRIPT} >> ${LOGFILE} 2>&1
   fi
 
-  set_scripts "startup-script-url" "STARTUP_SCRIPT" "startup"
-  set_scripts "shutdown-script-url" "SHUTDOWN_SCRIPT" "shutdown"
+  fetch_scripts startup-script-url ${STARTUP_SCRIPT} startup
+  fetch_scripts shutdown-script-url ${SHUTDOWN_SCRIPT} shutdown
 
   return 0
 }
