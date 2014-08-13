@@ -83,8 +83,8 @@ function do_init() {
     ${BOTO_SETUP_SCRIPT} >> ${LOGFILE} 2>&1
   fi
 
-  /usr/share/google/fetch_scripts startup-script-url ${STARTUP_SCRIPT} startup
-  /usr/share/google/fetch_scripts shutdown-script-url ${SHUTDOWN_SCRIPT} shutdown
+  /usr/share/google/fetch_script startup-script-url ${STARTUP_SCRIPT} startup
+  /usr/share/google/fetch_script shutdown-script-url ${SHUTDOWN_SCRIPT} shutdown
 
   return 0
 }
