@@ -5,6 +5,7 @@ After=google.service
 
 [Service]
 ExecStart=/usr/share/google/run-startup-scripts
+ExecStop=/usr/share/google/run-shutdown-scripts
 Type=idle
 
 [Install]

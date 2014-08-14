@@ -18,9 +18,10 @@
 # Do NOT "set -e"
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
-declare -r STARTUP_SCRIPT=/var/run/google.startup.script
+declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 
 # Make sure all udev changes settle before running startup scripts.
 udevadm settle
 
-/usr/share/google/run-scripts ${STARTUP_SCRIPT} startup
+/usr/share/google/fetch_script shutdown-script-url ${SHUTDOWN_SCRIPT} shutdown
+/usr/share/google/run-scripts ${SHUTDOWN_SCRIPT} shutdown
