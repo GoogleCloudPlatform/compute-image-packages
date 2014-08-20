@@ -14,6 +14,7 @@
 # limitations under the License.
 
 # Run startup scripts that should happen "Late" at boot.
+# Run shutdown scripts that should happen early at shutdown.
 #
 # Do NOT "set -e"
 declare -r SCRIPT=$1
