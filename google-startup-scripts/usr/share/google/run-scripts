@@ -14,7 +14,8 @@
 # limitations under the License.
 
 # Run startup scripts that should happen "Late" at boot.
-# Run shutdown scripts that should happen early at shutdown.
+# Run shutdown scripts that should happen as soon as the instances
+# begin to power down.
 #
 # Do NOT "set -e"
 declare -r SCRIPT=$1

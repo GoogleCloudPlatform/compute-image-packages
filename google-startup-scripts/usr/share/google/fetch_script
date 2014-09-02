@@ -114,9 +114,11 @@ function get_metadata_attribute() {
 function fetch_script() {
   # Try to use the script-url, then the script metadata.
   # Check the script url first.
-  url=$1
-  script=$2
-  script_type=$3
+  script=$1
+  script_type=$2
+  url_type="${script_type}-script"
+  url="${url_type}-url"
+
   local readonly script_url=$(get_metadata_attribute ${url})
   if [[ -n "${script_url}" ]]; then
     download_url ${script_url} ${script}
@@ -124,7 +126,7 @@ function fetch_script() {
       log "Could not download ${script_type} script ${script_url}"
     fi
   else
-    get_metadata_attribute startup-script > ${script}
+    get_metadata_attribute ${url_type} > ${script}
     if [[ $? != 0 ]]; then
       log "No ${script_type} script found in metadata."
     fi
@@ -134,4 +136,4 @@ function fetch_script() {
   return 0
 }
 
-fetch_script $1 $2 $3
+fetch_script $1 $2
