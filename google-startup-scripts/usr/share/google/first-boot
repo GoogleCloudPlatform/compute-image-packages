@@ -31,7 +31,7 @@ function log() {
 
 function get_instance_id() {
   # Do not retry to get the metadata value on failures.
-  MDS_TRIES=1 ${PREFIX}/usr/share/google/get_metadata_value instance-id 2>/dev/null
+  MDS_TRIES=1 ${PREFIX}/usr/share/google/get_metadata_value id 2>/dev/null
 }
 
 # Output the instance id.
