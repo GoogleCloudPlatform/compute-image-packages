@@ -88,7 +88,7 @@ fi
 mkdir -p ${PREFIX}/var/lib/google/per-instance/${INSTANCE_ID}
 
 # Run system updates.
-if [[ -f ${PREFIX}/etc/lsb-release ]]; then
+if [[ -f ${PREFIX}/etc/debian_version ]]; then
   # Update packages for apt-get.
   if [[ -x ${PREFIX}/usr/bin/apt-get ]]; then
     ${PREFIX}/usr/bin/apt-get -q -y --force-yes update
