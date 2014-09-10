@@ -33,7 +33,7 @@ else
     declare -r LOGGER=/bin/logger
 fi
 
-declare -r BOTO_SETUP_SCRIPT=/usr/share/google/boto/boot_setup.py
+declare -r BOTO_SETUP_SCRIPT=${GOOGLE_STARTUP_SCRIPTS_PREFIX}/boto/boot_setup.py
 
 declare -r CURL_RETRY_LIMIT=10
 declare -r CURL_TIMEOUT=10
@@ -134,13 +134,13 @@ function download_url() {
 
 function get_metadata_value() {
   local readonly varname=$1
-  /usr/share/google/get_metadata_value ${varname}
+  ${GOOGLE_STARTUP_SCRIPTS_PREFIX}/get_metadata_value ${varname}
   return $?
 }
 
 function get_metadata_attribute() {
   local readonly varname=$1
-  /usr/share/google/get_metadata_value "attributes/${varname}"
+  ${GOOGLE_STARTUP_SCRIPTS_PREFIX}/get_metadata_value "attributes/${varname}"
   return $?
 }
 
@@ -158,14 +158,14 @@ function run_command_with_retry() {
 }
 
 function first_boot() {
-  if [[ -x /usr/share/google/first-boot ]]; then
-    /usr/share/google/first-boot
+  if [[ -x ${GOOGLE_STARTUP_SCRIPTS_PREFIX}/first-boot ]]; then
+    ${GOOGLE_STARTUP_SCRIPTS_PREFIX}/first-boot
   fi
 }
 
 function virtionet_irq_affinity() {
-  if [[ -x /usr/share/google/virtionet-irq-affinity ]]; then
-    /usr/share/google/virtionet-irq-affinity
+  if [[ -x ${GOOGLE_STARTUP_SCRIPTS_PREFIX}/virtionet-irq-affinity ]]; then
+    ${GOOGLE_STARTUP_SCRIPTS_PREFIX}/virtionet-irq-affinity
   fi
 }
 
