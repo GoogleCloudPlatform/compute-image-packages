@@ -26,8 +26,8 @@ declare -r CURL_RETRY_LIMIT=10
 declare -r CURL_TIMEOUT=10
 
 function log() {
-  echo $* | ${LOGGER} -t google -p daemon.info
-  echo $* >> ${LOGFILE}
+  echo "$@" | ${LOGGER} -t google -p daemon.info
+  echo "$@" >> ${LOGFILE}
 }
 
 function download_url_with_logfile() {
@@ -98,7 +98,7 @@ function download_url() {
   # If the script was unable to download then report to the syslog.
   if [ "${return_code}" != "0" ]
   then
-    log $(<"${logfile}")
+    log "$(<"${logfile}")"
   else
     rm -f "${logfile}"
   fi
@@ -136,4 +136,4 @@ function fetch_script() {
   return 0
 }
 
-fetch_script $1 $2
+fetch_script "$1" "$2"

@@ -30,11 +30,11 @@ fi
 LOG_CMD="${LOGGER} -t ${SCRIPT_TYPE}script -p daemon.info"
 
 function log() {
-  echo $* | ${LOG_CMD}
+  echo "$@" | ${LOG_CMD}
 }
 
 function die() {
-  log $*
+  log "$@"
   exit 1
 }
 
