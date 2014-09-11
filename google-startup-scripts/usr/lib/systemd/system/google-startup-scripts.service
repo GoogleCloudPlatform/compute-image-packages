@@ -1,11 +1,13 @@
 [Unit]
-Description=Google Compute Engine user startup scripts
-After=network.target
-After=google.service
+Description=Google Compute Engine user scripts
+After=local-fs.target network-online.target network.target
+After=google.service rsyslog.service
 
 [Service]
 ExecStart=/usr/share/google/run-startup-scripts
-Type=idle
+ExecStop=/usr/share/google/run-shutdown-scripts
+Type=oneshot
+RemainAfterExit=true
 
 [Install]
 WantedBy=multi-user.target

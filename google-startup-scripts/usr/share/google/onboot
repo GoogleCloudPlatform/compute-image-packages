@@ -34,17 +34,9 @@ else
 fi
 
 declare -r BOTO_SETUP_SCRIPT=/usr/share/google/boto/boot_setup.py
-
-declare -r CURL_RETRY_LIMIT=10
-declare -r CURL_TIMEOUT=10
-
-declare -r STARTUP_SCRIPT=/var/run/google.startup.script
-
 declare -r GOOGLE_ENVIRONMENT=/var/run/google.environment
-
-declare -r CLOUDINIT_UPSTART_JOB=/etc/init/google_cloudinit.conf
-declare -r CLOUDINIT_USER_DATA=/var/run/google.cloudinit.user_data
-declare -r CLOUDINIT_CLOUD_BOOTHOOK=/var/lib/cloud/cloud.boothook
+declare -r STARTUP_SCRIPT=/var/run/google.startup.script
+declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 
 function log() {
   echo $* | ${LOGGER} -t google -p daemon.info
@@ -56,105 +48,10 @@ function log_file() {
   cat $* >> ${LOGFILE}
 }
 
-function download_url_with_logfile() {
-
-  local readonly url=$1
-  local readonly dest=$2
-  local readonly logfile=$3
-      
-  case ${url} in
-    gs://*)
-      log "Downloading url from ${url} to ${dest} using gsutil";
-      gsutil cp ${url} ${dest} >${logfile} 2>&1 && return 0;;
-  esac
-
-  # Many of the Google Storage URLs are supported below. 
-  # It is prefered that customers specify their object using
-  # its gs://<bucket>/<object> url.
-
-  bucket="[a-z0-9][-.a-z0-9]*[a-z0-9]"
-
-  # Accept any non-empty string that doesn't contain a wildcard character
-  # gsutil interprets some characters as wildcards
-  # These characters in object names make it difficult or impossible
-  # to perform various wildcard operations using gsutil
-  # For a complete list use "gsutil help naming"
-  object="[^\*\?][^\*\?]*"
-
-  # Check for the Google Storage URLs:
-  # http://<bucket>.storage.googleapis.com/<object>/
-  # https://<bucket>.storage.googleapis.com/<object>/
-  if [[ $url =~ http[s]?://${bucket}\.storage\.googleapis\.com/${object} ]];
-  then
-    log "Downloading url from ${url} to ${dest} using gsutil"
-    # Create a url that can be interpreted by gsutil
-    gsurl=$(echo $url | sed "s/^https\?:\/\/\($bucket\)\.storage\.googleapis\.com\/\($object\)$/gs:\/\/\1\/\2/")
-    gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0
-  # Check for the other possible Google Storage URLS: 
-  # http://storage.googleapis.com/<bucket>/<object>/
-  # https://storage.googleapis.com/<bucket>/<object>/
-  #
-  # The following are deprecated but checked
-  # http://commondatastorage.googleapis.com/<bucket>/<object>/
-  # https://commondatastorage.googleapis.com/<bucket>/<object>/
-  elif [[ $url =~ http[s]?://(commondata|)?storage\.googleapis\.com/${bucket}/${object} ]];
-  then
-    log "Downloading url from ${url} to ${dest} using gsutil"
-    # Create a url that can be interpreted by gsutil
-    gsurl=$(echo $url | sed "s/^https\?:\/\/\(commondata\|\)storage\.googleapis\.com\/\($bucket\)\/\($object\)$/gs:\/\/\2\/\3/")
-    gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0
-  else
-    log "URL ${url} is not located in Google Storage"
+function virtionet_irq_affinity() {
+  if [[ -x /usr/share/google/virtionet-irq-affinity ]]; then
+    /usr/share/google/virtionet-irq-affinity
   fi
-
-  # Unauthenticated download of the object.
-  log "Downloading url from ${url} to ${dest} using curl"
-  curl --max-time "${CURL_TIMEOUT}" --retry "${CURL_RETRY_LIMIT}" \
-    2> "${logfile}" -o ${dest} -- "${url}" && return 0;
-
-  log "Failed to download $url"
-  return 1
-}
-
-function download_url() {
-  local readonly url=$1
-  local readonly dest=$2
-  local readonly logfile=$(mktemp)
-  download_url_with_logfile ${url} ${dest} ${logfile}
-  return_code=$?
-  # If the script was unable to download then report to the syslog.
-  if [ "${return_code}" != "0" ]
-  then
-    log $(<${logfile})
-  else
-    rm -f ${logfile}
-  fi
-  return ${return_code}
-}
-
-function get_metadata_value() {
-  local readonly varname=$1
-  /usr/share/google/get_metadata_value ${varname}
-  return $?
-}
-
-function get_metadata_attribute() {
-  local readonly varname=$1
-  /usr/share/google/get_metadata_value "attributes/${varname}"
-  return $?
-}
-
-function run_command_with_retry() {
-  local readonly NUM_RETRY=$1
-  shift
-  local SLEEP=1
-  for i in $(seq 1 ${NUM_RETRY}); do
-    $* && return || log "retrying after ${SLEEP} sec..."
-    sleep ${SLEEP}
-    SLEEP=$((${SLEEP} * 2))
-  done
-  log failed to execute $*
-  exit 1
 }
 
 function first_boot() {
@@ -163,23 +60,22 @@ function first_boot() {
   fi
 }
 
-function virtionet_irq_affinity() {
-  if [[ -x /usr/share/google/virtionet-irq-affinity ]]; then
-    /usr/share/google/virtionet-irq-affinity
-  fi
+function get_metadata_value() {
+  local readonly varname=$1
+  /usr/share/google/get_metadata_value ${varname}
+  return $?
 }
 
 function do_environment() {
   echo "INSTANCE_ID=$(get_metadata_value instance-id)" > ${GOOGLE_ENVIRONMENT}
 }
 
-function do_init()
-{
+function do_init() {
   log "onboot initializing"
 
   do_environment
 
-  # If it exists, run the boto bootstrap script.  This will set things
+  # If it exists, run the boto bootstrap script. This will set things
   # up so that gsutil will just work with any provisioned service
   # account.
   if [ -x ${BOTO_SETUP_SCRIPT} ]; then
@@ -187,50 +83,35 @@ function do_init()
     ${BOTO_SETUP_SCRIPT} >> ${LOGFILE} 2>&1
   fi
 
-  # Try to use the startup-script-url, then the startup-script metadata.
-  # Check the startup script url first.
-  local readonly startup_script_url=$(get_metadata_attribute startup-script-url)
-  if [[ -n "${startup_script_url}" ]]; then
-    download_url ${startup_script_url} ${STARTUP_SCRIPT}
-    if [[ $? != 0 ]]; then
-      log "Could not download startup script ${startup_script_url}"
-    fi
-  else
-    get_metadata_attribute startup-script > ${STARTUP_SCRIPT}
-    if [[ $? != 0 ]]; then
-      log "No startup script found in metadata."
-    fi
-  fi
-  [[ -e ${STARTUP_SCRIPT} ]] && chmod 700 ${STARTUP_SCRIPT}
+  /usr/share/google/fetch_script ${STARTUP_SCRIPT} startup
 
   return 0
 }
 
-function print_ssh_key_fingerprints()
-{
+function print_ssh_key_fingerprints() {
   log "SSH public key fingerprints"
-  
+
   if [ -e /etc/ssh/ssh_host_rsa_key.pub ]; then
     log "RSA public key"
     ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub
   else
     log "No RSA public key found."
   fi
-  
+
   if [ -e /etc/ssh/ssh_host_dsa_key.pub ]; then
     log "DSA public key"
     ssh-keygen -lf /etc/ssh/ssh_host_dsa_key.pub
   else
     log "No DSA public key found."
   fi
-  
+
   if [ -e /etc/ssh/ssh_host_ecdsa_key.pub ]; then
     log "ECDSA public key"
     ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub
   else
     log "No ECDSA public key found."
   fi
-  
+
   return 0
 }
 

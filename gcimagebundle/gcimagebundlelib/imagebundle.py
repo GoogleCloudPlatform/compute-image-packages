@@ -142,7 +142,7 @@ def SetupLogging(options, log_dir='/tmp'):
 
 def PrintVersionInfo():
   #TODO: Should read from the VERSION file instead.
-  print 'version 1.1.6'
+  print 'version 1.1.7'
 
 
 def GetTargetFilesystem(options, guest_platform):

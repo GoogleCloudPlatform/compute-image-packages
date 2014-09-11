@@ -13,14 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Run startup scripts that should happen "Late" at boot.
+# Run shutdown scripts that should happen as soon as the instances
+# begin to power down.
 #
 # Do NOT "set -e"
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
-declare -r STARTUP_SCRIPT=/var/run/google.startup.script
+declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 
-# Make sure all udev changes settle before running startup scripts.
+# Make sure all udev changes settle before running shutdown scripts.
 udevadm settle
 
-/usr/share/google/run-scripts ${STARTUP_SCRIPT} startup
+# NOTE:
+# The instance may be forcibly shut down two minutes after the shutdown
+# is initiated, irrespective of whether the shutdown script has completed.
+# The shutdown script blocks other shutdown operations from proceeding.
+/usr/share/google/fetch_script ${SHUTDOWN_SCRIPT} shutdown
+/usr/share/google/run-scripts ${SHUTDOWN_SCRIPT} shutdown
