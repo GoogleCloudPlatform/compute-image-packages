@@ -35,10 +35,10 @@ function download_url_with_logfile() {
   local readonly dest=$2
   local readonly logfile=$3
 
-  case ${url} in
+  case "${url}" in
     gs://*)
       log "Downloading url from ${url} to ${dest} using gsutil";
-      gsutil cp ${url} ${dest} >${logfile} 2>&1 && return 0;;
+      gsutil cp "${url}" "${dest}" > "${logfile}" 2>&1 && return 0;;
   esac
 
   # Many of the Google Storage URLs are supported below.
@@ -57,11 +57,11 @@ function download_url_with_logfile() {
   # Check for the Google Storage URLs:
   # http://<bucket>.storage.googleapis.com/<object>/
   # https://<bucket>.storage.googleapis.com/<object>/
-  if [[ $url =~ http[s]?://${bucket}\.storage\.googleapis\.com/${object} ]];
+  if [[ "$url" =~ http[s]?://"${bucket}"\.storage\.googleapis\.com/"${object}" ]];
   then
     log "Downloading url from ${url} to ${dest} using gsutil"
     # Create a url that can be interpreted by gsutil
-    gsurl=$(echo $url | sed "s/^https\?:\/\/\($bucket\)\.storage\.googleapis\.com\/\($object\)$/gs:\/\/\1\/\2/")
+    gsurl=$(echo "$url" | sed "s/^https\?:\/\/\($bucket\)\.storage\.googleapis\.com\/\($object\)$/gs:\/\/\1\/\2/")
     gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0
   # Check for the other possible Google Storage URLS:
   # http://storage.googleapis.com/<bucket>/<object>/
@@ -70,12 +70,12 @@ function download_url_with_logfile() {
   # The following are deprecated but checked
   # http://commondatastorage.googleapis.com/<bucket>/<object>/
   # https://commondatastorage.googleapis.com/<bucket>/<object>/
-  elif [[ $url =~ http[s]?://(commondata|)?storage\.googleapis\.com/${bucket}/${object} ]];
+  elif [[ "$url" =~ http[s]?://(commondata|)?storage\.googleapis\.com/"${bucket}"/"${object}" ]];
   then
     log "Downloading url from ${url} to ${dest} using gsutil"
     # Create a url that can be interpreted by gsutil
-    gsurl=$(echo $url | sed "s/^https\?:\/\/\(commondata\|\)storage\.googleapis\.com\/\($bucket\)\/\($object\)$/gs:\/\/\2\/\3/")
-    gsutil cp ${gsurl} ${dest} 2> ${logfile} && return 0
+    gsurl=$(echo "$url" | sed "s/^https\?:\/\/\(commondata\|\)storage\.googleapis\.com\/\($bucket\)\/\($object\)$/gs:\/\/\2\/\3/")
+    gsutil cp "${gsurl}" "${dest}" 2> "${logfile}" && return 0
   else
     log "URL ${url} is not located in Google Storage"
   fi
@@ -83,7 +83,7 @@ function download_url_with_logfile() {
   # Unauthenticated download of the object.
   log "Downloading url from ${url} to ${dest} using curl"
   curl --max-time "${CURL_TIMEOUT}" --retry "${CURL_RETRY_LIMIT}" \
-    2> "${logfile}" -o ${dest} -- "${url}" && return 0;
+    2> "${logfile}" -o "${dest}" -- "${url}" && return 0;
 
   log "Failed to download $url"
   return 1
@@ -93,16 +93,16 @@ function download_url() {
   local readonly url=$1
   local readonly dest=$2
   local readonly logfile=$(mktemp)
-  download_url_with_logfile ${url} ${dest} ${logfile}
+  download_url_with_logfile "${url}" "${dest}" "${logfile}"
   return_code=$?
   # If the script was unable to download then report to the syslog.
   if [ "${return_code}" != "0" ]
   then
-    log $(<${logfile})
+    log $(<"${logfile}")
   else
-    rm -f ${logfile}
+    rm -f "${logfile}"
   fi
-  return ${return_code}
+  return "${return_code}"
 }
 
 function get_metadata_attribute() {
@@ -119,19 +119,19 @@ function fetch_script() {
   url_type="${script_type}-script"
   url="${url_type}-url"
 
-  local readonly script_url=$(get_metadata_attribute ${url})
+  local readonly script_url="$(get_metadata_attribute ${url})"
   if [[ -n "${script_url}" ]]; then
-    download_url ${script_url} ${script}
+    download_url "${script_url}" "${script}"
     if [[ $? != 0 ]]; then
       log "Could not download ${script_type} script ${script_url}"
     fi
   else
-    get_metadata_attribute ${url_type} > ${script}
+    get_metadata_attribute "${url_type}" > "${script}"
     if [[ $? != 0 ]]; then
       log "No ${script_type} script found in metadata."
     fi
   fi
-  [[ -e ${script} ]] && chmod 700 ${script}
+  [[ -e "${script}" ]] && chmod 700 "${script}"
 
   return 0
 }
