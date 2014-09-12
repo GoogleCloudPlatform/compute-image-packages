@@ -46,7 +46,7 @@ function copy_and_run() {
   cat "${source}" >> "${dest}"
   chmod u+x "${dest}"
   log "Running ${SCRIPT_TYPE} script ${source}"
-  "${dest}" 2>&1 | "${LOG_CMD}"
+  "${dest}" 2>&1 | ${LOG_CMD}
   log "Finished running ${SCRIPT_TYPE} script ${source}"
   rm -f "${dest}"
 }
