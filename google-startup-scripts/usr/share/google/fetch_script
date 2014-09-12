@@ -61,7 +61,7 @@ function download_url_with_logfile() {
   # Check for the Google Storage URLs:
   # http://<bucket>.storage.googleapis.com/<object>/
   # https://<bucket>.storage.googleapis.com/<object>/
-  if [[ "$url" =~ http[s]?://"${bucket}"\.storage\.googleapis\.com/"${object}" ]];
+  if [[ "$url" =~ http[s]?://${bucket}\.storage\.googleapis\.com/${object} ]];
   then
     log "Downloading url from ${url} to ${dest} using gsutil"
     # Create a url that can be interpreted by gsutil
@@ -74,7 +74,7 @@ function download_url_with_logfile() {
   # The following are deprecated but checked
   # http://commondatastorage.googleapis.com/<bucket>/<object>/
   # https://commondatastorage.googleapis.com/<bucket>/<object>/
-  elif [[ "$url" =~ http[s]?://(commondata)?storage\.googleapis\.com/"${bucket}"/"${object}" ]];
+  elif [[ "$url" =~ http[s]?://(commondata)?storage\.googleapis\.com/${bucket}/${object} ]];
   then
     log "Downloading url from ${url} to ${dest} using gsutil"
     # Create a url that can be interpreted by gsutil
