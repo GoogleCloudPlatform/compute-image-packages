@@ -45,7 +45,7 @@ function download_url_with_logfile() {
   # It is prefered that customers specify their object using
   # its gs://<bucket>/<object> url.
 
-  bucket="[a-z0-9][-.a-z0-9]*[a-z0-9]"
+  bucket="[a-z0-9][-_.a-z0-9]*[a-z0-9]"
 
   # Accept any non-empty string that doesn't contain a wildcard character
   # gsutil interprets some characters as wildcards
@@ -53,6 +53,10 @@ function download_url_with_logfile() {
   # to perform various wildcard operations using gsutil
   # For a complete list use "gsutil help naming"
   object="[^\*\?][^\*\?]*"
+
+  # For all validation tests:
+  # alphanumeric ranges should only include ascii characters
+  export LC_COLLATE=C
 
   # Check for the Google Storage URLs:
   # http://<bucket>.storage.googleapis.com/<object>/
@@ -70,7 +74,7 @@ function download_url_with_logfile() {
   # The following are deprecated but checked
   # http://commondatastorage.googleapis.com/<bucket>/<object>/
   # https://commondatastorage.googleapis.com/<bucket>/<object>/
-  elif [[ "$url" =~ http[s]?://(commondata|)?storage\.googleapis\.com/"${bucket}"/"${object}" ]];
+  elif [[ "$url" =~ http[s]?://(commondata)?storage\.googleapis\.com/"${bucket}"/"${object}" ]];
   then
     log "Downloading url from ${url} to ${dest} using gsutil"
     # Create a url that can be interpreted by gsutil
