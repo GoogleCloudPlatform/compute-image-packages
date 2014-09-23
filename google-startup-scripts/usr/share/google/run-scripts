@@ -22,9 +22,9 @@ declare -r SCRIPT=$1
 declare -r SCRIPT_TYPE=$2
 
 if [ -x /usr/bin/logger ]; then
-    declare -r LOGGER=/usr/bin/logger
+  declare -r LOGGER=/usr/bin/logger
 else
-    declare -r LOGGER=/bin/logger
+  declare -r LOGGER=/bin/logger
 fi
 
 LOG_CMD="${LOGGER} -t ${SCRIPT_TYPE}script -p daemon.info"
