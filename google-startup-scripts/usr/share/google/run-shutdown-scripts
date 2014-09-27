@@ -20,11 +20,24 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
+
 if [ -n "$1" ]; then
   declare -r TIMEOUT=$1
 else
   declare -r TIMEOUT=150
 fi
+
+if [ -x /usr/bin/logger ]; then
+  declare -r LOGGER=/usr/bin/logger
+else
+  declare -r LOGGER=/bin/logger
+fi
+
+LOG_CMD="${LOGGER} -t shutdownscript -p daemon.info"
+
+function log() {
+  echo "$@" | ${LOG_CMD}
+}
 
 # Make sure all udev changes settle before running shutdown scripts.
 udevadm settle
@@ -35,3 +48,6 @@ udevadm settle
 # The shutdown script blocks other shutdown operations from proceeding.
 /usr/share/google/fetch_script ${SHUTDOWN_SCRIPT} shutdown
 timeout ${TIMEOUT} /usr/share/google/run-scripts ${SHUTDOWN_SCRIPT} shutdown
+if [ $? -eq 124 ]; then
+  log "Timed out."
+fi
