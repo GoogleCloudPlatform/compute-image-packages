@@ -53,7 +53,7 @@ if [ -x /sbin/ethtool ]; then
     for eth_dev in $ETH_DEVS; do
       eth_dev=$(basename "$eth_dev")
       if ! errormsg=$(ethtool -l "$eth_dev" 2>&1) ; then
-        log "/sbin/ethtool does not support virtionet multiqueue: $errormsg"
+        log "/sbin/ethtool says that $eth_dev does not support virtionet multiqueue: $errormsg"
         continue
       fi
       num_max_channels=$(ethtool -l "$eth_dev" | grep -m 1 Combined | cut -f2)
