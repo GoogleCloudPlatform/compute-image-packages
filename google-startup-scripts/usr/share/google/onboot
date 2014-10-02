@@ -83,8 +83,6 @@ function do_init() {
     ${BOTO_SETUP_SCRIPT} >> ${LOGFILE} 2>&1
   fi
 
-  /usr/share/google/fetch_script ${STARTUP_SCRIPT} startup
-
   return 0
 }
 
