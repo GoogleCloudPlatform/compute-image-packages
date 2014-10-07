@@ -136,6 +136,7 @@ function fetch_script() {
       log "${script_type} script found in metadata."
     else
       log "No ${script_type} script found in metadata."
+      log "Instance: $(/usr/share/google/get_metadata_value id)"
     fi
   fi
   [[ -e "${script}" ]] && chmod 700 "${script}"
