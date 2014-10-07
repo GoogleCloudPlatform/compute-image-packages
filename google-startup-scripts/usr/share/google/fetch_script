@@ -16,7 +16,8 @@
 # Fetch a script from metadata and store it in the /var/run directory.
 declare -r LOGFILE=/var/log/google.log
 
-if [ -x /usr/bin/logger ]; then
+if [ -x /usr/bin/logger ];
+then
     declare -r LOGGER=/usr/bin/logger
 else
     declare -r LOGGER=/bin/logger
@@ -124,14 +125,23 @@ function fetch_script() {
   url="${url_type}-url"
 
   local readonly script_url="$(get_metadata_attribute ${url})"
-  if [[ -n "${script_url}" ]]; then
+  if [[ -n "${script_url}" ]];
+  then
+    log "${url} metadata flag: ${script_url}"
     download_url "${script_url}" "${script}"
-    if [[ $? != 0 ]]; then
-      log "Could not download ${script_type} script ${script_url}"
+    if [[ $? != 0 ]];
+    then
+      log "Could not download ${script_type} script ${script_url}."
+    else
+      log "Successfully downloaded ${script_type} script ${script_url}."
     fi
   else
-    get_metadata_attribute "${url_type}" > "${script}"
-    if [[ $? != 0 ]]; then
+    local readonly metadata_script="$(get_metadata_attribute ${url_type})"
+    if [[ -n "${metadata_script}" ]];
+    then
+      echo "${metadata_script}" > "${script}"
+      log "${script_type} script found in metadata."
+    else
       log "No ${script_type} script found in metadata."
     fi
   fi
