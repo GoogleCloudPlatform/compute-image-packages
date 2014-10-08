@@ -1,7 +1,6 @@
 [Unit]
 Description=Google Compute Engine VM initialization
-After=network.target
-After=local-fs.target
+After=local-fs.target network-online.target network.target
 Before=sshd.service
 Requires=network.target
 Requires=local-fs.target
