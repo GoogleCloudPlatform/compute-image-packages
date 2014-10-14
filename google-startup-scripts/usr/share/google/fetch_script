@@ -135,8 +135,8 @@ function fetch_script() {
       echo "${metadata_script}" > "${script}"
       log "${script_type} script found in metadata."
     else
+      log $(curl "http://metadata.google.internal/computeMetadata/v1/instance/?recursive=True" -H "Metadata-Flavor: Google")
       log "No ${script_type} script found in metadata."
-      log "Instance: $(/usr/share/google/get_metadata_value id)"
     fi
   fi
   [[ -e "${script}" ]] && chmod 700 "${script}"
