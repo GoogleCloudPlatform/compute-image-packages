@@ -18,7 +18,7 @@
 # Do NOT "set -e"
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
-declare -r STARTUP_SCRIPT=/var/run/google.startup.script
+declare -r STARTUP_SCRIPT=/tmp/google.startup.script
 
 # Make sure all udev changes settle before running startup scripts.
 udevadm settle
