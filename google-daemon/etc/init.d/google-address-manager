@@ -15,7 +15,7 @@
 #
 ### BEGIN INIT INFO
 # Provides:    google-address-manager
-# Required-Start:    $network
+# Required-Start:    $network $syslog
 # Required-Stop:     $network
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
