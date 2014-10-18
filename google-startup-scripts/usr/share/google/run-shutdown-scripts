@@ -19,7 +19,7 @@
 # Do NOT "set -e"
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
-declare -r SHUTDOWN_SCRIPT=/tmp/google.shutdown.script
+declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 
 # Make sure all udev changes settle before running shutdown scripts.
 udevadm settle
