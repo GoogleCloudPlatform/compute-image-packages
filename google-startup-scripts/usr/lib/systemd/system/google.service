@@ -2,8 +2,7 @@
 Description=Google Compute Engine VM initialization
 After=local-fs.target network-online.target network.target
 Before=sshd.service
-Requires=network.target
-Requires=local-fs.target
+Wants=local-fs.target network-online.target network.target
 
 [Service]
 ExecStart=/usr/share/google/onboot
