@@ -55,10 +55,14 @@ generate_key() {
 
 regenerate_host_keys() {
   log "Regenerating SSH Host Keys for: $new_ip_address (previously $old_ip_address)."
-  rm -f /etc/ssh/ssh_host_key  # SSH1 RSA key.
-  generate_key rsa /etc/ssh/ssh_host_rsa_key
-  generate_key dsa /etc/ssh/ssh_host_dsa_key
-  generate_key ecdsa /etc/ssh/ssh_host_ecdsa_key
+  rm -f /etc/ssh/ssh_host_key /etc/ssh_host_key.pub # SSH1 RSA key.
+  for key_file in /etc/ssh/ssh_host_*_key; do
+    # Parse out the type of key, matching the * in the for loop command above.
+    key_type=$(basename "${key_file}" _key)
+    key_type=${key_type#ssh_host_}
+
+    generate_key "${key_type}" "${key_file}"
+  done
   # Allow sshd to come up if we were suppressing it.
   if [[ $(cat /etc/ssh/sshd_not_to_be_run 2>/dev/null) == "GOOGLE" ]]; then
     rm -f /etc/ssh/sshd_not_to_be_run
