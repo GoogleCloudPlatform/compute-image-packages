@@ -1,3 +1,2 @@
-enable NetworkManager-wait-online.service
 enable google-startup-scripts.service
 enable google.service

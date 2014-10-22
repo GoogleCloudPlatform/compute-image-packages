@@ -35,17 +35,10 @@ fi
 
 declare -r BOTO_SETUP_SCRIPT=/usr/share/google/boto/boot_setup.py
 declare -r GOOGLE_ENVIRONMENT=/var/run/google.environment
-declare -r STARTUP_SCRIPT=/var/run/google.startup.script
-declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 
 function log() {
   echo $* | ${LOGGER} -t google -p daemon.info
   echo $* >> ${LOGFILE}
-}
-
-function log_file() {
-  cat $* | ${LOGGER} -t google -p daemon.info
-  cat $* >> ${LOGFILE}
 }
 
 function virtionet_irq_affinity() {

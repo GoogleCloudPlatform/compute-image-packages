@@ -33,11 +33,6 @@ function log() {
   echo "$@" | ${LOG_CMD}
 }
 
-function die() {
-  log "$@"
-  exit 1
-}
-
 declare -r GOOGLE_ENVIRONMENT=/var/run/google.environment
 
 function copy_and_run() {
