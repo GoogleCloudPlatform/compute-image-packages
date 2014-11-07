@@ -2,6 +2,7 @@
 Description=Google Compute Engine user scripts
 After=local-fs.target network-online.target network.target
 After=google.service rsyslog.service
+Wants=local-fs.target network-online.target network.target
 
 [Service]
 ExecStart=/usr/share/google/run-startup-scripts
