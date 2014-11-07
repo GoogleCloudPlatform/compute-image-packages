@@ -25,8 +25,10 @@ declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 udevadm settle
 
 # NOTE:
-# The instance may be forcibly shut down two minutes after the shutdown
-# is initiated, irrespective of whether the shutdown script has completed.
+# Make sure that the script completes within 90 seconds.
+# The instance may be forcibly terminated after 90 seconds, even if
+# the script has not completed.
+#
 # The shutdown script blocks other shutdown operations from proceeding.
 /usr/share/google/fetch_script ${SHUTDOWN_SCRIPT} shutdown
 /usr/share/google/run-scripts ${SHUTDOWN_SCRIPT} shutdown
