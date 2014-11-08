@@ -24,10 +24,10 @@ declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 # Make sure all udev changes settle before running shutdown scripts.
 udevadm settle
 
-# NOTE:
-# Make sure that the script completes within 90 seconds.
-# The instance may be forcibly terminated after 90 seconds, even if
-# the script has not completed.
+# NOTE
+# Make sure that the shutdown script completes within 90 seconds, so
+# that the OS has time to complete its shutdown, including flushing
+# buffers to disk.
 #
 # The shutdown script blocks other shutdown operations from proceeding.
 /usr/share/google/fetch_script ${SHUTDOWN_SCRIPT} shutdown
