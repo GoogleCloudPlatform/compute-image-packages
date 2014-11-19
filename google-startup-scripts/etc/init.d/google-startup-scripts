@@ -16,7 +16,7 @@
 ### BEGIN INIT INFO
 # Provides:    gce_run_startup_scripts
 # Required-Start:    $all
-# Required-Stop:     $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog docker kubelet
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: Google Compute Engine user scripts
