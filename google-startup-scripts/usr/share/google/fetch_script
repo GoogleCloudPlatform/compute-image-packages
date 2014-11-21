@@ -85,7 +85,7 @@ function download_url_with_logfile() {
   # Unauthenticated download of the object.
   log "Downloading url from ${url} to ${dest} using curl"
   curl --max-time "${CURL_TIMEOUT}" --retry "${CURL_RETRY_LIMIT}" \
-    2> "${logfile}" -o "${dest}" -- "${url}" && return 0;
+    2>> "${logfile}" -o "${dest}" -- "${url}" && return 0;
 
   log "Failed to download $url"
   return 1
