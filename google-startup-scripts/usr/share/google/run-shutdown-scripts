@@ -21,9 +21,6 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 
-# Make sure all udev changes settle before running shutdown scripts.
-udevadm settle
-
 # NOTE
 # Make sure that the shutdown script completes within 90 seconds, so
 # that the OS has time to complete its shutdown, including flushing
