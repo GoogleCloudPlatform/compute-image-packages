@@ -1,14 +1,14 @@
-## Image Packages for Google Compute Engine
+## [Image Packages](https://cloud.google.com/compute/docs/images) for [Google Compute Engine](https://cloud.google.com/compute/)
 This repository is the collection of packages that are installed on the standard Google Compute Engine images.
 
-1. Image Bundle - Tool that creates an image file out of a disk attached to a GCE VM.
-1. Google Startup Scripts - Scripts and configuration files that setup a Linux-based image to work smoothly with GCE.
+1. [Image Bundle](https://cloud.google.com/compute/docs/images#buildingimage) - Tool that creates an image file out of a disk attached to a GCE VM.
+1. [Google Startup Scripts](https://cloud.google.com/compute/docs/startupscript) - Scripts and configuration files that setup a Linux-based image to work smoothly with GCE.
 1. Google Daemon - A service that manages user accounts, maintains ssh login keys, and syncs public endpoint IP addresses.
 
 ## Installation
 The easiest way to install these packages into a Linux-based image is to extract each tarball to `/` (root). Image Bundle does not have a directory structure, it is recommended to it extract to `/usr/share/imagebundle`. The tarballs are available in [releases](https://github.com/GoogleCloudPlatform/compute-image-packages/releases). 
 
-Refer to [Building a Google Compute Engine Image](https://developers.google.com/compute/docs/building_image) for the complete guide.
+Refer to [Building a Google Compute Engine Image](https://cloud.google.com/compute/docs/images) for the complete guide.
 
 ## Source Code
 This repository is structured so that each package is located in its own top-level directory. [`google-startup-scripts`](google-startup-scripts/) and [`google-daemon`](google-daemon/) are stored as the directory structure of where the files would be from root. [`image-bundle`](image-bundle/) has no directory structure.
