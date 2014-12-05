@@ -41,9 +41,9 @@ function log() {
   echo $* >> ${LOGFILE}
 }
 
-function set_inturrupts() {
-  if [[ -x /usr/share/google/set-inturrupts ]]; then
-    /usr/share/google/set-inturrupts
+function set_interrupts() {
+  if [[ -x /usr/share/google/set-interrupts ]]; then
+    /usr/share/google/set-interrupts
   fi
 }
 
@@ -112,7 +112,7 @@ function print_ssh_key_fingerprints() {
   return 0
 }
 
-set_inturrupts
+set_interrupts
 virtionet_irq_affinity
 first_boot
 do_init
