@@ -41,6 +41,12 @@ function log() {
   echo $* >> ${LOGFILE}
 }
 
+function set_interrupts() {
+  if [[ -x /usr/share/google/set-interrupts ]]; then
+    /usr/share/google/set-interrupts
+  fi
+}
+
 function virtionet_irq_affinity() {
   if [[ -x /usr/share/google/virtionet-irq-affinity ]]; then
     /usr/share/google/virtionet-irq-affinity
@@ -106,6 +112,7 @@ function print_ssh_key_fingerprints() {
   return 0
 }
 
+set_interrupts
 virtionet_irq_affinity
 first_boot
 do_init
