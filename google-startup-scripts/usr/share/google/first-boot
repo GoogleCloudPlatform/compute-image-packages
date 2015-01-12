@@ -18,7 +18,6 @@
 declare -r INSTANCE_FILE=${PREFIX}/var/lib/google/vm-instance-id
 declare -r LOCK_FILE=${INSTANCE_FILE}.lock
 
-mkdir -p ${PREFIX}/var/lib/google/
 mkdir -p ${PREFIX}/var/lib/google/per-instance
 
 function log() {
