@@ -1,4 +1,3 @@
-#! /bin/bash
 # Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +14,7 @@
 
 # Deal with a new hostname assignment.
 
-if [[ -n "$new_host_name" && -n "$new_ip_address" ]]; then
+if [ -n "$new_host_name" ] && [ -n "$new_ip_address" ]; then
   # Delete entries with new_host_name or new_ip_address in /etc/hosts.
   sed -i '/Added by Google/d' /etc/hosts
 
@@ -33,10 +32,9 @@ fi
 # As a result, we set the host name in all circumstances here, to the truncated
 # unqualified domain name.
 
-if [[ -n "$new_host_name" ]]; then
+if [ -n "$new_host_name" ]; then
   hostname ${new_host_name%%.*}
 
   # Let syslogd know we've changed the hostname.
   pkill -HUP syslogd
 fi
-
