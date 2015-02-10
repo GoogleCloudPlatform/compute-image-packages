@@ -14,7 +14,7 @@
 
 # Deal with a new hostname assignment.
 
-if [ -n "$new_host_name" -a -n "$new_ip_address" ]; then
+if [ -n "$new_host_name" ] && [ -n "$new_ip_address" ]; then
   # Delete entries with new_host_name or new_ip_address in /etc/hosts.
   sed -i '/Added by Google/d' /etc/hosts
 
