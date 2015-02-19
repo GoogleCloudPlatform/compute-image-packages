@@ -61,7 +61,7 @@ def KeyHasExpired(key):
     logging.debug('Rejecting %s as potential key schema identifier.', schema)
     return False
 
-  logging.info('Google SSH key schema identifier found.')
+  logging.debug('Google SSH key schema identifier found.')
   logging.debug('JSON string detected: %s', json_str)
 
   try:
