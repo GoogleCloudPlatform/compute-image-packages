@@ -70,6 +70,8 @@ function get_metadata_value_with_retries() {
     case $return_code in
       # No error.  We're done.
       0) exit ${return_code};;
+      # Failed to resolve host, wait for network interfaces.  Retry.
+      6) sleep 0.3; continue;;
       # Failed to connect to host.  Retry.
       7) sleep 0.1; continue;;
       # A genuine error.  Exit.
