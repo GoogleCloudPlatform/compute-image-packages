@@ -14,10 +14,21 @@
 # limitations under the License.
 
 # Get a metadata value from the metadata server.
+declare -r LOGFILE=/var/log/google.log
+
+if [[ -x /usr/bin/logger ]]; then
+    declare -r LOGGER=/usr/bin/logger
+else
+    declare -r LOGGER=/bin/logger
+fi
 
 declare -r VARNAME=$1
 declare -r MDS_PREFIX=http://169.254.169.254/computeMetadata/v1
-declare -r MDS_TRIES=${MDS_TRIES:-100}
+
+function log() {
+  echo "$@" | ${LOGGER} -t google -p daemon.info
+  echo "$@" >> ${LOGFILE}
+}
 
 function metadata_get_url_code() {
   return $(curl "${1}" -H "Metadata-Flavor: Google" -s \
@@ -63,19 +74,34 @@ function get_metadata_value() {
 }
 
 function get_metadata_value_with_retries() {
+  local count=0
   local return_code=1  # General error code.
-  for ((count=0; count <= ${MDS_TRIES}; count++)); do
+
+  # In cases where there is not a connection to the metadata server we are
+  # assuming there is no network available and will block Google startup
+  # scripts from continuing on.
+  while true; do
+    ((count++))
     get_metadata_value $VARNAME
     return_code=$?
     case $return_code in
       # No error.  We're done.
       0) exit ${return_code};;
-      # Failed to resolve host, wait for network interfaces.  Retry.
-      6) sleep 0.3; continue;;
-      # Failed to connect to host.  Retry.
-      7) sleep 0.1; continue;;
+      # Failed to resolve host or connect to host.  Retry indefinitely.
+      6|7) sleep 1.0
+        log "Waiting for metadata server, attempt ${count}"
+        # After 7 minutes, add a console message denoting a probable network
+        # issue. On systems using dhclient there is an attempt to obtain an IP
+        # for 60 seconds followed by a 5 minute wait period. After 7 minutes,
+        # this cycle will have run through twice. After this period of time, it
+        # is not known when a DHCP lease might be obtained and the network
+        # interface fully operational.
+        if ((count >= 421)); then
+          log "There is likely a problem with the network."
+        fi
+        continue;;
       # A genuine error.  Exit.
-      *) exit ${return_code};
+      *) exit ${return_code};;
     esac
   done
   # Exit with the last return code we got.
