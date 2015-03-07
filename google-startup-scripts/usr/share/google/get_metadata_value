@@ -15,7 +15,7 @@
 
 # Get a metadata value from the metadata server.
 declare -r VARNAME=$1
-declare -r MDS_PREFIX=http://metadata/computeMetadata/v1
+declare -r MDS_PREFIX=http://metadata.google.internal/computeMetadata/v1
 declare -r MDS_TRIES=${MDS_TRIES:-100}
 
 function metadata_get_url_code() {

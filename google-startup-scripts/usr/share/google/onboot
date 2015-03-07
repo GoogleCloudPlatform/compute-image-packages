@@ -115,12 +115,11 @@ function print_ssh_key_fingerprints() {
 function check_for_connection() {
   local count=0
   local return_code=0
-  local url="http://metadata/computeMetadata/v1/instance/?recursive=True"
 
   log "Checking for metadata server connection."
   while true; do
     ((count++))
-    curl -f ${url} -H "Metadata-Flavor: Google" 2>/dev/null
+    MDS_TRIES=1 /usr/share/google/get_metadata_value "?recursive=True"
     return_code=$?
     case $return_code in
       # No error.  Connection is active.
@@ -134,7 +133,7 @@ function check_for_connection() {
         # this cycle will have run through twice. After this period of time, it
         # is not known when a DHCP lease might be obtained and the network
         # interface fully operational.
-        if ((count >= 421)); then
+        if ((count >= 7*60+1)); then
           log "There is likely a problem with the network."
         fi
         continue;;
@@ -146,9 +145,9 @@ function check_for_connection() {
   return ${return_code}
 }
 
-check_for_connection
 set_interrupts
 virtionet_irq_affinity
+check_for_connection
 first_boot
 do_init
 print_ssh_key_fingerprints
