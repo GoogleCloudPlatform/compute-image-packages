@@ -121,7 +121,7 @@ function check_for_connection() {
     ((count++))
     MDS_TRIES=1 /usr/share/google/get_metadata_value "?recursive=True"
     return_code=$?
-    case $return_code in
+    case ${return_code} in
       # No error.  Connection is active.
       0) break;;
       # Failed to resolve host or connect to host.  Retry indefinitely.
