@@ -138,7 +138,9 @@ function check_for_connection() {
         fi
         continue;;
       # A genuine error but a connection exists.
-      *) log "Extraneous error getting metadata ${return_code}"; break;;
+      *)
+        log "Check for connection non-fatal error getting metadata ${return_code}"
+        break;;
     esac
   done
   # Return the last return code we got.
