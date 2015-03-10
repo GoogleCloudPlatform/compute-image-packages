@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 # Copyright 2013 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,8 +112,44 @@ function print_ssh_key_fingerprints() {
   return 0
 }
 
+function check_for_connection() {
+  local count=0
+  local return_code=0
+
+  log "Checking for metadata server connection."
+  while true; do
+    ((count++))
+    MDS_TRIES=1 /usr/share/google/get_metadata_value "?recursive=True"
+    return_code=$?
+    case ${return_code} in
+      # No error.  Connection is active.
+      0) break;;
+      # Failed to resolve host or connect to host.  Retry indefinitely.
+      6|7) sleep 1.0
+        log "Waiting for metadata server, attempt ${count}"
+        # After 7 minutes, add a console message denoting a probable network
+        # issue. On systems using dhclient there is an attempt to obtain an IP
+        # for 60 seconds followed by a 5 minute wait period. After 7 minutes,
+        # this cycle will have run through twice. After this period of time, it
+        # is not known when a DHCP lease might be obtained and the network
+        # interface fully operational.
+        if ((count >= 7*60+1)); then
+          log "There is likely a problem with the network."
+        fi
+        continue;;
+      # A genuine error but a connection exists.
+      *)
+        log "Check for connection non-fatal error getting metadata ${return_code}"
+        break;;
+    esac
+  done
+  # Return the last return code we got.
+  return ${return_code}
+}
+
 set_interrupts
 virtionet_irq_affinity
+check_for_connection
 first_boot
 do_init
 print_ssh_key_fingerprints

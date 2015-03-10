@@ -14,22 +14,17 @@
 # limitations under the License.
 
 # Get a metadata value from the metadata server.
-
 declare -r VARNAME=$1
-declare -r MDS_PREFIX=http://169.254.169.254/computeMetadata/v1
+declare -r MDS_PREFIX=http://metadata.google.internal/computeMetadata/v1
 declare -r MDS_TRIES=${MDS_TRIES:-100}
-
-function metadata_get_url_code() {
-  return $(curl "${1}" -H "Metadata-Flavor: Google" -s \
-      -w "%{http_code}" -o /dev/null)
-}
 
 function print_metadata_value() {
   local readonly tmpfile=$(mktemp)
-  curl -f "${1}" -H "Metadata-Flavor: Google" > ${tmpfile} 2>/dev/null
+  http_code=$(curl -f "${1}" -H "Metadata-Flavor: Google" -w "%{http_code}" \
+    -s -o ${tmpfile} 2>/dev/null)
   local readonly return_code=$?
   # If the command completed successfully, print the metadata value to stdout.
-  if [[ ${return_code} == 0 ]]; then
+  if [[ ${return_code} == 0 && ${http_code} == 200 ]]; then
     cat ${tmpfile}
   fi
   rm -f ${tmpfile}
@@ -39,13 +34,8 @@ function print_metadata_value() {
 function print_metadata_value_if_exists() {
   local return_code=1
   local readonly url=$1
-  metadata_get_url_code ${url}
-  http_code=$?
-  # Test the instance metadata value.
-  if test ${http_code} -eq 200; then
-    print_metadata_value ${url}
-    return_code=$?
-  fi
+  print_metadata_value ${url}
+  return_code=$?
   return ${return_code}
 }
 
@@ -70,8 +60,8 @@ function get_metadata_value_with_retries() {
     case $return_code in
       # No error.  We're done.
       0) exit ${return_code};;
-      # Failed to connect to host.  Retry.
-      7) sleep 0.1; continue;;
+      # Failed to resolve host or connect to host.  Retry.
+      6|7) sleep 0.3; continue;;
       # A genuine error.  Exit.
       *) exit ${return_code};
     esac
