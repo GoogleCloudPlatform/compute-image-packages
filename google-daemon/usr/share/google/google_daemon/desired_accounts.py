@@ -87,7 +87,7 @@ def KeyHasExpired(key):
         expire_str)
     logging.error('Not expiring key.')
     return False
-  
+
   # Expire the key if and only if we have exceeded the expiration timestamp.
   return (datetime.datetime.utcnow() > expire_time)
 
@@ -170,7 +170,7 @@ class DesiredAccounts(object):
       return (attribute_value, etag)
     except urllib2.HTTPError as e:
       if e.code == 404:
-        # The attribute doesn't exist. Return None. 
+        # The attribute doesn't exist. Return None.
         # No need to log a warning.
         return None
       # rethrow the exception since we don't know what it is. Let the
@@ -231,6 +231,6 @@ class DesiredAccounts(object):
         logging.debug('Project sshKeys attribute not found.')
         # sshKeys doesn't exist for either project or instance.
         account_data = None
-    
+
     self.attributes_etag = attributes_etag_cache
     return AccountDataToDictionary(account_data)
