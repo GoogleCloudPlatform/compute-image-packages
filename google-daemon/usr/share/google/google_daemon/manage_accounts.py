@@ -41,12 +41,12 @@ from utils import System
 def Main(accounts, desired_accounts, system, logger,
          log_handler, lock_file, lock_fname=None, single_pass=True,
          daemon_mode=False, debug_mode=False):
-  
+
   if not log_handler:
     log_handler = system.MakeLoggingHandler(
         'accounts-from-metadata', logging.handlers.SysLogHandler.LOG_AUTH)
   system.SetLoggingHandler(logger, log_handler)
-  
+
   if debug_mode:
     system.EnableDebugLogging(logger)
     logging.debug('Running in Debug Mode')
@@ -54,7 +54,7 @@ def Main(accounts, desired_accounts, system, logger,
   accounts_manager = AccountsManager(
       accounts, desired_accounts, system, lock_file, lock_fname,
       single_pass)
-  
+
   if daemon_mode:
     manager_daemon = AccountsManagerDaemon(None, accounts_manager)
     manager_daemon.StartDaemon()

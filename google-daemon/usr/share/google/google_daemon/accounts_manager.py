@@ -50,9 +50,9 @@ class AccountsManager(object):
     while True:
       # Fork and run the key regeneration and account update while the
       # parent waits for the subprocess to finish before continuing.
-      
+
       # Create a pipe used to get the new etag value from child
-      reader, writer = os.pipe() # these are file descriptors, not file objects        
+      reader, writer = os.pipe() # these are file descriptors, not file objects
       pid = os.fork()
       if pid:
         # we are the parent
@@ -117,7 +117,7 @@ class AccountsManager(object):
         for entry in all_accounts
         if os.path.isfile(os.path.join(entry.pw_dir, keyfile_suffix))]
     extra_usernames = set(sshable_usernames) - set(desired_accounts.keys())
-    
+
     if desired_accounts:
       for username, ssh_keys in desired_accounts.iteritems():
         if not username:
