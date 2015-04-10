@@ -8,7 +8,7 @@ Google daemon is typically located at:
 
     /usr/share/google/google_daemon/manage_accounts.py
 
-Your users can create ssh keys for accounts on a virtual machine using [gcutil](http://developers.google.com/compute/docs/gcutil "gcutil") or manually using these steps:
+Your users can create ssh keys for accounts on a virtual machine using [gcloud compute](https://cloud.google.com/compute/docs/gcloud-compute/) or manually using these steps:
 
     # Generate the ssh keys
     $ ssh-keygen -t rsa -f ~/.ssh/google_compute_engine
