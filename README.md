@@ -6,9 +6,39 @@ This repository is the collection of packages that are installed on the standard
 1. Google Daemon - A service that manages user accounts, maintains ssh login keys, syncs the system clock after migration, and syncs public endpoint IP addresses.
 
 ## Installation
+
+### From Release Tarballs
 The easiest way to install these packages into a Linux-based image is to extract each tarball to `/` (root). Image Bundle does not have a directory structure, it is recommended to it extract to `/usr/share/imagebundle`. The tarballs are available in [releases](https://github.com/GoogleCloudPlatform/compute-image-packages/releases). 
 
 Refer to [Building a Google Compute Engine Image](https://cloud.google.com/compute/docs/images) for the complete guide.
+
+### From Source Repository
+Occasionally you may want to install the latest commits to the [repository](https://github.com/GoogleCloudPlatform/compute-image-packages/) even if they have not been released. This is not recommended unless there is a change that you specifically need and cannot wait for. To do this:
+
+1. Log in to your target machine.
+1. Clone the repository with
+
+        git clone https://github.com/GoogleCloudPlatform/compute-image-packages.git
+
+1. Copy the google-daemon and google-startup-scripts files to your root directory with
+
+        sudo cp -R compute-image-packages/{google-daemon/{etc,user},google-startup-scripts/{etc,usr,lib}} /
+
+1. Configure the packages to run on startup with (Debian)
+
+        sudo update-rc.d google-starup-scripts defaults && sudo update-rc.d google-accounts-manager defaults && sudo update-rc.d google-address-manager defaults && sudo update-rc.d google-clock-sync-manager defaults
+
+   or (Redhat)
+
+        sudo chkconfig --add google-startup-scripts && sudo chkconfig --add google-accounts-manager && sudo chkconfig --add google-address-manager && sudo chkconfig --add google-clock-sync-manager
+
+1. Either restart so the packages run or start them with (Debian and Redhat)
+
+        sudo service google-accounts-manager restart && sudo service google-address-manager restart && sudo service google-clock-sync-manager restart
+
+1. Install gcimagebundle with
+
+        cd compute-image-packages/gcimagebundle && sudo python setup.py install
 
 ## Source Code
 This repository is structured so that each package is located in its own top-level directory. [`google-startup-scripts`](google-startup-scripts/) and [`google-daemon`](google-daemon/) are stored as the directory structure of where the files would be from root. [`image-bundle`](image-bundle/) has no directory structure.
