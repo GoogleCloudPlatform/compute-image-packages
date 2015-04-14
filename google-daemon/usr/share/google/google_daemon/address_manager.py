@@ -49,6 +49,9 @@ class AddressManager(object):
     self.system = system_module
     self.urllib2 = urllib2_module
     self.time = time_module
+    self.ip_path = '/sbin/ip'
+    if not os.path.exists(self.ip_path):
+        self.ip_path = '/bin/ip'
 
     # etag header value is hex, so this is guaranteed to not match.
     self.default_last_etag = 'NONE'
@@ -104,8 +107,8 @@ class AddressManager(object):
 
   def ReadLocalConfiguredAddrs(self):
     """Fetch list of addresses we've configured on eth0 already."""
-    cmd = ('/sbin/ip route ls table local type local dev eth0 scope host ' +
-           'proto %d' % GOOGLE_PROTO_ID)
+    cmd = ('%s route ls table local type local dev eth0 scope host ' +
+           'proto %d' % (self.ip_path, GOOGLE_PROTO_ID))
     result = self.system.RunCommand(cmd.split())
     if self.IPCommandFailed(result, cmd):
       raise InputError('Can''t check local addresses')
@@ -138,8 +141,8 @@ class AddressManager(object):
 
   def AddOneAddress(self, addr):
     """Configure one address on eth0."""
-    cmd = '/sbin/ip route add to local %s/32 dev eth0 proto %d' % (
-        addr, GOOGLE_PROTO_ID)
+    cmd = '%s route add to local %s/32 dev eth0 proto %d' % (
+        self.ip_path, addr, GOOGLE_PROTO_ID)
     result = self.system.RunCommand(cmd.split())
     self.IPCommandFailed(result, cmd)  # Ignore return code
 
@@ -152,8 +155,8 @@ class AddressManager(object):
     """Delete one address from eth0."""
     # This will fail if it doesn't match exactly the specs listed.
     # That'll help ensure we don't remove one added by someone else.
-    cmd = '/sbin/ip route delete to local %s/32 dev eth0 proto %d' % (
-        addr, GOOGLE_PROTO_ID)
+    cmd = '%s route delete to local %s/32 dev eth0 proto %d' % (
+        self.ip_path, addr, GOOGLE_PROTO_ID)
     result = self.system.RunCommand(cmd.split())
     self.IPCommandFailed(result, cmd)  # Ignore return code
 
