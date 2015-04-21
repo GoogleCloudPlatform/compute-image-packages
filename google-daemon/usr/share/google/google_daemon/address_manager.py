@@ -107,8 +107,8 @@ class AddressManager(object):
 
   def ReadLocalConfiguredAddrs(self):
     """Fetch list of addresses we've configured on eth0 already."""
-    cmd = ('%s route ls table local type local dev eth0 scope host ' +
-           'proto %d' % (self.ip_path, GOOGLE_PROTO_ID))
+    cmd = ('%s route ls table local type local dev ' % self.ip_path +
+           'eth0 scope host proto %d' % GOOGLE_PROTO_ID)
     result = self.system.RunCommand(cmd.split())
     if self.IPCommandFailed(result, cmd):
       raise InputError('Can''t check local addresses')
