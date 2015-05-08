@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Copy start up scripts
+# Copy start up scripts.
 sudo cp -R /compute-image-packages/{google-daemon/{etc,usr},google-startup-scripts/{etc,usr,lib}} /
 
-# add start up scripts to configruation
+# add start up scripts to configruation.
 sudo update-rc.d google-startup-scripts defaults && sudo update-rc.d google-accounts-manager defaults && sudo update-rc.d google-address-manager defaults && sudo update-rc.d google-clock-sync-manager defaults
 
-# restart the service
+# restart the service.
 sudo service google-accounts-manager restart && sudo service google-address-manager restart && sudo service google-clock-sync-manager restart
 
-# install gcimagebundle with
+# install gcimagebundle with.
 cd /compute-image-packages/gcimagebundle && sudo python setup.py install
