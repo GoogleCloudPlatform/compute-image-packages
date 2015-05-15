@@ -24,7 +24,7 @@ sudo cp -R /compute-image-packages/google-startup-scripts/etc/{init.d,rc.local} 
 
 sudo cp -R /compute-image-packages/google-startup-scripts/lib /usr/
 
-# add start up scripts to configruation.
+# add start up scripts to configuration.
 sudo chkconfig --add google-startup-scripts && sudo chkconfig --add google-accounts-manager && sudo chkconfig --add google-address-manager && sudo chkconfig --add google-clock-sync-manager
 
 # restart the service.

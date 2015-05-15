@@ -8,7 +8,7 @@ This repository is the collection of packages that are installed on the standard
 ## Installation
 
 ### From Release Tarballs
-The easiest way to install these packages into a Linux-based image is to extract each tarball to `/` (root). Image Bundle does not have a directory structure, it is recommended to it extract to `/usr/share/imagebundle`. The tarballs are available in [releases](https://github.com/GoogleCloudPlatform/compute-image-packages/releases). 
+The easiest way to install these packages into a Linux-based image is to extract each tarball to `/` (root). Image Bundle does not have a directory structure, it is recommended to it extract to `/usr/share/imagebundle`. The tarballs are available in [releases](https://github.com/GoogleCloudPlatform/compute-image-packages/releases).
 
 Refer to [Building a Google Compute Engine Image](https://cloud.google.com/compute/docs/images) for the complete guide.
 
@@ -18,11 +18,11 @@ You may generate a .deb or .rpm package with the script under the directory ./ge
 1. Log in to your target machine.
 1. Clone the repository with
 
-        git clone https://github.com/GoogleCloudPlatform/compute-image-packages.git 
+        git clone https://github.com/GoogleCloudPlatform/compute-image-packages.git
 
-2. Copy the files in directory ./generate_packages to the same directory as compute-image-packages:
+2. Copy the files in directory ./generate-packages to the same directory as compute-image-packages:
 
-        cp compute-image-packages/generate_packages/*.* .
+        cp compute-image-packages/generate-packages/*.* .
 
 3. Execute the script ./generate_packages.sh with root permission. It will generate both .deb and .rpm packages. You may also run the script with -r or -d parameter if you only want .rpm or .deb package.
 

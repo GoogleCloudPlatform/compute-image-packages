@@ -62,5 +62,5 @@ fi
 
 for target_package in "${target_packages[@]}"
 do
-  fpm -s "$SOURCE_TYPE" -t "$target_package" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" --after-install ./"$target_package"-post-install.sh -n "$PACKAGE_NAME" -f --verbose -x .git -x .gitignore -x generate-packages  "$SOURCE_DIR"
+  fpm -s "$SOURCE_TYPE" -t "$target_package" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" --after-install ./"$target_package"-post-install.sh --before-remove ./"$target_package"-pre-remove.sh -n "$PACKAGE_NAME" -f --verbose -x .git -x .gitignore -x generate-packages  "$SOURCE_DIR"
 done
