@@ -66,6 +66,9 @@ class System(object):
   def CreateTempFile(self, delete=True):
     return tempfile.NamedTemporaryFile(delete=delete)
 
+  def DeleteFile(self, name):
+    return os.remove(name)
+
   def UserAdd(self, user, groups):
     logging.info('Creating account %s', user)
 
