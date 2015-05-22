@@ -26,7 +26,7 @@ You may generate a .deb or .rpm package with the script under the directory ./ge
 
 3. Install the dependencies:
 
-        cd compute-image-packages/generate-packages
+        sudo ./install-dependencies.sh
 
 4. Execute the script ./generate_packages.sh. It will generate both .deb and .rpm packages. You may also run the script with -r or -d parameter if you only want .rpm or .deb package.
 
