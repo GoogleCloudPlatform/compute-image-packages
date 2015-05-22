@@ -22,11 +22,11 @@ Occasionally you may want to install the latest commits to the [repository](http
 
 1. Copy the google-daemon and google-startup-scripts files to your root directory with
 
-        sudo cp -R compute-image-packages/{google-daemon/{etc,user},google-startup-scripts/{etc,usr,lib}} /
+        sudo cp -R compute-image-packages/{google-daemon/{etc,usr},google-startup-scripts/{etc,usr,lib}} /
 
 1. Configure the packages to run on startup with (Debian)
 
-        sudo update-rc.d google-starup-scripts defaults && sudo update-rc.d google-accounts-manager defaults && sudo update-rc.d google-address-manager defaults && sudo update-rc.d google-clock-sync-manager defaults
+        sudo update-rc.d google-startup-scripts defaults && sudo update-rc.d google-accounts-manager defaults && sudo update-rc.d google-address-manager defaults && sudo update-rc.d google-clock-sync-manager defaults
 
    or (Redhat)
 
