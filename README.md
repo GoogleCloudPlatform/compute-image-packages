@@ -22,9 +22,13 @@ You may generate a .deb or .rpm package with the script under the directory ./ge
 
 2. Switch to generate-packages directory:
 
-        cd compute-image-packages/generate-packages/*.*
+        cd compute-image-packages/generate-packages
 
-3. Execute the script ./generate_packages.sh with root permission. It will generate both .deb and .rpm packages. You may also run the script with -r or -d parameter if you only want .rpm or .deb package.
+3. Install the dependencies:
+
+        cd compute-image-packages/generate-packages
+
+4. Execute the script ./generate_packages.sh. It will generate both .deb and .rpm packages. You may also run the script with -r or -d parameter if you only want .rpm or .deb package.
 
 ### From Source Repository
 Occasionally you may want to install the latest commits to the [repository](https://github.com/GoogleCloudPlatform/compute-image-packages/) even if they have not been released. This is not recommended unless there is a change that you specifically need and cannot wait for. To do this:
