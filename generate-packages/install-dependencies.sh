@@ -13,5 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# remove start up scripts from configuration.
-sudo chkconfig --del google-startup-scripts && sudo chkconfig --del google-accounts-manager && sudo chkconfig --del google-address-manager && sudo chkconfig --del google-clock-sync-manager
+if [ "$(id -u)" != "0" ]; then
+  echo "Error: Requested operation requires superuser privilege." 1>&2
+  exit 1
+fi
+
+sudo apt-get update
+sudo apt-get install gcc ruby-dev rpm
+sudo gem install fpm

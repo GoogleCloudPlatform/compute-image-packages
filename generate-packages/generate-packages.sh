@@ -16,20 +16,10 @@
 set -o pipefail
 set -e
 
-if [ "$(id -u)" != "0" ]; then
-  echo "Error: Requested operation requires superuser privilege." 1>&2
-  exit 1
-fi
-
-sudo apt-get update
-sudo apt-get install gcc ruby-dev rpm
-sudo gem install fpm
-
 RELEASE_VERSION=1.25
 DEPENDENCIES="python"
 ARCHITECTURE="all"
 SOURCE_TYPE="dir"
-SOURCE_DIR="compute-image-packages"
 
 PACKAGE_NAME="compute-image"
 LICENSE="Apache"
@@ -38,29 +28,36 @@ MAINTAINER="bigcluster-accounts-eng@google.com"
 URL="https://github.com/GoogleCloudPlatform/compute-image-packages"
 VENDOR="Google Inc."
 
-supported_packages=("deb" "rpm")
-target_packages=()
+SOURCES=" \
+  gcimagebundle=/compute-image-packages \
+  google-daemon/etc=/ \
+  google-daemon/usr=/ \
+  google-startup-scripts/lib=/ \
+  google-startup-scripts/etc=/ \
+  google-startup-scripts/usr=/"
+
+generate_deb=true
+generate_rpm=true
 
 while getopts "dhr" opt; do
   case "${opt}" in
   h|\?)
-    echo "sudo ./generate_packages.sh [-deb | -rpm ]" 1>&2
+    echo "./generate_packages.sh [-d | -r ]" 1>&2
     exit 1
     ;;
   d)
-    target_packages=("${target_packages[@]}" "deb")
+    generate_rpm=false
     ;;
   r)
-    target_packages=("${target_packages[@]}" "rpm")
+    generate_deb=false
     ;;
   esac
 done
 
-if [ ${#target_packages[@]} -eq 0 ]; then
-	target_packages=("${supported_packages[@]}")
+if  $generate_deb ; then
+	fpm -s "$SOURCE_TYPE" -t "deb" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" -C .. --after-install deb-post-install.sh --before-remove deb-pre-remove.sh -n "$PACKAGE_NAME" -f --verbose $SOURCES
 fi
 
-for target_package in "${target_packages[@]}"
-do
-  fpm -s "$SOURCE_TYPE" -t "$target_package" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" --after-install ./"$target_package"-post-install.sh --before-remove ./"$target_package"-pre-remove.sh -n "$PACKAGE_NAME" -f --verbose -x .git -x .gitignore -x generate-packages  "$SOURCE_DIR"
-done
+if  $generate_rpm ; then
+  fpm -s "$SOURCE_TYPE" -t "rpm" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" -C .. --after-install rpm-post-install.sh --before-remove rpm-pre-remove.sh -n "$PACKAGE_NAME" -f --verbose -x **etc/rc.local $SOURCES
+fi

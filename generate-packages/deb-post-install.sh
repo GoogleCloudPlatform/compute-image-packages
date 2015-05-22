@@ -13,9 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Copy start up scripts.
-sudo cp -R /compute-image-packages/{google-daemon/{etc,usr},google-startup-scripts/{etc,usr,lib}} /
-
 # add start up scripts to configuration.
 sudo update-rc.d google-startup-scripts defaults && sudo update-rc.d google-accounts-manager defaults && sudo update-rc.d google-address-manager defaults && sudo update-rc.d google-clock-sync-manager defaults
 

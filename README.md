@@ -20,9 +20,9 @@ You may generate a .deb or .rpm package with the script under the directory ./ge
 
         git clone https://github.com/GoogleCloudPlatform/compute-image-packages.git
 
-2. Copy the files in directory ./generate-packages to the same directory as compute-image-packages:
+2. Switch to generate-packages directory:
 
-        cp compute-image-packages/generate-packages/*.* .
+        cd compute-image-packages/generate-packages/*.*
 
 3. Execute the script ./generate_packages.sh with root permission. It will generate both .deb and .rpm packages. You may also run the script with -r or -d parameter if you only want .rpm or .deb package.
 
