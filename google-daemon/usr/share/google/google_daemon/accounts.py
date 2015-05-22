@@ -414,8 +414,14 @@ class Accounts(object):
       if available_space < required_space:
         raise IOError('Disk is too full')
 
-    # Override the old authorized keys file with the new one.
-    self.system.MoveFile(new_keys_path, authorized_keys_file)
+    try:
+      # Override the old authorized keys file with the new one.
+      self.system.MoveFile(new_keys_path, authorized_keys_file)
+    finally:
+      try:
+        self.system.DeleteFile(new_keys_path)
+      except:
+        pass
 
     # Make sure the authorized_keys_file has the right perms (u+rw).
     self.os.chmod(authorized_keys_file, 0600)
