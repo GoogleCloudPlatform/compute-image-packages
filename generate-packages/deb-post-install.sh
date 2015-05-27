@@ -13,11 +13,57 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# add start up scripts to configuration.
-sudo update-rc.d google-startup-scripts defaults && sudo update-rc.d google-accounts-manager defaults && sudo update-rc.d google-address-manager defaults && sudo update-rc.d google-clock-sync-manager defaults
+if [ -x /bin/systemctl ]; then
+  # Daemon
+  systemctl enable google-accounts-manager.service
+  systemctl enable google-address-manager.service
+  systemctl enable google-clock-sync-manager.service
+
+  # Start-up scripts
+  systemctl enable google.service
+  systemctl enable google-startup-scripts.service
+
+  # Daemon
+  systemctl start --no-block google-accounts-manager
+  systemctl start --no-block google-address-manager
+  systemctl start --no-block google-clock-sync-manager
+
+  # Start-up scripts
+  systemctl start --no-block google
+  systemctl start --no-block google-startup-scripts
+else
+  # Daemon
+  update-rc.d google-address-manager defaults
+  update-rc.d google-accounts-manager defaults
+  update-rc.d google-clock-sync-manager defaults
+
+  # Start-up scripts
+  update-rc.d google defaults
+  update-rc.d google-startup-scripts defaults
+fi
+
+# add the command to emit the 'google-rc-local-has-run' signal, which will trigger
+# startup scripts that should run late at boot.
+if ! grep -q 'google-rc-local-has-run' /etc/rc.local; then
+    sed -i '/^exit /i \[ -x /sbin/initctl \] && initctl emit --no-wait google-rc-local-has-run || true' /etc/rc.local
+fi
 
 # restart the service.
-sudo service google-accounts-manager restart && sudo service google-address-manager restart && sudo service google-clock-sync-manager restart
+service google-accounts-manager restart && service google-address-manager restart && service google-clock-sync-manager restart
 
 # install gcimagebundle with.
 cd /compute-image-packages/gcimagebundle && sudo python setup.py install
+
+# remove temp files
+if [ -d "/compute-image-packages/gcimagebundle/build" ]; then
+  rm -rf /compute-image-packages/gcimagebundle/build
+fi
+
+if [ -d "/compute-image-packages/gcimagebundle/dist" ]; then
+  rm -rf /compute-image-packages/gcimagebundle/dist
+fi
+
+if [ -d "/compute-image-packages/gcimagebundle" ]; then
+  rm -f /compute-image-packages/gcimagebundle/*.pyc /compute-image-packages/gcimagebundle/*.egg  /compute-image-packages/gcimagebundle/*.tar.gz
+  rm -rf /compute-image-packages/gcimagebundle/*.egg-info
+fi

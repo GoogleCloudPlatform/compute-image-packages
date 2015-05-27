@@ -55,9 +55,9 @@ while getopts "dhr" opt; do
 done
 
 if  $generate_deb ; then
-	fpm -s "$SOURCE_TYPE" -t "deb" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" -C .. --after-install deb-post-install.sh --before-remove deb-pre-remove.sh -n "$PACKAGE_NAME" -f --verbose $SOURCES
+	fpm -s "$SOURCE_TYPE" -t "deb" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" -C .. --before-install deb-pre-install.sh --after-install deb-post-install.sh --after-remove deb-post-remove.sh -n "$PACKAGE_NAME" -f --verbose -x **etc/rc.local $SOURCES
 fi
 
 if  $generate_rpm ; then
-  fpm -s "$SOURCE_TYPE" -t "rpm" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" -C .. --after-install rpm-post-install.sh --before-remove rpm-pre-remove.sh -n "$PACKAGE_NAME" -f --verbose -x **etc/rc.local $SOURCES
+  fpm -s "$SOURCE_TYPE" -t "rpm" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" -C .. --before-install rpm-pre-install.sh --after-install rpm-post-install.sh --before-remove rpm-pre-remove.sh --after-remove rpm-post-remove.sh -n "$PACKAGE_NAME" -f --verbose -x **etc/rc.local $SOURCES
 fi

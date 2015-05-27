@@ -13,5 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# remove start up scripts from configuration.
-sudo chkconfig --del google-startup-scripts && sudo chkconfig --del google-accounts-manager && sudo chkconfig --del google-address-manager && sudo chkconfig --del google-clock-sync-manager
+# Daemon
+if grep systemd /proc/1/comm; then
+  /bin/systemctl stop google-accounts-manager 2> /dev/null
+  /bin/systemctl stop google-address-manager 2> /dev/null
+  /bin/systemctl stop google-clock-sync-manager 2> /dev/null
+else
+  /sbin/stop google-address-manager 2> /dev/null
+  /sbin/stop google-accounts-manager-service 2> /dev/null
+  /sbin/stop google-clock-sync-manager 2> /dev/null
+fi
+
+# Start-Up Scripts
+if [ ! -x /sbin/initctl ] ; then
+  # The following is an eval of the (percent)systemd_preun
+  if [ "$1" -eq 0 ] ; then
+        # Package removal, not upgrade
+        /usr/bin/systemctl --no-reload disable google.service > /dev/null 2>&1 || :
+        /usr/bin/systemctl stop google.service > /dev/null 2>&1 || :
+        /usr/bin/systemctl --no-reload disable google-startup-scripts.service > /dev/null 2>&1 || :
+        /usr/bin/systemctl stop google-startup-scripts.service > /dev/null 2>&1 || :
+  fi
+fi
