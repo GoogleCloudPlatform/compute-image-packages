@@ -15,18 +15,14 @@ Refer to [Building a Google Compute Engine Image](https://cloud.google.com/compu
 ### Generate Deb/Rpm Package
 You may generate a .deb or .rpm package with the script under the directory ./generate_packages. To do this:
 
-1. Log in to your target machine.
-1. Clone the repository with
+1. We use FPM to generate packages. Please install it from https://github.com/jordansissel/fpm.
+2. Clone the repository with
 
         git clone https://github.com/GoogleCloudPlatform/compute-image-packages.git
 
-2. Switch to generate-packages directory:
+3. Switch to generate-packages directory:
 
         cd compute-image-packages/generate-packages
-
-3. Install the dependencies:
-
-        sudo ./install-dependencies.sh
 
 4. Execute the script ./generate_packages.sh. It will generate both .deb and .rpm packages. You may also run the script with -r or -d parameter if you only want .rpm or .deb package.
 

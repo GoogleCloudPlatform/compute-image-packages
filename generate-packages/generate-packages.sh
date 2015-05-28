@@ -16,7 +16,7 @@
 set -o pipefail
 set -e
 
-RELEASE_VERSION=1.25
+RELEASE_VERSION=1.2.5
 DEPENDENCIES="python"
 ARCHITECTURE="all"
 SOURCE_TYPE="dir"
@@ -28,7 +28,7 @@ MAINTAINER="bigcluster-accounts-eng@google.com"
 URL="https://github.com/GoogleCloudPlatform/compute-image-packages"
 VENDOR="Google Inc."
 
-SOURCES=" \
+SOURCES="\
   gcimagebundle=/compute-image-packages \
   google-daemon/etc=/ \
   google-daemon/usr=/ \
@@ -36,28 +36,25 @@ SOURCES=" \
   google-startup-scripts/etc=/ \
   google-startup-scripts/usr=/"
 
-generate_deb=true
-generate_rpm=true
+CONFIG_FILES_ARGS="\
+  --config-files /etc/init/google-accounts-manager-service.conf \
+  --config-files /etc/init/google-accounts-manager-task.conf \
+  --config-files /etc/init/google-address-manager.conf \
+  --config-files /etc/init/google-clock-sync-manager.conf \
+  --config-files /etc/init/google.conf \
+  --config-files /etc/init/google_run_shutdown_scripts.conf \
+  --config-files /etc/init/google_run_startup_scripts.conf \
+  --config-files /etc/rsyslog.d/90-google.conf \
+  --config-files /etc/sysctl.d/11-gce-network-security.conf"
 
-while getopts "dhr" opt; do
-  case "${opt}" in
-  h|\?)
-    echo "./generate_packages.sh [-d | -r ]" 1>&2
-    exit 1
-    ;;
-  d)
-    generate_rpm=false
-    ;;
-  r)
-    generate_deb=false
-    ;;
-  esac
-done
 
-if  $generate_deb ; then
-	fpm -s "$SOURCE_TYPE" -t "deb" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" -C .. --before-install deb-pre-install.sh --after-install deb-post-install.sh --after-remove deb-post-remove.sh -n "$PACKAGE_NAME" -f --verbose -x **etc/rc.local $SOURCES
-fi
+DEB_ARGS=" -t deb --before-install deb-pre-install.sh --after-install deb-post-install.sh --after-remove deb-post-remove.sh"
+RPM_ARGS=" -t rpm --before-install rpm-pre-install.sh --after-install rpm-post-install.sh --before-remove rpm-pre-remove.sh --after-remove rpm-post-remove.sh"
 
-if  $generate_rpm ; then
-  fpm -s "$SOURCE_TYPE" -t "rpm" -v "$RELEASE_VERSION" -a "$ARCHITECTURE" --license "$LICENSE" -m "$MAINTAINER" --description "$DESCRIPTION" --url "$URL" --vendor "$VENDOR" -d "$DEPENDENCIES" -C .. --before-install rpm-pre-install.sh --after-install rpm-post-install.sh --before-remove rpm-pre-remove.sh --after-remove rpm-post-remove.sh -n "$PACKAGE_NAME" -f --verbose -x **etc/rc.local $SOURCES
-fi
+GENERATE_COMMAND="fpm -s ${SOURCE_TYPE} -v '${RELEASE_VERSION}' -a '${ARCHITECTURE}' --license '${LICENSE}' -m '${MAINTAINER}' --description '${DESCRIPTION}' --url '${URL}' --vendor '${VENDOR}' -d ${DEPENDENCIES} -C .. -n '${PACKAGE_NAME}' -f --verbose -x **etc/rc.local ${CONFIG_FILES_ARGS}"
+
+# Generate Deb Package
+eval ${GENERATE_COMMAND} ${DEB_ARGS} ${SOURCES}
+
+# Generate RPM Package
+eval ${GENERATE_COMMAND} ${RPM_ARGS} ${SOURCES}
