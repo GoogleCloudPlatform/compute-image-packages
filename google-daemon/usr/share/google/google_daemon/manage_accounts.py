@@ -18,6 +18,7 @@
 import logging
 import optparse
 import os
+import os.path
 import sys
 
 
@@ -40,7 +41,7 @@ from utils import System
 
 def Main(accounts, desired_accounts, system, logger,
          log_handler, lock_file, lock_fname=None, single_pass=True,
-         daemon_mode=False, debug_mode=False):
+         daemon_mode=False, force_mode=False, debug_mode=False):
 
   if not log_handler:
     log_handler = system.MakeLoggingHandler(
@@ -50,6 +51,10 @@ def Main(accounts, desired_accounts, system, logger,
   if debug_mode:
     system.EnableDebugLogging(logger)
     logging.debug('Running in Debug Mode')
+
+  if not force_mode and os.path.isfile('gcua'):
+    logging.error('Google Compute User Accounts is installed.')
+    sys.exit(1)
 
   accounts_manager = AccountsManager(
       accounts, desired_accounts, system, lock_file, lock_fname,
@@ -71,10 +76,12 @@ if __name__ == '__main__':
   parser.add_option('--interval', type='int', dest='interval')
   parser.add_option('--single-pass', dest='single_pass', action='store_true')
   parser.add_option('--no-single-pass', dest='single_pass', action='store_false')
+  parser.add_option('--force', dest='force', action='store_true')
   parser.add_option('--debug', dest='debug', action='store_true')
   parser.set_defaults(interval=60)
   parser.set_defaults(single_pass=False)
   parser.set_defaults(daemon=False)
+  parser.set_defaults(force=False)
   parser.set_defaults(debug=False)
   (options, args) = parser.parse_args()
 
@@ -84,4 +91,4 @@ if __name__ == '__main__':
 
   Main(Accounts(system_module=System()), DesiredAccounts(),
        System(), logging.getLogger(), None, LockFile(), None, options.single_pass,
-       options.daemon, options.debug)
+       options.daemon, options.force, options.debug)
