@@ -52,7 +52,7 @@ def Main(accounts, desired_accounts, system, logger,
     system.EnableDebugLogging(logger)
     logging.debug('Running in Debug Mode')
 
-  if not force_mode and os.path.isfile('gcua'):
+  if not force_mode and os.path.isfile('/usr/share/google/gcua'):
     logging.error('Google Compute User Accounts is installed.')
     sys.exit(1)
 
