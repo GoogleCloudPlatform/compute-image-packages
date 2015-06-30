@@ -26,11 +26,15 @@ log() {
 sshd_cmd() {
   local cmd=$1
   log "${cmd}ing sshd"
-  if [[ -x /etc/init.d/ssh || -f /etc/init/ssh.conf ]]; then
-    service ssh ${cmd}
-  fi
-  if [[ -x /etc/init.d/sshd || -f /etc/init/sshd.conf ]]; then
-    service sshd ${cmd}
+  if [[ -x /bin/systemctl ]]; then
+    systemctl ${cmd} sshd
+  else
+    if [[ -x /etc/init.d/ssh || -f /etc/init/ssh.conf ]]; then
+      service ssh ${cmd}
+    fi
+    if [[ -x /etc/init.d/sshd || -f /etc/init/sshd.conf ]]; then
+      service sshd ${cmd}
+    fi
   fi
 }
 
