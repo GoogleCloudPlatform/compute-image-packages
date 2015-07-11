@@ -9,4 +9,5 @@ ExecStart=/usr/share/google/onboot
 Type=oneshot
 
 [Install]
+WantedBy=sshd.service
 WantedBy=multi-user.target

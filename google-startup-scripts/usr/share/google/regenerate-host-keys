@@ -26,15 +26,11 @@ log() {
 sshd_cmd() {
   local cmd=$1
   log "${cmd}ing sshd"
-  if [[ -x /bin/systemctl ]]; then
-    systemctl ${cmd} sshd
-  else
-    if [[ -x /etc/init.d/ssh || -f /etc/init/ssh.conf ]]; then
-      service ssh ${cmd}
-    fi
-    if [[ -x /etc/init.d/sshd || -f /etc/init/sshd.conf ]]; then
-      service sshd ${cmd}
-    fi
+  if [[ -x /etc/init.d/ssh || -f /etc/init/ssh.conf ]]; then
+    service ssh ${cmd}
+  fi
+  if [[ -x /etc/init.d/sshd || -f /etc/init/sshd.conf ]]; then
+    service sshd ${cmd}
   fi
 }
 
@@ -71,10 +67,14 @@ regenerate_host_keys() {
   if [[ $(cat /etc/ssh/sshd_not_to_be_run 2>/dev/null) == "GOOGLE" ]]; then
     rm -f /etc/ssh/sshd_not_to_be_run
   fi
-  # Start sshd if it was not running.
-  sshd_cmd start
-  # Reload sshd config if it already was running.
-  sshd_cmd reload
+  if [[ -x /bin/systemctl ]]; then
+    exit
+  else
+    # Start sshd if it was not running.
+    sshd_cmd start
+    # Reload sshd config if it already was running.
+    sshd_cmd reload
+  fi
 }
 
 regenerate_host_keys
