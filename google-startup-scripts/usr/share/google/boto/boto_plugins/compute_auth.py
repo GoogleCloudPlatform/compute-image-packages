@@ -61,7 +61,7 @@ class ComputeAuth(AuthHandler):
       request.add_unredirected_header('Metadata-Flavor', 'Google')
       data = urllib2.urlopen(request).read()
       return json.loads(data)
-    except (urllib2.URLError, urllib2.HTTPError, IOError), e:
+    except (urllib2.URLError, urllib2.HTTPError, IOError):
       return None
 
   def __GetGSScopes(self):
