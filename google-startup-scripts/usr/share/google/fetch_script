@@ -36,8 +36,10 @@ function download_url_with_logfile() {
   local readonly logfile=$3
 
   if [[ "$url" =~ gs://* ]]; then
-    echo "Downloading url from ${url} to ${dest} using gsutil";
+    log "Downloading url from ${url} to ${dest} using gsutil";
     gsutil cp "${url}" "${dest}" > "${logfile}" 2>&1 && return 0
+    log "Failed to download $url"
+    return 1
   fi
 
   # Many of the Google Storage URLs are supported below.
