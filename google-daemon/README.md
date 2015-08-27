@@ -2,13 +2,17 @@
 Google daemon runs in the background and provides the following services:
 
 + Creates new accounts based on the instance metadata.
-+ Configures ssh to accept the accounts' public keys from the instance metadata.
++ Configures SSH to accept the accounts' public keys from the instance metadata.
++ Adds IP addresses of network load balancers as aliases of the external Ethernet interface
++ Resyncs clock if skewed due to [live migration](googlecloudplatform.blogspot.com/2015/03/Google-Compute-Engine-uses-Live-Migration-technology-to-service-infrastructure-without-application-downtime.html)
 
-Google daemon is typically located at: 
+Google Daemon services are typically located at: 
 
-    /usr/share/google/google_daemon/manage_accounts.py
+    /usr/share/google/google_daemon/
 
-Your users can create ssh keys for accounts on a virtual machine using [gcloud compute](https://cloud.google.com/compute/docs/gcloud-compute/) or manually using these steps:
+#### Account synchronization
+
+Your users can create SSH keys for accounts on a virtual machine using [gcloud compute](https://cloud.google.com/compute/docs/gcloud-compute/) or manually using these steps:
 
     # Generate the ssh keys
     $ ssh-keygen -t rsa -f ~/.ssh/google_compute_engine
