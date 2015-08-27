@@ -34,7 +34,6 @@ import stat
 import tempfile
 import time
 
-from utils_vyatta import VyattaSystem
 
 def EnsureTrailingNewline(line):
   if line.endswith('\n'):
@@ -49,6 +48,8 @@ def IsUserSudoerInLines(user, sudoer_lines):
     return re.match(r'^%s\s+' % user, line)
 
   return filter(IsUserSudoerEntry, sudoer_lines)
+
+
 class Accounts(object):
   """Manage accounts on a machine."""
 
@@ -86,12 +87,8 @@ class Accounts(object):
           ' characters [A-Za-z0-9._-] and not start with \'-\'.', username)
       return
 
-    print "@@@@ User is: ", username, " @@@@"
     if not self.UserExists(username):
-      if os.path.isfile("/etc/os-release.vyatta"):
-        VyattaSystem().UserAddVyatta(username, "v")
-      else:
-        self.system.UserAdd(username, self.default_user_groups)
+      self.system.UserAdd(username, self.default_user_groups)
 
     if self.UserExists(username):
       # Don't try to manage the sshkeys of an account with a shell set to
@@ -107,16 +104,9 @@ class Accounts(object):
       # metadata server but isn't currently, we should never increase their
       # privileges. Therefore, only grant sudo access if we have ssh keys.
       if ssh_keys:
-        if os.path.isfile("/etc/os-release.vyatta"):
-          VyattaSystem().MakeUserSudoerVyatta(username)
-        else:
-          self.MakeUserSudoer(username)
+        self.MakeUserSudoer(username)
+      self.AuthorizeSshKeys(username, ssh_keys)
 
-      if os.path.isfile("/etc/os-release.vyatta"):
-        VyattaSystem().AuthorizeSshKeysVyatta(username, ssh_keys)
-      else:
-        self.AuthorizeSshKeys(username, ssh_keys)
-      
   def IsValidUsername(self, username):
     """Return whether username looks like a valid user name."""
 
