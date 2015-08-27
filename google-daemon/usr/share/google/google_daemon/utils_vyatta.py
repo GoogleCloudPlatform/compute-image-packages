@@ -20,92 +20,80 @@ import sys
 import pwd
 import grp
 import traceback
+import logging
 
-from Vyatta import CfgClient
+from vyatta import configd
 from contextlib import contextmanager
 
 @contextmanager
 def VyattaCfgClient():
-  client = CfgClient.CfgClient()
+  client = configd.Client()
   sessid = str(os.getpid())
-  
-  # save the old IDs 
+
+  # save the old IDs
   old_euid = os.getuid()
   old_egid = os.getegid()
   old_gid = os.getgid()
-  
+
   # get uid of configd and gid of vyattacfg
   configd_uid = pwd.getpwnam("configd").pw_uid
-  vyattacfg_gid = pwd.getpwnam("configd").pw_gid
-  print "configd: ", configd_uid
-  print "vyattacfg: ", vyattacfg_gid
+  vyattacfg_gid = grp.getgrnam("vyattacfg").gr_gid
 
-  # set the new configd uid and vyattacfg gid 
+  # set the new configd uid and vyattacfg gid
   os.setegid(vyattacfg_gid)
-  #os.setgid(vyattacfg_gid)
   os.seteuid(configd_uid)
-  
-  client.SessionSetup(sessid)
+
+  client.session_setup(sessid)
   try:
     yield client
-  except CfgClient.CfgClientException as e:
-    client.Discard()
+  except configd.Exception as e:
+    client.discard()
     raise e
   finally:
-    client.SessionTeardown()
+    client.session_teardown()
     os.seteuid(old_euid)
     os.setegid(old_egid)
     os.setgid(old_gid)
-    
-      
+
+
 class VyattaSystem(object):
   def UserAddVyatta(self, username, passwd):
     """Adds the user to the VRouter's Configuration."""
 
-    print "Inside CreateAccount()"
     prefix_path = ["system", "login", "user", username]
-    
+
     with VyattaCfgClient() as client:
-      print ("IN: egid:%s  gid:%s  euid:%s  uid:%s"
-             % (os.getegid(), os.getgid(), os.geteuid(), os.getuid()))
-      
       # add the user if they do not exist
-      if not client.NodeExists(client.AUTO, prefix_path):
+      if not client.node_exists(client.AUTO, prefix_path):
         try:
           passwd_path = prefix_path + ["authentication",
                                        "plaintext-password", passwd]
-          client.Set(passwd_path)
-          client.Commit("Google Compute Engine Agent")
-          client.Save()
-          print "%s added" % username
-        except CfgClient.CfgClientException as e:
-          print "Unable to set passwd:", e.what()
-        
-    # outside of context manager
-    print ("OUT: egid:%s  gid:%s  euid:%s  uid:%s"
-           % (os.getegid(), os.getgid(), os.geteuid(), os.getuid()))
+          client.set(passwd_path)
+          client.commit("Google Compute Engine Agent")
+          client.save()
+          logging.info(username + " added")
+        except configd.Exception as e:
+          logging.error("Unable to set passwd: %s", e.what())
 
   def MakeUserSudoerVyatta(self, username):
     """Set the specified user to superuser in the config system"""
 
     with VyattaCfgClient() as client:
       path = ["system", "login", "user", username, "level", "superuser"]
-      
-      if not client.NodeExists(client.AUTO, path):
+
+      if not client.node_exists(client.AUTO, path):
         try:
-          client.Set(path)
-          client.Commit("Google Compute Engine Agent")
-          client.Save()
-          print "%s made sudoer" % username
-        except CfgClient.CfgClientException as e:
-          print "Unable to set sudoer:", e.what()
-      
+          client.set(path)
+          client.commit("Google Compute Engine Agent")
+          client.save()
+          logging.info(username + " made sudoer")
+        except configd.Exception as e:
+          logging.error("Unable to set sudoer: %s", e.what())
+
   def AuthorizeSshKeysVyatta(self, username, ssh_keys):
     """Sets the specified user's ssh_keys"""
-    
-    print "Inside SetSshKeys()"
     key_number = 0
-    
+
     with VyattaCfgClient() as client:
       for ssh_key in ssh_keys:
         # extract the values from the ssh_key block
@@ -113,21 +101,21 @@ class VyattaSystem(object):
         key_type = key_split[0]
         key_value = key_split[1]
         key_user = key_split[2]
-        
+
         prefix_path = ["system", "login", "user", username, "authentication",
                        "public-keys", key_user + "_key" + str(key_number)]
-        # set the key value and type if they do not exist 
-        if not client.NodeExists(client.AUTO, prefix_path):
+
+        path_value = prefix_path + ["key", key_value]
+        path_type = prefix_path + ["type", key_type]
+
+        # set the key value and type if the key does not exist
+        if not client.node_exists(client.AUTO, path_value):
           try:
-            path_value = prefix_path + ["key", key_value]
-            path_type = prefix_path + ["type", key_type]
-            
-            client.Set(path_value)
-            client.Set(path_type)
-            client.Commit("Google Compute Engine Agent")
-            client.Save()
-            print "%s ssh key's added" % username
-          except Exception as e:
-            print "Unable to set ssh_key", e.what()
-            #raise e
+            client.set(path_value)
+            client.set(path_type)
+            client.commit("Google Compute Engine Agent")
+            client.save()
+            logging.info(username + " ssh key added")
+          except configd.Exception as e:
+            logging.error("Unable to set ssh_key: %s", e.what())
         key_number += 1
