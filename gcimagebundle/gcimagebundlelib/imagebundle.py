@@ -236,6 +236,11 @@ def main():
     else:
       output_bucket = 'gs://%s/%s' % (
           bucket, os.path.basename(output_file))
+
+  # /usr/local/bin not in redhat root PATH by default
+  if '/usr/local/bin' not in os.environ['PATH']:
+    os.environ['PATH'] += ':/usr/local/bin'
+
     # TODO: Consider using boto library directly.
     cmd = ['gsutil', 'cp', output_file, output_bucket]
     retcode = subprocess.call(cmd)
