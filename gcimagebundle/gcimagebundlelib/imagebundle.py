@@ -236,19 +236,24 @@ def main():
     else:
       output_bucket = 'gs://%s/%s' % (
           bucket, os.path.basename(output_file))
-    # TODO: Consider using boto library directly.
-    cmd = ['gsutil', 'cp', output_file, output_bucket]
-    retcode = subprocess.call(cmd)
-    if retcode != 0:
-      logging.critical('Failed to copy image to bucket. '
-                       'gsutil returned %d. To retry, run the command: %s',
-                       retcode, ' '.join(cmd))
 
-      return -1
-    logging.info('Uploaded image to %s', output_bucket)
+  # /usr/local/bin not in redhat root PATH by default
+  if '/usr/local/bin' not in os.environ['PATH']:
+    os.environ['PATH'] += ':/usr/local/bin'
 
-    # If we've uploaded, then we can remove the local file.
-    os.remove(output_file)
+  # TODO: Consider using boto library directly.
+  cmd = ['gsutil', 'cp', output_file, output_bucket]
+  retcode = subprocess.call(cmd)
+  if retcode != 0:
+    logging.critical('Failed to copy image to bucket. '
+                     'gsutil returned %d. To retry, run the command: %s',
+                     retcode, ' '.join(cmd))
+
+    return -1
+  logging.info('Uploaded image to %s', output_bucket)
+
+  # If we've uploaded, then we can remove the local file.
+  os.remove(output_file)
 
   if options.cleanup:
     shutil.rmtree(scratch_dir)
