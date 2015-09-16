@@ -252,8 +252,8 @@ def main():
       return -1
     logging.info('Uploaded image to %s', output_bucket)
 
-  # If we've uploaded, then we can remove the local file.
-  os.remove(output_file)
+    # If we've uploaded, then we can remove the local file.
+    os.remove(output_file)
 
   if options.cleanup:
     shutil.rmtree(scratch_dir)
