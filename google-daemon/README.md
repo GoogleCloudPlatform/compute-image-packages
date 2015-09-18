@@ -4,9 +4,9 @@ Google daemon runs in the background and provides the following services:
 + Creates new accounts based on the instance metadata.
 + Configures SSH to accept the accounts' public keys from the instance metadata.
 + Adds IP addresses of network load balancers as aliases of the external Ethernet interface
-+ Resyncs clock if skewed due to [live migration](googlecloudplatform.blogspot.com/2015/03/Google-Compute-Engine-uses-Live-Migration-technology-to-service-infrastructure-without-application-downtime.html)
++ Resyncs clock if skewed due to [live migration](https://googlecloudplatform.blogspot.com/2015/03/Google-Compute-Engine-uses-Live-Migration-technology-to-service-infrastructure-without-application-downtime.html)
 
-Google Daemon services are typically located at: 
+Google Daemon services are typically located at:
 
     /usr/share/google/google_daemon/
 
@@ -16,7 +16,7 @@ Your users can create SSH keys for accounts on a virtual machine using [gcloud c
 
     # Generate the ssh keys
     $ ssh-keygen -t rsa -f ~/.ssh/google_compute_engine
-    
+
     # Create public RSA key in OpenSSH format
     $ ssh-rsa [base-64-encoded-public-key] [comment]
 
@@ -29,7 +29,7 @@ In the metadata server, the SSH keys are passed to a virtual machine individuall
          "value": "<ssh-keys-value>"
       ]
     }
-    
+
 `<ssh-keys-value>` is a newline-separated list of individual authorized public ssh key records, each in the format:
 
     <username>:<public-ssh-key-file-contents>
@@ -48,7 +48,7 @@ For example:
       }
      ]
     }
-    
+
 For more information about the metadata server, read the [metadata server](http://developers.google.com/compute/docs/metadata "metadata server") documentation.
 
 Inside a virtual machine, a cron job runs every minute to check if project or instance metadata was updated with the new sshKeys value, and makes sure those users exist. It also checks that the keys are in the `~$USER/.ssh/authorized_keys` file.
