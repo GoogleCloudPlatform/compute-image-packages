@@ -142,7 +142,7 @@ def SetupLogging(options, log_dir='/tmp'):
 
 def PrintVersionInfo():
   #TODO: Should read from the VERSION file instead.
-  print 'version 1.2.8'
+  print 'version 1.2.9'
 
 
 def GetTargetFilesystem(options, guest_platform):
@@ -236,6 +236,11 @@ def main():
     else:
       output_bucket = 'gs://%s/%s' % (
           bucket, os.path.basename(output_file))
+
+    # /usr/local/bin not in redhat root PATH by default
+    if '/usr/local/bin' not in os.environ['PATH']:
+      os.environ['PATH'] += ':/usr/local/bin'
+
     # TODO: Consider using boto library directly.
     cmd = ['gsutil', 'cp', output_file, output_bucket]
     retcode = subprocess.call(cmd)
