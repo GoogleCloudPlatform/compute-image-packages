@@ -31,8 +31,8 @@ function get_instance_id() {
   ${PREFIX}/usr/share/google/get_metadata_value id 2>/dev/null
 }
 
-# Output the instance id.
-# Returns 1 if the instance id hasn't changed, 0 if it has.
+# Checks the instance id has changed.
+# Exits with return code 1 if the instance id hasn't changed.
 function check_instanceid_on_disk() {
   local readonly instanceid=$1
 
@@ -47,18 +47,12 @@ function check_instanceid_on_disk() {
     # Instance id is same as on disk.
     exit 1
   fi
-
-  exit 0
 }
 
 declare -r INSTANCE_ID=$(get_instance_id)
 
 # Checks whether the instance has changed.
 check_instanceid_on_disk ${INSTANCE_ID}
-if [[ $? != 0 ]]; then
-  # The instance hasn't changed. Just exit.
-  exit 0
-fi
 
 #####################################################################
 # If the instance hasn't changed, we have now exited this script.
