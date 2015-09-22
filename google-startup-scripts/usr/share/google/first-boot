@@ -16,6 +16,7 @@
 # Run initialization code the first time this image boots on a given instance.
 
 declare -r INSTANCE_FILE=${PREFIX}/var/lib/google/vm-instance-id
+declare -r LOCK_FILE=${INSTANCE_FILE}.lock
 
 mkdir -p ${PREFIX}/var/lib/google/per-instance
 
@@ -33,42 +34,61 @@ function get_instance_id() {
 
 # Checks the instance id has changed.
 # Exits with return code 0 if the instance id hasn't changed.
-function check_instanceid_on_disk() {
-  local readonly instanceid=$1
+function check_instance_id() {
+  local readonly instance_id=$1
 
-  if [[ "${instanceid}" == "" ]]; then
+  if [[ "${instance_id}" == "" ]]; then
     # Cannot determine instance id. Either we're not running on a Compute VM,
     # or networking hasn't started up yet, etc.
-    exit 0
+    exit 1
   fi
 
-  if [[ "${instanceid}" != "unknown-instance" &&
-        "${instanceid}" == "$(cat ${INSTANCE_FILE} 2>/dev/null)" ]]; then
+  if [[ "${instance_id}" != "unknown-instance" &&
+        "${instance_id}" == "$(cat ${INSTANCE_FILE} 2>/dev/null)" ]]; then
     # Instance id is same as on disk.
-    exit 0
+    exit 1
   fi
+}
+
+# Performs host key setup if the instance has changed.
+# Otherwise we exit with a non-zero return code.
+function manage_instance_id_on_disk() {
+  local readonly instance_id=$1
+
+  # Create a subshell to manage the lock file. The file lock is released
+  # when the subshell exits.
+  (
+    # Open LOCK_FILE on FD 200 and lock it. This prevents concurrent calls
+    # to regenerate host keys that spam console output.
+    flock -e 200
+
+    # Checks whether the instance has changed.
+    # If the instance hasn't changed, exit the script.
+    check_instance_id_on_disk ${instance_id}
+
+    # If the instance hasn't changed, we have now exited the subshell.
+    # Since the instance changed, we do host key regeneration.
+    log "Running first-boot"
+
+    # Regenerate host keys for ssh.
+    if [[ -x ${PREFIX}/usr/share/google/regenerate-host-keys ]]; then
+      ${PREFIX}/usr/share/google/regenerate-host-keys
+    fi
+
+    # We are booting this instance for the first time.
+    echo ${instance_id} > ${INSTANCE_FILE}
+  ) 200> ${LOCK_FILE}
+
+  return $?
 }
 
 declare -r INSTANCE_ID=$(get_instance_id)
 
-# Checks whether the instance has changed.
-# If the instance hasn't changed, exit the script.
-check_instanceid_on_disk ${INSTANCE_ID}
-
-#####################################################################
-# If the instance hasn't changed, we have now exited this script.
-# Since the instance changed, we have to do a bunch of work.
-#####################################################################
-
-log "Running first-boot"
-
-# Regenerate host keys for ssh.
-if [[ -x ${PREFIX}/usr/share/google/regenerate-host-keys ]]; then
-  ${PREFIX}/usr/share/google/regenerate-host-keys
+manage_instance_id_on_disk ${INSTANCE_ID}
+if [[ $? != 0 ]]; then
+  # The instance hasn't changed so exit.
+  exit 0
 fi
-
-# We are booting this instance for the first time.
-echo ${INSTANCE_ID} > ${INSTANCE_FILE}
 
 # Make a per-instance data directory.
 mkdir -p ${PREFIX}/var/lib/google/per-instance/${INSTANCE_ID}
