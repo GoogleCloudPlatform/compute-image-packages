@@ -34,7 +34,7 @@ function get_instance_id() {
 
 # Checks the instance id has changed.
 # Exits with return code 0 if the instance id hasn't changed.
-function check_instance_id() {
+function check_stored_instance_id() {
   local readonly instance_id=$1
 
   if [[ "${instance_id}" == "" ]]; then
@@ -52,7 +52,7 @@ function check_instance_id() {
 
 # Performs host key setup if the instance has changed.
 # Otherwise we exit with a non-zero return code.
-function manage_instance_id_on_disk() {
+function manage_stored_instance_id() {
   local readonly instance_id=$1
 
   # Create a subshell to manage the lock file. The file lock is released
@@ -64,7 +64,7 @@ function manage_instance_id_on_disk() {
 
     # Checks whether the instance has changed.
     # If the instance hasn't changed, exit the script.
-    check_instance_id_on_disk ${instance_id}
+    check_stored_instance_id ${instance_id}
 
     # If the instance hasn't changed, we have now exited the subshell.
     # Since the instance changed, we do host key regeneration.
@@ -84,7 +84,7 @@ function manage_instance_id_on_disk() {
 
 declare -r INSTANCE_ID=$(get_instance_id)
 
-manage_instance_id_on_disk ${INSTANCE_ID}
+manage_stored_instance_id ${INSTANCE_ID}
 if [[ $? != 0 ]]; then
   # The instance hasn't changed so exit.
   exit 0
