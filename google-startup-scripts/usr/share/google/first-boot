@@ -32,20 +32,20 @@ function get_instance_id() {
 }
 
 # Checks the instance id has changed.
-# Exits with return code 1 if the instance id hasn't changed.
+# Exits with return code 0 if the instance id hasn't changed.
 function check_instanceid_on_disk() {
   local readonly instanceid=$1
 
   if [[ "${instanceid}" == "" ]]; then
     # Cannot determine instance id. Either we're not running on a Compute VM,
     # or networking hasn't started up yet, etc.
-    exit 1
+    exit 0
   fi
 
   if [[ "${instanceid}" != "unknown-instance" &&
         "${instanceid}" == "$(cat ${INSTANCE_FILE} 2>/dev/null)" ]]; then
     # Instance id is same as on disk.
-    exit 1
+    exit 0
   fi
 }
 
