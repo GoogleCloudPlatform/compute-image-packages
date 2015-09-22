@@ -52,6 +52,7 @@ function check_instanceid_on_disk() {
 declare -r INSTANCE_ID=$(get_instance_id)
 
 # Checks whether the instance has changed.
+# If the instance hasn't changed, exit the script.
 check_instanceid_on_disk ${INSTANCE_ID}
 
 #####################################################################
