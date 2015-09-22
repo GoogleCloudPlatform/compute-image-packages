@@ -17,6 +17,7 @@
 
 declare -r INSTANCE_FILE=${PREFIX}/var/lib/google/vm-instance-id
 declare -r LOCK_FILE=${INSTANCE_FILE}.lock
+declare -r INSTANCE_ID=$(get_instance_id)
 
 mkdir -p ${PREFIX}/var/lib/google/per-instance
 
@@ -34,7 +35,7 @@ function get_instance_id() {
 
 # Output the instance id.
 # Returns 1 if the instance id hasn't changed, 0 if it has.
-function update_instanceid_on_disk() {
+function check_instanceid_on_disk() {
   local readonly instanceid=$1
 
   if [[ "${instanceid}" == "" ]]; then
@@ -49,20 +50,11 @@ function update_instanceid_on_disk() {
     exit 1
   fi
 
-  # We are booting this instance for the first time.
-  echo ${instanceid} > ${INSTANCE_FILE}
   exit 0
 }
 
-# This uses a subshell, opens LOCK_FILE on FD 200, locks it, and then
-# checks whether the instance has changed.
-function sync_new_instance_check() {
-  local instanceid=$(get_instance_id)
-  (flock 200; update_instanceid_on_disk ${instanceid}) 200> ${LOCK_FILE}
-  return $?
-}
-
-sync_new_instance_check
+# Checks whether the instance has changed.
+check_instanceid_on_disk ${INSTANCE_ID}
 if [[ $? != 0 ]]; then
   # The instance hasn't changed.  Just exit.
   exit 0
@@ -75,12 +67,13 @@ fi
 
 log "Running first-boot"
 
-declare -r INSTANCE_ID=$(cat ${INSTANCE_FILE})
-
 # Regenerate host keys for ssh.
 if [[ -x ${PREFIX}/usr/share/google/regenerate-host-keys ]]; then
   ${PREFIX}/usr/share/google/regenerate-host-keys
 fi
+
+# We are booting this instance for the first time.
+echo ${INSTANCE_ID} > ${INSTANCE_FILE}
 
 # Make a per-instance data directory.
 mkdir -p ${PREFIX}/var/lib/google/per-instance/${INSTANCE_ID}
