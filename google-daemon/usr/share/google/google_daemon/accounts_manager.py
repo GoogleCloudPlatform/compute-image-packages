@@ -62,10 +62,9 @@ class AccountsManager(object):
         if json_tags:
           etags = json.loads(json_tags)
           if etags:
-            self.desired_accounts.attributes_etag = etags[0]
-            self.desired_accounts.instance_sshkeys_etag = etags[1]
+            self.desired_accounts.etag = etags[0]
         reader.close()
-        logging.debug('New etag: %s', self.desired_accounts.attributes_etag)
+        logging.debug('New etag: %s', self.desired_accounts.etag)
         os.waitpid(pid, 0)
       else:
         # we are the child
@@ -80,9 +79,7 @@ class AccountsManager(object):
           time.sleep(5)
 
         # Write the etag to pass to parent
-        json_tags = json.dumps(
-            [self.desired_accounts.attributes_etag,
-             self.desired_accounts.instance_sshkeys_etag])
+        json_tags = json.dumps([self.desired_accounts.etag])
         writer.write(json_tags)
         writer.close()
 
