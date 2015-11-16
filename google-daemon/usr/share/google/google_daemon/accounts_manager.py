@@ -14,7 +14,6 @@
 
 """Main driver logic for managing accounts on GCE instances."""
 
-import json
 import logging
 import os
 import pwd
@@ -58,11 +57,9 @@ class AccountsManager(object):
         # we are the parent
         os.close(writer)
         reader = os.fdopen(reader) # turn r into a file object
-        json_tags = reader.read()
-        if json_tags:
-          etags = json.loads(json_tags)
-          if etags:
-            self.desired_accounts.etag = etags[0]
+        etag = reader.read()
+        if etag:
+          self.desired_accounts.etag = etag
         reader.close()
         logging.debug('New etag: %s', self.desired_accounts.etag)
         os.waitpid(pid, 0)
@@ -79,8 +76,8 @@ class AccountsManager(object):
           time.sleep(5)
 
         # Write the etag to pass to parent
-        json_tags = json.dumps([self.desired_accounts.etag])
-        writer.write(json_tags)
+        etag = self.desired_accounts.etag or ''
+        writer.write(etag)
         writer.close()
 
         # The use of os._exit here is recommended for subprocesses spawned
