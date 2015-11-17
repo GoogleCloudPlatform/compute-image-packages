@@ -54,9 +54,9 @@ class AccountsManager(object):
       reader, writer = os.pipe() # these are file descriptors, not file objects
       pid = os.fork()
       if pid:
-        # we are the parent
+        # We are the parent.
         os.close(writer)
-        reader = os.fdopen(reader) # turn r into a file object
+        reader = os.fdopen(reader) # turn reader into a file object
         etag = reader.read()
         if etag:
           self.desired_accounts.etag = etag
@@ -64,18 +64,18 @@ class AccountsManager(object):
         logging.debug('New etag: %s', self.desired_accounts.etag)
         os.waitpid(pid, 0)
       else:
-        # we are the child
+        # We are the child.
         os.close(reader)
         writer = os.fdopen(writer, 'w')
         try:
           self.RegenerateKeysAndUpdateAccounts()
         except Exception as e:
           logging.warning('error while trying to update accounts: %s', e)
-          # An error happened while trying to update the accounts. Lets sleep a
-          # bit to avoid getting stuck in a loop for intermittent errors.
+          # An error happened while trying to update the accounts.
+          # Sleep for five seconds before trying again.
           time.sleep(5)
 
-        # Write the etag to pass to parent
+        # Write the etag to pass to parent.
         etag = self.desired_accounts.etag or ''
         writer.write(etag)
         writer.close()
