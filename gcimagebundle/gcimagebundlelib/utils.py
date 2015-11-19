@@ -94,7 +94,7 @@ class MountFileSystem(object):
     """
     # Since the bundled image can have the same uuid as the root disk,
     # we should prevent uuid conflicts for xfs mounts.
-    if self._fs_type is 'xfs':
+    if self._fs_type == 'xfs':
       mount_cmd = ['mount', '-o', 'nouuid', self._dev_path, self._dir_path]
     else:
       mount_cmd = ['mount', self._dev_path, self._dir_path]
@@ -189,7 +189,7 @@ def MakeFileSystem(dev_path, fs_type, uuid=None):
   mkfs_cmd = ['mkfs', '-t', fs_type, dev_path]
   RunCommand(mkfs_cmd)
 
-  if fs_type is 'xfs':
+  if fs_type == 'xfs':
     set_uuid_cmd = ['xfs_admin', '-U', uuid, dev_path]
   else:
     set_uuid_cmd = ['tune2fs', '-U', uuid, dev_path]

@@ -25,6 +25,7 @@ from gcimagebundlelib import opensuse
 from gcimagebundlelib import rhel
 from gcimagebundlelib import sle
 from gcimagebundlelib import ubuntu
+from gcimagebundlelib import gentoo
 
 
 class UnknownPlatformException(Exception):
@@ -46,6 +47,7 @@ class PlatformFactory(object):
     self.Register('Red Hat Enterprise Linux', rhel.RHEL)
     self.Register('SUSE Linux Enterprise', sle.SLE)
     self.Register('Ubuntu', ubuntu.Ubuntu)
+    self.Register('Gentoo', gentoo.Gentoo)
 
   def Register(self, name, klass):
     self.__registry[name] = klass
