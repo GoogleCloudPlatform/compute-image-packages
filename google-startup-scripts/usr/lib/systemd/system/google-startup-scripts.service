@@ -9,6 +9,7 @@ ExecStart=/usr/share/google/run-startup-scripts
 ExecStop=/usr/share/google/run-shutdown-scripts
 Type=oneshot
 RemainAfterExit=true
+TimeoutStopSec=0
 
 [Install]
 WantedBy=multi-user.target
