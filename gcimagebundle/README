@@ -14,6 +14,9 @@
 
 Image bundling tool for root file system.
 
+Note: This tool is deprecated. Please see alternate instructions at
+https://cloud.google.com/compute/docs/creating-custom-image#export_an_image_to_google_cloud_storage
+
 To build a root filesystem tar
 $ sudo gcimagebundle -d /dev/sda -r /  -o /tmp \
   --loglevel=DEBUG  --log_file=/tmp/gcimagebundle.log
