@@ -28,7 +28,7 @@ METADATA_HANG = ('/?recursive=true&alt=json&wait_for_change=true'
 
 
 def KeyHasExpired(key):
-  """ Check to see whether an SSH key has expired.
+  """Check to see whether an SSH key has expired.
 
   Uses Google-specific (for now) semantics of the OpenSSH public key format's
   comment field to determine if an SSH key is past its expiration timestamp, and
@@ -42,7 +42,8 @@ def KeyHasExpired(key):
 
   Returns:
     True if the key has Google-specific comment semantics and has an expiration
-    timestamp in the past, or False otherwise."""
+    timestamp in the past, or False otherwise.
+  """
 
   logging.debug('Processing key: %s', key)
 
@@ -73,19 +74,18 @@ def KeyHasExpired(key):
     return False
 
   expire_str = json_obj['expireOn']
+  format_str = '%Y-%m-%dT%H:%M:%S+0000'
 
   try:
-    expire_time = datetime.datetime.strptime(expire_str,
-                                             '%Y-%m-%dT%H:%M:%S+0000')
+    expire_time = datetime.datetime.strptime(expire_str, format_str)
   except ValueError:
     logging.error(
-        'Expiration timestamp "%s" not in format %Y-%m-%dT%H:%M:%S+0000.',
-        expire_str)
+        'Expiration timestamp "%s" not in format %s.', expire_str, format_str)
     logging.error('Not expiring key.')
     return False
 
   # Expire the key if and only if we have exceeded the expiration timestamp.
-  return (datetime.datetime.utcnow() > expire_time)
+  return datetime.datetime.utcnow() > expire_time
 
 
 def AccountDataToDictionary(data):
@@ -112,10 +112,10 @@ def AccountDataToDictionary(data):
       logging.debug(
           'Skipping expired SSH key for user %s: %s', user, key)
       continue
-    if not user in usermap:
+    if user not in usermap:
       usermap[user] = []
     usermap[user].append(key)
-  logging.debug('User accounts: {0}'.format(usermap))
+  logging.debug('User accounts: %s', usermap)
   return usermap
 
 
