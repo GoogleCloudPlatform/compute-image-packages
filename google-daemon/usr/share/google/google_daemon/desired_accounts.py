@@ -178,12 +178,14 @@ class DesiredAccounts(object):
       instance_data = metadata_dict['instance']['attributes']
       project_data = metadata_dict['project']['attributes']
       # Instance SSH keys that will override keys in project metadata.
-      instance_keys = instance_data.get('override-ssh-keys')
-      project_keys = (project_data.get('ssh-keys', '') +
-                      project_data.get('sshKeys', ''))
-      account_data = instance_keys or project_keys
+      if instance_data.get('override-ssh-keys'):
+        valid_keys = [instance_data.get('override-ssh-keys')]
+      else:
+        valid_keys = [project_data.get('ssh-keys'), project_data.get('sshKeys')]
       # Additional SSH keys the instance should accept.
-      account_data += instance_data.get('additional-ssh-keys', '')
+      valid_keys.append(instance_data.get('additional-ssh-keys'))
+      valid_keys = [key for key in valid_keys if key]
+      account_data = '\n'.join(valid_keys)
     except KeyError:
       logging.debug('The sshKeys attribute was not found.')
 
