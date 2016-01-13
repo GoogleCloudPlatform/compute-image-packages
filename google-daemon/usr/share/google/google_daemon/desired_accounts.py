@@ -89,10 +89,10 @@ def KeyHasExpired(key):
 
 
 def AccountDataToDictionary(data):
-  """Given sshKeys attribute data, construct a usermap.
+  """Given SSH key data, construct a usermap.
 
   Args:
-    data: The data returned from the metadata server's sshKeys attribute.
+    data: The data returned from the metadata server's SSH key attributes.
 
   Returns:
     A map of {'username': ssh_keys_list}.
@@ -105,7 +105,7 @@ def AccountDataToDictionary(data):
     split_line = line.split(':', 1)
     if len(split_line) != 2:
       logging.warning(
-          'sshKey is not a complete entry: %s', split_line)
+          'SSH key is not a complete entry: %s', split_line)
       continue
     user, key = split_line
     if KeyHasExpired(key):
@@ -187,6 +187,6 @@ class DesiredAccounts(object):
       valid_keys = [key for key in valid_keys if key]
       account_data = '\n'.join(valid_keys)
     except KeyError:
-      logging.debug('The sshKeys attribute was not found.')
+      logging.debug('Project or instance attributes were not found.')
 
     return AccountDataToDictionary(account_data)
