@@ -28,7 +28,7 @@ METADATA_HANG = ('/?recursive=true&alt=json&wait_for_change=true'
 
 
 def KeyHasExpired(key):
-  """ Check to see whether an SSH key has expired.
+  """Check to see whether an SSH key has expired.
 
   Uses Google-specific (for now) semantics of the OpenSSH public key format's
   comment field to determine if an SSH key is past its expiration timestamp, and
@@ -42,7 +42,8 @@ def KeyHasExpired(key):
 
   Returns:
     True if the key has Google-specific comment semantics and has an expiration
-    timestamp in the past, or False otherwise."""
+    timestamp in the past, or False otherwise.
+  """
 
   logging.debug('Processing key: %s', key)
 
@@ -73,26 +74,25 @@ def KeyHasExpired(key):
     return False
 
   expire_str = json_obj['expireOn']
+  format_str = '%Y-%m-%dT%H:%M:%S+0000'
 
   try:
-    expire_time = datetime.datetime.strptime(expire_str,
-                                             '%Y-%m-%dT%H:%M:%S+0000')
+    expire_time = datetime.datetime.strptime(expire_str, format_str)
   except ValueError:
     logging.error(
-        'Expiration timestamp "%s" not in format %Y-%m-%dT%H:%M:%S+0000.',
-        expire_str)
+        'Expiration timestamp "%s" not in format %s.', expire_str, format_str)
     logging.error('Not expiring key.')
     return False
 
   # Expire the key if and only if we have exceeded the expiration timestamp.
-  return (datetime.datetime.utcnow() > expire_time)
+  return datetime.datetime.utcnow() > expire_time
 
 
 def AccountDataToDictionary(data):
-  """Given sshKeys attribute data, construct a usermap.
+  """Given SSH key data, construct a usermap.
 
   Args:
-    data: The data returned from the metadata server's sshKeys attribute.
+    data: The data returned from the metadata server's SSH key attributes.
 
   Returns:
     A map of {'username': ssh_keys_list}.
@@ -105,17 +105,17 @@ def AccountDataToDictionary(data):
     split_line = line.split(':', 1)
     if len(split_line) != 2:
       logging.warning(
-          'sshKey is not a complete entry: %s', split_line)
+          'SSH key is not a complete entry: %s', split_line)
       continue
     user, key = split_line
     if KeyHasExpired(key):
       logging.debug(
           'Skipping expired SSH key for user %s: %s', user, key)
       continue
-    if not user in usermap:
+    if user not in usermap:
       usermap[user] = []
     usermap[user].append(key)
-  logging.debug('User accounts: {0}'.format(usermap))
+  logging.debug('User accounts: %s', usermap)
   return usermap
 
 
@@ -177,8 +177,16 @@ class DesiredAccounts(object):
     try:
       instance_data = metadata_dict['instance']['attributes']
       project_data = metadata_dict['project']['attributes']
-      account_data = instance_data.get('sshKeys') or project_data.get('sshKeys')
+      # Instance SSH keys that will override keys in project metadata.
+      if instance_data.get('override-ssh-keys'):
+        valid_keys = [instance_data.get('override-ssh-keys')]
+      else:
+        valid_keys = [project_data.get('ssh-keys'), project_data.get('sshKeys')]
+      # Additional SSH keys the instance should accept.
+      valid_keys.append(instance_data.get('additional-ssh-keys'))
+      valid_keys = [key for key in valid_keys if key]
+      account_data = '\n'.join(valid_keys)
     except KeyError:
-      logging.debug('The sshKeys attribute was not found.')
+      logging.debug('Project or instance attributes were not found.')
 
     return AccountDataToDictionary(account_data)
