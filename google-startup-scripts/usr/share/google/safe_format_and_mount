@@ -143,5 +143,10 @@ function try_mount() {
   return ${mount_retcode}
 }
 
+log warn "====================================================================="
+log warn "WARNING: safe_format_and_mount is deprecated."
+log warn "See https://cloud.google.com/compute/docs/disks/persistent-disks"
+log warn "for additional instructions."
+log warn "====================================================================="
 try_mount
 exit $?

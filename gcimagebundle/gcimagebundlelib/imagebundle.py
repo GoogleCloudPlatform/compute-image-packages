@@ -163,6 +163,12 @@ def main():
 
   scratch_dir = tempfile.mkdtemp(dir=options.output_directory)
   SetupLogging(options, scratch_dir)
+  logging.warn('============================================================\n'
+               'Warning: gcimagebundle is deprecated. See\n'
+               'https://cloud.google.com/compute/docs/creating-custom-image'
+               '#export_an_image_to_google_cloud_storage\n'
+               'for updated instructions.\n'
+               '============================================================')
   try:
     guest_platform = platform_factory.PlatformFactory(
         options.root_directory).GetPlatform()
