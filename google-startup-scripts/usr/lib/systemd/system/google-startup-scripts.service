@@ -1,5 +1,5 @@
 [Unit]
-Description=Google Compute Engine user startup scripts.
+Description=Google Compute Engine user startup scripts
 After=local-fs.target network-online.target network.target
 After=google.service rsyslog.service
 Wants=local-fs.target network-online.target network.target
