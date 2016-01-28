@@ -1,6 +1,6 @@
 [Unit]
 Description=Google Compute Engine user shutdown scripts
-Before=shutdown.target
+Before=shutdown.target reboot.target halt.target
 DefaultDependencies=true
 Wants=local-fs.target network-online.target network.target
 
@@ -9,4 +9,4 @@ ExecStart=/usr/share/google/run-shutdown-scripts
 Type=oneshot
 
 [Install]
-WantedBy=shutdown.target
+WantedBy=shutdown.target reboot.target halt.target

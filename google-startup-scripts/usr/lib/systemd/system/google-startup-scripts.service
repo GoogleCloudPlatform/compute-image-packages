@@ -7,7 +7,6 @@ Wants=local-fs.target network-online.target network.target
 [Service]
 ExecStart=/usr/share/google/run-startup-scripts
 Type=oneshot
-RemainAfterExit=true
 
 [Install]
 WantedBy=multi-user.target
