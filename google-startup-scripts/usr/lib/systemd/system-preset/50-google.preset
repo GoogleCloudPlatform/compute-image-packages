@@ -1,2 +1,3 @@
-enable google-startup-scripts.service
 enable google.service
+enable google-shutdown-scripts.service
+enable google-startup-scripts.service
