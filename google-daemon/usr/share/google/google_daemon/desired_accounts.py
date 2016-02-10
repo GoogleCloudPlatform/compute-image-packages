@@ -157,8 +157,8 @@ class DesiredAccounts(object):
         # The metadata server content doesn't exist. Return None.
         # No need to log a warning.
         return None
-      # rethrow the exception since we don't know what it is. Let the
-      # top layer handle it
+      # Rethrow the exception since we don't know what it is. Let the
+      # top layer handle it.
       raise
     return None
 
@@ -169,7 +169,7 @@ class DesiredAccounts(object):
       A dict of the form: {'username': ['sshkey1, 'sshkey2', ...]}.
     """
     logging.debug('Getting desired accounts from metadata.')
-    # Fetch the top level attribute with a hanging get
+    # Fetch the top level attribute with a hanging get.
     metadata_content = self._GetMetadataUpdate()
     metadata_dict = json.loads(metadata_content or '{}')
     account_data = None
@@ -177,15 +177,12 @@ class DesiredAccounts(object):
     try:
       instance_data = metadata_dict['instance']['attributes']
       project_data = metadata_dict['project']['attributes']
-      # Instance SSH keys that will override keys in project metadata.
-      instance_override = instance_data.get('override-ssh-keys')
-      instance_ssh = instance_data.get('sshKeys')
-      if instance_override or instance_ssh:
-        valid_keys = [instance_override, instance_ssh]
-      else:
-        valid_keys = [project_data.get('ssh-keys'), project_data.get('sshKeys')]
-      # Additional SSH keys the instance should accept.
-      valid_keys.append(instance_data.get('additional-ssh-keys'))
+      # Instance SSH keys to use regardless of project metadata.
+      valid_keys = [instance_data.get('sshKeys'), instance_data.get('ssh-keys')]
+      block_project = instance_data.get('block-project-ssh-keys', '').lower()
+      if block_project != 'true' and not instance_data.get('sshKeys'):
+        valid_keys.append(project_data.get('ssh-keys'))
+        valid_keys.append(project_data.get('sshKeys'))
       valid_keys = [key for key in valid_keys if key]
       account_data = '\n'.join(valid_keys)
     except KeyError:
