@@ -1,4 +1,4 @@
-## Experimental disk-expand package for GCE CentOS 6 and RHEL 6 images.
+## Experimental gce disk-expand package.
 
 This package is intended to expand the root partition up to 2TB on a GCE VM. It
 consists of several scripts from other packages that for various reasons are not
