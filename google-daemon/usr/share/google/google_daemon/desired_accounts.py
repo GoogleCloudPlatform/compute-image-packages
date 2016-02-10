@@ -179,12 +179,10 @@ class DesiredAccounts(object):
       project_data = metadata_dict['project']['attributes']
       # Instance SSH keys to use regardless of project metadata.
       valid_keys = [instance_data.get('sshKeys'), instance_data.get('ssh-keys')]
-      block_project = (instance_data.get('block-project-ssh-keys') == 'true' or
-                       instance_data.get('sshKeys'))
-      if not block_project:
+      block_project = instance_data.get('block-project-ssh-keys', '').lower()
+      if block_project != 'true' and not instance_data.get('sshKeys'):
         valid_keys.append(project_data.get('ssh-keys'))
         valid_keys.append(project_data.get('sshKeys'))
-      # Additional SSH keys the instance should accept.
       valid_keys = [key for key in valid_keys if key]
       account_data = '\n'.join(valid_keys)
     except KeyError:
