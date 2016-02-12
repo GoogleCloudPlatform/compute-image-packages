@@ -40,7 +40,7 @@ from the EPEL repo.
 
 #### Dracut modules
 
-The dracut modules are taken unmodified from the [dracut-modules-growroot](http://rpmfind.net/linux/RPM/epel/6/x86_64/dracut-modules-growroot-0.20-2.el6.noarch.html)
+The dracut module is taken from the [dracut-modules-growroot](http://rpmfind.net/linux/RPM/epel/6/x86_64/dracut-modules-growroot-0.20-2.el6.noarch.html)
 package in the EPEL 6 repo. The dracut module allows the partition table to be
 expanded on boot before / is mounted and prevents an additional reboot.
 
@@ -51,8 +51,3 @@ The expand-root init.d script is derived from the
 of this script used for Debian instances. Essentially, it just calls the proper
 filesystem expansion utility to live resize the filesystem on first boot. The
 root partition is hard coded as /dev/sda1 in this script.
-
-### License
-
-The scripts in this package, unless otherwise noted, are licensed under GPLv3
-from their upstream sources.

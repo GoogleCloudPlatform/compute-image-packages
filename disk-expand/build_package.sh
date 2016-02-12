@@ -24,8 +24,14 @@ RPM_TOP=$(mktemp -d)
 SPEC_FILE="gce-disk-expand-el6.spec"
 
 echo "Setup"
-mkdir -p ${RPM_TOP}/SOURCES
-cp -R * ${RPM_TOP}/SOURCES
+mkdir -p ${RPM_TOP}/SOURCES/etc/init.d
+mkdir -p ${RPM_TOP}/SOURCES/usr/bin
+mkdir -p ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
+
+cp expand-root ${RPM_TOP}/SOURCES/etc/init.d
+cp third_party/cloud-utils/* ${RPM_TOP}/SOURCES/usr/bin
+cp third_party/dracut-modules-growroot/* \
+  ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
 
 echo "Building"
 rpmbuild --define "_topdir ${RPM_TOP}" -ba ${SPEC_FILE}
