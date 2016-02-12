@@ -1,12 +1,15 @@
 [Unit]
 Description=Google Compute Engine user shutdown scripts
-Before=shutdown.target
-DefaultDependencies=false
+After=local-fs.target network-online.target network.target
+After=google.service rsyslog.service
 Wants=local-fs.target network-online.target network.target
 
 [Service]
-ExecStart=/usr/share/google/run-shutdown-scripts
+ExecStart=/bin/true
+ExecStop=/usr/share/google/run-shutdown-scripts
 Type=oneshot
+RemainAfterExit=true
+TimeoutStopSec=0
 
 [Install]
-WantedBy=shutdown.target
+WantedBy=multi-user.target
