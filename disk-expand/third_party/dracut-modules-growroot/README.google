@@ -1,0 +1,12 @@
+URL: http://download.fedoraproject.org/pub/epel/6/SRPMS/cloud-initramfs-tools-0.20-2.el6.src.rpm
+Version: 0.20-2.el6
+License: GPL v3
+License File: LICENSE
+Description:
+This dracut module will re-write the partition table of a disk so that the
+root partition has as much space as possible, bumping it up to the edge of the
+disk, or the edge of the next partition.
+
+Local Modifications:
+* Patched in el6 patches from the source RPM.
+* Added sgdisk dependency to dracut module install as growpart requires sgdisk.

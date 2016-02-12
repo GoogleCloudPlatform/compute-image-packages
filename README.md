@@ -1,9 +1,12 @@
 ## [Image Packages](https://cloud.google.com/compute/docs/images) for [Google Compute Engine](https://cloud.google.com/compute/)
 This repository is the collection of packages that are installed on the standard Google Compute Engine images.
 
-1. [Image Bundle](https://cloud.google.com/compute/docs/images#buildingimage) - Tool that creates an image file out of a disk attached to a GCE VM.
 1. [Google Startup Scripts](https://cloud.google.com/compute/docs/startupscript) - Scripts and configuration files that setup a Linux-based image to work smoothly with GCE.
 1. Google Daemon - A service that manages user accounts, maintains ssh login keys, syncs the system clock after migration, and syncs public endpoint IP addresses.
+1. Disk Expand - Scripts to expand the root partition on GCE VM's for CentOS 6 and RHEL 6 images.
+
+Note: gcimagebundle is deprecated and is provided here as is with no further
+support or maintenance. See [replacement instructions](https://cloud.google.com/compute/docs/creating-custom-image#export_an_image_to_google_cloud_storage).
 
 ## Installation
 
@@ -36,19 +39,14 @@ Occasionally you may want to install the latest commits to the [repository](http
 
         sudo service google-accounts-manager restart && sudo service google-address-manager restart && sudo service google-clock-sync-manager restart
 
-1. Install gcimagebundle with
-
-        cd compute-image-packages/gcimagebundle && sudo python setup.py install
-
 ## Source Code
-This repository is structured so that each package is located in its own top-level directory. [`google-startup-scripts`](google-startup-scripts/) and [`google-daemon`](google-daemon/) are stored as the directory structure of where the files would be from root. [`image-bundle`](image-bundle/) has no directory structure.
+This repository is structured so that each package is located in its own top-level directory. [`google-startup-scripts`](google-startup-scripts/) and [`google-daemon`](google-daemon/) are stored as the directory structure of where the files would be from root.
 
 ## Contributing
 Have a patch that will benefit this project? Awesome! Follow these steps to have it accepted.
 
 1. Please sign our [Contributor License Agreement](CONTRIB.md).
 1. Fork this Git repository and make your changes.
-1. Run the unit tests. (gcimagebundle only)
 1. Create a Pull Request
 1. Incorporate review feedback to your changes.
 1. Accepted!
