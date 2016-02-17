@@ -66,7 +66,7 @@ function get_metadata_value() {
 }
 
 function do_environment() {
-  echo "INSTANCE_ID=$(get_metadata_value instance-id)" > ${GOOGLE_ENVIRONMENT}
+  echo "INSTANCE_ID=$(get_metadata_value id)" > ${GOOGLE_ENVIRONMENT}
 }
 
 function do_init() {
