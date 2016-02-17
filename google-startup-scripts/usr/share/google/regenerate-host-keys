@@ -37,7 +37,8 @@ sshd_cmd() {
 generate_key() {
   local key_type=$1
   local key_dest=$2
-  local tmp_file="/tmp/keyfile.$$";
+  local tmp_dir=$(mktemp -d /tmp/keystore.XXXXXXXX)
+  local tmp_file="/${tmp_dir}/keyfile.$$";
   local log_file=$(mktemp);
   log "Regenerating sshd key ${key_dest}"
   ssh-keygen -N '' -t ${key_type} -f ${tmp_file} > ${log_file} 2>&1
@@ -49,7 +50,7 @@ generate_key() {
     log "Could not create sshd key ${key_dest}"
     log "$(cat ${log_file})"
   fi
-  rm -f ${tmp_file}
+  rm -rf ${tmp_dir}
   rm -f ${log_file}
 }
 
