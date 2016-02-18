@@ -6,6 +6,7 @@ Wants=local-fs.target network-online.target network.target
 
 [Service]
 ExecStart=/usr/share/google/run-startup-scripts
+KillMode=process
 Type=oneshot
 
 [Install]
