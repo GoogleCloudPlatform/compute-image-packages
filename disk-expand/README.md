@@ -14,10 +14,10 @@ defined output directory.
 
 ### Package usage
 
-1. Update your distro and reboot. If there is a kernel update, you need to be
-   running the new kernel for dracut to update it properly. Alternativley, if
-   there is not a kernel update you can just install the gce-disk-expand
-   package in the next step.
+1. Update to the latest packages and reboot. If there is a kernel update,
+   you need to be running the new kernel for dracut to update it properly.
+   Alternativley, if there is not a kernel update you can just install the
+   gce-disk-expand package in the next step.
    `yum -y update ; reboot`
 1. Install the gce-disk-expand package with yum and reboot:
    `yum -y install /PATH_TO/gce-disk-expand-el6-VER-DATE.x86_64.rpm ; reboot`
