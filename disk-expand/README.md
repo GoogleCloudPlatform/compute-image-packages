@@ -15,8 +15,10 @@ defined output directory for EL6 and EL7.
 ### Package usage
 
 Install the gce-disk-expand package for your distro with yum and reboot:
-   CentOS/RHEL 6: `yum -y install /PATH_TO/gce-disk-expand-el6-VER-DATE.x86_64.rpm ; reboot`
-   CentOS/RHEL 7: 'yum -y install /PATH_TO/gce-disk-expand-el7-VER-DATE.x86_64.rpm ; reboot`
+
+* CentOS/RHEL 6: `yum -y install /PATH_TO/gce-disk-expand-el6-VER-DATE.x86_64.rpm ; reboot`
+
+* CentOS/RHEL 7: `yum -y install /PATH_TO/gce-disk-expand-el7-VER-DATE.x86_64.rpm ; reboot`
 
 Your root partition will now be expanded to the full size of your disk up to
 2TB.
