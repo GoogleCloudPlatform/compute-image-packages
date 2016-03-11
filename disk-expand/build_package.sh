@@ -21,25 +21,30 @@ else
 fi
 
 RPM_TOP=$(mktemp -d)
-SPEC_FILE="gce-disk-expand-el6.spec"
+SPEC_FILES="gce-disk-expand-el6.spec gce-disk-expand-el7.spec"
 
-echo "Setup"
-mkdir -p ${RPM_TOP}/SOURCES/etc/init.d
-mkdir -p ${RPM_TOP}/SOURCES/usr/bin
-mkdir -p ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
+for spec_file in ${SPEC_FILES}; do
+  echo "Setup ${spec_file}"
+  mkdir -p ${RPM_TOP}/SOURCES/etc/init.d
+  mkdir -p ${RPM_TOP}/SOURCES/usr/bin
+  mkdir -p ${RPM_TOP}/SOURCES/usr/lib/systemd/system
+  mkdir -p ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
 
-cp expand-root ${RPM_TOP}/SOURCES/etc/init.d
-cp third_party/cloud-utils/* ${RPM_TOP}/SOURCES/usr/bin
-cp third_party/dracut-modules-growroot/* \
-  ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
+  cp expand-root ${RPM_TOP}/SOURCES/etc/init.d
+  cp expand-root ${RPM_TOP}/SOURCES/usr/bin
+  cp third_party/cloud-utils/* ${RPM_TOP}/SOURCES/usr/bin
+  cp expand-root.service ${RPM_TOP}/SOURCES/usr/lib/systemd/system
+  cp third_party/dracut-modules-growroot/* \
+    ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
 
-echo "Building"
-rpmbuild --define "_topdir ${RPM_TOP}" -ba ${SPEC_FILE}
+  echo "Building"
+  rpmbuild --define "_topdir ${RPM_TOP}" -ba ${spec_file}
 
-echo "Copying rpm's to ${RPM_DEST}"
-cp ${RPM_TOP}/RPMS/x86_64/*.rpm ${RPM_DEST}
-cp ${RPM_TOP}/SRPMS/*.rpm ${RPM_DEST}
-ls -l ${RPM_DEST}/*.rpm
+  echo "Copying rpm's to ${RPM_DEST}"
+  cp ${RPM_TOP}/RPMS/x86_64/*.rpm ${RPM_DEST}
+  cp ${RPM_TOP}/SRPMS/*.rpm ${RPM_DEST}
+  ls -l ${RPM_DEST}/*.rpm
 
-echo "Cleaning up"
-rm -Rf ${RPM_TOP}
+  echo "Cleaning up"
+  rm -Rf ${RPM_TOP}
+done
