@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 Name: gce-disk-expand
-Summary: Google Compute Engine root disk expansion utilities for EL6
+Summary: Google Compute Engine root disk expansion utilities for EL7
 Version: 1.0.0
-Release: %(date +%s).el6
+Release: %(date +%s).el7
 License: GPLv3, Apache Software License
 Group: System Environment/Base
 URL: https://github.com/GoogleCloudPlatform/compute-image-packages
-Requires: gawk, e2fsprogs, file, dracut, grep, util-linux, gdisk
-Conflicts: cloud-utils-growpart, cloud-utils, dracut-modules-growroot
+Requires: gawk, e2fsprogs, file, grep, util-linux, gdisk
+Conflicts: cloud-utils-growpart, cloud-utils
 
 # Allow other files in the source that don't end up in the package.
 %define _unpackaged_files_terminate_build 0
@@ -27,26 +27,20 @@ Conflicts: cloud-utils-growpart, cloud-utils, dracut-modules-growroot
 %description
 gce-disk-expand: Automatically resize the root partition on first boot.
 
-This package is adopted from cloud-utils, cloud-initramfs-tools, and
-cloud-utils-growpart.
+This package is adopted from cloud-utils.
 
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
-cp -R $RPM_SOURCE_DIR/etc $RPM_BUILD_ROOT
 cp -R $RPM_SOURCE_DIR/usr $RPM_BUILD_ROOT
 
 %files
-%attr(755,root,root) /etc/init.d/expand-root
+%attr(755,root,root) /usr/bin/expand-root
 %attr(755,root,root) /usr/bin/growpart
-%attr(755,root,root) /usr/share/dracut/modules.d/50growroot/growroot-dummy.sh
-%attr(755,root,root) /usr/share/dracut/modules.d/50growroot/growroot.sh
-%attr(755,root,root) /usr/share/dracut/modules.d/50growroot/install
+%attr(644,root,root) /usr/lib/systemd/system/expand-root.service
 
 %post
-dracut --force
-chkconfig --level 2345 expand-root on
+systemctl enable expand-root.service
 
 %postun
-dracut --force
-chkconfig expand-root off
+systemctl disable expand-root.service
