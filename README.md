@@ -5,9 +5,6 @@ This repository is the collection of packages that are installed on the standard
 1. Google Daemon - A service that manages user accounts, maintains ssh login keys, syncs the system clock after migration, and syncs public endpoint IP addresses.
 1. Disk Expand - Scripts to expand the root partition on GCE VM's for CentOS 6 and RHEL 6 images.
 
-Note: gcimagebundle is deprecated and is provided here as is with no further
-support or maintenance. See [replacement instructions](https://cloud.google.com/compute/docs/creating-custom-image#export_an_image_to_google_cloud_storage).
-
 ## Installation
 
 ### From Release Tarballs
