@@ -1,10 +1,10 @@
-## Experimental gce-disk-expand package for CentOS/RHEL
+## gce-disk-expand package for CentOS/RHEL
 
 This package is intended to expand the root partition up to 2TB on a GCE VM. It
 consists of several scripts from other packages that for various reasons are not
 maintained by the distros; cloud-utils-growpart, dracut-modules-growroot, and an
 upstream version of the growpart script. See below for details. This package is
-being provided on an experimental basis for GCE CentOS and RHEL images only.
+included in GCE CentOS and RHEL images after v20160415.
 
 ### Build the package
 

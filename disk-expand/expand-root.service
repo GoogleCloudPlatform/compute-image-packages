@@ -21,6 +21,7 @@ Wants=local-fs.target
 ExecStart=/usr/bin/growpart /dev/sda 1
 ExecStop=/usr/bin/expand-root
 Type=oneshot
+SuccessExitStatus=1
 
 [Install]
 WantedBy=multi-user.target
