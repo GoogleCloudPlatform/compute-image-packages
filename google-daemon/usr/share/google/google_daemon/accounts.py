@@ -45,7 +45,7 @@ def IsUserSudoerInLines(user, sudoer_lines):
   """Return whether the user has an entry in the sudoer lines."""
 
   def IsUserSudoerEntry(line):
-    return re.match(r'^%s\s+' % user, line)
+    return re.match(r'^%s\s+' % re.escape(user), line)
 
   return filter(IsUserSudoerEntry, sudoer_lines)
 
