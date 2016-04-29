@@ -15,8 +15,8 @@
 """Manage extra network interface addresses on a GCE instance.
 
 Fetch a list of public endpoint IPs from the metadata server, compare it with
-what's configured on eth0, and add/remove addresses from eth0 to make them
-match.  Only remove those which match our proto code.
+what's configured on default interface, and add/remove addresses from default
+interface to make them match.  Only remove those which match our proto code.
 
 This must be run by root. If it reads any malformed data, it will take no
 action.
@@ -56,6 +56,9 @@ class AddressManager(object):
     # etag header value is hex, so this is guaranteed to not match.
     self.default_last_etag = 'NONE'
     self.ResetEtag()
+
+    # get default IP interface
+    self.iface = self.get_default_interface_linux()
 
   def SyncAddressesForever(self):
     while True:
@@ -106,9 +109,9 @@ class AddressManager(object):
     return self.ParseIPAddrs(addrs_data)
 
   def ReadLocalConfiguredAddrs(self):
-    """Fetch list of addresses we've configured on eth0 already."""
-    cmd = ('{0} route ls table local type local dev eth0 scope host ' +
-           'proto {1:d}').format(self.ip_path, GOOGLE_PROTO_ID)
+    """Fetch list of addresses we've configured on default interface already."""
+    cmd = ('{0} route ls table local type local dev %s scope host ' +
+           'proto {1:d}').format(self.ip_path, GOOGLE_PROTO_ID) % (self.iface)
     result = self.system.RunCommand(cmd.split())
     if self.IPCommandFailed(result, cmd):
       raise InputError('Can''t check local addresses')
@@ -135,28 +138,28 @@ class AddressManager(object):
             to_remove or None))
 
   def AddAddresses(self, to_add):
-    """Configure new addresses on eth0."""
+    """Configure new addresses on default interface."""
     for addr in to_add:
        self.AddOneAddress(addr)
 
   def AddOneAddress(self, addr):
-    """Configure one address on eth0."""
-    cmd = '%s route add to local %s/32 dev eth0 proto %d' % (
-        self.ip_path, addr, GOOGLE_PROTO_ID)
+    """Configure one address on default interface."""
+    cmd = '%s route add to local %s/32 dev %s proto %d' % (
+        self.ip_path, addr, self.iface, GOOGLE_PROTO_ID)
     result = self.system.RunCommand(cmd.split())
     self.IPCommandFailed(result, cmd)  # Ignore return code
 
   def DeleteAddresses(self, to_remove):
-    """Un-configure a list of addresses from eth0."""
+    """Un-configure a list of addresses from default interface."""
     for addr in to_remove:
       self.DeleteOneAddress(addr)
 
   def DeleteOneAddress(self, addr):
-    """Delete one address from eth0."""
+    """Delete one address from default interface."""
     # This will fail if it doesn't match exactly the specs listed.
     # That'll help ensure we don't remove one added by someone else.
-    cmd = '%s route delete to local %s/32 dev eth0 proto %d' % (
-        self.ip_path, addr, GOOGLE_PROTO_ID)
+    cmd = '%s route delete to local %s/32 dev %s proto %d' % (
+        self.ip_path, addr, self.iface, GOOGLE_PROTO_ID)
     result = self.system.RunCommand(cmd.split())
     self.IPCommandFailed(result, cmd)  # Ignore return code
 
@@ -177,3 +180,12 @@ class AddressManager(object):
       return True
     else:
       return False
+
+
+  def get_default_interface_linux(self):
+        with open("/proc/net/route") as pr:
+            for line in pr:
+                fields = line.strip().split()
+                if fields[1] != '00000000' or not int(fields[3], 16) & 2:
+                    continue
+                return fields[0]
