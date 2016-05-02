@@ -1,7 +1,10 @@
 language: python
+sudo: true
 python:
-  - "2.7"
-before_script:
-  - chmod +x unit-tests/travis-run-tests.sh
-script:
-  - unit-tests/travis-run-tests.sh
+  - 2.7
+os:
+  - linux
+install:
+  - pip install boto
+# nosetests will run all tests within the current directory.
+script: nosetests
