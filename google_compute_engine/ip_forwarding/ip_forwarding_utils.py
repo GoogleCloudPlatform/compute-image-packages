@@ -53,7 +53,7 @@ class IpForwardingUtils(object):
     options = options or {}
     command = ['ip', 'route']
     command.extend(args)
-    for item in options.iteritems():
+    for item in options.items():
       command.extend(item)
     try:
       process = subprocess.Popen(
@@ -76,7 +76,7 @@ class IpForwardingUtils(object):
       string, the name of the default network interface.
     """
     result = self._RunIpRoute(args=['list'])
-    for route in result.split('\n'):
+    for route in result.decode('utf-8').split('\n'):
       fields = route.split()
       if fields and fields[0] == 'default':
         return fields[-1]

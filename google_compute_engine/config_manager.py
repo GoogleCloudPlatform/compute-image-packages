@@ -15,17 +15,10 @@
 
 """A library for retrieving and modifying configuration settings."""
 
-import sys
 import textwrap
 
 from google_compute_engine import lock_file
-
-if sys.version_info >= (3,):
-  # Python 3 imports.
-  import configparser as parser
-else:
-  # Python 2 imports.
-  import ConfigParser as parser
+from google_compute_engine.compat import parser
 
 CONFIG = '/etc/default/instance_configs.cfg'
 LOCKFILE = '/var/lock/google_config_manager.lock'

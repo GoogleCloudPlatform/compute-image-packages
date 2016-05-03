@@ -18,7 +18,8 @@
 import unittest
 
 from google_compute_engine import config_manager
-import mock
+from google_compute_engine.compat import builtin
+from google_compute_engine.compat import mock
 
 
 class ConfigManagerTest(unittest.TestCase):
@@ -154,7 +155,7 @@ class ConfigManagerTest(unittest.TestCase):
 
   def testWriteConfig(self):
     mock_open = mock.mock_open()
-    with mock.patch('__builtin__.open', mock_open, create=False):
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
       self.mock_config_manager.WriteConfig()
       expected_calls = [
           mock.call('# %s' % self.config_header),
@@ -166,7 +167,7 @@ class ConfigManagerTest(unittest.TestCase):
     self.mock_config_manager = config_manager.ConfigManager(
         config_file=self.config_file)
     mock_open = mock.mock_open()
-    with mock.patch('__builtin__.open', mock_open, create=False):
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
       self.mock_config_manager.WriteConfig()
       mock_open().write.assert_not_called()
 
@@ -175,7 +176,7 @@ class ConfigManagerTest(unittest.TestCase):
     ioerror = IOError('Test Error')
     mock_lock.LockFile.side_effect = ioerror
     mock_open = mock.mock_open()
-    with mock.patch('__builtin__.open', mock_open, create=False):
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
       with self.assertRaises(IOError) as error:
         self.mock_config_manager.WriteConfig()
       self.assertEqual(error.exception, ioerror)

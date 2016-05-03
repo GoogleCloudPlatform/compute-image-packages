@@ -18,7 +18,7 @@
 import unittest
 
 from google_compute_engine import lock_file
-import mock
+from google_compute_engine.compat import mock
 
 
 class LockFileTest(unittest.TestCase):

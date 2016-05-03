@@ -21,18 +21,10 @@ import os
 import socket
 import time
 
-try:
-  # Python 2 imports.
-  import httplib as httpclient
-  import urllib as urlparse
-  import urllib2 as urlrequest
-  import urllib2 as urlerror
-except ImportError:
-  # Python 3 imports.
-  import http.client as httpclient
-  import urllib.request as urlrequest
-  import urllib.parse as urlparse
-  import urllib.error as urlerror
+from google_compute_engine.compat import httpclient
+from google_compute_engine.compat import urlerror
+from google_compute_engine.compat import urlparse
+from google_compute_engine.compat import urlrequest
 
 METADATA_SERVER = 'http://metadata.google.internal/computeMetadata/v1'
 

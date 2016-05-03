@@ -19,7 +19,7 @@ import os
 import unittest
 
 from google_compute_engine import metadata_watcher
-import mock
+from google_compute_engine.compat import mock
 
 
 class MetadataWatcherTest(unittest.TestCase):
@@ -138,7 +138,7 @@ class MetadataWatcherTest(unittest.TestCase):
     mock_response = mock.Mock()
     mock_response.return_value = mock_response
     mock_response.headers = {'etag': 1}
-    mock_response.read.return_value = '{}'
+    mock_response.read.return_value = bytes(b'{}')
     self.mock_watcher._GetMetadataRequest = mock_response
     request_url = os.path.join(self.url, '')
 
@@ -150,7 +150,7 @@ class MetadataWatcherTest(unittest.TestCase):
     mock_response = mock.Mock()
     mock_response.return_value = mock_response
     mock_response.headers = {'etag': 0}
-    mock_response.read.return_value = '{}'
+    mock_response.read.return_value = bytes(b'{}')
     self.mock_watcher._GetMetadataRequest = mock_response
     metadata_key = 'instance/id'
     self.params['recursive'] = False
@@ -167,10 +167,10 @@ class MetadataWatcherTest(unittest.TestCase):
     self.mock_watcher.etag = 1
     mock_unchanged = mock.Mock()
     mock_unchanged.headers = {'etag': 1}
-    mock_unchanged.read.return_value = '{}'
+    mock_unchanged.read.return_value = bytes(b'{}')
     mock_changed = mock.Mock()
     mock_changed.headers = {'etag': 2}
-    mock_changed.read.return_value = '{}'
+    mock_changed.read.return_value = bytes(b'{}')
     mock_response = mock.Mock()
     mock_response.side_effect = [mock_unchanged, mock_unchanged, mock_changed]
     self.mock_watcher._GetMetadataRequest = mock_response

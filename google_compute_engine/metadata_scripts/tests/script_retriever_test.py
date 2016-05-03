@@ -18,8 +18,8 @@
 import subprocess
 import unittest
 
+from google_compute_engine.compat import mock
 from google_compute_engine.metadata_scripts import script_retriever
-import mock
 
 
 class ScriptRetrieverTest(unittest.TestCase):
@@ -68,7 +68,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     self.assertEqual(self.mock_logger.warning.call_count, 1)
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.urlretrieve')
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
   def testDownloadUrl(self, mock_retrieve, mock_tempfile):
     url = 'http://www.google.com/fake/url'
     mock_tempfile.return_value = mock_tempfile
@@ -81,7 +81,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     self.mock_logger.warning.assert_not_called()
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.urlretrieve')
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
   def testDownloadUrlProcessError(self, mock_retrieve, mock_tempfile):
     url = 'http://www.google.com/fake/url'
     mock_tempfile.return_value = mock_tempfile
@@ -91,7 +91,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     self.assertEqual(self.mock_logger.warning.call_count, 1)
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.urlretrieve')
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
   def testDownloadUrlException(self, mock_retrieve, mock_tempfile):
     url = 'http://www.google.com/fake/url'
     mock_tempfile.return_value = mock_tempfile

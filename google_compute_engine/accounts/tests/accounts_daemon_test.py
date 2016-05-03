@@ -19,7 +19,7 @@ import datetime
 import unittest
 
 from google_compute_engine.accounts import accounts_daemon
-import mock
+from google_compute_engine.compat import mock
 
 
 class AccountsDaemonTest(unittest.TestCase):

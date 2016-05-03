@@ -18,7 +18,7 @@
 import unittest
 
 from google_compute_engine.boto import compute_auth
-import mock
+from google_compute_engine.compat import mock
 
 
 class ComputeAuthTest(unittest.TestCase):
