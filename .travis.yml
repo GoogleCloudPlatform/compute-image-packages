@@ -2,9 +2,22 @@ language: python
 sudo: true
 python:
   - 2.7
+  - 3.2
+  - 3.3
+  - 3.4
+  - 3.5
+  - pypy
+  - pypy3
+# Global configs cause unit tests to break.
+# Issue: travis-ci/travis-ci#5246
+env:
+  - BOTO_CONFIG=/tmp/fake
 os:
   - linux
+# python3.2 does not have mock installed by default.
 install:
   - pip install boto
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.2 ]]; then pip3.2 install mock; fi
 # nosetests will run all tests within the current directory.
-script: nosetests
+script:
+  - nosetests
