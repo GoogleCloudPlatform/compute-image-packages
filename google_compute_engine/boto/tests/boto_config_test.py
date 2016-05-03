@@ -18,7 +18,7 @@
 import unittest
 
 from google_compute_engine.boto import boto_config
-import mock
+from google_compute_engine.compat import mock
 
 
 class BotoConfigTest(unittest.TestCase):

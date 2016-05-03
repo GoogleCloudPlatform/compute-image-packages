@@ -17,8 +17,8 @@
 
 import unittest
 
+from google_compute_engine.compat import mock
 from google_compute_engine.metadata_scripts import script_manager
-import mock
 
 
 class ScriptManagerTest(unittest.TestCase):

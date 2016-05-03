@@ -19,7 +19,8 @@ import subprocess
 import unittest
 
 from google_compute_engine.accounts import accounts_utils
-import mock
+from google_compute_engine.compat import builtin
+from google_compute_engine.compat import mock
 
 
 class AccountsUtilsTest(unittest.TestCase):
@@ -165,7 +166,7 @@ class AccountsUtilsTest(unittest.TestCase):
     mock_exists.return_value = False
     command = ['groupadd', self.sudoers_group]
 
-    with mock.patch('__builtin__.open', mock_open, create=False):
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
       accounts_utils.AccountsUtils._CreateSudoersGroup(self.mock_utils)
       mock_open().write.assert_called_once_with(mock.ANY)
 
@@ -190,7 +191,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils._GetGroup.return_value = True
     mock_exists.return_value = True
 
-    with mock.patch('__builtin__.open', mock_open, create=False):
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
       accounts_utils.AccountsUtils._CreateSudoersGroup(self.mock_utils)
       mock_open().write.assert_not_called()
 
@@ -321,7 +322,7 @@ class AccountsUtilsTest(unittest.TestCase):
     mock_tempfile.__enter__.return_value.name = temp_dest
     self.mock_logger.name = 'test'
 
-    with mock.patch('__builtin__.open', mock_open, create=False):
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
       mock_open().readlines.return_value = [
           'User key a\n',
           'User key b\n',
@@ -360,6 +361,7 @@ class AccountsUtilsTest(unittest.TestCase):
         self.mock_utils._SetPermissions.mock_calls, expected_calls)
 
   def testUpdateAuthorizedKeysNoUser(self):
+    self.mock_utils._SetPermissions = mock.Mock()
     user = 'user'
     ssh_keys = ['key']
     self.mock_utils._GetUser.return_value = None
@@ -433,7 +435,7 @@ class AccountsUtilsTest(unittest.TestCase):
   def testGetConfiguredUsers(self, mock_exists):
     mock_open = mock.mock_open()
     mock_exists.return_value = True
-    with mock.patch('__builtin__.open', mock_open, create=False):
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
       mock_open().readlines.return_value = ['a\n', 'b\n', 'c\n', '\n']
       self.assertEqual(
           accounts_utils.AccountsUtils.GetConfiguredUsers(self.mock_utils),
@@ -495,6 +497,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_logger.warning.assert_not_called()
 
   def testUpdateUserInvalidUser(self):
+    self.mock_utils._GetUser = mock.Mock()
     invalid_users = [
         '',
         '!#$%^',
@@ -514,9 +517,11 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils._GetUser.assert_not_called()
 
   def testUpdateUserFailedAddUser(self):
+    self.mock_utils._UpdateUserGroups = mock.Mock()
     user = 'user'
     self.mock_utils._GetUser.return_value = False
     self.mock_utils._AddUser.return_value = False
+
     self.assertFalse(
         accounts_utils.AccountsUtils.UpdateUser(self.mock_utils, user, []))
     self.mock_utils._GetUser.assert_called_once_with(user)
@@ -530,6 +535,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils._GetUser.return_value = False
     self.mock_utils._AddUser.return_value = True
     self.mock_utils._UpdateUserGroups.return_value = False
+
     self.assertFalse(
         accounts_utils.AccountsUtils.UpdateUser(self.mock_utils, user, []))
     self.mock_utils._GetUser.assert_called_once_with(user)
@@ -537,6 +543,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils._UpdateUserGroups.assert_called_once_with(user, groups)
 
   def testUpdateUserNoLogin(self):
+    self.mock_utils._UpdateAuthorizedKeys = mock.Mock()
     user = 'user'
     groups = ['a', 'b', 'c']
     pw_shell = '/sbin/nologin'
@@ -545,6 +552,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils.groups = groups
     self.mock_utils._GetUser.return_value = pw_entry
     self.mock_utils._UpdateUserGroups.return_value = True
+
     self.assertTrue(
         accounts_utils.AccountsUtils.UpdateUser(self.mock_utils, user, []))
     self.mock_utils._UpdateAuthorizedKeys.assert_not_called()
@@ -558,6 +566,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils._GetUser.return_value = pw_entry
     self.mock_utils._AddUser.return_value = True
     self.mock_utils._UpdateAuthorizedKeys.side_effect = IOError('Test Error')
+
     self.assertFalse(
         accounts_utils.AccountsUtils.UpdateUser(self.mock_utils, user, keys))
     self.mock_logger.warning.assert_called_once_with(mock.ANY, user, mock.ANY)
@@ -566,6 +575,7 @@ class AccountsUtilsTest(unittest.TestCase):
   def testRemoveUser(self, mock_call):
     user = 'user'
     self.mock_utils.remove = False
+
     accounts_utils.AccountsUtils.RemoveUser(self.mock_utils, user)
     self.mock_utils._RemoveAuthorizedKeys.assert_called_once_with(user)
     mock_call.assert_not_called()

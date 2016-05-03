@@ -19,7 +19,7 @@ import subprocess
 import unittest
 
 from google_compute_engine.clock_skew import clock_skew_daemon
-import mock
+from google_compute_engine.compat import mock
 
 
 class ClockSkewDaemonTest(unittest.TestCase):

@@ -17,15 +17,15 @@
 
 import unittest
 
+from google_compute_engine.compat import mock
 from google_compute_engine.ip_forwarding import ip_forwarding_utils
-import mock
 
 
 class IpForwardingUtilsTest(unittest.TestCase):
 
   def setUp(self):
     self.mock_logger = mock.Mock()
-    self.options = {'a': 'apple', 'b': 'banana'}
+    self.options = {'hello': 'world'}
     self.mock_utils = ip_forwarding_utils.IpForwardingUtils(self.mock_logger)
     self.mock_utils.options = self.options
 
@@ -56,7 +56,7 @@ class IpForwardingUtilsTest(unittest.TestCase):
     self.assertEqual(
         self.mock_utils._RunIpRoute(args=['foo', 'bar'], options=self.options),
         '')
-    command = ['ip', 'route', 'foo', 'bar', 'a', 'apple', 'b', 'banana']
+    command = ['ip', 'route', 'foo', 'bar', 'hello', 'world']
     self.mock_logger.warning.assert_called_once_with(mock.ANY, command, 'error')
 
   @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_utils.subprocess')
@@ -66,18 +66,18 @@ class IpForwardingUtilsTest(unittest.TestCase):
     self.assertEqual(
         self.mock_utils._RunIpRoute(args=['foo', 'bar'], options=self.options),
         '')
-    command = ['ip', 'route', 'foo', 'bar', 'a', 'apple', 'b', 'banana']
+    command = ['ip', 'route', 'foo', 'bar', 'hello', 'world']
     self.mock_logger.warning.assert_called_once_with(
         mock.ANY, command, 'Test Error')
 
   def testGetDefaultInterface(self):
     mock_run = mock.Mock()
     mock_run.side_effect = [
-        '',
-        'invalid route\n',
-        '\n\n\n\ndefault interface\n',
-        'default via ip dev interface\nip default eth0\n',
-        'ip default eth0\ndefault via ip dev interface\n',
+        bytes(b''),
+        bytes(b'invalid route\n'),
+        bytes(b'\n\n\n\ndefault interface\n'),
+        bytes(b'default via ip dev interface\nip default eth0\n'),
+        bytes(b'ip default eth0\ndefault via ip dev interface\n'),
     ]
     self.mock_utils._RunIpRoute = mock_run
 

@@ -18,8 +18,8 @@
 import subprocess
 import unittest
 
+from google_compute_engine.compat import mock
 from google_compute_engine.instance_setup import instance_setup
-import mock
 
 
 class InstanceSetupTest(unittest.TestCase):
@@ -34,7 +34,7 @@ class InstanceSetupTest(unittest.TestCase):
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess')
   def testRunScript(self, mock_subprocess):
     mock_readline = mock.Mock()
-    mock_readline.side_effect = ['a\n', 'b\n', '']
+    mock_readline.side_effect = [bytes(b'a\n'), bytes(b'b\n'), bytes(b'')]
     mock_stdout = mock.Mock()
     mock_stdout.readline = mock_readline
     mock_process = mock.Mock()

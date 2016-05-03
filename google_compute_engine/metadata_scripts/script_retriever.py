@@ -18,21 +18,12 @@
 import re
 import socket
 import subprocess
-import sys
 import tempfile
 
 from google_compute_engine import metadata_watcher
-
-if sys.version_info >= (3,):
-  # Python 3 imports.
-  import http.client as httpclient
-  import urllib.request as urlrequest
-  import urllib.error as urlerror
-else:
-  # Python 2 imports.
-  import httplib as httpclient
-  import urllib as urlrequest
-  import urllib2 as urlerror
+from google_compute_engine.compat import httpclient
+from google_compute_engine.compat import urlerror
+from google_compute_engine.compat import urlretrieve
 
 
 class ScriptRetriever(object):
@@ -91,7 +82,7 @@ class ScriptRetriever(object):
 
     self.logger.info('Downloading url from %s to %s.', url, dest)
     try:
-      urlrequest.urlretrieve(url, dest)
+      urlretrieve.urlretrieve(url, dest)
       return dest
     except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
       self.logger.warning('Could not download %s. %s.', url, str(e))
