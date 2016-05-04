@@ -15,9 +15,9 @@
 
 """Unittest for script_manager.py module."""
 
-from google_compute_engine.compat import mock
-from google_compute_engine.compat import unittest
 from google_compute_engine.metadata_scripts import script_manager
+from google_compute_engine.test_compat import mock
+from google_compute_engine.test_compat import unittest
 
 
 class ScriptManagerTest(unittest.TestCase):

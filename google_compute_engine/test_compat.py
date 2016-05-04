@@ -17,19 +17,23 @@
 
 import sys
 
-if sys.version_info >= (3,):
-  # Python 3 imports.
-  import configparser as parser
-  import http.client as httpclient
-  import urllib.error as urlerror
-  import urllib.parse as urlparse
-  import urllib.request as urlrequest
-  import urllib.request as urlretrieve
+from google_compute_engine.compat import httpclient
+from google_compute_engine.compat import parser
+from google_compute_engine.compat import urlerror
+from google_compute_engine.compat import urlparse
+from google_compute_engine.compat import urlrequest
+from google_compute_engine.compat import urlretrieve
+
+# Import the mock module in Python 3.2.
+if sys.version_info >= (3, 3):
+  import unittest.mock as mock
 else:
-  # Python 2 imports.
-  import ConfigParser as parser
-  import httplib as httpclient
-  import urllib as urlparse
-  import urllib as urlretrieve
-  import urllib2 as urlrequest
-  import urllib2 as urlerror
+  import mock
+
+# Import the unittest2 module to backport testing features to Python 2.6.
+if sys.version_info >= (2, 7):
+  import unittest
+else:
+  import unittest2 as unittest
+
+builtin = 'builtins' if sys.version_info >= (3,) else '__builtin__'
