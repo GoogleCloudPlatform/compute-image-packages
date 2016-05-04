@@ -20,7 +20,7 @@ import json
 import logging.handlers
 
 from google_compute_engine import config_manager
-from google_compute_engine import lock_file
+from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine.accounts import accounts_utils
@@ -46,7 +46,7 @@ class AccountsDaemon(object):
     self.utils = accounts_utils.AccountsUtils(
         logger=self.logger, groups=groups, remove=remove)
     try:
-      with lock_file.LockFile(LOCKFILE):
+      with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google Accounts daemon.')
         self.watcher.WatchMetadata(self.HandleAccounts, recursive=True)
     except (IOError, OSError) as e:

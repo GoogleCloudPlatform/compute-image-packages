@@ -74,13 +74,17 @@ class IpForwardingUtilsTest(unittest.TestCase):
     mock_run.side_effect = [
         bytes(b''),
         bytes(b'invalid route\n'),
-        bytes(b'\n\n\n\ndefault interface\n'),
+        bytes(b'default invalid interface\n'),
+        bytes(b'default dev\n'),
+        bytes(b'\n\n\ndefault dev interface\n\n\n'),
         bytes(b'default via ip dev interface\nip default eth0\n'),
         bytes(b'ip default eth0\ndefault via ip dev interface\n'),
     ]
     self.mock_utils._RunIpRoute = mock_run
 
     # Invalid routes default to 'eth0'.
+    self.assertEqual(self.mock_utils._GetDefaultInterface(), 'eth0')
+    self.assertEqual(self.mock_utils._GetDefaultInterface(), 'eth0')
     self.assertEqual(self.mock_utils._GetDefaultInterface(), 'eth0')
     self.assertEqual(self.mock_utils._GetDefaultInterface(), 'eth0')
 

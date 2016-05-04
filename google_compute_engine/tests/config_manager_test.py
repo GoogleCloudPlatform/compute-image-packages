@@ -170,7 +170,7 @@ class ConfigManagerTest(unittest.TestCase):
       self.mock_config_manager.WriteConfig()
       mock_open().write.assert_not_called()
 
-  @mock.patch('google_compute_engine.config_manager.lock_file')
+  @mock.patch('google_compute_engine.config_manager.file_utils')
   def testWriteConfigLocked(self, mock_lock):
     ioerror = IOError('Test Error')
     mock_lock.LockFile.side_effect = ioerror

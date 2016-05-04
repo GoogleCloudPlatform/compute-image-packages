@@ -17,7 +17,7 @@
 
 import textwrap
 
-from google_compute_engine import lock_file
+from google_compute_engine import file_utils
 from google_compute_engine.compat import parser
 
 CONFIG = '/etc/default/instance_configs.cfg'
@@ -102,7 +102,7 @@ class ConfigManager(object):
       config_file: string, the file location of the config file to write.
     """
     config_file = config_file or self.config_file
-    with lock_file.LockFile(LOCKFILE):
+    with file_utils.LockFile(LOCKFILE):
       with open(config_file, 'w') as config:
         if self.config_header:
           self._AddHeader(config)

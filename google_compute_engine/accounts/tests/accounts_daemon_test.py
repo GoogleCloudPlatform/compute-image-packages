@@ -37,7 +37,7 @@ class AccountsDaemonTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_daemon.accounts_utils')
   @mock.patch('google_compute_engine.accounts.accounts_daemon.metadata_watcher')
   @mock.patch('google_compute_engine.accounts.accounts_daemon.logger')
-  @mock.patch('google_compute_engine.accounts.accounts_daemon.lock_file')
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.file_utils')
   def testAccountsDaemon(self, mock_lock, mock_logger, mock_watcher,
                          mock_utils):
     mock_logger_instance = mock.Mock()
@@ -67,7 +67,7 @@ class AccountsDaemonTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_daemon.accounts_utils')
   @mock.patch('google_compute_engine.accounts.accounts_daemon.metadata_watcher')
   @mock.patch('google_compute_engine.accounts.accounts_daemon.logger')
-  @mock.patch('google_compute_engine.accounts.accounts_daemon.lock_file')
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.file_utils')
   def testAccountsDaemonError(self, mock_lock, mock_logger, mock_watcher,
                               mock_utils):
     mock_logger_instance = mock.Mock()

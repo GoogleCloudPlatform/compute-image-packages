@@ -78,8 +78,9 @@ class IpForwardingUtils(object):
     result = self._RunIpRoute(args=['list'])
     for route in result.decode('utf-8').split('\n'):
       fields = route.split()
-      if fields and fields[0] == 'default':
-        return fields[-1]
+      if fields and fields[0] == 'default' and 'dev' in fields:
+        index = fields.index('dev') + 1
+        return fields[index] if index < len(fields) else 'eth0'
       else:
         continue
     return 'eth0'

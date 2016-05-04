@@ -23,6 +23,7 @@ import subprocess
 import tempfile
 
 from google_compute_engine import config_manager
+from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 
@@ -113,6 +114,9 @@ class InstanceSetup(object):
 
     shutil.move(temp_key, key_dest)
     shutil.move('%s.pub' % temp_key, '%s.pub' % key_dest)
+
+    file_utils.SetPermissions(key_dest, mode=0o600)
+    file_utils.SetPermissions('%s.pub' % key_dest, mode=0o644)
 
   def _StartSshd(self):
     """Initialize the SSH daemon."""

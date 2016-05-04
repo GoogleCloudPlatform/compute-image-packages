@@ -26,7 +26,7 @@ class ClockSkewDaemonTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.metadata_watcher')
   @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.logger.Logger')
-  @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.lock_file.LockFile')
+  @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.file_utils.LockFile')
   def testClockSkewDaemon(self, mock_lock, mock_logger, mock_watcher):
     mocks = mock.Mock()
     mocks.attach_mock(mock_lock, 'lock')
@@ -52,7 +52,7 @@ class ClockSkewDaemonTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.metadata_watcher')
   @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.logger.Logger')
-  @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.lock_file.LockFile')
+  @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.file_utils.LockFile')
   def testClockSkewDaemonError(self, mock_lock, mock_logger, mock_watcher):
     mocks = mock.Mock()
     mocks.attach_mock(mock_lock, 'lock')
