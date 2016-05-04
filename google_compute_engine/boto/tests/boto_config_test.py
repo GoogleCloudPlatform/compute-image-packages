@@ -16,8 +16,8 @@
 """Unittest for boto_config.py module."""
 
 from google_compute_engine.boto import boto_config
-from google_compute_engine.compat import mock
-from google_compute_engine.compat import unittest
+from google_compute_engine.test_compat import mock
+from google_compute_engine.test_compat import unittest
 
 
 class BotoConfigTest(unittest.TestCase):

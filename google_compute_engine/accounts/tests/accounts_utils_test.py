@@ -18,9 +18,9 @@
 import subprocess
 
 from google_compute_engine.accounts import accounts_utils
-from google_compute_engine.compat import builtin
-from google_compute_engine.compat import mock
-from google_compute_engine.compat import unittest
+from google_compute_engine.test_compat import builtin
+from google_compute_engine.test_compat import mock
+from google_compute_engine.test_compat import unittest
 
 
 class AccountsUtilsTest(unittest.TestCase):
@@ -272,7 +272,7 @@ class AccountsUtilsTest(unittest.TestCase):
   def testUpdateUserGroups(self, mock_call):
     user = 'user'
     groups = ['a', 'b', 'c']
-    command = ['usermod', user, '-G', 'a,b,c']
+    command = ['usermod', '-G', 'a,b,c', user]
 
     self.assertTrue(
         accounts_utils.AccountsUtils._UpdateUserGroups(
@@ -288,7 +288,7 @@ class AccountsUtilsTest(unittest.TestCase):
   def testUpdateUserGroupsError(self, mock_call):
     user = 'user'
     groups = ['a', 'b', 'c']
-    command = ['usermod', user, '-G', 'a,b,c']
+    command = ['usermod', '-G', 'a,b,c', user]
     mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
 
     self.assertFalse(
