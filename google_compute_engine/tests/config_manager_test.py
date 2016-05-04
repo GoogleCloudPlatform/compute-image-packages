@@ -15,11 +15,10 @@
 
 """Unittest for config_manager.py module."""
 
-import unittest
-
 from google_compute_engine import config_manager
 from google_compute_engine.compat import builtin
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 
 
 class ConfigManagerTest(unittest.TestCase):

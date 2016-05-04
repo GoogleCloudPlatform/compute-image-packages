@@ -16,10 +16,10 @@
 """Unittest for metadata_watcher.py module."""
 
 import os
-import unittest
 
 from google_compute_engine import metadata_watcher
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 
 
 class MetadataWatcherTest(unittest.TestCase):

@@ -15,9 +15,8 @@
 
 """Unittest for ip_forwarding_daemon.py module."""
 
-import unittest
-
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 from google_compute_engine.ip_forwarding import ip_forwarding_daemon
 
 

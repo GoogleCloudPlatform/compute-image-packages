@@ -19,11 +19,11 @@ from boto import auth_handler
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 
-GS_SCOPES = {
+GS_SCOPES = set([
     'https://www.googleapis.com/auth/devstorage.read_only',
     'https://www.googleapis.com/auth/devstorage.read_write',
     'https://www.googleapis.com/auth/devstorage.full_control',
-}
+])
 
 
 class ComputeAuth(auth_handler.AuthHandler):

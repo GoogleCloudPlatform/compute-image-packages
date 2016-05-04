@@ -16,9 +16,9 @@
 """Unittest for script_executor.py module."""
 
 import stat
-import unittest
 
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 from google_compute_engine.metadata_scripts import script_executor
 
 

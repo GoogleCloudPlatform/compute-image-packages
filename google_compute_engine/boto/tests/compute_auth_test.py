@@ -15,10 +15,9 @@
 
 """Unittest for compute_auth.py module."""
 
-import unittest
-
 from google_compute_engine.boto import compute_auth
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 
 
 class ComputeAuthTest(unittest.TestCase):
