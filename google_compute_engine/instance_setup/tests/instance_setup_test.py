@@ -63,10 +63,18 @@ class InstanceSetupTest(unittest.TestCase):
         instance_setup.InstanceSetup._GetInstanceId(self.mock_setup))
     self.assertEqual(self.mock_logger.warning.call_count, 1)
 
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.shutil.move')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess.check_call')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.tempfile.NamedTemporaryFile')
-  def testGenerateSshKey(self, mock_tempfile, mock_call, mock_move):
+  def testGenerateSshKey(self, mock_tempfile, mock_call, mock_move,
+                         mock_permissions):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_tempfile, 'tempfile')
+    mocks.attach_mock(mock_call, 'call')
+    mocks.attach_mock(mock_move, 'move')
+    mocks.attach_mock(mock_permissions, 'permissions')
+    mocks.attach_mock(self.mock_logger, 'logger')
     key_type = 'key-type'
     key_dest = '/key/dest'
     temp_dest = '/tmp/dest'
@@ -75,16 +83,19 @@ class InstanceSetupTest(unittest.TestCase):
 
     instance_setup.InstanceSetup._GenerateSshKey(
         self.mock_setup, key_type, key_dest)
-    mock_tempfile.assert_called_once_with(prefix=key_type, delete=True)
-    self.mock_logger.info.assert_called_once_with(mock.ANY, key_dest)
-    mock_call.assert_called_once_with(
-        ['ssh-keygen', '-t', key_type, '-f', temp_dest, '-N', '', '-q'])
-    self.mock_logger.warning.assert_not_called()
     expected_calls = [
-        mock.call(temp_dest, key_dest),
-        mock.call('%s.pub' % temp_dest, '%s.pub' % key_dest),
+        mock.call.tempfile(prefix=key_type, delete=True),
+        mock.call.tempfile.__enter__(),
+        mock.call.tempfile.__exit__(None, None, None),
+        mock.call.logger.info(mock.ANY, key_dest),
+        mock.call.call(
+            ['ssh-keygen', '-t', key_type, '-f', temp_dest, '-N', '', '-q']),
+        mock.call.move(temp_dest, key_dest),
+        mock.call.move('%s.pub' % temp_dest, '%s.pub' % key_dest),
+        mock.call.permissions(key_dest, mode=0o600),
+        mock.call.permissions('%s.pub' % key_dest, mode=0o644),
     ]
-    self.assertEqual(mock_move.mock_calls, expected_calls)
+    self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess.check_call')
   def testGenerateSshKeyProcessError(self, mock_call):

@@ -23,6 +23,8 @@ import shutil
 import subprocess
 import tempfile
 
+from google_compute_engine import file_utils
+
 USER_REGEX = re.compile(r'\A[A-Za-z0-9._][A-Za-z0-9._-]*\Z')
 
 
@@ -64,44 +66,6 @@ class AccountsUtils(object):
     except KeyError:
       return None
 
-  def _SetSELinuxContext(self, path):
-    """Set the appropriate SELinux context, if SELinux tools are installed.
-
-    Calls /sbin/restorecon on the provided path to set the SELinux context as
-    specified by policy. This call does not operate recursively.
-
-    Only some OS configurations use SELinux. It is therefore acceptable for
-    restorecon to be missing, in which case we do nothing.
-
-    Args:
-      path: string, the path on which to fix the SELinux context.
-    """
-    restorecon = '/sbin/restorecon'
-    if os.path.isfile(restorecon) and os.access(restorecon, os.X_OK):
-      try:
-        subprocess.check_call([restorecon, path])
-      except subprocess.CalledProcessError as e:
-        message = 'Could not set SELinux context for %s. %s.'
-        self.logger.warning(message, path, str(e))
-
-  def _SetPermissions(self, path, mode, uid, gid, mkdir=False):
-    """Set the permissions and ownership of a path.
-
-    Args:
-      path: string, the path for which owner ID and group ID needs to be setup.
-      mode: int, the permissions to set on the path.
-      uid: int, the owner ID to be set for the path.
-      gid: int, the group ID to be set for the path.
-      mkdir: bool, True if the directory needs to be created.
-    """
-    if mkdir and not os.path.exists(path):
-      self.logger.debug('Creating directory %s.', path)
-      os.mkdir(path, mode)
-    else:
-      os.chmod(path, mode)
-    os.chown(path, uid, gid)
-    self._SetSELinuxContext(path)
-
   def _CreateSudoersGroup(self):
     """Create a Linux group for Google added sudo user accounts."""
     if not self._GetGroup(self.google_sudoers_group):
@@ -116,7 +80,8 @@ class AccountsUtils(object):
             self.google_sudoers_group)
         group.write(message)
 
-    self._SetPermissions(self.google_sudoers_file, 0o440, 0, 0)
+    file_utils.SetPermissions(
+        self.google_sudoers_file, mode=0o440, uid=0, gid=0)
 
   def _GetUser(self, user):
     """Retrieve a Linux user account.
@@ -154,7 +119,7 @@ class AccountsUtils(object):
     #
     # To solve the issue, make the password '*' which is also recognized
     # as locked but does not prevent SSH login.
-    command = ['useradd', user, '-m', '-s', '/bin/bash', '-p', '*']
+    command = ['useradd', '-m', '-s', '/bin/bash', '-p', '*', user]
     try:
       subprocess.check_call(command)
     except subprocess.CalledProcessError as e:
@@ -203,8 +168,10 @@ class AccountsUtils(object):
     gid = pw_entry.pw_gid
     home_dir = pw_entry.pw_dir
     ssh_dir = os.path.join(home_dir, '.ssh')
-    self._SetPermissions(home_dir, 0o755, uid, gid, mkdir=True)
-    self._SetPermissions(ssh_dir, 0o700, uid, gid, mkdir=True)
+    file_utils.SetPermissions(
+        home_dir, mode=0o755, uid=uid, gid=gid, mkdir=True)
+    file_utils.SetPermissions(
+        ssh_dir, mode=0o700, uid=uid, gid=gid, mkdir=True)
 
     # Not all sshd's support multiple authorized_keys files so we have to
     # share one with the user. We add each of our entries as follows:
@@ -243,7 +210,8 @@ class AccountsUtils(object):
       updated_keys.flush()
       shutil.copy(updated_keys_file, authorized_keys_file)
 
-    self._SetPermissions(authorized_keys_file, 0o600, uid, gid)
+    file_utils.SetPermissions(
+        authorized_keys_file, mode=0o600, uid=uid, gid=gid)
 
   def _RemoveAuthorizedKeys(self, user):
     """Remove a Linux user account's authorized keys file to prevent login.
@@ -291,7 +259,7 @@ class AccountsUtils(object):
       updated_users.flush()
       shutil.copy(updated_users_file, self.google_users_file)
 
-    self._SetPermissions(self.google_users_file, 0o600, 0, 0)
+    file_utils.SetPermissions(self.google_users_file, mode=0o600, uid=0, gid=0)
 
   def UpdateUser(self, user, ssh_keys):
     """Update a Linux user with authorized SSH keys.
@@ -337,7 +305,7 @@ class AccountsUtils(object):
     """
     self.logger.info('Removing user %s.', user)
     if self.remove:
-      command = ['userdel', user, '-r']
+      command = ['userdel', '-r', user]
       try:
         subprocess.check_call(command)
       except subprocess.CalledProcessError as e:

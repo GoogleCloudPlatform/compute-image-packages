@@ -19,7 +19,7 @@ import logging.handlers
 import subprocess
 
 from google_compute_engine import config_manager
-from google_compute_engine import lock_file
+from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 
@@ -36,7 +36,7 @@ class ClockSkewDaemon(object):
     self.logger = logger.Logger(name='google-clock-skew', facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     try:
-      with lock_file.LockFile(LOCKFILE):
+      with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google Clock Skew daemon.')
         self.watcher.WatchMetadata(
             self.HandleClockSync, metadata_key=self.drift_token,

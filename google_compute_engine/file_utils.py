@@ -19,6 +19,43 @@ import contextlib
 import errno
 import fcntl
 import os
+import subprocess
+
+
+def _SetSELinuxContext(path):
+  """Set the appropriate SELinux context, if SELinux tools are installed.
+
+  Calls /sbin/restorecon on the provided path to set the SELinux context as
+  specified by policy. This call does not operate recursively.
+
+  Only some OS configurations use SELinux. It is therefore acceptable for
+  restorecon to be missing, in which case we do nothing.
+
+  Args:
+    path: string, the path on which to fix the SELinux context.
+  """
+  restorecon = '/sbin/restorecon'
+  if os.path.isfile(restorecon) and os.access(restorecon, os.X_OK):
+    subprocess.call([restorecon, path])
+
+
+def SetPermissions(path, mode=None, uid=None, gid=None, mkdir=False):
+  """Set the permissions and ownership of a path.
+
+  Args:
+    path: string, the path for which owner ID and group ID needs to be setup.
+    mode: octal string, the permissions to set on the path.
+    uid: int, the owner ID to be set for the path.
+    gid: int, the group ID to be set for the path.
+    mkdir: bool, True if the directory needs to be created.
+  """
+  if mkdir and not os.path.exists(path):
+    os.mkdir(path, mode or 0o777)
+  elif mode:
+    os.chmod(path, mode)
+  if uid and gid:
+    os.chown(path, uid, gid)
+  _SetSELinuxContext(path)
 
 
 def Lock(fd, path, blocking):
