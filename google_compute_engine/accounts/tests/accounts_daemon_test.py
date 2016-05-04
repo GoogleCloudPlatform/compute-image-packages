@@ -16,10 +16,10 @@
 """Unittest for accounts_daemon.py module."""
 
 import datetime
-import unittest
 
 from google_compute_engine.accounts import accounts_daemon
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 
 
 class AccountsDaemonTest(unittest.TestCase):
@@ -254,7 +254,7 @@ class AccountsDaemonTest(unittest.TestCase):
         'invalid': '4',
         'valid': '5',
     }
-    self.mock_setup.invalid_users = {'invalid'}
+    self.mock_setup.invalid_users = set(['invalid'])
     # Make UpdateUser succeed for fake names longer than one character.
     self.mock_utils.UpdateUser.side_effect = lambda user, _: len(user) > 1
     accounts_daemon.AccountsDaemon._UpdateUsers(self.mock_setup, update_users)
@@ -268,11 +268,11 @@ class AccountsDaemonTest(unittest.TestCase):
     self.assertEqual(
         self.mock_utils.UpdateUser.call_count, len(expected_calls))
     self.assertEqual(
-        self.mock_setup.invalid_users, {'invalid', 'a', 'b', 'c'})
+        self.mock_setup.invalid_users, set(['invalid', 'a', 'b', 'c']))
 
   def testRemoveUsers(self):
     remove_users = ['a', 'b', 'c', 'valid']
-    self.mock_setup.invalid_users = {'invalid', 'a', 'b', 'c'}
+    self.mock_setup.invalid_users = set(['invalid', 'a', 'b', 'c'])
     accounts_daemon.AccountsDaemon._RemoveUsers(self.mock_setup, remove_users)
     expected_calls = [
         mock.call('a'),
@@ -281,7 +281,7 @@ class AccountsDaemonTest(unittest.TestCase):
         mock.call('valid'),
     ]
     self.mock_utils.RemoveUser.assert_has_calls(expected_calls)
-    self.assertEqual(self.mock_setup.invalid_users, {'invalid'})
+    self.assertEqual(self.mock_setup.invalid_users, set(['invalid']))
 
   def testHandleAccounts(self):
     configured = ['c', 'c', 'b', 'b', 'a', 'a']

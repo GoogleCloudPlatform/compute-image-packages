@@ -15,10 +15,9 @@
 
 """Unittest for logger.py module."""
 
-import unittest
-
 from google_compute_engine import logger
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 
 
 class LoggerTest(unittest.TestCase):

@@ -16,9 +16,9 @@
 """Unittest for instance_setup.py module."""
 
 import subprocess
-import unittest
 
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 from google_compute_engine.instance_setup import instance_setup
 
 

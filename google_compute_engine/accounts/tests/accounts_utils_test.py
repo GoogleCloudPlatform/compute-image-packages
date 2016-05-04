@@ -16,11 +16,11 @@
 """Unittest for accounts_utils.py module."""
 
 import subprocess
-import unittest
 
 from google_compute_engine.accounts import accounts_utils
 from google_compute_engine.compat import builtin
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 
 
 class AccountsUtilsTest(unittest.TestCase):

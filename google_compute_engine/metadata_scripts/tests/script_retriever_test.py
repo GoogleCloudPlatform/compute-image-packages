@@ -16,9 +16,9 @@
 """Unittest for script_retriever.py module."""
 
 import subprocess
-import unittest
 
 from google_compute_engine.compat import mock
+from google_compute_engine.compat import unittest
 from google_compute_engine.metadata_scripts import script_retriever
 
 
@@ -125,7 +125,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     ]
     url_formats = [url % (bucket, obj) for url in url_formats]
     if gs_match:
-      gs_urls.update({url: gs_url for url in url_formats})
+      gs_urls.update(dict((url, gs_url) for url in url_formats))
       return ([], gs_urls)
     else:
       return (url_formats, gs_urls)

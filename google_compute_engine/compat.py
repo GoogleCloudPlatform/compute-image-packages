@@ -40,4 +40,10 @@ if sys.version_info >= (3, 3):
 else:
   import mock
 
+# Import the unittest2 module to backport testing features to Python 2.6.
+if sys.version_info >= (2, 7):
+  import unittest
+else:
+  import unittest2 as unittest
+
 builtin = 'builtins' if sys.version_info >= (3,) else '__builtin__'
