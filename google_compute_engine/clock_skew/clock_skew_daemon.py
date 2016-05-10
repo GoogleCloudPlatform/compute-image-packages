@@ -62,5 +62,5 @@ class ClockSkewDaemon(object):
 
 if __name__ == '__main__':
   instance_config = config_manager.ConfigManager()
-  if instance_config.GetOptionBool('clock_skew_daemon', section='Daemons'):
+  if instance_config.GetOptionBool('Daemons', 'clock_skew_daemon'):
     ClockSkewDaemon()

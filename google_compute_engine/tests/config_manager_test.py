@@ -26,29 +26,28 @@ class ConfigManagerTest(unittest.TestCase):
   option = 'option'
   section = 'section'
   value = 'value'
-  config_options = {option: section}
 
-  def HasOption(self, section, _):
-    """Validate the option has a section in the config file.
+  def HasOption(self, _, option):
+    """Validate the option exists in the config file.
 
     Args:
-      section: string, the section of the config associated with the option.
+      option: string, the config option to check.
 
     Returns:
-      bool, True if section exists.
+      bool, True if test is not in the option name.
     """
-    return bool(section)
+    return 'test' not in option
 
   def HasSection(self, section):
-    """Validate the section exists when setting the config file.
+    """Validate the section exists in the config file.
 
     Args:
-      section: string, the section of the config file to check.
+      section: string, the config section to check.
 
     Returns:
-      bool, True if an option maps to the section in the config file.
+      bool, True if test is not in the section name.
     """
-    return section in self.config_options.values()
+    return 'test' not in section
 
   def setUp(self):
     self.mock_config = mock.Mock()
@@ -61,8 +60,7 @@ class ConfigManagerTest(unittest.TestCase):
     self.config_header = 'Config file header.'
 
     self.mock_config_manager = config_manager.ConfigManager(
-        config_file=self.config_file, config_header=self.config_header,
-        config_options=self.config_options)
+        config_file=self.config_file, config_header=self.config_header)
 
   def testAddHeader(self):
     mock_fp = mock.Mock()
@@ -74,7 +72,7 @@ class ConfigManagerTest(unittest.TestCase):
     self.assertEqual(mock_fp.write.mock_calls, expected_calls)
 
   def testGetOptionString(self):
-    self.mock_config_manager.GetOptionString(option=self.option)
+    self.mock_config_manager.GetOptionString(self.section, self.option)
     expected_calls = [
         mock.call.read(self.config_file),
         mock.call.has_option(self.section, self.option),
@@ -82,28 +80,18 @@ class ConfigManagerTest(unittest.TestCase):
     ]
     self.assertEqual(self.mock_config.mock_calls, expected_calls)
 
-  def testGetOptionStringWithSection(self):
+  def testGetOptionStringNoOption(self):
     option = 'test-option'
-    section = 'test-section'
-    self.mock_config_manager.GetOptionString(option=option, section=section)
+    self.assertIsNone(
+        self.mock_config_manager.GetOptionString(self.section, option))
     expected_calls = [
         mock.call.read(self.config_file),
-        mock.call.has_option(section, option),
-        mock.call.get(section, option),
-    ]
-    self.assertEqual(self.mock_config.mock_calls, expected_calls)
-
-  def testGetOptionStringNoSection(self):
-    option = 'test-option'
-    self.assertIsNone(self.mock_config_manager.GetOptionString(option=option))
-    expected_calls = [
-        mock.call.read(self.config_file),
-        mock.call.has_option(None, option),
+        mock.call.has_option(self.section, option),
     ]
     self.assertEqual(self.mock_config.mock_calls, expected_calls)
 
   def testGetOptionBool(self):
-    self.mock_config_manager.GetOptionBool(option=self.option)
+    self.mock_config_manager.GetOptionBool(self.section, self.option)
     expected_calls = [
         mock.call.read(self.config_file),
         mock.call.has_option(self.section, self.option),
@@ -111,28 +99,18 @@ class ConfigManagerTest(unittest.TestCase):
     ]
     self.assertEqual(self.mock_config.mock_calls, expected_calls)
 
-  def testGetOptionBoolWithSection(self):
+  def testGetOptionBoolNoOption(self):
     option = 'test-option'
-    section = 'test-section'
-    self.mock_config_manager.GetOptionBool(option=option, section=section)
+    self.assertFalse(
+        self.mock_config_manager.GetOptionBool(self.section, option))
     expected_calls = [
         mock.call.read(self.config_file),
-        mock.call.has_option(section, option),
-        mock.call.getboolean(section, option),
-    ]
-    self.assertEqual(self.mock_config.mock_calls, expected_calls)
-
-  def testGetOptionBoolNoSection(self):
-    option = 'test-option'
-    self.assertFalse(self.mock_config_manager.GetOptionBool(option=option))
-    expected_calls = [
-        mock.call.read(self.config_file),
-        mock.call.has_option(None, option),
+        mock.call.has_option(self.section, option),
     ]
     self.assertEqual(self.mock_config.mock_calls, expected_calls)
 
   def testSetOption(self):
-    self.mock_config_manager.SetOption(option=self.option, value=self.value)
+    self.mock_config_manager.SetOption(self.section, self.option, self.value)
     expected_calls = [
         mock.call.read(self.config_file),
         mock.call.has_section(self.section),
@@ -142,8 +120,7 @@ class ConfigManagerTest(unittest.TestCase):
 
   def testSetOptionNewSection(self):
     section = 'test-section'
-    self.mock_config_manager.SetOption(
-        option=self.option, value=self.value, section=section)
+    self.mock_config_manager.SetOption(section, self.option, self.value)
     expected_calls = [
         mock.call.read(self.config_file),
         mock.call.has_section(section),

@@ -31,6 +31,93 @@ class InstanceSetupTest(unittest.TestCase):
     self.mock_setup.instance_config = self.mock_instance_config
     self.mock_setup.logger = self.mock_logger
 
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.instance_config')
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.metadata_watcher')
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.logger')
+  def testInstanceSetup(self, mock_logger, mock_watcher, mock_config):
+    mock_setup = mock.create_autospec(instance_setup.InstanceSetup)
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_logger, 'logger')
+    mocks.attach_mock(mock_watcher, 'watcher')
+    mocks.attach_mock(mock_config, 'config')
+    mocks.attach_mock(mock_setup, 'setup')
+    mock_logger_instance = mock.Mock()
+    mock_logger.Logger.return_value = mock_logger_instance
+    mock_watcher_instance = mock.Mock()
+    mock_watcher_instance.GetMetadata.side_effect = [{}, {'hello': 'world'}]
+    mock_watcher.MetadataWatcher.return_value = mock_watcher_instance
+    mock_config_instance = mock.Mock()
+    mock_config_instance.GetOptionBool.return_value = True
+    mock_config.InstanceConfig.return_value = mock_config_instance
+
+    instance_setup.InstanceSetup.__init__(mock_setup)
+    expected_calls = [
+        # Setup and reading the configuration file.
+        mock.call.logger.Logger(name=mock.ANY, facility=mock.ANY),
+        mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
+        mock.call.config.InstanceConfig(),
+        # Setup for local SSD.
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'optimize_local_ssd'),
+        mock.call.setup._RunScript('optimize_local_ssd'),
+        # Setup for multiqueue virtio driver.
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'set_multiqueue'),
+        mock.call.setup._RunScript('set_multiqueue'),
+        # Check network access for reaching the metadata server.
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'network_enabled'),
+        # Retry metadata requests until network is available.
+        mock.call.watcher.MetadataWatcher().GetMetadata(),
+        mock.call.watcher.MetadataWatcher().GetMetadata(),
+        # Setup for SSH host keys if necessary.
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'set_host_keys'),
+        mock.call.setup._SetSshHostKeys(),
+        # Setup for the boto config if necessary.
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'set_boto_config'),
+        mock.call.setup._SetupBotoConfig(),
+        # Write the updated config file.
+        mock.call.config.InstanceConfig().WriteConfig(),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+    self.assertEqual(mock_setup.metadata_dict, {'hello': 'world'})
+
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.instance_config')
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.metadata_watcher')
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.logger')
+  def testInstanceSetupException(self, mock_logger, mock_watcher, mock_config):
+    mock_setup = mock.create_autospec(instance_setup.InstanceSetup)
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_logger, 'logger')
+    mocks.attach_mock(mock_watcher, 'watcher')
+    mocks.attach_mock(mock_config, 'config')
+    mocks.attach_mock(mock_setup, 'setup')
+    mock_logger_instance = mock.Mock()
+    mock_logger.Logger.return_value = mock_logger_instance
+    mock_config_instance = mock.Mock()
+    mock_config_instance.GetOptionBool.return_value = False
+    mock_config_instance.WriteConfig.side_effect = IOError('Test Error')
+    mock_config.InstanceConfig.return_value = mock_config_instance
+
+    instance_setup.InstanceSetup.__init__(mock_setup)
+    expected_calls = [
+        mock.call.logger.Logger(name=mock.ANY, facility=mock.ANY),
+        mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
+        mock.call.config.InstanceConfig(),
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'optimize_local_ssd'),
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'set_multiqueue'),
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'network_enabled'),
+        mock.call.config.InstanceConfig().WriteConfig(),
+        mock.call.logger.Logger().warning('Test Error'),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+    self.assertIsNone(mock_setup.metadata_dict)
+
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess')
   def testRunScript(self, mock_subprocess):
     mock_readline = mock.Mock()
@@ -165,8 +252,7 @@ class InstanceSetupTest(unittest.TestCase):
     self.mock_setup._GetInstanceId = mock_instance_id
 
     instance_setup.InstanceSetup._SetSshHostKeys(self.mock_setup)
-    self.mock_instance_config.SetOptions.assert_not_called()
-    self.mock_instance_config.WriteOptions.assert_not_called()
+    self.mock_instance_config.SetOption.assert_not_called()
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.os.listdir')
   def testSetSshHostKeysFirstBoot(self, mock_listdir):
@@ -194,16 +280,7 @@ class InstanceSetupTest(unittest.TestCase):
     ]
     self.assertEqual(mock_generate_key.mock_calls, expected_calls)
     self.mock_instance_config.SetOption.assert_called_once_with(
-        'instance_id', '123')
-    self.mock_instance_config.WriteConfig.assert_called_once_with()
-
-  def testSetSshHostKeysFirstBootLocked(self):
-    self.mock_instance_config.GetOptionString.return_value = None
-    self.mock_instance_config.WriteConfig.side_effect = IOError('Test Error')
-
-    instance_setup.InstanceSetup._SetSshHostKeys(self.mock_setup)
-    self.mock_instance_config.WriteConfig.assert_called_once_with()
-    self.mock_logger.warning.assert_called_once_with('Test Error')
+        'Instance', 'instance_id', '123')
 
   def testGetNumericProjectId(self):
     self.mock_setup.metadata_dict = {

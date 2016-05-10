@@ -22,50 +22,42 @@ import shutil
 import subprocess
 import tempfile
 
-from google_compute_engine import config_manager
 from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 
 from google_compute_engine.boto import boto_config
+from google_compute_engine.instance_setup import instance_config
 
 
 class InstanceSetup(object):
   """Initialize the instance the first time it boots."""
 
   config_file = '/etc/default/instance_configs.cfg'
-  config_header = (
-      'This file defines Python default value for instance configuration '
-      'on Google Compute Engine instances.')
-  config_options = {
-      'instance_id': 'Instance',
-      'network_enabled': 'InstanceSetup',
-      'set_boto_config': 'InstanceSetup',
-      'set_host_keys': 'InstanceSetup',
-      'set_interrupts': 'InstanceSetup',
-      'set_multiqueue': 'InstanceSetup',
-  }
 
   def __init__(self):
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(name='instance-setup', facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
-    self.instance_config = config_manager.ConfigManager(
-        config_file=self.config_file, config_header=self.config_header,
-        config_options=self.config_options)
     self.metadata_dict = None
+    self.instance_config = instance_config.InstanceConfig()
 
-    if self.instance_config.GetOptionBool('optimize_local_ssd'):
+    if self.instance_config.GetOptionBool(
+        'InstanceSetup', 'optimize_local_ssd'):
       self._RunScript('optimize_local_ssd')
-    if self.instance_config.GetOptionBool('set_multiqueue'):
+    if self.instance_config.GetOptionBool('InstanceSetup', 'set_multiqueue'):
       self._RunScript('set_multiqueue')
-    if self.instance_config.GetOptionBool('network_enabled'):
+    if self.instance_config.GetOptionBool('InstanceSetup', 'network_enabled'):
       while not self.metadata_dict:
         self.metadata_dict = self.watcher.GetMetadata()
-      if self.instance_config.GetOptionBool('set_host_keys'):
+      if self.instance_config.GetOptionBool('InstanceSetup', 'set_host_keys'):
         self._SetSshHostKeys()
-      if self.instance_config.GetOptionBool('set_boto_config'):
+      if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
         self._SetupBotoConfig()
+    try:
+      self.instance_config.WriteConfig()
+    except (IOError, OSError) as e:
+      self.logger.warning(str(e))
 
   def _RunScript(self, script):
     """Run a script and log the streamed script output.
@@ -141,8 +133,10 @@ class InstanceSetup(object):
     changes. This applies the first time the instance is booted, and each time
     the disk is used to boot a new instance.
     """
+    section = 'Instance'
     instance_id = self._GetInstanceId()
-    if instance_id != self.instance_config.GetOptionString('instance_id'):
+    if instance_id != self.instance_config.GetOptionString(
+        section, 'instance_id'):
       self.logger.info('Generating SSH host keys for instance %s.', instance_id)
       file_regex = re.compile(r'ssh_host_(?P<type>[a-z0-9]*)_key\Z')
       key_dir = '/etc/ssh'
@@ -152,11 +146,7 @@ class InstanceSetup(object):
         key_dest = os.path.join(key_dir, key_file)
         self._GenerateSshKey(key_type, key_dest)
       self._StartSshd()
-      self.instance_config.SetOption('instance_id', str(instance_id))
-      try:
-        self.instance_config.WriteConfig()
-      except (IOError, OSError) as e:
-        self.logger.warning(str(e))
+      self.instance_config.SetOption(section, 'instance_id', str(instance_id))
 
   def _GetNumericProjectId(self):
     """Get the numeric project ID.

@@ -26,7 +26,7 @@ class BotoConfigTest(unittest.TestCase):
     self.project_id = 'project'
     boto_config.BotoConfig.boto_config = 'config'
     boto_config.BotoConfig.boto_config_template = 'template'
-    boto_config.BotoConfig.boto_script = '/tmp/test.py'
+    boto_config.BotoConfig.boto_config_script = '/tmp/test.py'
     boto_config.BotoConfig.boto_config_header = '%s %s'
 
   @mock.patch('google_compute_engine.boto.boto_config.metadata_watcher')
@@ -50,10 +50,10 @@ class BotoConfigTest(unittest.TestCase):
         mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
         mock.call.config(
             config_file='template', config_header='/tmp/test.py template'),
-        mock.call.set('default_project_id', self.project_id, section='GSUtil'),
-        mock.call.set('default_api_version', '2', section='GSUtil'),
-        mock.call.set('service_account', 'default', section='GoogleCompute'),
-        mock.call.set('plugin_directory', '/tmp', section='Plugin'),
+        mock.call.set('GSUtil', 'default_project_id', self.project_id),
+        mock.call.set('GSUtil', 'default_api_version', '2'),
+        mock.call.set('GoogleCompute', 'service_account', 'default'),
+        mock.call.set('Plugin', 'plugin_directory', '/tmp'),
         mock.call.write(config_file='config'),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
@@ -71,7 +71,7 @@ class BotoConfigTest(unittest.TestCase):
     mock_watcher_instance.GetMetadata.assert_called_once_with(
         metadata_key='project/numeric-project-id', recursive=False)
     expected_calls = [
-        mock.call('default_project_id', self.project_id, section='GSUtil'),
+        mock.call('GSUtil', 'default_project_id', self.project_id),
     ]
     mock_config_instance.SetOption.assert_has_calls(expected_calls)
 
