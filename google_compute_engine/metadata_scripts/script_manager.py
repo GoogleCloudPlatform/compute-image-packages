@@ -82,7 +82,7 @@ def main(args):
     raise ValueError(message)
 
   instance_config = config_manager.ConfigManager()
-  if instance_config.GetOptionBool(script_type, section='MetadataScripts'):
+  if instance_config.GetOptionBool('MetadataScripts', script_type):
     ScriptManager(script_type)
 
 

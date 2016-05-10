@@ -113,9 +113,9 @@ class IpForwardingDaemon(object):
 
 if __name__ == '__main__':
   instance_config = config_manager.ConfigManager()
-  if instance_config.GetOptionBool('ip_forwarding_daemon', section='Daemons'):
+  if instance_config.GetOptionBool('Daemons', 'ip_forwarding_daemon'):
     IpForwardingDaemon(
         interface=instance_config.GetOptionString(
-            'ethernet_interface', section='IpForwarding'),
+            'IpForwarding', 'ethernet_interface'),
         proto_id=instance_config.GetOptionString(
-            'ethernet_proto_id', section='IpForwarding'))
+            'IpForwarding', 'ethernet_proto_id'))

@@ -201,9 +201,7 @@ class AccountsDaemon(object):
 
 if __name__ == '__main__':
   instance_config = config_manager.ConfigManager()
-  if instance_config.GetOptionBool('accounts_daemon', section='Daemons'):
+  if instance_config.GetOptionBool('Daemons', 'accounts_daemon'):
     AccountsDaemon(
-        groups=instance_config.GetOptionString(
-            'groups', section='Accounts'),
-        remove=instance_config.GetOptionBool(
-            'deprovision_remove', section='Accounts'))
+        groups=instance_config.GetOptionString('Accounts', 'groups'),
+        remove=instance_config.GetOptionBool('Accounts', 'deprovision_remove'))

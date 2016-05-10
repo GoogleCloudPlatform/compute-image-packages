@@ -18,9 +18,10 @@
 If a project ID is not provided, this request the project ID from the
 metadata server and install the compute authentication plugin.
 
-Note that this starts with whatever is in /etc/boto.cfg.template, adds
-to that and then persists it into /etc/boto.cfg.  This is done so that
-the system boto.cfg can be removed prior to image packaging.
+Note the config starts with the content in /etc/boto.cfg.template,
+overrides settings, and then persists it into /etc/boto.cfg. This
+is done so that the system boto.cfg can be removed prior to image
+packaging.
 """
 
 import os
@@ -35,7 +36,7 @@ class BotoConfig(object):
 
   boto_config = '/etc/boto.cfg'
   boto_config_template = '/etc/boto.cfg.template'
-  boto_script = os.path.abspath(__file__)
+  boto_config_script = os.path.abspath(__file__)
   boto_config_header = (
       'This file is automatically created at boot time by the %s script. Do '
       'not edit this file directly. If you need to add items to this file, '
@@ -72,14 +73,15 @@ class BotoConfig(object):
     if not project_id:
       return
 
-    self.boto_config_header %= (self.boto_script, self.boto_config_template)
+    self.boto_config_header %= (
+        self.boto_config_script, self.boto_config_template)
     config = config_manager.ConfigManager(
         config_file=self.boto_config_template,
         config_header=self.boto_config_header)
-    boto_dir = os.path.dirname(self.boto_script)
+    boto_dir = os.path.dirname(self.boto_config_script)
 
-    config.SetOption('default_project_id', project_id, section='GSUtil')
-    config.SetOption('default_api_version', '2', section='GSUtil')
-    config.SetOption('service_account', 'default', section='GoogleCompute')
-    config.SetOption('plugin_directory', boto_dir, section='Plugin')
+    config.SetOption('GSUtil', 'default_project_id', project_id)
+    config.SetOption('GSUtil', 'default_api_version', '2')
+    config.SetOption('GoogleCompute', 'service_account', 'default')
+    config.SetOption('Plugin', 'plugin_directory', boto_dir)
     config.WriteConfig(config_file=self.boto_config)
