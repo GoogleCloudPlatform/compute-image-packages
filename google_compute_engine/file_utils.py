@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A library for preventing concurrent script executions using a file lock."""
+"""A library providing file utilities for setting permissions and locking."""
 
 import contextlib
 import errno
