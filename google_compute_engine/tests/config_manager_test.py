@@ -139,13 +139,15 @@ class ConfigManagerTest(unittest.TestCase):
       ]
       self.assertEqual(mock_open().write.mock_calls, expected_calls)
 
-  def testWriteConfigNoHeader(self):
+  @mock.patch('google_compute_engine.config_manager.file_utils')
+  def testWriteConfigNoHeader(self, mock_lock):
     self.mock_config_manager = config_manager.ConfigManager(
-        config_file=self.config_file)
+        config_file='/tmp/file.cfg')
     mock_open = mock.mock_open()
     with mock.patch('%s.open' % builtin, mock_open, create=False):
       self.mock_config_manager.WriteConfig()
       mock_open().write.assert_not_called()
+    mock_lock.LockFile.assert_called_once_with('/var/lock/google_file.lock')
 
   @mock.patch('google_compute_engine.config_manager.file_utils')
   def testWriteConfigLocked(self, mock_lock):
@@ -157,6 +159,7 @@ class ConfigManagerTest(unittest.TestCase):
         self.mock_config_manager.WriteConfig()
       self.assertEqual(error.exception, ioerror)
       mock_open().write.assert_not_called()
+    mock_lock.LockFile.assert_called_once_with('/var/lock/google_test.lock')
 
 
 if __name__ == '__main__':

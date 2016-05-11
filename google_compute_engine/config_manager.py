@@ -15,13 +15,13 @@
 
 """A library for retrieving and modifying configuration settings."""
 
+import os
 import textwrap
 
 from google_compute_engine import file_utils
 from google_compute_engine.compat import parser
 
 CONFIG = '/etc/default/instance_configs.cfg'
-LOCKFILE = '/var/lock/google_config_manager.lock'
 
 
 class ConfigManager(object):
@@ -100,8 +100,10 @@ class ConfigManager(object):
       config_file: string, the file location of the config file to write.
     """
     config_file = config_file or self.config_file
-    with file_utils.LockFile(LOCKFILE):
-      with open(config_file, 'w') as config:
+    config_name = os.path.splitext(os.path.basename(config_file))[0]
+    config_lock = '/var/lock/google_%s.lock' % config_name
+    with file_utils.LockFile(config_lock):
+      with open(config_file, 'w') as config_fp:
         if self.config_header:
-          self._AddHeader(config)
-        self.config.write(config)
+          self._AddHeader(config_fp)
+        self.config.write(config_fp)
