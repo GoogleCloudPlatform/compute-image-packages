@@ -17,6 +17,7 @@
 
 declare -r INSTANCE_FILE=${PREFIX}/var/lib/google/vm-instance-id
 declare -r LOCK_FILE=${INSTANCE_FILE}.lock
+declare -r SCRIPTS_PREFIX=${GOOGLE_SCRIPTS_PREFIX:-/usr/share/google/}
 
 mkdir -p ${PREFIX}/var/lib/google/per-instance
 
@@ -29,7 +30,7 @@ function log() {
 }
 
 function get_instance_id() {
-  ${PREFIX}/usr/share/google/get_metadata_value id 2>/dev/null
+  ${PREFIX}/${SCRIPTS_PREFIX}/get_metadata_value id 2>/dev/null
 }
 
 # Checks the instance id has changed.
@@ -71,8 +72,8 @@ function manage_stored_instance_id() {
     log "Running first-boot"
 
     # Regenerate host keys for ssh.
-    if [[ -x ${PREFIX}/usr/share/google/regenerate-host-keys ]]; then
-      ${PREFIX}/usr/share/google/regenerate-host-keys
+    if [[ -x ${PREFIX}/${SCRIPTS_PREFIX}/regenerate-host-keys ]]; then
+      ${PREFIX}/${SCRIPTS_PREFIX}/regenerate-host-keys
     fi
 
     # We are booting this instance for the first time.
