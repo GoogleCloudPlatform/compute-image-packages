@@ -24,6 +24,7 @@ fi
 
 declare -r CURL_RETRY_LIMIT=10
 declare -r CURL_TIMEOUT=10
+declare -r SCRIPTS_PREFIX=${GOOGLE_SCRIPTS_PREFIX:-/usr/share/google/}
 
 function log() {
   echo "$@" | ${LOGGER} -t google -p daemon.info
@@ -109,7 +110,7 @@ function download_url() {
 
 function get_metadata_attribute() {
   local readonly varname=$1
-  /usr/share/google/get_metadata_value "attributes/${varname}"
+  ${SCRIPTS_PREFIX}/get_metadata_value "attributes/${varname}"
   return $?
 }
 

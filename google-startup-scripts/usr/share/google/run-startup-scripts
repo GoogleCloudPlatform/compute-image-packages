@@ -19,9 +19,10 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 declare -r STARTUP_SCRIPT=/var/run/google.startup.script
+declare -r SCRIPTS_PREFIX=${GOOGLE_SCRIPTS_PREFIX:-/usr/share/google/}
 
 # Make sure all udev changes settle before running startup scripts.
 udevadm settle
 
-/usr/share/google/fetch_script ${STARTUP_SCRIPT} startup
-/usr/share/google/run-scripts ${STARTUP_SCRIPT} startup
+${SCRIPTS_PREFIX}/fetch_script ${STARTUP_SCRIPT} startup
+${SCRIPTS_PREFIX}/run-scripts ${STARTUP_SCRIPT} startup

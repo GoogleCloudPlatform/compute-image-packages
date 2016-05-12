@@ -33,7 +33,8 @@ else
     declare -r LOGGER=/bin/logger
 fi
 
-declare -r BOTO_SETUP_SCRIPT=/usr/share/google/boto/boot_setup.py
+declare -r SCRIPTS_PREFIX=${GOOGLE_SCRIPTS_PREFIX:-/usr/share/google/}
+declare -r BOTO_SETUP_SCRIPT=${SCRIPTS_PREFIX}/boto/boot_setup.py
 declare -r GOOGLE_ENVIRONMENT=/var/run/google.environment
 
 function log() {
@@ -42,26 +43,26 @@ function log() {
 }
 
 function set_interrupts() {
-  if [[ -x /usr/share/google/set-interrupts ]]; then
-    /usr/share/google/set-interrupts
+  if [[ -x ${SCRIPTS_PREFIX}/set-interrupts ]]; then
+    ${SCRIPTS_PREFIX}/set-interrupts
   fi
 }
 
 function virtionet_irq_affinity() {
-  if [[ -x /usr/share/google/virtionet-irq-affinity ]]; then
-    /usr/share/google/virtionet-irq-affinity
+  if [[ -x ${SCRIPTS_PREFIX}/virtionet-irq-affinity ]]; then
+    ${SCRIPTS_PREFIX}/virtionet-irq-affinity
   fi
 }
 
 function first_boot() {
-  if [[ -x /usr/share/google/first-boot ]]; then
-    /usr/share/google/first-boot
+  if [[ -x ${SCRIPTS_PREFIX}/first-boot ]]; then
+    ${SCRIPTS_PREFIX}/first-boot
   fi
 }
 
 function get_metadata_value() {
   local readonly varname=$1
-  /usr/share/google/get_metadata_value ${varname}
+  ${SCRIPTS_PREFIX}/get_metadata_value ${varname}
   return $?
 }
 
@@ -119,7 +120,7 @@ function check_for_connection() {
   log "Checking for metadata server connection."
   while true; do
     ((count++))
-    MDS_TRIES=1 /usr/share/google/get_metadata_value "?recursive=True"
+    MDS_TRIES=1 ${SCRIPTS_PREFIX}/get_metadata_value "?recursive=True"
     return_code=$?
     case ${return_code} in
       # No error.  Connection is active.

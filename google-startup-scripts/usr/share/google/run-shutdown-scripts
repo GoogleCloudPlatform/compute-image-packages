@@ -20,6 +20,7 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
+declare -r SCRIPTS_PREFIX=${GOOGLE_SCRIPTS_PREFIX:-/usr/share/google/}
 
 # NOTE
 # Make sure that the shutdown script completes within 90 seconds, so
@@ -27,5 +28,5 @@ declare -r SHUTDOWN_SCRIPT=/var/run/google.shutdown.script
 # buffers to disk.
 #
 # The shutdown script blocks other shutdown operations from proceeding.
-/usr/share/google/fetch_script ${SHUTDOWN_SCRIPT} shutdown
-/usr/share/google/run-scripts ${SHUTDOWN_SCRIPT} shutdown
+${SCRIPTS_PREFIX}/fetch_script ${SHUTDOWN_SCRIPT} shutdown
+${SCRIPTS_PREFIX}/run-scripts ${SHUTDOWN_SCRIPT} shutdown
