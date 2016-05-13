@@ -1,0 +1,12 @@
+[Unit]
+Description=Google Compute Engine Accounts Daemon
+After=network.target google-instance-setup.service
+Before=sshd.service
+Requires=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/google_accounts_daemon
+
+[Install]
+WantedBy=multi-user.target
