@@ -113,6 +113,7 @@ class AccountsDaemonTest(unittest.TestCase):
         'user:ssh-rsa key user@domain.com': False,
         'user:ssh-rsa key google {"expireOn":"%s"}' % _GetTimestamp(-1): False,
         'user:ssh-rsa key google-ssh': False,
+        'user:ssh-rsa key google-ssh {invalid:json}': False,
         'user:ssh-rsa key google-ssh {"userName":"user"}': False,
         'user:ssh-rsa key google-ssh {"expireOn":"invalid"}': False,
         'user:xyz key google-ssh {"expireOn":"%s"}' % _GetTimestamp(1): False,
@@ -129,7 +130,7 @@ class AccountsDaemonTest(unittest.TestCase):
         'a': ['1', '2'],
         'b': ['3', '4', '5'],
     }
-    accounts_data = ''
+    accounts_data = 'skip\n'
     for user, keys in user_map.items():
       for key in keys:
         accounts_data += '%s:%s\n' % (user, key)

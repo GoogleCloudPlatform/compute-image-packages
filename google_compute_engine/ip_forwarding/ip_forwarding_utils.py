@@ -81,8 +81,6 @@ class IpForwardingUtils(object):
       if fields and fields[0] == 'default' and 'dev' in fields:
         index = fields.index('dev') + 1
         return fields[index] if index < len(fields) else 'eth0'
-      else:
-        continue
     return 'eth0'
 
   def ParseForwardedIps(self, forwarded_ips):
