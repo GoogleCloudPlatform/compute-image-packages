@@ -105,6 +105,19 @@ class MetadataWatcherTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.urlopen')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
+  def testGetMetadataRequestHttpException(self, mock_request, mock_urlopen):
+    mock_request.return_value = mock_request
+    mock_response = mock.Mock()
+    mock_response.getcode.return_value = metadata_watcher.httpclient.NOT_FOUND
+    mock_urlopen.side_effect = metadata_watcher.StatusException(mock_response),
+
+    with self.assertRaises(metadata_watcher.StatusException):
+      self.mock_watcher._GetMetadataRequest(self.url)
+    self.assertEqual(mock_request.call_count, 1)
+    self.assertEqual(mock_urlopen.call_count, 1)
+
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.urlopen')
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
   def testGetMetadataRequestException(self, mock_request, mock_urlopen):
     mock_request.return_value = mock_request
     mock_response = mock.Mock()

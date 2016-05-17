@@ -118,6 +118,15 @@ class ConfigManagerTest(unittest.TestCase):
     ]
     self.assertEqual(self.mock_config.mock_calls, expected_calls)
 
+  def testSetOptionNoOverwrite(self):
+    self.mock_config_manager.SetOption(
+        self.section, self.option, self.value, overwrite=False)
+    expected_calls = [
+        mock.call.read(self.config_file),
+        mock.call.has_option(self.section, self.option),
+    ]
+    self.assertEqual(self.mock_config.mock_calls, expected_calls)
+
   def testSetOptionNewSection(self):
     section = 'test-section'
     self.mock_config_manager.SetOption(section, self.option, self.value)
