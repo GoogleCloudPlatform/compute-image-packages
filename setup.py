@@ -15,35 +15,54 @@
 
 """Create a Python package of the Linux guest environment."""
 
+import glob
+import os
+import sys
+
 import setuptools
 
 
-# NOTE Not yet able to build a working deb or rpm. Will build a working
-# python package.
+def GetInitFiles(path):
+  """Get the list of relative paths to init files.
+
+  Args:
+    path: string, the relative path to the source directory.
+
+  Returns:
+    list, the relative path strings for init files.
+  """
+  valid = '%s/*' % path
+  invalid = '%s/*.sh' % path
+  return list(set(glob.glob(valid)) - set(glob.glob(invalid)))
+
+
+data_files_dict = {
+    'systemd': [('/usr/lib/systemd/system', GetInitFiles('package/systemd'))],
+    'sysvinit': [('/etc/init.d', GetInitFiles('package/sysvinit'))],
+    'upstart': [('/etc/init', GetInitFiles('package/upstart'))],
+}
+
+
+if os.environ.get('CONFIG') not in data_files_dict.keys():
+  keys = ', '.join(data_files_dict.keys())
+  sys.exit('Expected "CONFIG" environment variable set to one of [%s].' % keys)
 
 
 setuptools.setup(
-    name='google_compute_engine',
-    version='2.0.0',
     author='Google Compute Engine Team',
     author_email='gc-team@google.com',
-    url='https://github.com/GoogleCloudPlatform/compute-image-packages',
-
+    data_files=data_files_dict.get(os.environ['CONFIG']),
     description='Google Compute Engine',
-    long_description='Google Compute Engine guest environment.',
+    include_package_data=True,
     install_requires=['boto>=2.25.0'],
     license='Apache Software License',
-
+    long_description='Google Compute Engine guest environment.',
+    name='google_compute_engine_%s' % os.environ['CONFIG'],
     packages=setuptools.find_packages(),
-
-    # These end up in /usr/bin
-    scripts=[
-        'scripts/optimize_local_ssd',
-        'scripts/set_hostname',
-        'scripts/set_multiqueue',
-    ],
-
-    # These end up in /usr/bin, for example /usr/bin/google_accounts_daemon
+    scripts=glob.glob('scripts/*'),
+    url='https://github.com/GoogleCloudPlatform/compute-image-packages',
+    version='2.0.0',
+    # Entry points create scripts in /usr/bin that call a function.
     entry_points={
         'console_scripts': [
             'google_accounts_daemon=accounts.accounts_daemon:main',
@@ -53,7 +72,6 @@ setuptools.setup(
             'google_metadata_script_runner=metadata_scripts.script_manager:main',
         ],
     },
-
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: No Input/Output (Daemon)',
