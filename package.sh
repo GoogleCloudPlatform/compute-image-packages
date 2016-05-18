@@ -19,6 +19,8 @@ TIMESTAMP="$(date -u +%Y%m%d%H%M%S)"
 
 for CONFIG in 'systemd' 'sysvinit' 'upstart';
 do
+  export CONFIG="$CONFIG"
+
   fpm \
     -s python \
     -t deb \
