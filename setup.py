@@ -57,7 +57,7 @@ setuptools.setup(
     install_requires=['boto>=2.25.0'],
     license='Apache Software License',
     long_description='Google Compute Engine guest environment.',
-    name='google_compute_engine_%s' % os.environ['CONFIG'],
+    name='google-compute-engine-%s' % os.environ['CONFIG'],
     packages=setuptools.find_packages(),
     scripts=glob.glob('scripts/*'),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages',

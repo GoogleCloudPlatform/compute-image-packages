@@ -17,8 +17,7 @@
 
 TIMESTAMP="$(date -u +%Y%m%d%H%M%S)"
 
-for CONFIG in 'systemd' 'sysvinit' 'upstart';
-do
+for CONFIG in 'systemd' 'sysvinit' 'upstart'; do
   export CONFIG="$CONFIG"
 
   fpm \
@@ -26,10 +25,10 @@ do
     -t deb \
     --no-python-fix-name \
     --python-install-bin '/usr/bin' \
-    --python-install-lib '/usr/lib/python2.7/site-packages' \
+    --python-install-lib '/usr/lib/python2.7/dist-packages' \
     --after-install "package/$CONFIG/postinst.sh" \
     --before-remove "package/$CONFIG/prerm.sh" \
-    --iteration "$TIMESTAMP" \
+    --iteration "0.$TIMESTAMP" \
     setup.py
 
   fpm \
@@ -40,6 +39,6 @@ do
     --python-install-lib '/usr/lib/python2.7/site-packages' \
     --after-install "package/$CONFIG/postinst.sh" \
     --before-remove "package/$CONFIG/prerm.sh" \
-    --iteration "$TIMESTAMP" \
+    --iteration "0.$TIMESTAMP" \
     setup.py
 done
