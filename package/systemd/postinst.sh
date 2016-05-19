@@ -14,19 +14,19 @@
 # limitations under the License.
 
 # Stop existing daemons
-systemctl stop --no-block google_accounts_daemon
-systemctl stop --no-block google_clock_skew_daemon
-systemctl stop --no-block google_ip_forwarding_daemon
+systemctl stop --no-block google-accounts-daemon
+systemctl stop --no-block google-clock-skew-daemon
+systemctl stop --no-block google-ip-forwarding-daemon
 
 # Enable systemd services
-systemctl enable google_instance_setup.service
-systemctl enable google_startup_scripts.service
-systemctl enable google_shutdown_scripts.service
-systemctl enable google_accounts_daemon.service
-systemctl enable google_clock_skew_daemon.service
-systemctl enable google_ip_forwarding_daemon.service
+systemctl enable google-instance-setup.service
+systemctl enable google-startup-scripts.service
+systemctl enable google-shutdown-scripts.service
+systemctl enable google-accounts-daemon.service
+systemctl enable google-clock-skew-daemon.service
+systemctl enable google-ip-forwarding-daemon.service
 
 # Start daemons
-systemctl start --no-block google_accounts_daemon
-systemctl start --no-block google_clock_skew_daemon
-systemctl start --no-block google_ip_forwarding_daemon
+systemctl start --no-block google-accounts-daemon
+systemctl start --no-block google-clock-skew-daemon
+systemctl start --no-block google-ip-forwarding-daemon

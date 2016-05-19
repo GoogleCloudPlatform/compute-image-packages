@@ -111,7 +111,7 @@ class IpForwardingDaemon(object):
     self._RemoveForwardedIps(to_remove)
 
 
-if __name__ == '__main__':
+def main():
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('Daemons', 'ip_forwarding_daemon'):
     IpForwardingDaemon(
@@ -119,3 +119,7 @@ if __name__ == '__main__':
             'IpForwarding', 'ethernet_interface'),
         proto_id=instance_config.GetOptionString(
             'IpForwarding', 'ethernet_proto_id'))
+
+
+if __name__ == '__main__':
+  main()
