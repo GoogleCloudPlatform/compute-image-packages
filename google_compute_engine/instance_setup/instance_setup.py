@@ -169,5 +169,9 @@ class InstanceSetup(object):
       self.logger.warning(str(e))
 
 
-if __name__ == '__main__':
+def main():
   InstanceSetup()
+
+
+if __name__ == '__main__':
+  main()

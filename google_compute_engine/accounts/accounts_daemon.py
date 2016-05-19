@@ -199,9 +199,13 @@ class AccountsDaemon(object):
     self.utils.SetConfiguredUsers(desired_users.keys())
 
 
-if __name__ == '__main__':
+def main():
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('Daemons', 'accounts_daemon'):
     AccountsDaemon(
         groups=instance_config.GetOptionString('Accounts', 'groups'),
         remove=instance_config.GetOptionBool('Accounts', 'deprovision_remove'))
+
+
+if __name__ == '__main__':
+  main()

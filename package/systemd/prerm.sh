@@ -14,14 +14,14 @@
 # limitations under the License.
 
 if [ "$1" = purge ]; then
-  systemctl stop --no-block google_accounts_daemon
-  systemctl stop --no-block google_clock_skew_daemon
-  systemctl stop --no-block google_ip_forwarding_daemon
+  systemctl stop --no-block google-accounts-daemon
+  systemctl stop --no-block google-clock-skew-daemon
+  systemctl stop --no-block google-ip-forwarding-daemon
 
-  systemctl --no-reload disable google_instance_setup.service
-  systemctl --no-reload disable google_startup_scripts.service
-  systemctl --no-reload disable google_shutdown_scripts.service
-  systemctl --no-reload disable google_accounts_daemon.service
-  systemctl --no-reload disable google_clock_skew_daemon.service
-  systemctl --no-reload disable google_ip_forwarding_daemon.service
+  systemctl --no-reload disable google-instance-setup.service
+  systemctl --no-reload disable google-startup-scripts.service
+  systemctl --no-reload disable google-shutdown-scripts.service
+  systemctl --no-reload disable google-accounts-daemon.service
+  systemctl --no-reload disable google-clock-skew-daemon.service
+  systemctl --no-reload disable google-ip-forwarding-daemon.service
 fi

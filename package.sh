@@ -38,6 +38,7 @@ function build_distro() {
     --no-python-fix-name \
     --python-install-bin '/usr/bin' \
     --python-install-lib "$py_path" \
+    --python-install-data "/usr/share/doc/${name}" \
     --rpm-dist "$distro" \
     --after-install "package/${init_config}/postinst.sh" \
     --before-remove "package/${init_config}/prerm.sh" \

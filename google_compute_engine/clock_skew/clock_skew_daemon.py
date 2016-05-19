@@ -60,7 +60,11 @@ class ClockSkewDaemon(object):
       self.logger.info('Synced system time with hardware clock.')
 
 
-if __name__ == '__main__':
+def main():
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('Daemons', 'clock_skew_daemon'):
     ClockSkewDaemon()
+
+
+if __name__ == '__main__':
+  main()
