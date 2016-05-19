@@ -15,30 +15,40 @@
 
 # Build the Linux guest environment deb and rpm packages.
 
-TIMESTAMP="$(date -u +%Y%m%d%H%M%S)"
+TIMESTAMP="$(date +%s)"
 
-for CONFIG in 'systemd' 'sysvinit' 'upstart'; do
-  export CONFIG="$CONFIG"
+function build_distro() {
+  declare -r distro="$1"
+  declare -r pkg_type="$2"
+  declare -r init_config="$3"
+  declare -r py_path="$4"
+  declare name='google-compute-engine'
+
+  export CONFIG="$init_config"
+
+  if [[ "${pkg_type}" == 'deb' ]]; then
+    name="$name-$distro"
+  fi
 
   fpm \
+    -n "${name}" \
     -s python \
-    -t deb \
+    -t "${pkg_type}" \
+    -m 'gc-team@google.com' \
     --no-python-fix-name \
     --python-install-bin '/usr/bin' \
-    --python-install-lib '/usr/lib/python2.7/dist-packages' \
-    --after-install "package/$CONFIG/postinst.sh" \
-    --before-remove "package/$CONFIG/prerm.sh" \
+    --python-install-lib "$py_path" \
+    --rpm-dist "$distro" \
+    --after-install "package/${init_config}/postinst.sh" \
+    --before-remove "package/${init_config}/prerm.sh" \
     --iteration "0.$TIMESTAMP" \
     setup.py
+}
 
-  fpm \
-    -s python \
-    -t rpm \
-    --no-python-fix-name \
-    --python-install-bin '/usr/bin' \
-    --python-install-lib '/usr/lib/python2.7/site-packages' \
-    --after-install "package/$CONFIG/postinst.sh" \
-    --before-remove "package/$CONFIG/prerm.sh" \
-    --iteration "0.$TIMESTAMP" \
-    setup.py
-done
+# RHEL/CentOS
+build_distro 'el6' 'rpm' 'upstart' '/usr/lib/python2.6/site-packages'
+build_distro 'el7' 'rpm' 'systemd' '/usr/lib/python2.7/site-packages'
+
+# Debian
+build_distro 'deb7' 'deb' 'sysvinit' '/usr/lib/python2.7/dist-packages'
+build_distro 'deb8' 'deb' 'systemd' '/usr/lib/python2.7/dist-packages'
