@@ -5,7 +5,7 @@ Wants=local-fs.target network-online.target network.target
 
 [Service]
 ExecStart=/bin/true
-ExecStop=/usr/bin/google_metadata_script_runner shutdown
+ExecStop=/usr/bin/google_metadata_script_runner --script-type shutdown
 Type=oneshot
 RemainAfterExit=true
 TimeoutStopSec=0

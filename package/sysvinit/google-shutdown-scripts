@@ -40,7 +40,7 @@ SCRIPTNAME=/etc/init.d/$NAME
 #
 do_start()
 {
-  /usr/bin/google_metadata_script_runner shutdown
+  /usr/bin/google_metadata_script_runner --script-type shutdown
 }
 
 case "$1" in

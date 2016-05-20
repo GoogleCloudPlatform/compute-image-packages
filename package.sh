@@ -31,18 +31,20 @@ function build_distro() {
   fi
 
   fpm \
-    -n "${name}" \
     -s python \
     -t "${pkg_type}" \
-    -m 'gc-team@google.com' \
+    --after-install "package/${init_config}/postinst.sh" \
+    --before-remove "package/${init_config}/prerm.sh" \
+    --depends 'python-boto' \
+    --depends 'python-pkg-resources' \
+    --iteration "0.$TIMESTAMP" \
+    --maintainer 'gc-team@google.com' \
+    --name "${name}" \
     --no-python-fix-name \
     --python-install-bin '/usr/bin' \
     --python-install-lib "$py_path" \
     --python-install-data "/usr/share/doc/${name}" \
     --rpm-dist "$distro" \
-    --after-install "package/${init_config}/postinst.sh" \
-    --before-remove "package/${init_config}/prerm.sh" \
-    --iteration "0.$TIMESTAMP" \
     setup.py
 }
 
