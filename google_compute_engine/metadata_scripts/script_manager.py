@@ -57,7 +57,7 @@ class ScriptManager(object):
     self.script_type = script_type
     name = '%s-script' % self.script_type
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    self.logger = logger.Logger(name=name, facility=facility)
+    self.logger = logger.Logger(name=name, console=False, facility=facility)
     self.retriever = script_retriever.ScriptRetriever(self.logger, script_type)
     self.executor = script_executor.ScriptExecutor(self.logger, script_type)
     self._RunScripts()

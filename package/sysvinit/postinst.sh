@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-update-rc.d google-instance-setup defaults
-update-rc.d google-startup-scripts defaults
-update-rc.d google-shutdown-scripts defaults
 update-rc.d google-accounts-daemon defaults
 update-rc.d google-clock-skew-daemon defaults
+update-rc.d google-instance-setup defaults
 update-rc.d google-ip-forwarding-daemon defaults
+update-rc.d google-shutdown-scripts defaults
+update-rc.d google-startup-scripts defaults

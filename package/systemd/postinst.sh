@@ -13,20 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Stop existing daemons
+# Stop existing daemons.
 systemctl stop --no-block google-accounts-daemon
 systemctl stop --no-block google-clock-skew-daemon
 systemctl stop --no-block google-ip-forwarding-daemon
 
-# Enable systemd services
-systemctl enable google-instance-setup.service
-systemctl enable google-startup-scripts.service
-systemctl enable google-shutdown-scripts.service
+# Enable systemd services.
 systemctl enable google-accounts-daemon.service
 systemctl enable google-clock-skew-daemon.service
+systemctl enable google-instance-setup.service
 systemctl enable google-ip-forwarding-daemon.service
+systemctl enable google-shutdown-scripts.service
+systemctl enable google-startup-scripts.service
 
-# Start daemons
+# Start daemons.
 systemctl start --no-block google-accounts-daemon
 systemctl start --no-block google-clock-skew-daemon
 systemctl start --no-block google-ip-forwarding-daemon
