@@ -37,7 +37,8 @@ class InstanceSetup(object):
 
   def __init__(self):
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    self.logger = logger.Logger(name='instance-setup', facility=facility)
+    self.logger = logger.Logger(
+        name='instance-setup', console=False, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.metadata_dict = None
     self.instance_config = instance_config.InstanceConfig()

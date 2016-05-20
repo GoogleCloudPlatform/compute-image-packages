@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 # Copyright 2016 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,46 +15,35 @@
 #
 ### BEGIN INIT INFO
 # Provides:          google_startup_scripts
-# Required-Start:    $google_instance_setup
+# Required-Start:    $all $google_instance_setup
 # Required-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:
 # Short-Description: Google Compute Engine Startup Scripts
-# Description:       Runs a startup script from metadata.
+# Description:       Runs user specified startup scripts from metadata.
 ### END INIT INFO
 
-# Load the VERBOSE setting and other rcS variables
-. /lib/init/vars.sh
-
-# Define LSB log_* functions.
-# Depend on lsb-base (>= 3.2-14) to ensure that this file is present
-# and status_of_proc is working.
-. /lib/lsb/init-functions
-
-DESC="Google Compute Engine Startup Scripts"
-NAME="google-startup-scripts"
+NAME=google-startup-scripts
 SCRIPTNAME=/etc/init.d/$NAME
 
+# Load the rcS variables.
+. /lib/init/vars.sh
+
 #
-# Function that starts the daemon/service
+# Function that starts the daemon/service.
 #
 do_start()
 {
-  /usr/bin/google_metadata_script_runner --script-type startup
+  /usr/bin/google_metadata_script_runner --script-type startup > /dev/null
 }
 
 case "$1" in
   start)
-    [ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
     do_start
-    case "$?" in
-      0) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-      *) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
-    esac
     ;;
   *)
     echo "Usage: $SCRIPTNAME start" >&2
-    exit 3
+    exit 1
     ;;
 esac
 
