@@ -17,8 +17,8 @@
 
 import contextlib
 import logging.handlers
+import optparse
 import shutil
-import sys
 import tempfile
 
 from google_compute_engine import config_manager
@@ -72,10 +72,14 @@ class ScriptManager(object):
         self.logger.info('Finished running %s scripts.', self.script_type)
 
 
-def main(args):
+def main():
   script_types = ('startup', 'shutdown')
-  if args and args[0].lower() in script_types:
-    script_type = args[0].lower()
+  parser = optparse.OptionParser()
+  parser.add_option('--script-type', dest='script_type',
+                    help='metadata script type.')
+  (options, _) = parser.parse_args()
+  if options.script_type and options.script_type.lower() in script_types:
+    script_type = options.script_type.lower()
   else:
     valid_args = ', '.join(script_types)
     message = 'No valid argument specified. Options: [%s].' % valid_args
@@ -87,4 +91,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  main()

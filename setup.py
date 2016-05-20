@@ -54,7 +54,7 @@ setuptools.setup(
     data_files=data_files_dict.get(os.environ['CONFIG']),
     description='Google Compute Engine',
     include_package_data=True,
-    install_requires=['boto>=2.25.0'],
+    install_requires=['boto'],
     license='Apache Software License',
     long_description='Google Compute Engine guest environment.',
     name='google-compute-engine',
