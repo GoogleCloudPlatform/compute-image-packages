@@ -13,12 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+COMMON_FILES=(
+  'rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf',
+  'sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf',
+  'udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules',
+  'udev/65-gce-disk-naming.rules=/etc/udev/rules.d/65-gce-disk-naming.rules')
 TIMESTAMP="$(date +%s)"
 
 function build_distro() {
   declare -r distro="$1"
   declare -r pkg_type="$2"
-  declare files="${@:3}"
+  declare files=("$@")
   declare name='google-config'
 
   if [[ "${pkg_type}" == 'deb' ]]; then
@@ -37,38 +42,23 @@ function build_distro() {
     --url 'https://github.com/GoogleCloudPlatform/compute-image-packages' \
     --vendor 'Google Compute Engine Team' \
     --version '2.0.0' \
-    ${files}
+    "${COMMON_FILES[@]}" \
+    "${files[@]:2}"
 }
 
-
-# RHEL/CentOS
+# RHEL/CentOS 6
 build_distro 'el6' 'rpm' \
-  "bin/set_hostname=/etc/dhcp/dhclient-exit-hooks" \
-  "rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf" \
-  "sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf" \
-  "udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules" \
-  "udev/65-gce-disk-naming.rules=/etc/udev/rules.d/65-gce-disk-naming.rules"
+  'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks'
 
-
+# RHEL/CentOS 7
 build_distro 'el7' 'rpm' \
-  "bin/set_hostname=/usr/bin/set_hostname" \
-  "dhcp/google_hostname.sh=/etc/dhcp/dhclient.d/google_hostname.sh" \  # DHCP for NetworkManager
-  "rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf" \
-  "sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf" \
-  "udev/64-gce-disk-removal.rules=/usr/lib/udev/rules.d/64-gce-disk-removal.rules" \
-  "udev/65-gce-disk-naming.rules=/usr/lib/udev/rules.d/65-gce-disk-naming.rules"
+  'bin/set_hostname=/usr/bin/set_hostname' \
+  'dhcp/google_hostname.sh=/etc/dhcp/dhclient.d/google_hostname.sh'
 
-# Debian
+# Debian 7
 build_distro 'deb7' 'deb' \
-  "bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname" \
-  "rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf" \
-  "sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf" \
-  "udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules" \
-  "udev/65-gce-disk-naming.rules=/etc/udev/rules.d/65-gce-disk-naming.rules"
+  'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
 
+# Debian 8
 build_distro 'deb8' 'deb' \
-  "bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname" \
-  "rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf" \
-  "sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf" \
-  "udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules" \
-  "udev/65-gce-disk-naming.rules=/etc/udev/rules.d/65-gce-disk-naming.rules"
+  'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
