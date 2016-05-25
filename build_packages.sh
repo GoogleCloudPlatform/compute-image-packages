@@ -24,10 +24,10 @@ function build_distro() {
   declare -r py_path="$4"
   declare name='google-compute-engine'
 
-  export CONFIG="$init_config"
+  export CONFIG="${init_config}"
 
   if [[ "${pkg_type}" == 'deb' ]]; then
-    name="$name-$distro"
+    name="${name}-${distro}"
   fi
 
   fpm \
@@ -37,14 +37,14 @@ function build_distro() {
     --before-remove "package/${init_config}/prerm.sh" \
     --depends 'python-boto' \
     --depends 'python-pkg-resources' \
-    --iteration "0.$TIMESTAMP" \
+    --iteration "0.${TIMESTAMP}" \
     --maintainer 'gc-team@google.com' \
     --name "${name}" \
     --no-python-fix-name \
     --python-install-bin '/usr/bin' \
-    --python-install-lib "$py_path" \
+    --python-install-lib "${py_path}" \
     --python-install-data "/usr/share/doc/${name}" \
-    --rpm-dist "$distro" \
+    --rpm-dist "${distro}" \
     setup.py
 }
 
