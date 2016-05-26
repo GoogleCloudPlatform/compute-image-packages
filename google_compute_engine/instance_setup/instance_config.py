@@ -57,7 +57,6 @@ class InstanceConfig(config_manager.ConfigManager):
           'set_multiqueue': 'true',
       },
       'IpForwarding': {
-          'ethernet_interface': '',
           'ethernet_proto_id': '66',
       },
       'MetadataScripts': {

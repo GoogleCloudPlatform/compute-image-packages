@@ -42,18 +42,17 @@ class IpForwardingDaemon(object):
 
   forwarded_ips = 'instance/network-interfaces/0/forwarded-ips'
 
-  def __init__(self, interface=None, proto_id=None):
+  def __init__(self, proto_id=None):
     """Constructor.
 
     Args:
-      interface: string, the output device to use.
       proto_id: string, the routing protocol identifier for Google IP changes.
     """
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(name='google-ip-forwarding', facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.utils = ip_forwarding_utils.IpForwardingUtils(
-        logger=self.logger, interface=interface, proto_id=proto_id)
+        logger=self.logger, proto_id=proto_id)
     try:
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google IP Forwarding daemon.')
@@ -115,8 +114,6 @@ def main():
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('Daemons', 'ip_forwarding_daemon'):
     IpForwardingDaemon(
-        interface=instance_config.GetOptionString(
-            'IpForwarding', 'ethernet_interface'),
         proto_id=instance_config.GetOptionString(
             'IpForwarding', 'ethernet_proto_id'))
 

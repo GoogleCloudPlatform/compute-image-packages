@@ -50,12 +50,12 @@ class IpForwardingDaemonTest(unittest.TestCase):
     with mock.patch.object(
         ip_forwarding_daemon.IpForwardingDaemon,
         'HandleForwardedIps') as mock_handle:
-      ip_forwarding_daemon.IpForwardingDaemon(interface='eth0', proto_id='66')
+      ip_forwarding_daemon.IpForwardingDaemon(proto_id='66')
       expected_calls = [
           mock.call.logger.Logger(name=mock.ANY, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.IpForwardingUtils(
-              logger=mock_logger_instance, interface='eth0', proto_id='66'),
+              logger=mock_logger_instance, proto_id='66'),
           mock.call.lock.LockFile(ip_forwarding_daemon.LOCKFILE),
           mock.call.lock.LockFile().__enter__(),
           mock.call.logger.Logger().info(mock.ANY),
@@ -86,7 +86,7 @@ class IpForwardingDaemonTest(unittest.TestCase):
           mock.call.logger.Logger(name=mock.ANY, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.IpForwardingUtils(
-              logger=mock_logger_instance, interface=None, proto_id=None),
+              logger=mock_logger_instance, proto_id=None),
           mock.call.lock.LockFile(ip_forwarding_daemon.LOCKFILE),
           mock.call.logger.Logger().warning('Test Error'),
       ]
