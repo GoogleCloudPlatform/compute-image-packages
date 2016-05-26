@@ -24,17 +24,16 @@ IP_REGEX = re.compile(r'\A(\d{1,3}\.){3}\d{1,3}\Z')
 class IpForwardingUtils(object):
   """System IP address configuration utilities."""
 
-  def __init__(self, logger, interface=None, proto_id=None):
+  def __init__(self, logger, proto_id=None):
     """Constructor.
 
     Args:
       logger: logger object, used to write to SysLog and serial port.
-      interface: string, the output device to use.
       proto_id: string, the routing protocol identifier for Google IP changes.
     """
     self.logger = logger
     self.options = {
-        'dev': interface or self._GetDefaultInterface(),
+        'dev': self._GetDefaultInterface(),
         'proto': proto_id or '66',
         'scope': 'host',
     }
