@@ -34,8 +34,6 @@ from google_compute_engine.instance_setup import instance_config
 class InstanceSetup(object):
   """Initialize the instance the first time it boots."""
 
-  config_file = '/etc/default/instance_configs.cfg'
-
   def __init__(self, debug=False):
     """Constructor.
 
