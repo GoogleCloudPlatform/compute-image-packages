@@ -19,12 +19,12 @@ import logging
 import logging.handlers
 
 
-def Logger(name, console=True, facility=None):
+def Logger(name, debug=False, facility=None):
   """Get a logging object with handlers for sending logs to SysLog.
 
   Args:
     name: string, the name of the logger which will be added to log entries.
-    console: bool, True tocreate a handler for console logging.
+    debug: bool, True if debug output should write to the console.
     facility: int, an encoding of the SysLog handler's facility and priority.
 
   Returns:
@@ -32,10 +32,11 @@ def Logger(name, console=True, facility=None):
   """
   logger = logging.getLogger(name)
   logger.handlers = []
+  logger.propagate = False
   logger.setLevel(logging.DEBUG)
   formatter = logging.Formatter(name + ': %(levelname)s %(message)s')
 
-  if console:
+  if debug:
     # Create a handler for console logging.
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)

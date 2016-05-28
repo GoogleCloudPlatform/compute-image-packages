@@ -30,20 +30,20 @@ class LoggerTest(unittest.TestCase):
     name = 'test'
 
     # Verify basic logger setup.
-    named_logger = logger.Logger(name=name)
+    named_logger = logger.Logger(name=name, debug=True)
     mock_stream.setLevel.assert_called_once_with(logger.logging.DEBUG)
     self.assertEqual(named_logger.handlers, [mock_stream])
 
     # Verify logger setup with a facility.
     address = '/dev/log'
     facility = 1
-    named_logger = logger.Logger(name=name, console=True, facility=facility)
+    named_logger = logger.Logger(name=name, debug=True, facility=facility)
     mock_syslog.assert_called_once_with(address=address, facility=facility)
     mock_syslog.setLevel.assert_called_once_with(logger.logging.INFO)
     self.assertEqual(named_logger.handlers, [mock_stream, mock_syslog])
 
     # Verify the handlers are reset during repeated calls.
-    named_logger = logger.Logger(name=name, console=False)
+    named_logger = logger.Logger(name=name, debug=False)
     self.assertEqual(named_logger.handlers, [])
 
 

@@ -49,9 +49,9 @@ class AccountsDaemonTest(unittest.TestCase):
     mocks.attach_mock(mock_utils, 'utils')
     with mock.patch.object(
         accounts_daemon.AccountsDaemon, 'HandleAccounts') as mock_handle:
-      accounts_daemon.AccountsDaemon(groups='foo,bar', remove=True)
+      accounts_daemon.AccountsDaemon(groups='foo,bar', remove=True, debug=True)
       expected_calls = [
-          mock.call.logger.Logger(name=mock.ANY, facility=mock.ANY),
+          mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.AccountsUtils(
               logger=mock_logger_instance, groups='foo,bar', remove=True),
@@ -81,7 +81,8 @@ class AccountsDaemonTest(unittest.TestCase):
     with mock.patch.object(accounts_daemon.AccountsDaemon, 'HandleAccounts'):
       accounts_daemon.AccountsDaemon()
       expected_calls = [
-          mock.call.logger.Logger(name=mock.ANY, facility=mock.ANY),
+          mock.call.logger.Logger(
+              name=mock.ANY, debug=False, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.AccountsUtils(
               logger=mock_logger_instance, groups=None, remove=False),

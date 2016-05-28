@@ -54,7 +54,7 @@ class InstanceSetupTest(unittest.TestCase):
     expected_calls = [
         # Setup and reading the configuration file.
         mock.call.logger.Logger(
-            name=mock.ANY, console=False, facility=mock.ANY),
+            name=mock.ANY, debug=False, facility=mock.ANY),
         mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
         mock.call.config.InstanceConfig(),
         # Setup for local SSD.
@@ -105,7 +105,7 @@ class InstanceSetupTest(unittest.TestCase):
     instance_setup.InstanceSetup.__init__(mock_setup)
     expected_calls = [
         mock.call.logger.Logger(
-            name=mock.ANY, console=False, facility=mock.ANY),
+            name=mock.ANY, debug=False, facility=mock.ANY),
         mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
         mock.call.config.InstanceConfig(),
         mock.call.config.InstanceConfig().GetOptionBool(

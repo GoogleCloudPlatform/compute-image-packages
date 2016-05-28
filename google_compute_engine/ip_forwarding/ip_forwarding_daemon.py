@@ -26,6 +26,7 @@ Command used to fetch list of configured IPs:
 """
 
 import logging.handlers
+import optparse
 
 from google_compute_engine import config_manager
 from google_compute_engine import file_utils
@@ -42,14 +43,16 @@ class IpForwardingDaemon(object):
 
   forwarded_ips = 'instance/network-interfaces/0/forwarded-ips'
 
-  def __init__(self, proto_id=None):
+  def __init__(self, proto_id=None, debug=False):
     """Constructor.
 
     Args:
       proto_id: string, the routing protocol identifier for Google IP changes.
+      debug: bool, True if debug output should write to the console.
     """
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    self.logger = logger.Logger(name='google-ip-forwarding', facility=facility)
+    self.logger = logger.Logger(
+        name='google-ip-forwarding', debug=debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.utils = ip_forwarding_utils.IpForwardingUtils(
         logger=self.logger, proto_id=proto_id)
@@ -111,11 +114,16 @@ class IpForwardingDaemon(object):
 
 
 def main():
+  parser = optparse.OptionParser()
+  parser.add_option('-d', '--debug', action='store_true', dest='debug',
+                    help='print debug output to the console.')
+  (options, _) = parser.parse_args()
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('Daemons', 'ip_forwarding_daemon'):
     IpForwardingDaemon(
         proto_id=instance_config.GetOptionString(
-            'IpForwarding', 'ethernet_proto_id'))
+            'IpForwarding', 'ethernet_proto_id'),
+        debug=bool(options.debug))
 
 
 if __name__ == '__main__':
