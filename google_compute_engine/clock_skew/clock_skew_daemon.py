@@ -16,6 +16,7 @@
 """Manage clock skew after migration on a Google Compute Engine instance."""
 
 import logging.handlers
+import optparse
 import subprocess
 
 from google_compute_engine import config_manager
@@ -31,9 +32,15 @@ class ClockSkewDaemon(object):
 
   drift_token = 'instance/virtual-clock/drift-token'
 
-  def __init__(self):
+  def __init__(self, debug=False):
+    """Constructor.
+
+    Args:
+      debug: bool, True if debug output should write to the console.
+    """
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    self.logger = logger.Logger(name='google-clock-skew', facility=facility)
+    self.logger = logger.Logger(
+        name='google-clock-skew', debug=debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     try:
       with file_utils.LockFile(LOCKFILE):
@@ -61,9 +68,13 @@ class ClockSkewDaemon(object):
 
 
 def main():
+  parser = optparse.OptionParser()
+  parser.add_option('-d', '--debug', action='store_true', dest='debug',
+                    help='print debug output to the console.')
+  (options, _) = parser.parse_args()
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('Daemons', 'clock_skew_daemon'):
-    ClockSkewDaemon()
+    ClockSkewDaemon(debug=bool(options.debug))
 
 
 if __name__ == '__main__':

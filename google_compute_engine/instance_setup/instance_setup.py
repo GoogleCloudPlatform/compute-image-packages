@@ -16,6 +16,7 @@
 """Run initialization code the first time the instance boots."""
 
 import logging.handlers
+import optparse
 import os
 import re
 import shutil
@@ -33,12 +34,15 @@ from google_compute_engine.instance_setup import instance_config
 class InstanceSetup(object):
   """Initialize the instance the first time it boots."""
 
-  config_file = '/etc/default/instance_configs.cfg'
+  def __init__(self, debug=False):
+    """Constructor.
 
-  def __init__(self):
+    Args:
+      debug: bool, True if debug output should write to the console.
+    """
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
-        name='instance-setup', console=False, facility=facility)
+        name='instance-setup', debug=debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.metadata_dict = None
     self.instance_config = instance_config.InstanceConfig()
@@ -171,7 +175,11 @@ class InstanceSetup(object):
 
 
 def main():
-  InstanceSetup()
+  parser = optparse.OptionParser()
+  parser.add_option('-d', '--debug', action='store_true', dest='debug',
+                    help='print debug output to the console.')
+  (options, _) = parser.parse_args()
+  InstanceSetup(debug=bool(options.debug))
 
 
 if __name__ == '__main__':

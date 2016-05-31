@@ -50,7 +50,7 @@ class ScriptManagerTest(unittest.TestCase):
     script_manager.ScriptManager(script_type)
     expected_calls = [
         mock.call.logger.Logger(
-            name=script_name, console=False, facility=mock.ANY),
+            name=script_name, debug=False, facility=mock.ANY),
         mock.call.retriever.ScriptRetriever(mock_logger_instance, script_type),
         mock.call.executor.ScriptExecutor(mock_logger_instance, script_type),
         mock.call.mkdir(prefix=script_prefix),

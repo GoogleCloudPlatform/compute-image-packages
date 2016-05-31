@@ -39,7 +39,7 @@ class ClockSkewDaemonTest(unittest.TestCase):
         clock_skew_daemon.ClockSkewDaemon, 'HandleClockSync') as mock_handle:
       clock_skew_daemon.ClockSkewDaemon()
       expected_calls = [
-          mock.call.logger(name=mock.ANY, facility=mock.ANY),
+          mock.call.logger(name=mock.ANY, debug=False, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger),
           mock.call.lock(clock_skew_daemon.LOCKFILE),
           mock.call.lock().__enter__(),
@@ -62,9 +62,9 @@ class ClockSkewDaemonTest(unittest.TestCase):
     mock_logger.return_value = mock_logger
     with mock.patch.object(
         clock_skew_daemon.ClockSkewDaemon, 'HandleClockSync'):
-      clock_skew_daemon.ClockSkewDaemon()
+      clock_skew_daemon.ClockSkewDaemon(debug=True)
       expected_calls = [
-          mock.call.logger(name=mock.ANY, facility=mock.ANY),
+          mock.call.logger(name=mock.ANY, debug=True, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger),
           mock.call.lock(clock_skew_daemon.LOCKFILE),
           mock.call.logger.warning('Test Error'),

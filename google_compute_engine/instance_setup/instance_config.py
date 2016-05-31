@@ -24,6 +24,7 @@ instance_config.cfg can be removed prior to image packaging.
 import os
 
 from google_compute_engine import config_manager
+from google_compute_engine.compat import parser
 
 
 class InstanceConfig(config_manager.ConfigManager):
@@ -77,7 +78,15 @@ class InstanceConfig(config_manager.ConfigManager):
     super(InstanceConfig, self).__init__(
         config_file=self.instance_config_template,
         config_header=self.instance_config_header)
-    for section, options in sorted(self.instance_config_options.items()):
+
+    if os.path.exists(self.instance_config):
+      config = parser.SafeConfigParser()
+      config.read(self.instance_config)
+      defaults = dict((s, dict(config.items(s))) for s in config.sections())
+    else:
+      defaults = self.instance_config_options
+
+    for section, options in sorted(defaults.items()):
       for option, value in sorted(options.items()):
         super(InstanceConfig, self).SetOption(
             section, option, value, overwrite=False)

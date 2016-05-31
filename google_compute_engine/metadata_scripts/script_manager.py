@@ -48,16 +48,17 @@ def _CreateTempDir(prefix):
 class ScriptManager(object):
   """A class for retrieving and executing metadata scripts."""
 
-  def __init__(self, script_type):
+  def __init__(self, script_type, debug=False):
     """Constructor.
 
     Args:
       script_type: string, the metadata script type to run.
+      debug: bool, True if debug output should write to the console.
     """
     self.script_type = script_type
     name = '%s-script' % self.script_type
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    self.logger = logger.Logger(name=name, console=False, facility=facility)
+    self.logger = logger.Logger(name=name, debug=debug, facility=facility)
     self.retriever = script_retriever.ScriptRetriever(self.logger, script_type)
     self.executor = script_executor.ScriptExecutor(self.logger, script_type)
     self._RunScripts()
@@ -75,6 +76,8 @@ class ScriptManager(object):
 def main():
   script_types = ('startup', 'shutdown')
   parser = optparse.OptionParser()
+  parser.add_option('-d', '--debug', action='store_true', dest='debug',
+                    help='print debug output to the console.')
   parser.add_option('--script-type', dest='script_type',
                     help='metadata script type.')
   (options, _) = parser.parse_args()
@@ -87,7 +90,7 @@ def main():
 
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('MetadataScripts', script_type):
-    ScriptManager(script_type)
+    ScriptManager(script_type, debug=bool(options.debug))
 
 
 if __name__ == '__main__':

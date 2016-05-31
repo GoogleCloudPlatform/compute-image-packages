@@ -18,6 +18,7 @@
 import datetime
 import json
 import logging.handlers
+import optparse
 
 from google_compute_engine import config_manager
 from google_compute_engine import file_utils
@@ -33,15 +34,17 @@ class AccountsDaemon(object):
 
   invalid_users = set()
 
-  def __init__(self, groups=None, remove=False):
+  def __init__(self, groups=None, remove=False, debug=False):
     """Constructor.
 
     Args:
       groups: string, a comma separated list of groups.
       remove: bool, True if deprovisioning a user should be destructive.
+      debug: bool, True if debug output should write to the console.
     """
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    self.logger = logger.Logger(name='google-accounts', facility=facility)
+    self.logger = logger.Logger(
+        name='google-accounts', debug=debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.utils = accounts_utils.AccountsUtils(
         logger=self.logger, groups=groups, remove=remove)
@@ -200,11 +203,16 @@ class AccountsDaemon(object):
 
 
 def main():
+  parser = optparse.OptionParser()
+  parser.add_option('-d', '--debug', action='store_true', dest='debug',
+                    help='print debug output to the console.')
+  (options, _) = parser.parse_args()
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('Daemons', 'accounts_daemon'):
     AccountsDaemon(
         groups=instance_config.GetOptionString('Accounts', 'groups'),
-        remove=instance_config.GetOptionBool('Accounts', 'deprovision_remove'))
+        remove=instance_config.GetOptionBool('Accounts', 'deprovision_remove'),
+        debug=bool(options.debug))
 
 
 if __name__ == '__main__':
