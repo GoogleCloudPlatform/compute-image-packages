@@ -14,9 +14,9 @@
 # limitations under the License.
 
 COMMON_FILES=(
-  'rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf',
-  'sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf',
-  'udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules',
+  'rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf'
+  'sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf'
+  'udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules'
   'udev/65-gce-disk-naming.rules=/etc/udev/rules.d/65-gce-disk-naming.rules')
 TIMESTAMP="$(date +%s)"
 
