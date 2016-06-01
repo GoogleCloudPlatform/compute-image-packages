@@ -29,12 +29,14 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_logger = mock.Mock()
     self.sudoers_group = 'google-sudoers'
     self.sudoers_file = '/sudoers/file'
+    self.users_dir = '/users'
     self.users_file = '/users/file'
 
     self.mock_utils = mock.create_autospec(accounts_utils.AccountsUtils)
     self.mock_utils.google_comment = accounts_utils.AccountsUtils.google_comment
     self.mock_utils.google_sudoers_group = self.sudoers_group
     self.mock_utils.google_sudoers_file = self.sudoers_file
+    self.mock_utils.google_users_dir = self.users_dir
     self.mock_utils.google_users_file = self.users_file
     self.mock_utils.logger = self.mock_logger
 
@@ -411,14 +413,18 @@ class AccountsUtilsTest(unittest.TestCase):
     self.assertEqual(
         accounts_utils.AccountsUtils.GetConfiguredUsers(self.mock_utils), [])
 
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.makedirs')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.accounts.accounts_utils.shutil.copy')
   @mock.patch('google_compute_engine.accounts.accounts_utils.tempfile.NamedTemporaryFile')
-  def testSetConfiguredUsers(self, mock_tempfile, mock_copy, mock_permissions):
+  def testSetConfiguredUsers(self, mock_tempfile, mock_copy, mock_permissions,
+                             mock_exists, mock_makedirs):
     temp_dest = '/temp/dest'
     users = ['a', 'b', 'c']
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
+    mock_exists.return_value = False
     self.mock_logger.name = 'test'
 
     accounts_utils.AccountsUtils.SetConfiguredUsers(self.mock_utils, users)
@@ -433,6 +439,7 @@ class AccountsUtilsTest(unittest.TestCase):
         mock.call.__exit__(None, None, None),
     ]
     self.assertEqual(mock_tempfile.mock_calls, expected_calls)
+    mock_makedirs.assert_called_once_with(self.users_dir)
     mock_copy.assert_called_once_with(temp_dest, self.users_file)
     mock_permissions.assert_called_once_with(
         self.users_file, mode=0o600, uid=0, gid=0)

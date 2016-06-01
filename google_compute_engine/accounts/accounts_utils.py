@@ -44,7 +44,8 @@ class AccountsUtils(object):
     self.logger = logger
     self.google_sudoers_group = 'google-sudoers'
     self.google_sudoers_file = '/etc/sudoers.d/google_sudoers'
-    self.google_users_file = '/var/lib/google/google_users'
+    self.google_users_dir = '/var/lib/google'
+    self.google_users_file = os.path.join(self.google_users_dir, 'google_users')
 
     self._CreateSudoersGroup()
     self.groups = groups.split(',') if groups else []
@@ -257,6 +258,8 @@ class AccountsUtils(object):
       for user in users:
         updated_users.write(user + '\n')
       updated_users.flush()
+      if not os.path.exists(self.google_users_dir):
+        os.makedirs(self.google_users_dir)
       shutil.copy(updated_users_file, self.google_users_file)
 
     file_utils.SetPermissions(self.google_users_file, mode=0o600, uid=0, gid=0)
