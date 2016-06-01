@@ -56,9 +56,9 @@ build_distro 'el7' 'rpm' \
   'dhcp/google_hostname.sh=/etc/dhcp/dhclient.d/google_hostname.sh'
 
 # Debian 7
-build_distro 'deb7' 'deb' \
+build_distro 'wheezy' 'deb' \
   'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
 
 # Debian 8
-build_distro 'deb8' 'deb' \
+build_distro 'jessie' 'deb' \
   'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
