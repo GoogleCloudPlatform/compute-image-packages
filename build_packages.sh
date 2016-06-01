@@ -36,7 +36,7 @@ function build_distro() {
     --after-install "package/${init_config}/postinst.sh" \
     --before-remove "package/${init_config}/prerm.sh" \
     --depends 'python-boto' \
-    --depends 'python-pkg-resources' \
+    --depends 'python-setuptools' \
     --iteration "0.${TIMESTAMP}" \
     --maintainer 'gc-team@google.com' \
     --name "${name}" \
@@ -53,5 +53,5 @@ build_distro 'el6' 'rpm' 'upstart' '/usr/lib/python2.6/site-packages'
 build_distro 'el7' 'rpm' 'systemd' '/usr/lib/python2.7/site-packages'
 
 # Debian
-build_distro 'deb7' 'deb' 'sysvinit' '/usr/lib/python2.7/dist-packages'
-build_distro 'deb8' 'deb' 'systemd' '/usr/lib/python2.7/dist-packages'
+build_distro 'wheezy' 'deb' 'sysvinit' '/usr/lib/python2.7/dist-packages'
+build_distro 'jessie' 'deb' 'systemd' '/usr/lib/python2.7/dist-packages'
