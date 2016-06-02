@@ -36,6 +36,13 @@ def GetInitFiles(path):
   return list(set(glob.glob(valid)) - set(glob.glob(invalid)))
 
 
+# Common data files to add as part of all Linux distributions.
+data_files = [
+    ('/etc/default', ['package/instance_configs.cfg']),
+]
+
+
+# Data files specific to the various Linux init systems.
 data_files_dict = {
     'systemd': [('/usr/lib/systemd/system', GetInitFiles('package/systemd'))],
     'sysvinit': [('/etc/init.d', GetInitFiles('package/sysvinit'))],
@@ -51,7 +58,7 @@ if os.environ.get('CONFIG') not in data_files_dict.keys():
 setuptools.setup(
     author='Google Compute Engine Team',
     author_email='gc-team@google.com',
-    data_files=data_files_dict.get(os.environ['CONFIG']),
+    data_files=data_files + data_files_dict.get(os.environ['CONFIG']),
     description='Google Compute Engine',
     include_package_data=True,
     install_requires=['boto'],
