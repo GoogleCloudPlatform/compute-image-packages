@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-gce_config() {
+google_hostname_config() {
   set_hostname
 }
-gce_restore() {
+google_hostname_restore() {
   :
 }
