@@ -174,12 +174,12 @@ class ScriptRetrieverTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   def testGetAttributeScripts(self, mock_tempfile):
-    script = 'echo Hello World.'
+    script = 'echo Hello World.\n'
     script_dest = '/tmp/script'
     script_url = 'gs://fake/url'
     script_url_dest = '/tmp/script_url'
     attribute_data = {
-        '%s-script' % self.script_type: script,
+        '%s-script' % self.script_type: '\n%s' % script,
         '%s-script-url' % self.script_type: script_url,
     }
     expected_data = {

@@ -164,7 +164,7 @@ class ScriptRetriever(object):
       self.logger.info('Found %s in metadata.' % metadata_key)
       with tempfile.NamedTemporaryFile(
           mode='w', dir=dest_dir, delete=False) as dest:
-        dest.write(metadata_value)
+        dest.write(metadata_value.lstrip())
         script_dict[metadata_key] = dest.name
 
     metadata_key = '%s-script-url' % self.script_type
