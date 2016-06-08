@@ -1,0 +1,15 @@
+[Unit]
+Description=Google Compute Engine Shutdown Scripts
+After=local-fs.target network-online.target network.target rsyslog.service
+After=google-instance-setup.service
+Wants=local-fs.target network-online.target network.target
+
+[Service]
+ExecStart=/bin/true
+ExecStop=/usr/bin/google_metadata_script_runner --script-type shutdown
+Type=oneshot
+RemainAfterExit=true
+TimeoutStopSec=0
+
+[Install]
+WantedBy=multi-user.target

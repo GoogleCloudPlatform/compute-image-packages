@@ -1,0 +1,13 @@
+[Unit]
+Description=Google Compute Engine Instance Setup
+After=local-fs.target network-online.target network.target rsyslog.service
+Before=sshd.service
+Wants=local-fs.target network-online.target network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/google_instance_setup
+
+[Install]
+WantedBy=sshd.service
+WantedBy=multi-user.target

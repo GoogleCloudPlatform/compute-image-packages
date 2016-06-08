@@ -1,0 +1,317 @@
+#!/usr/bin/python
+# Copyright 2016 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Unittest for accounts_daemon.py module."""
+
+import datetime
+
+from google_compute_engine.accounts import accounts_daemon
+from google_compute_engine.test_compat import mock
+from google_compute_engine.test_compat import unittest
+
+
+class AccountsDaemonTest(unittest.TestCase):
+
+  def setUp(self):
+    self.mock_logger = mock.Mock()
+    self.mock_watcher = mock.Mock()
+    self.mock_utils = mock.Mock()
+
+    self.mock_setup = mock.create_autospec(accounts_daemon.AccountsDaemon)
+    self.mock_setup.logger = self.mock_logger
+    self.mock_setup.watcher = self.mock_watcher
+    self.mock_setup.utils = self.mock_utils
+
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.accounts_utils')
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.metadata_watcher')
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.logger')
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.file_utils')
+  def testAccountsDaemon(self, mock_lock, mock_logger, mock_watcher,
+                         mock_utils):
+    mock_logger_instance = mock.Mock()
+    mock_logger.Logger.return_value = mock_logger_instance
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_lock, 'lock')
+    mocks.attach_mock(mock_logger, 'logger')
+    mocks.attach_mock(mock_watcher, 'watcher')
+    mocks.attach_mock(mock_utils, 'utils')
+    with mock.patch.object(
+        accounts_daemon.AccountsDaemon, 'HandleAccounts') as mock_handle:
+      accounts_daemon.AccountsDaemon(groups='foo,bar', remove=True, debug=True)
+      expected_calls = [
+          mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
+          mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
+          mock.call.utils.AccountsUtils(
+              logger=mock_logger_instance, groups='foo,bar', remove=True),
+          mock.call.lock.LockFile(accounts_daemon.LOCKFILE),
+          mock.call.lock.LockFile().__enter__(),
+          mock.call.logger.Logger().info(mock.ANY),
+          mock.call.watcher.MetadataWatcher().WatchMetadata(
+              mock_handle, recursive=True),
+          mock.call.lock.LockFile().__exit__(None, None, None),
+      ]
+      self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.accounts_utils')
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.metadata_watcher')
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.logger')
+  @mock.patch('google_compute_engine.accounts.accounts_daemon.file_utils')
+  def testAccountsDaemonError(self, mock_lock, mock_logger, mock_watcher,
+                              mock_utils):
+    mock_logger_instance = mock.Mock()
+    mock_logger.Logger.return_value = mock_logger_instance
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_lock, 'lock')
+    mocks.attach_mock(mock_logger, 'logger')
+    mocks.attach_mock(mock_watcher, 'watcher')
+    mocks.attach_mock(mock_utils, 'utils')
+    mock_lock.LockFile.side_effect = IOError('Test Error')
+    with mock.patch.object(accounts_daemon.AccountsDaemon, 'HandleAccounts'):
+      accounts_daemon.AccountsDaemon()
+      expected_calls = [
+          mock.call.logger.Logger(
+              name=mock.ANY, debug=False, facility=mock.ANY),
+          mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
+          mock.call.utils.AccountsUtils(
+              logger=mock_logger_instance, groups=None, remove=False),
+          mock.call.lock.LockFile(accounts_daemon.LOCKFILE),
+          mock.call.logger.Logger().warning('Test Error'),
+      ]
+      self.assertEqual(mocks.mock_calls, expected_calls)
+
+  def testHasExpired(self):
+
+    def _GetTimestamp(days):
+      """Create a timestamp in the correct format with a days offset.
+
+      Args:
+        days: int, number of days to add to the current date.
+
+      Returns:
+        string, a timestamp with the format '%Y-%m-%dT%H:%M:%S+0000'.
+      """
+      format_str = '%Y-%m-%dT%H:%M:%S+0000'
+      today = datetime.datetime.now()
+      timestamp = today + datetime.timedelta(days=days)
+      return timestamp.strftime(format_str)
+
+    ssh_keys = {
+        None: False,
+        '': False,
+        'Invalid': False,
+        'user:ssh-rsa key user@domain.com': False,
+        'user:ssh-rsa key google {"expireOn":"%s"}' % _GetTimestamp(-1): False,
+        'user:ssh-rsa key google-ssh': False,
+        'user:ssh-rsa key google-ssh {invalid:json}': False,
+        'user:ssh-rsa key google-ssh {"userName":"user"}': False,
+        'user:ssh-rsa key google-ssh {"expireOn":"invalid"}': False,
+        'user:xyz key google-ssh {"expireOn":"%s"}' % _GetTimestamp(1): False,
+        'user:xyz key google-ssh {"expireOn":"%s"}' % _GetTimestamp(-1): True,
+    }
+
+    for key, expired in ssh_keys.items():
+      self.assertEqual(
+          accounts_daemon.AccountsDaemon._HasExpired(self.mock_setup, key),
+          expired)
+
+  def testParseAccountsData(self):
+    user_map = {
+        'a': ['1', '2'],
+        'b': ['3', '4', '5'],
+    }
+    accounts_data = 'skip\n'
+    for user, keys in user_map.items():
+      for key in keys:
+        accounts_data += '%s:%s\n' % (user, key)
+    # Make the _HasExpired function treat odd numbers as expired SSH keys.
+    self.mock_setup._HasExpired.side_effect = lambda key: int(key) % 2 == 0
+
+    self.assertEqual(
+        accounts_daemon.AccountsDaemon._ParseAccountsData(
+            self.mock_setup, None), {})
+    self.assertEqual(
+        accounts_daemon.AccountsDaemon._ParseAccountsData(
+            self.mock_setup, ''), {})
+    expected_users = {'a': ['1'], 'b': ['3', '5']}
+    self.assertEqual(accounts_daemon.AccountsDaemon._ParseAccountsData(
+        self.mock_setup, accounts_data), expected_users)
+
+  def testGetAccountsData(self):
+
+    def _AssertAccountsData(data, expected):
+      """Test the correct accounts data is returned.
+
+      Args:
+        data: dictionary, the faux metadata server contents.
+        expected: list, the faux SSH keys expected to be set.
+      """
+      accounts_daemon.AccountsDaemon._GetAccountsData(self.mock_setup, data)
+      if expected:
+        call_args, _ = self.mock_setup._ParseAccountsData.call_args
+        actual = call_args[0]
+        self.assertEqual(set(actual.split()), set(expected))
+      else:
+        self.mock_setup._ParseAccountsData.assert_called_once_with(expected)
+      self.mock_setup._ParseAccountsData.reset_mock()
+
+    data = None
+    _AssertAccountsData(data, '')
+
+    data = {'test': 'data'}
+    _AssertAccountsData(data, '')
+
+    data = {'instance': {'attributes': {}}}
+    _AssertAccountsData(data, '')
+
+    data = {'instance': {'attributes': {'ssh-keys': '1'}}}
+    _AssertAccountsData(data, ['1'])
+
+    data = {'instance': {'attributes': {'ssh-keys': '1', 'sshKeys': '2'}}}
+    _AssertAccountsData(data, ['1', '2'])
+
+    data = {'project': {'attributes': {'ssh-keys': '1'}}}
+    _AssertAccountsData(data, ['1'])
+
+    data = {'project': {'attributes': {'ssh-keys': '1', 'sshKeys': '2'}}}
+    _AssertAccountsData(data, ['1', '2'])
+
+    data = {
+        'instance': {
+            'attributes': {
+                'ssh-keys': '1',
+                'sshKeys': '2',
+            },
+        },
+        'project': {
+            'attributes': {
+                'ssh-keys': '3',
+            },
+        },
+    }
+    _AssertAccountsData(data, ['1', '2'])
+
+    data = {
+        'instance': {
+            'attributes': {
+                'ssh-keys': '1',
+                'block-project-ssh-keys': 'false',
+            },
+        },
+        'project': {
+            'attributes': {
+                'ssh-keys': '2',
+            },
+        },
+    }
+    _AssertAccountsData(data, ['1', '2'])
+
+    data = {
+        'instance': {
+            'attributes': {
+                'ssh-keys': '1',
+                'block-project-ssh-keys': 'true',
+            },
+        },
+        'project': {
+            'attributes': {
+                'ssh-keys': '2',
+            },
+        },
+    }
+    _AssertAccountsData(data, ['1'])
+
+    data = {
+        'instance': {
+            'attributes': {
+                'ssh-keys': '1',
+                'block-project-ssh-keys': 'false',
+            },
+        },
+        'project': {
+            'attributes': {
+                'ssh-keys': '2',
+                'sshKeys': '3',
+            },
+        },
+    }
+    _AssertAccountsData(data, ['1', '2', '3'])
+
+  def testUpdateUsers(self):
+    update_users = {
+        'a': '1',
+        'b': '2',
+        'c': '3',
+        'invalid': '4',
+        'valid': '5',
+    }
+    self.mock_setup.invalid_users = set(['invalid'])
+    # Make UpdateUser succeed for fake names longer than one character.
+    self.mock_utils.UpdateUser.side_effect = lambda user, _: len(user) > 1
+    accounts_daemon.AccountsDaemon._UpdateUsers(self.mock_setup, update_users)
+    expected_calls = [
+        mock.call('a', '1'),
+        mock.call('b', '2'),
+        mock.call('c', '3'),
+        mock.call('valid', '5'),
+    ]
+    self.mock_utils.UpdateUser.assert_has_calls(expected_calls, any_order=True)
+    self.assertEqual(
+        self.mock_utils.UpdateUser.call_count, len(expected_calls))
+    self.assertEqual(
+        self.mock_setup.invalid_users, set(['invalid', 'a', 'b', 'c']))
+
+  def testRemoveUsers(self):
+    remove_users = ['a', 'b', 'c', 'valid']
+    self.mock_setup.invalid_users = set(['invalid', 'a', 'b', 'c'])
+    accounts_daemon.AccountsDaemon._RemoveUsers(self.mock_setup, remove_users)
+    expected_calls = [
+        mock.call('a'),
+        mock.call('b'),
+        mock.call('c'),
+        mock.call('valid'),
+    ]
+    self.mock_utils.RemoveUser.assert_has_calls(expected_calls)
+    self.assertEqual(self.mock_setup.invalid_users, set(['invalid']))
+
+  def testHandleAccounts(self):
+    configured = ['c', 'c', 'b', 'b', 'a', 'a']
+    desired = {'d': '1', 'c': '2'}
+    mocks = mock.Mock()
+    mocks.attach_mock(self.mock_utils, 'utils')
+    mocks.attach_mock(self.mock_setup, 'setup')
+    self.mock_utils.GetConfiguredUsers.return_value = configured
+    self.mock_setup._GetAccountsData.return_value = desired
+    result = 'result'
+    expected_add = ['c', 'd']
+    expected_remove = ['a', 'b']
+
+    accounts_daemon.AccountsDaemon.HandleAccounts(self.mock_setup, result)
+    expected_calls = [
+        mock.call.setup.logger.debug(mock.ANY),
+        mock.call.utils.GetConfiguredUsers(),
+        mock.call.setup._GetAccountsData(result),
+        mock.call.setup._UpdateUsers(desired),
+        mock.call.setup._RemoveUsers(mock.ANY),
+        mock.call.utils.SetConfiguredUsers(mock.ANY),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+    call_args, _ = self.mock_utils.SetConfiguredUsers.call_args
+    self.assertEqual(set(call_args[0]), set(expected_add))
+    call_args, _ = self.mock_setup._RemoveUsers.call_args
+    self.assertEqual(set(call_args[0]), set(expected_remove))
+
+
+if __name__ == '__main__':
+  unittest.main()

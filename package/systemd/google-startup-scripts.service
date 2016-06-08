@@ -1,0 +1,13 @@
+[Unit]
+Description=Google Compute Engine Startup Scripts
+After=local-fs.target network-online.target network.target rsyslog.service
+After=google-instance-setup.service
+Wants=local-fs.target network-online.target network.target
+
+[Service]
+ExecStart=/usr/bin/google_metadata_script_runner --script-type startup
+KillMode=process
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
