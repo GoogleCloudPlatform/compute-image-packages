@@ -3,6 +3,27 @@
 This repository stores the collection of packages installed on Google supported
 Compute Engine [images](https://cloud.google.com/compute/docs/images).
 
+**Table of Contents**
+
+* [Background](#background)
+* [Guest Overview](#guest-overview)
+* [Common Libraries](#common-libraries)
+    * [Metadata Watcher](#metadata-watcher)
+    * [Logging](#logging)
+    * [Configuration Management](#configuration-management)
+    * [File Management](#file-management)
+* [Daemons](#daemons)
+    * [Accounts](#accounts)
+    * [Clock Skew](#clock-skew)
+    * [IP Forwarding](#ip-forwarding)
+* [Instance Setup](#instance-setup)
+* [Metadata Scripts](#metadata-scripts)
+* [Configuration](#configuration)
+* [Packaging](#packaging)
+* [Troubleshooting](#troubleshooting)
+* [Contributing](#contributing)
+* [License](#license)
+
 ## Background
 
 The Linux guest environment denotes the Google provided configuration and
@@ -40,7 +61,7 @@ are detailed in the sections below.
 The Python libraries are shared with each of the daemons and the instance setup
 tools.
 
-### Metadata Watcher
+#### Metadata Watcher
 
 The guest environment relies upon retrieving content from the metadata server to
 configure the VM environment. A metadata watching library handles all
@@ -65,7 +86,7 @@ unavailability; by default, any request has one minute to complete before the
 request is cancelled. In case of a brief network outage where the metadata
 server is unavailable, there is a short delay between retries.
 
-### Logging
+#### Logging
 
 The Google added daemons and scripts write to the serial port for added
 transparency. A common logging library is a thin wrapper around the Python
@@ -73,7 +94,7 @@ logging module. The library configures appropriate SysLog handlers, sets the
 logging formatter, and provides a debug options for added logging and console
 output.
 
-### Configuration Management
+#### Configuration Management
 
 A configuration file allows users to disable daemons and modify instance setup
 behaviors from a single location. Guest environment daemons and scripts need a
@@ -92,7 +113,7 @@ The library exposes the following functions:
     responsible for locking the file, preventing concurrent writes, and writing
     a file header if one is provided.
 
-### File Management
+#### File Management
 
 Guest environment daemons and scripts use a common library for file management.
 The library provides the following functions:
@@ -112,7 +133,7 @@ above. Each daemon reads the configuration file before execution. This allows a
 user to easily disable undesired functionality. Additional daemon behaviors are
 detailed below.
 
-### Accounts
+#### Accounts
 
 The accounts daemon is responsible for provisioning and deprovisioning user
 accounts. The daemon grants permissions to user accounts, and updates the list
@@ -132,13 +153,13 @@ The accounts management daemon has the following behaviors.
     keys for the user are removed from metadata.
 *   User accounts not managed by Google are not modified by the accounts daemon.
 
-### Clock Skew
+#### Clock Skew
 
 The clock skew daemon is responsible for syncing the software clock with the
 hypervisor clock after a stop/start event or after a migration. Preventing clock
 skew may result in `system time has changed` messages in VM logs.
 
-### IP Forwarding
+#### IP Forwarding
 
 The IP forwarding daemon uses IP forwarding metadata to setup or remove IP
 routes in the guest.
@@ -250,6 +271,15 @@ We build the following packages for the Linux guest environment.
 The package build tools are published. The tools are run on a GCE VM to build
 release packages, and the output deb and rpm packages are included in our
 GitHub releases.
+
+## Troubleshooting
+
+**Using boto with virtualenv**
+
+Specific to running `boto` inside of a Python
+[`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/),
+specify `--system-site-packages` when creating any virtual environment. This
+enables use of the Linux guest environmment package during setup.
 
 ## Contributing
 
