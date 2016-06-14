@@ -20,6 +20,7 @@ Compute Engine [images](https://cloud.google.com/compute/docs/images).
 * [Metadata Scripts](#metadata-scripts)
 * [Configuration](#configuration)
 * [Packaging](#packaging)
+* [Troubleshooting](#troubleshooting)
 * [Contributing](#contributing)
 * [License](#license)
 
@@ -270,6 +271,15 @@ We build the following packages for the Linux guest environment.
 The package build tools are published. The tools are run on a GCE VM to build
 release packages, and the output deb and rpm packages are included in our
 GitHub releases.
+
+## Troubleshooting
+
+**Using boto with virtualenv**
+
+Specific to running `boto` inside of a Python
+[`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/),
+specify `--system-site-packages` when creating any virtual environment. This
+enables use of the Linux guest environmment package during setup.
 
 ## Contributing
 
