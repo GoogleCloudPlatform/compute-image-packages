@@ -44,6 +44,7 @@ data_files = [
 
 # Data files specific to the various Linux init systems.
 data_files_dict = {
+    None: [],
     'systemd': [('/usr/lib/systemd/system', GetInitFiles('package/systemd'))],
     'sysvinit': [('/etc/init.d', GetInitFiles('package/sysvinit'))],
     'upstart': [('/etc/init', GetInitFiles('package/upstart'))],
@@ -51,14 +52,14 @@ data_files_dict = {
 
 
 if os.environ.get('CONFIG') not in data_files_dict.keys():
-  keys = ', '.join(data_files_dict.keys())
+  keys = ', '.join([key for key in data_files_dict.keys() if key])
   sys.exit('Expected "CONFIG" environment variable set to one of [%s].' % keys)
 
 
 setuptools.setup(
     author='Google Compute Engine Team',
     author_email='gc-team@google.com',
-    data_files=data_files + data_files_dict.get(os.environ['CONFIG']),
+    data_files=data_files + data_files_dict.get(os.environ.get('CONFIG')),
     description='Google Compute Engine',
     include_package_data=True,
     install_requires=['boto'],
