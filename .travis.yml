@@ -29,7 +29,7 @@ deploy:
   provider: pypi
   user: gc-team
   password:
-    secure: ljO08Dm8MnVZLse68cxe/o85x20C3JseBupESr2hXK/3axRYbW3o6TbRwAlHDCrOrDjg+NzmEjZojxg9A2+5DuWcWJLvKcCG4NbheoMAbs38IGou5mAbLhcj+GBdM03wKHqEDPEyMT5s/LuMlpOcxtDnF+oJ0Wm8czGnyi06IM4=
+    secure: hh1iPe4033hHRhhjSWyogjqECgPLcTLjlgtfI6qZdhyE9K2xIdL4HUYoVJdEXIp3hXvafJ/egcJvmaxpyNDhRcNfZjv4aRy3daBWFDEqaJFqbmF3F2eCu8Fn28xs4ZFqzi0O7hhgtweJZg66ux6fKtoBbVeVR9+hy6iUH08AoOg=
   on:
     tags: true
     distributions: sdist bdist_wheel
