@@ -17,6 +17,7 @@
 
 import functools
 import json
+import logging
 import os
 import socket
 import time
@@ -63,7 +64,7 @@ def RetryOnUnavailable(func):
 class MetadataWatcher(object):
   """Watches for changes in metadata."""
 
-  def __init__(self, logger, timeout=60):
+  def __init__(self, logger=logging, timeout=60):
     """Constructor.
 
     Args:
