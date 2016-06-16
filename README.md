@@ -20,6 +20,7 @@ Compute Engine [images](https://cloud.google.com/compute/docs/images).
 * [Metadata Scripts](#metadata-scripts)
 * [Configuration](#configuration)
 * [Packaging](#packaging)
+* [Package Distribution](#package-distribution)
 * [Troubleshooting](#troubleshooting)
 * [Contributing](#contributing)
 * [License](#license)
@@ -268,9 +269,63 @@ We build the following packages for the Linux guest environment.
     *   Configures the SysLog output that gets sent to serial port output.
     *   Includes bash scripts needed by `instance_setup`.
 
-The package build tools are published. The tools are run on a GCE VM to build
-release packages, and the output deb and rpm packages are included in our
-GitHub releases.
+The package build tools are published in this project.
+
+## Package Distribution
+
+The deb and rpm packages used in some GCE images are published to Google Cloud
+repositories. Debian 8, CentOS 6 and 7, and RHEL 6 and 7 use these repositories
+to install and update the `google-compute-engine` and `google-config` packages.
+If you are creating a custom image, you can also use these repositories in your
+image.
+
+**For Debian 8, run the following commands as root:**
+
+Add the public repo key to your system:
+```
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+```
+
+Add a source list file `/etc/apt/sources.list.d/google-cloud.list`:
+```
+tee /etc/apt/sources.list.d/google-cloud.list << EOM
+deb http://packages.cloud.google.com/apt google-cloud-compute-jessie main
+deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-jessie main
+EOM
+```
+
+Install the packages to maintain the public key over time:
+```
+apt-get update; apt-get install google-cloud-packages-archive-keyring
+```
+
+Install the `google-compute-engine-jessie` and `google-config-jessie` packages:
+```
+apt-get update; apt-get install google-compute-engine-jessie google-config-jessie
+```
+
+**For EL6 and EL7 based distributions, run the following commands as root:**
+
+Add the yum repo to a repo file `/etc/yum.repos.d/google-cloud.repo` for either
+EL6 or EL7. Change `DIST` to either 6 or 7 respectively:
+```
+DIST=7
+tee /etc/yum.repos.d/google-cloud.repo << EOM
+[google-cloud-compute]
+name=Google Cloud Compute
+baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-compute-el${DIST}-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOM
+```
+
+Install the `google-compute-engine` and `google-config` packages:
+```
+yum install -y google-compute-engine google-config
+```
 
 ## Troubleshooting
 
