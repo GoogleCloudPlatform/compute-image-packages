@@ -278,8 +278,13 @@ GitHub releases.
 
 Specific to running `boto` inside of a Python
 [`virtualenv`](http://docs.python-guide.org/en/latest/dev/virtualenvs/),
-specify `--system-site-packages` when creating any virtual environment. This
-enables use of the Linux guest environmment package during setup.
+virtual environments are isolated from system site-packages. This includes the
+installed Linux guest environment libraries that are used to configure `boto`
+credentials. There are two recommended solutions:
+
+*   Create a virtual environment with `virtualenv venv --system-site-packages`.
+*   Install `boto` via the Linux guest environment PyPI package using
+    `pip install google-compute-engine`.
 
 ## Contributing
 
