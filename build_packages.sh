@@ -55,3 +55,6 @@ build_distro 'el7' 'rpm' 'systemd' '/usr/lib/python2.7/site-packages'
 # Debian
 build_distro 'wheezy' 'deb' 'sysvinit' '/usr/lib/python2.7/dist-packages'
 build_distro 'jessie' 'deb' 'systemd' '/usr/lib/python2.7/dist-packages'
+
+# Ubuntu
+build_distro 'ubuntu-14.04' 'deb' 'upstart' '/usr/lib/python2.7/dist-packages'
