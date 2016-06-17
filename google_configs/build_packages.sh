@@ -42,23 +42,24 @@ function build_distro() {
     --url 'https://github.com/GoogleCloudPlatform/compute-image-packages' \
     --vendor 'Google Compute Engine Team' \
     --version '2.0.0' \
+    --replaces 'gce-startup-scripts' \
     "${COMMON_FILES[@]}" \
     "${files[@]:2}"
 }
 
-# RHEL/CentOS 6
+# RHEL/CentOS
 build_distro 'el6' 'rpm' \
   'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks'
-
-# RHEL/CentOS 7
 build_distro 'el7' 'rpm' \
   'bin/set_hostname=/usr/bin/set_hostname' \
   'dhcp/google_hostname.sh=/etc/dhcp/dhclient.d/google_hostname.sh'
 
-# Debian 7
+# Debian
 build_distro 'wheezy' 'deb' \
   'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
-
-# Debian 8
 build_distro 'jessie' 'deb' \
+  'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
+
+# Ubuntu
+build_distro 'ubuntu-14.04' 'deb' \
   'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
