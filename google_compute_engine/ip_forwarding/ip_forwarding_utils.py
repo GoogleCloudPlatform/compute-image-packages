@@ -15,6 +15,7 @@
 
 """Utilities for configuring IP address forwarding."""
 
+import os
 import re
 import subprocess
 
@@ -32,14 +33,44 @@ class IpForwardingUtils(object):
       proto_id: string, the routing protocol identifier for Google IP changes.
     """
     self.logger = logger
-    self.options = {
-        'dev': self._GetDefaultInterface(),
-        'proto': proto_id or '66',
+    self.proto_id = proto_id or '66'
+    self.interfaces = self._CreateInterfaceMap()
+
+  def _CreateInterfaceMap(self):
+    """Generate a dictionary mapping MAC address to ethernet interfaces.
+
+    Returns:
+      dict, string MAC addresses mapped to the string network interface name.
+    """
+    interfaces = {}
+    for interface in os.listdir('/sys/class/net'):
+      try:
+        mac_address = open('/sys/class/net/%s/address' % interface).read().strip()
+      except FileNotFoundError as e:
+        message = 'Unable to determine MAC address for %s. %s.'
+        self.logger.warning(message, interface, str(e))
+      else:
+        interfaces[mac_address] = interface
+    return interfaces
+
+  def _CreateRouteOptions(self, **kwargs):
+    """Create a dictionary of parameters to append to the ip route command.
+
+    Args:
+      **kwargs: dict, the string parameters to update in the ip route command.
+
+    Returns:
+      dict, the string parameters to append to the ip route command.
+    """
+    options = {
+        'proto': self.proto_id,
         'scope': 'host',
     }
+    options.update(kwargs)
+    return options
 
   def _RunIpRoute(self, args=None, options=None):
-    """Run a command with IP route and return the response.
+    """Run a command with ip route and return the response.
 
     Args:
       args: list, the string ip route command args to execute.
@@ -68,19 +99,16 @@ class IpForwardingUtils(object):
         return stdout
     return ''
 
-  def _GetDefaultInterface(self):
-    """Get the name of the default network interface.
+  def GetNetworkInterface(self, mac_address):
+    """Get the name of the network interface associated with a MAC address.
+
+    Args:
+      mac_address: string, the hardware address of the network interface.
 
     Returns:
-      string, the name of the default network interface.
+      string, the network interface associated with a MAC address or None.
     """
-    result = self._RunIpRoute(args=['list'])
-    for route in result.decode('utf-8').split('\n'):
-      fields = route.split()
-      if fields and fields[0] == 'default' and 'dev' in fields:
-        index = fields.index('dev') + 1
-        return fields[index] if index < len(fields) else 'eth0'
-    return 'eth0'
+    return self.interfaces.get(mac_address)
 
   def ParseForwardedIps(self, forwarded_ips):
     """Parse and validate forwarded IP addresses.
@@ -100,30 +128,38 @@ class IpForwardingUtils(object):
         self.logger.warning('Could not parse IP address: "%s".', ip)
     return addresses
 
-  def GetForwardedIps(self):
+  def GetForwardedIps(self, interface):
     """Retrieve the list of configured forwarded IP addresses.
+
+    Args:
+      interface: string, the output device to query.
 
     Returns:
       list, the IP address strings.
     """
     args = ['ls', 'table', 'local', 'type', 'local']
-    result = self._RunIpRoute(args=args, options=self.options)
+    options = self._CreateRouteOptions(dev=interface)
+    result = self._RunIpRoute(args=args, options=options)
     return self.ParseForwardedIps(result.split())
 
-  def AddForwardedIp(self, address):
+  def AddForwardedIp(self, address, interface):
     """Configure a new IP address on the network interface.
 
     Args:
       address: string, the IP address to configure.
+      interface: string, the output device to use.
     """
     args = ['add', 'to', 'local', '%s/32' % address]
-    self._RunIpRoute(args=args, options=self.options)
+    options = self._CreateRouteOptions(dev=interface)
+    self._RunIpRoute(args=args, options=options)
 
-  def RemoveForwardedIp(self, address):
+  def RemoveForwardedIp(self, address, interface):
     """Delete an IP address on the network interface.
 
     Args:
       address: string, the IP address to configure.
+      interface: string, the output device to use.
     """
     args = ['delete', 'to', 'local', '%s/32' % address]
-    self._RunIpRoute(args=args, options=self.options)
+    options = self._CreateRouteOptions(dev=interface)
+    self._RunIpRoute(args=args, options=options)
