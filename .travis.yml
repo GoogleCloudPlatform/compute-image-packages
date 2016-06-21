@@ -13,7 +13,7 @@ os:
 - linux
 install:
 # Python 3.2 is only supported by an older version of virtualenv/pip.
-- if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install "virtualenv<14.0.0" fi
+- if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install "virtualenv<14.0.0"; fi
 - if [[ $TRAVIS_PYTHON_VERSION != '3.2' ]]; then pip install --upgrade virtualenv pip; fi
 - pip install tox tox-travis
 script:
