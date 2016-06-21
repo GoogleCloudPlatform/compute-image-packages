@@ -46,7 +46,7 @@ class IpForwardingUtils(object):
     for interface in os.listdir('/sys/class/net'):
       try:
         mac_address = open('/sys/class/net/%s/address' % interface).read().strip()
-      except FileNotFoundError as e:
+      except (IOError, OSError) as e:
         message = 'Unable to determine MAC address for %s. %s.'
         self.logger.warning(message, interface, str(e))
       else:
