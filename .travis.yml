@@ -12,7 +12,10 @@ python:
 os:
 - linux
 install:
-- pip install --upgrade pip tox tox-travis
+# Python 3.2 is only supported by an older version of pip.
+- if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then curl https://bootstrap.pypa.io/3.2/get-pip.py | python3.2; fi
+- if [[ $TRAVIS_PYTHON_VERSION != '3.2' ]]; then pip install --upgrade pip; fi
+- pip install tox tox-travis
 script:
 - tox
 
