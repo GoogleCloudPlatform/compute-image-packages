@@ -14,6 +14,7 @@
 # limitations under the License.
 
 COMMON_FILES=(
+  'instance_configs.cfg=/etc/default/instance_configs.cfg'
   'rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf'
   'sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf'
   'udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules'
@@ -23,8 +24,18 @@ TIMESTAMP="$(date +%s)"
 function build_distro() {
   declare -r distro="$1"
   declare -r pkg_type="$2"
+  declare -r init_config="$3"
+  declare -r init_prefix="$4"
   declare files=("$@")
+  declare file_pattern='*[^.sh]'
+  declare init_files=(${init_config}/${file_pattern})
   declare name='google-config'
+
+  for ((i=0; i<${#init_files[@]}; i++)); do
+    file_name="$(basename ${init_files[$i]})"
+    file_entry="${init_config}/${file_name}=${init_prefix}/${file_name}"
+    init_files[$i]="$file_entry"
+  done
 
   if [[ "${pkg_type}" == 'deb' ]]; then
     name="${name}-${distro}"
@@ -33,32 +44,36 @@ function build_distro() {
   fpm \
     -s dir \
     -t "${pkg_type}" \
-    --description 'Google Compute Engine guest configs' \
+    --after-install "${init_config}/postinst.sh" \
+    --before-remove "${init_config}/prerm.sh" \
+    --depends "google-compute-engine-${distro}" \
+    --description 'Google Compute Engine Linux guest configuration' \
     --iteration "0.${TIMESTAMP}" \
     --license 'Apache Software License' \
     --maintainer 'gc-team@google.com' \
     --name "${name}" \
+    --replaces 'gce-startup-scripts' \
+    --replaces 'google-startup-scripts' \
     --rpm-dist "${distro}" \
     --url 'https://github.com/GoogleCloudPlatform/compute-image-packages' \
     --vendor 'Google Compute Engine Team' \
     --version '2.0.0' \
     "${COMMON_FILES[@]}" \
-    "${files[@]:2}"
+    "${init_files[@]}" \
+    "${files[@]:4}"
 }
 
-# RHEL/CentOS 6
-build_distro 'el6' 'rpm' \
+# RHEL/CentOS
+build_distro 'el6' 'rpm' 'upstart' '/etc/init' \
   'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks'
 
-# RHEL/CentOS 7
-build_distro 'el7' 'rpm' \
+build_distro 'el7' 'rpm' 'systemd' '/usr/lib/systemd/system' \
   'bin/set_hostname=/usr/bin/set_hostname' \
   'dhcp/google_hostname.sh=/etc/dhcp/dhclient.d/google_hostname.sh'
 
-# Debian 7
-build_distro 'wheezy' 'deb' \
+# Debian
+build_distro 'wheezy' 'deb' 'sysvinit' '/etc/init.d' \
   'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
 
-# Debian 8
-build_distro 'jessie' 'deb' \
+build_distro 'jessie' 'deb' 'systemd' '/usr/lib/systemd/system' \
   'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
