@@ -1,6 +1,6 @@
 ## Linux Guest Environment for Google Compute Engine
 
-[![Build Status](https://travis-ci.org/GoogleCloudPlatform/compute-image-packages.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/compute-image-packages)
+[![Build Status](https://travis-ci.org/GoogleCloudPlatform/compute-image-packages.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/compute-image-packages) [![codecov](https://codecov.io/gh/GoogleCloudPlatform/compute-image-packages/branch/master/graph/badge.svg)](https://codecov.io/gh/GoogleCloudPlatform/compute-image-packages)
 
 This repository stores the collection of packages installed on Google supported
 Compute Engine [images](https://cloud.google.com/compute/docs/images).
