@@ -14,7 +14,6 @@
 # limitations under the License.
 
 COMMON_FILES=(
-  'instance_configs.cfg=/etc/default/instance_configs.cfg'
   'rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf'
   'sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf'
   'udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules'
@@ -26,6 +25,7 @@ function build_distro() {
   declare -r pkg_type="$2"
   declare -r init_config="$3"
   declare -r init_prefix="$4"
+  declare depends='google-compute-engine'
   declare files=("$@")
   declare file_pattern='*[^.sh]'
   declare init_files=(${init_config}/${file_pattern})
@@ -38,6 +38,7 @@ function build_distro() {
   done
 
   if [[ "${pkg_type}" == 'deb' ]]; then
+    depends="google-compute-engine-${distro}"
     name="${name}-${distro}"
   fi
 
@@ -46,7 +47,7 @@ function build_distro() {
     -t "${pkg_type}" \
     --after-install "${init_config}/postinst.sh" \
     --before-remove "${init_config}/prerm.sh" \
-    --depends "google-compute-engine-${distro}" \
+    --depends "${depends}" \
     --description 'Google Compute Engine Linux guest configuration' \
     --iteration "0.${TIMESTAMP}" \
     --license 'Apache Software License' \
