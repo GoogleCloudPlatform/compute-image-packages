@@ -16,50 +16,13 @@
 """Create a Python package of the Linux guest environment."""
 
 import glob
-import os
-import sys
 
 import setuptools
-
-
-def GetInitFiles(path):
-  """Get the list of relative paths to init files.
-
-  Args:
-    path: string, the relative path to the source directory.
-
-  Returns:
-    list, the relative path strings for init files.
-  """
-  valid = '%s/*' % path
-  invalid = '%s/*.sh' % path
-  return list(set(glob.glob(valid)) - set(glob.glob(invalid)))
-
-
-# Common data files to add as part of all Linux distributions.
-data_files = [
-    ('/etc/default', ['package/instance_configs.cfg']),
-]
-
-
-# Data files specific to the various Linux init systems.
-data_files_dict = {
-    None: [],
-    'systemd': [('/usr/lib/systemd/system', GetInitFiles('package/systemd'))],
-    'sysvinit': [('/etc/init.d', GetInitFiles('package/sysvinit'))],
-    'upstart': [('/etc/init', GetInitFiles('package/upstart'))],
-}
-
-
-if os.environ.get('CONFIG') not in data_files_dict.keys():
-  keys = ', '.join([key for key in data_files_dict.keys() if key])
-  sys.exit('Expected "CONFIG" environment variable set to one of [%s].' % keys)
 
 
 setuptools.setup(
     author='Google Compute Engine Team',
     author_email='gc-team@google.com',
-    data_files=data_files + data_files_dict.get(os.environ.get('CONFIG')),
     description='Google Compute Engine',
     include_package_data=True,
     install_requires=['boto'],
