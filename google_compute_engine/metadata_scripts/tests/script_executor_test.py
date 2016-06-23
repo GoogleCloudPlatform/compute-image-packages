@@ -62,8 +62,8 @@ class ScriptExecutorTest(unittest.TestCase):
     ]
     self.assertEqual(self.mock_logger.info.mock_calls, expected_calls)
     mock_subprocess.Popen.assert_called_once_with(
-        self.metadata_script, shell=True, stderr=mock_subprocess.STDOUT,
-        stdout=mock_subprocess.PIPE)
+        self.metadata_script, shell=True, executable='/bin/bash',
+        stderr=mock_subprocess.STDOUT, stdout=mock_subprocess.PIPE)
     mock_process.poll.assert_called_once_with()
 
   def testRunScripts(self):
