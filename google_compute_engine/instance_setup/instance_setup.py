@@ -53,8 +53,7 @@ class InstanceSetup(object):
     if self.instance_config.GetOptionBool('InstanceSetup', 'set_multiqueue'):
       self._RunScript('set_multiqueue')
     if self.instance_config.GetOptionBool('InstanceSetup', 'network_enabled'):
-      while not self.metadata_dict:
-        self.metadata_dict = self.watcher.GetMetadata()
+      self.metadata_dict = self.watcher.GetMetadata()
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_host_keys'):
         self._SetSshHostKeys()
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
