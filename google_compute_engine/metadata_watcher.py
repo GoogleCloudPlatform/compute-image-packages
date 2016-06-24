@@ -140,6 +140,30 @@ class MetadataWatcher(object):
         break
     return json.loads(response.read().decode('utf-8'))
 
+  def _HandleMetadataUpdate(self, metadata_key='', recursive=True, wait=True):
+    """Wait for a successful metadata response.
+
+    Args:
+      metadata_key: string, the metadata key to watch for changes.
+      recursive: bool, True if we should recursively watch for metadata changes.
+      wait: bool, True if we should wait for a metadata change.
+
+    Returns:
+      json, the deserialized contents of the metadata server.
+    """
+    exception = None
+    while True:
+      try:
+        return self._GetMetadataUpdate(
+            metadata_key=metadata_key, recursive=recursive, wait=wait)
+      except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
+        if isinstance(e, type(exception)) and e.args == exception.args:
+          continue
+        else:
+          exception = e
+          message = 'GET request error retrieving metadata. %s.'
+          self.logger.exception(message, exception)
+
   def WatchMetadata(self, handler, metadata_key='', recursive=True):
     """Watch for changes to the contents of the metadata server.
 
@@ -149,15 +173,12 @@ class MetadataWatcher(object):
       recursive: bool, True if we should recursively watch for metadata changes.
     """
     while True:
-      try:
-        response = self._GetMetadataUpdate(
-            metadata_key=metadata_key, recursive=recursive, wait=True)
-      except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
-        self.logger.error('GET request error watching metadata. %s.', str(e))
+      response = self._HandleMetadataUpdate(
+          metadata_key=metadata_key, recursive=recursive, wait=True)
       try:
         handler(response)
       except Exception as e:
-        self.logger.error('Exception calling the response handler. %s.', str(e))
+        self.logger.exception('Exception calling the response handler. %s.', e)
 
   def GetMetadata(self, metadata_key='', recursive=True):
     """Retrieve the contents of metadata server for a metadata key.
@@ -169,9 +190,5 @@ class MetadataWatcher(object):
     Returns:
       json, the deserialized contents of the metadata server or None if error.
     """
-    try:
-      return self._GetMetadataUpdate(
-          metadata_key=metadata_key, recursive=recursive, wait=False)
-    except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
-      self.logger.error('GET request error retrieving metadata. %s.', str(e))
-    return None
+    return self._HandleMetadataUpdate(
+        metadata_key=metadata_key, recursive=recursive, wait=False)
