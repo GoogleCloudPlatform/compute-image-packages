@@ -162,7 +162,7 @@ class MetadataWatcher(object):
         else:
           exception = e
           message = 'GET request error retrieving metadata. %s.'
-          self.logger.error(message, str(exception))
+          self.logger.exception(message, exception)
 
   def WatchMetadata(self, handler, metadata_key='', recursive=True):
     """Watch for changes to the contents of the metadata server.
@@ -178,7 +178,7 @@ class MetadataWatcher(object):
       try:
         handler(response)
       except Exception as e:
-        self.logger.error('Exception calling the response handler. %s.', str(e))
+        self.logger.exception('Exception calling the response handler. %s.', e)
 
   def GetMetadata(self, metadata_key='', recursive=True):
     """Retrieve the contents of metadata server for a metadata key.

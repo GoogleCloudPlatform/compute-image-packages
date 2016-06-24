@@ -202,7 +202,7 @@ class MetadataWatcherTest(unittest.TestCase):
     self.assertEqual(self.mock_watcher.GetMetadata(), {})
     mock_response.assert_called_once_with(
         metadata_key='', recursive=True, wait=False)
-    self.mock_watcher.logger.error.assert_not_called()
+    self.mock_watcher.logger.exception.assert_not_called()
 
   def testHandleMetadataUpdateException(self):
     mock_response = mock.Mock()
@@ -224,9 +224,9 @@ class MetadataWatcherTest(unittest.TestCase):
     ] * 5
     self.assertEqual(mock_response.mock_calls, expected_calls)
     expected_calls = [
-        mock.call.error(mock.ANY, str(first)),
-        mock.call.error(mock.ANY, str(second)),
-        mock.call.error(mock.ANY, str(third)),
+        mock.call.exception(mock.ANY, first),
+        mock.call.exception(mock.ANY, second),
+        mock.call.exception(mock.ANY, third),
     ]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
@@ -236,7 +236,7 @@ class MetadataWatcherTest(unittest.TestCase):
     self.mock_watcher._HandleMetadataUpdate = mock_response
     mock_handler = mock.Mock()
     mock_handler.side_effect = Exception()
-    self.mock_logger.error.side_effect = RuntimeError()
+    self.mock_logger.exception.side_effect = RuntimeError()
     recursive = True
 
     with self.assertRaises(RuntimeError):
@@ -249,7 +249,7 @@ class MetadataWatcherTest(unittest.TestCase):
     mock_response = mock.Mock()
     mock_response.side_effect = metadata_watcher.socket.timeout()
     self.mock_watcher._GetMetadataUpdate = mock_response
-    self.mock_logger.error.side_effect = RuntimeError()
+    self.mock_logger.exception.side_effect = RuntimeError()
     metadata_key = 'instance/id'
     recursive = False
 
@@ -267,7 +267,7 @@ class MetadataWatcherTest(unittest.TestCase):
     self.assertEqual(self.mock_watcher.GetMetadata(), {})
     mock_response.assert_called_once_with(
         metadata_key='', recursive=True, wait=False)
-    self.mock_watcher.logger.error.assert_not_called()
+    self.mock_watcher.logger.exception.assert_not_called()
 
   def testGetMetadataArgs(self):
     mock_response = mock.Mock()
@@ -281,7 +281,7 @@ class MetadataWatcherTest(unittest.TestCase):
     self.assertEqual(response, {})
     mock_response.assert_called_once_with(
         metadata_key=metadata_key, recursive=False, wait=False)
-    self.mock_watcher.logger.error.assert_not_called()
+    self.mock_watcher.logger.exception.assert_not_called()
 
 
 if __name__ == '__main__':
