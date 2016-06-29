@@ -47,7 +47,9 @@ function build_distro() {
     --license 'Apache Software License' \
     --maintainer 'gc-team@google.com' \
     --name "${name}" \
+    --replaces 'gce-daemon' \
     --replaces 'gce-startup-scripts' \
+    --replaces 'google-compute-daemon' \
     --replaces 'google-startup-scripts' \
     --rpm-dist "${distro}" \
     --url 'https://github.com/GoogleCloudPlatform/compute-image-packages' \
