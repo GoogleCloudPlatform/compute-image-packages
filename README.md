@@ -258,14 +258,17 @@ SLES 12      | rpm          | 2.7            | systemd
 
 We build the following packages for the Linux guest environment.
 
-*   `google_compute_engine` is a Python package for Linux daemons, scripts, and
+*   `google-compute-engine` is a Python package for Linux daemons, scripts, and
     libraries.
     *   The package is installed to its distro default Python package location
         (e.g. `/usr/lib/python2.7/site-packages`).
-    *   Includes appropriate init files for sysvinit, upstart, and systemd.
     *   Entry point scripts, created by the Python package, are located in
         `/usr/bin`.
-*   `google_configs` is a package containing non-Python scripts and guest
+*   `google-compute-engine-init` is a package that contains init configuration
+    for the `google-compute-engine` Python package. Installing this package
+    will configure the `google-compute-engine` package to run on system
+    startup on sysvinit, upstart, or systemd init systems.
+*   `google-configs` is a package containing non-Python scripts and guest
     configuration.
     *   Sets up udev rules and sysctl rules.
     *   Configures the SysLog output that gets sent to serial port output.
@@ -277,9 +280,9 @@ The package build tools are published in this project.
 
 The deb and rpm packages used in some GCE images are published to Google Cloud
 repositories. Debian 8, CentOS 6 and 7, and RHEL 6 and 7 use these repositories
-to install and update the `google-compute-engine` and `google-config` packages.
-If you are creating a custom image, you can also use these repositories in your
-image.
+to install and update the `google-compute-engine`,`google-compute-engine-init`,
+and `google-config` packages. If you are creating a custom image, you can also
+use these repositories in your image.
 
 **For Debian 8, run the following commands as root:**
 
@@ -301,9 +304,10 @@ Install the packages to maintain the public key over time:
 apt-get update; apt-get install google-cloud-packages-archive-keyring
 ```
 
-Install the `google-compute-engine-jessie` and `google-config-jessie` packages:
+Install the `google-compute-engine-jessie`,
+`google-compute-engine-init-jessie`, and `google-config-jessie` packages:
 ```
-apt-get update; apt-get install google-compute-engine-jessie google-config-jessie
+apt-get update; apt-get install -y google-config-jessie google-compute-engine-jessie google-compute-engine-init-jessie
 ```
 
 **For EL6 and EL7 based distributions, run the following commands as root:**
@@ -324,9 +328,10 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 EOM
 ```
 
-Install the `google-compute-engine` and `google-config` packages:
+Install the `google-compute-engine`, `google-compute-engine-init`, and
+`google-config` packages:
 ```
-yum install -y google-compute-engine google-config
+yum install -y google-compute-engine google-compute-engine-init google-config
 ```
 
 ## Troubleshooting
