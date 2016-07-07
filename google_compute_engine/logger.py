@@ -15,9 +15,6 @@
 
 """A library for logging text to SysLog and the serial console."""
 
-import logging
-import logging.handlers
-
 from google_compute_engine.compat import logging
 
 

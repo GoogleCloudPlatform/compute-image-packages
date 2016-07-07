@@ -47,4 +47,3 @@ if sys.version_info < (2,7,):
       pass
 
   logging.NullHandler = NullHandler
-
