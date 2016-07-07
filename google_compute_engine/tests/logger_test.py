@@ -24,7 +24,7 @@ class LoggerTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.logger.logging.handlers.SysLogHandler')
   @mock.patch('google_compute_engine.logger.logging.StreamHandler')
-  @mock.patch('google_compute_engine.logger.logging.NullHandler')
+  @mock.patch('google_compute_engine.logger.NullHandler')
   def testLogger(self, mock_null, mock_stream, mock_syslog):
     mock_null.return_value = mock_null
     mock_stream.return_value = mock_stream

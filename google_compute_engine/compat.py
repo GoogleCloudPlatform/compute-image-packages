@@ -21,6 +21,7 @@ if sys.version_info >= (3,):
   # Python 3 imports.
   import configparser as parser
   import http.client as httpclient
+  from logging import NullHandler
   import urllib.error as urlerror
   import urllib.parse as urlparse
   import urllib.request as urlrequest
@@ -29,6 +30,21 @@ else:
   # Python 2 imports.
   import ConfigParser as parser
   import httplib as httpclient
+
+  import logging
+  try:  # Python 2.7+
+      from logging import NullHandler
+  except ImportError:
+      class NullHandler(logging.Handler):
+          def emit(self, record):
+              pass
+
+          def handle(self, record):
+              pass
+
+          def createLock(self):
+              pass
+
   import urllib as urlparse
   import urllib as urlretrieve
   import urllib2 as urlrequest
