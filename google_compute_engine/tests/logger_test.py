@@ -43,8 +43,7 @@ class LoggerTest(unittest.TestCase):
     mock_syslog.assert_called_once_with(address=address, facility=facility)
     mock_syslog.setLevel.assert_called_once_with(logger.logging.INFO)
     self.assertEqual(
-        named_logger.handlers,
-        [mock_null, mock_stream, mock_syslog])
+        named_logger.handlers, [mock_null, mock_stream, mock_syslog])
 
     # Verify the handlers are reset during repeated calls.
     named_logger = logger.Logger(name=name, debug=False)
