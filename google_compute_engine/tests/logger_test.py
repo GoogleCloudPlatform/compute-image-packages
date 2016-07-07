@@ -24,7 +24,9 @@ class LoggerTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.logger.logging.handlers.SysLogHandler')
   @mock.patch('google_compute_engine.logger.logging.StreamHandler')
-  def testLogger(self, mock_stream, mock_syslog):
+  @mock.patch('google_compute_engine.logger.logging.NullHandler')
+  def testLogger(self, mock_null, mock_stream, mock_syslog):
+    mock_null.return_value = mock_null
     mock_stream.return_value = mock_stream
     mock_syslog.return_value = mock_syslog
     name = 'test'
@@ -32,7 +34,7 @@ class LoggerTest(unittest.TestCase):
     # Verify basic logger setup.
     named_logger = logger.Logger(name=name, debug=True)
     mock_stream.setLevel.assert_called_once_with(logger.logging.DEBUG)
-    self.assertEqual(named_logger.handlers, [mock_stream])
+    self.assertEqual(named_logger.handlers, [mock_null, mock_stream])
 
     # Verify logger setup with a facility.
     address = '/dev/log'
@@ -40,11 +42,13 @@ class LoggerTest(unittest.TestCase):
     named_logger = logger.Logger(name=name, debug=True, facility=facility)
     mock_syslog.assert_called_once_with(address=address, facility=facility)
     mock_syslog.setLevel.assert_called_once_with(logger.logging.INFO)
-    self.assertEqual(named_logger.handlers, [mock_stream, mock_syslog])
+    self.assertEqual(
+        named_logger.handlers,
+        [mock_null, mock_stream, mock_syslog])
 
     # Verify the handlers are reset during repeated calls.
     named_logger = logger.Logger(name=name, debug=False)
-    self.assertEqual(named_logger.handlers, [])
+    self.assertEqual(named_logger.handlers, [mock_null])
 
 
 if __name__ == '__main__':

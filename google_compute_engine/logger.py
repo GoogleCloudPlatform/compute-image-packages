@@ -32,6 +32,7 @@ def Logger(name, debug=False, facility=None):
   """
   logger = logging.getLogger(name)
   logger.handlers = []
+  logger.addHandler(logging.NullHandler())
   logger.propagate = False
   logger.setLevel(logging.DEBUG)
   formatter = logging.Formatter(name + ': %(levelname)s %(message)s')
