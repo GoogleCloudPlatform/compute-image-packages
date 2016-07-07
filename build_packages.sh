@@ -20,21 +20,21 @@ TIMESTAMP="$(date +%s)"
 function build_distro() {
   declare -r distro="$1"
   declare -r pkg_type="$2"
-  declare -r init_config="$3"
-  declare -r py_path="$4"
+  declare -r py_path="$3"
+  declare depends='google-compute-engine-init'
   declare name='google-compute-engine'
 
   export CONFIG="${init_config}"
 
   if [[ "${pkg_type}" == 'deb' ]]; then
+    depends="${depends}-${distro}"
     name="${name}-${distro}"
   fi
 
   fpm \
     -s python \
     -t "${pkg_type}" \
-    --after-install "package/${init_config}/postinst.sh" \
-    --before-remove "package/${init_config}/prerm.sh" \
+    --depends "${depends}" \
     --depends 'python-boto' \
     --depends 'python-setuptools' \
     --iteration "0.${TIMESTAMP}" \
@@ -49,9 +49,9 @@ function build_distro() {
 }
 
 # RHEL/CentOS
-build_distro 'el6' 'rpm' 'upstart' '/usr/lib/python2.6/site-packages'
-build_distro 'el7' 'rpm' 'systemd' '/usr/lib/python2.7/site-packages'
+build_distro 'el6' 'rpm' '/usr/lib/python2.6/site-packages'
+build_distro 'el7' 'rpm' '/usr/lib/python2.7/site-packages'
 
 # Debian
-build_distro 'wheezy' 'deb' 'sysvinit' '/usr/lib/python2.7/dist-packages'
-build_distro 'jessie' 'deb' 'systemd' '/usr/lib/python2.7/dist-packages'
+build_distro 'wheezy' 'deb' '/usr/lib/python2.7/dist-packages'
+build_distro 'jessie' 'deb' '/usr/lib/python2.7/dist-packages'

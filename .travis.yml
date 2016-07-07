@@ -1,29 +1,25 @@
 language: python
 sudo: true
 python:
-  - 2.6
-  - 2.7
-  - 3.2
-  - 3.3
-  - 3.4
-  - 3.5
-  - pypy
-  - pypy3
-# Global configs cause unit tests to break.
-# Issue: travis-ci/travis-ci#5246
-env:
-  - BOTO_CONFIG=/tmp/fake
+- 2.6
+- 2.7
+- 3.2
+- 3.3
+- 3.4
+- 3.5
+- pypy
+- pypy3
 os:
-  - linux
-# Python 2.6 uses a backported version of unittest.
-# Python 3.2 does not have mock installed by default.
+- linux
 install:
-  - pip install boto
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install unittest2; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.2 ]]; then pip3.2 install mock; fi
-# nosetests will run all tests within the current directory.
+# Python 3.2 is only supported by an older version of virtualenv/pip.
+- if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install "virtualenv<14.0.0"; fi
+- if [[ $TRAVIS_PYTHON_VERSION != '3.2' ]]; then pip install --upgrade virtualenv pip; fi
+- pip install tox tox-travis codecov
 script:
-  - nosetests
+- tox
+after_success:
+- codecov
 
 deploy:
   provider: pypi

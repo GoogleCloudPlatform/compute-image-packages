@@ -44,7 +44,7 @@ class InstanceSetupTest(unittest.TestCase):
     mock_logger_instance = mock.Mock()
     mock_logger.Logger.return_value = mock_logger_instance
     mock_watcher_instance = mock.Mock()
-    mock_watcher_instance.GetMetadata.side_effect = [{}, {'hello': 'world'}]
+    mock_watcher_instance.GetMetadata.return_value = {'hello': 'world'}
     mock_watcher.MetadataWatcher.return_value = mock_watcher_instance
     mock_config_instance = mock.Mock()
     mock_config_instance.GetOptionBool.return_value = True
@@ -68,8 +68,6 @@ class InstanceSetupTest(unittest.TestCase):
         # Check network access for reaching the metadata server.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'network_enabled'),
-        # Retry metadata requests until network is available.
-        mock.call.watcher.MetadataWatcher().GetMetadata(),
         mock.call.watcher.MetadataWatcher().GetMetadata(),
         # Setup for SSH host keys if necessary.
         mock.call.config.InstanceConfig().GetOptionBool(

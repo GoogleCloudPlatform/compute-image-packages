@@ -1,0 +1,8 @@
+[run]
+branch = True
+include = google_compute_engine/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:

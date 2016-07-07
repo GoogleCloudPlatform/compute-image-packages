@@ -2,6 +2,10 @@
 *.pyo
 .DS_Store
 .idea
+.cache
+.tox
+.coverage
+*.egg-info
 
 # emacs backup files
 *.*~

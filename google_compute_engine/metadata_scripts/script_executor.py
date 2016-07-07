@@ -50,8 +50,8 @@ class ScriptExecutor(object):
       metadata_script: string, the file location of an executable script.
     """
     process = subprocess.Popen(
-        metadata_script, shell=True, stderr=subprocess.STDOUT,
-        stdout=subprocess.PIPE)
+        metadata_script, shell=True, executable='/bin/bash',
+        stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     while True:
       for line in iter(process.stdout.readline, b''):
         message = line.decode('utf-8').rstrip('\n')
