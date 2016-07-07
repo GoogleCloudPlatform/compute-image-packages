@@ -18,7 +18,7 @@
 import logging
 import logging.handlers
 
-from google_compute_engine.compat import NullHandler
+from google_compute_engine.compat import logging
 
 
 def Logger(name, debug=False, facility=None):
@@ -34,7 +34,7 @@ def Logger(name, debug=False, facility=None):
   """
   logger = logging.getLogger(name)
   logger.handlers = []
-  logger.addHandler(NullHandler())
+  logger.addHandler(logging.NullHandler())
   logger.propagate = False
   logger.setLevel(logging.DEBUG)
   formatter = logging.Formatter(name + ': %(levelname)s %(message)s')
