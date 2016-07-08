@@ -157,12 +157,11 @@ class MetadataWatcher(object):
         return self._GetMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait)
       except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
-        if isinstance(e, type(exception)) and e.args == exception.args:
+        if isinstance(e, type(exception)):
           continue
         else:
           exception = e
-          message = 'GET request error retrieving metadata. %s.'
-          self.logger.exception(message, exception)
+          self.logger.exception('GET request error retrieving metadata.')
 
   def WatchMetadata(self, handler, metadata_key='', recursive=True):
     """Watch for changes to the contents of the metadata server.

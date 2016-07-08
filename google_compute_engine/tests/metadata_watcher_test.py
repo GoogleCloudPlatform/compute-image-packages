@@ -207,9 +207,8 @@ class MetadataWatcherTest(unittest.TestCase):
   def testHandleMetadataUpdateException(self):
     mock_response = mock.Mock()
     first = metadata_watcher.socket.timeout()
-    second = metadata_watcher.socket.timeout('a')
-    third = metadata_watcher.urlerror.URLError('b')
-    mock_response.side_effect = [first, second, second, third, {}]
+    second = metadata_watcher.urlerror.URLError('Test')
+    mock_response.side_effect = [first, first, second, {}]
     self.mock_watcher._GetMetadataUpdate = mock_response
     metadata_key = 'instance/id'
     recursive = False
@@ -221,13 +220,9 @@ class MetadataWatcherTest(unittest.TestCase):
         {})
     expected_calls = [
         mock.call(metadata_key=metadata_key, recursive=recursive, wait=wait),
-    ] * 5
+    ] * 4
     self.assertEqual(mock_response.mock_calls, expected_calls)
-    expected_calls = [
-        mock.call.exception(mock.ANY, first),
-        mock.call.exception(mock.ANY, second),
-        mock.call.exception(mock.ANY, third),
-    ]
+    expected_calls = [mock.call.exception(mock.ANY)] * 2
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
   def testWatchMetadata(self):

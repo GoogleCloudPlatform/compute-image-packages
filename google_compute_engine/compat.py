@@ -15,6 +15,7 @@
 
 """A module for resolving compatibility issues between Python 2 and Python 3."""
 
+import logging
 import sys
 
 if sys.version_info >= (3,):
@@ -33,3 +34,16 @@ else:
   import urllib as urlretrieve
   import urllib2 as urlrequest
   import urllib2 as urlerror
+
+if sys.version_info < (2,7,):
+  class NullHandler(logging.Handler):
+    def emit(self, record):
+      pass
+
+    def handle(self, record):
+      pass
+
+    def createLock(self):
+      pass
+
+  logging.NullHandler = NullHandler
