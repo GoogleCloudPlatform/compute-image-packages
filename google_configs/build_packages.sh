@@ -46,6 +46,10 @@ function build_distro() {
     "${files[@]:2}"
 }
 
+# RHEL/CentOS 5
+build_distro 'el5' 'rpm' \
+  'bin/set_hostname=/etc/dhclient-exit-hooks'
+
 # RHEL/CentOS 6
 build_distro 'el6' 'rpm' \
   'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks'

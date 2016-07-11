@@ -64,6 +64,7 @@ function build_distro() {
 }
 
 # RHEL/CentOS
+build_distro 'el5' 'rpm' 'sysvinit-rhel5' '/etc/init.d'
 build_distro 'el6' 'rpm' 'upstart' '/etc/init'
 build_distro 'el7' 'rpm' 'systemd' '/usr/lib/systemd/system'
 
