@@ -71,17 +71,14 @@ class AccountsUtilsTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
-  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
-  def testCreateSudoersGroup(self, mock_exists, mock_call, mock_permissions):
+  def testCreateSudoersGroup(self, mock_call, mock_permissions):
     mock_open = mock.mock_open()
     mocks = mock.Mock()
-    mocks.attach_mock(mock_exists, 'exists')
     mocks.attach_mock(mock_call, 'call')
     mocks.attach_mock(mock_permissions, 'permissions')
     mocks.attach_mock(self.mock_utils._GetGroup, 'group')
     mocks.attach_mock(self.mock_logger, 'logger')
     self.mock_utils._GetGroup.return_value = False
-    mock_exists.return_value = False
     command = ['groupadd', self.sudoers_group]
 
     with mock.patch('%s.open' % builtin, mock_open, create=False):
@@ -91,25 +88,21 @@ class AccountsUtilsTest(unittest.TestCase):
     expected_calls = [
         mock.call.group(self.sudoers_group),
         mock.call.call(command),
-        mock.call.exists(self.sudoers_file),
         mock.call.permissions(self.sudoers_file, mode=0o440, uid=0, gid=0),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
-  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
-  def testCreateSudoersGroupSkip(self, mock_exists, mock_call,
-                                 mock_permissions):
-    mock_open = mock.mock_open()
+  def testCreateSudoersGroupSkip(self, mock_call, mock_permissions):
+    mock_open = mock.mock_open(read_data="%%%s ALL=(ALL:ALL) NOPASSWD:ALL" % self.sudoers_group)
+    mock_open.return_value.__iter__ = lambda self: iter(self.readline, '')
     mocks = mock.Mock()
-    mocks.attach_mock(mock_exists, 'exists')
     mocks.attach_mock(mock_call, 'call')
     mocks.attach_mock(mock_permissions, 'permissions')
     mocks.attach_mock(self.mock_utils._GetGroup, 'group')
     mocks.attach_mock(self.mock_logger, 'logger')
     self.mock_utils._GetGroup.return_value = True
-    mock_exists.return_value = True
 
     with mock.patch('%s.open' % builtin, mock_open, create=False):
       accounts_utils.AccountsUtils._CreateSudoersGroup(self.mock_utils)
@@ -117,33 +110,30 @@ class AccountsUtilsTest(unittest.TestCase):
 
     expected_calls = [
         mock.call.group(self.sudoers_group),
-        mock.call.exists(self.sudoers_file),
         mock.call.permissions(self.sudoers_file, mode=0o440, uid=0, gid=0),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
-  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
-  def testCreateSudoersGroupError(self, mock_exists, mock_call,
-                                  mock_permissions):
+  def testCreateSudoersGroupError(self, mock_call, mock_permissions):
+    mock_open = mock.mock_open()
     mocks = mock.Mock()
-    mocks.attach_mock(mock_exists, 'exists')
     mocks.attach_mock(mock_call, 'call')
     mocks.attach_mock(mock_permissions, 'permissions')
     mocks.attach_mock(self.mock_utils._GetGroup, 'group')
     mocks.attach_mock(self.mock_logger, 'logger')
     self.mock_utils._GetGroup.return_value = False
-    mock_exists.return_value = True
     mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
     command = ['groupadd', self.sudoers_group]
 
-    accounts_utils.AccountsUtils._CreateSudoersGroup(self.mock_utils)
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
+      accounts_utils.AccountsUtils._CreateSudoersGroup(self.mock_utils)
+
     expected_calls = [
         mock.call.group(self.sudoers_group),
         mock.call.call(command),
         mock.call.logger.warning(mock.ANY, mock.ANY),
-        mock.call.exists(self.sudoers_file),
         mock.call.permissions(self.sudoers_file, mode=0o440, uid=0, gid=0),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
