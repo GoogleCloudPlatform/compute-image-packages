@@ -23,6 +23,7 @@ from google_compute_engine.test_compat import unittest
 class ComputeAuthTest(unittest.TestCase):
 
   def setUp(self):
+    self.metadata_key = 'instance/service-accounts'
     self.service_account = 'service_account'
     self.mock_config = mock.Mock()
     self.mock_config.get.return_value = self.service_account
@@ -33,9 +34,9 @@ class ComputeAuthTest(unittest.TestCase):
   @mock.patch('google_compute_engine.boto.compute_auth.logger')
   def testCreateConfig(self, mock_logger, mock_watcher):
     scopes = list(compute_auth.GS_SCOPES)[1:2]
-    mock_watcher.GetMetadata.return_value = scopes
+    service_accounts = {self.service_account: {'scopes': scopes}}
+    mock_watcher.GetMetadata.return_value = service_accounts
     mock_watcher.MetadataWatcher.return_value = mock_watcher
-    scopes_key = 'instance/service-accounts/%s/scopes' % self.service_account
     mocks = mock.Mock()
     mocks.attach_mock(mock_watcher, 'watcher')
     mocks.attach_mock(mock_logger, 'logger')
@@ -49,12 +50,20 @@ class ComputeAuthTest(unittest.TestCase):
         mock.call.logger.Logger(name=mock.ANY),
         mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
         mock.call.config.get('GoogleCompute', 'service_account', ''),
-        mock.call.watcher.GetMetadata(metadata_key=scopes_key, recursive=False),
+        mock.call.watcher.GetMetadata(metadata_key=self.metadata_key)
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
     self.assertEqual(mock_compute_auth.scopes, scopes)
 
-  def testCreateConfigException(self):
+  @mock.patch('google_compute_engine.boto.compute_auth.metadata_watcher')
+  def testCreateConfigNoScopes(self, mock_watcher):
+    mock_watcher.GetMetadata.return_value = {}
+    mock_watcher.MetadataWatcher.return_value = mock_watcher
+
+    with self.assertRaises(compute_auth.auth_handler.NotReadyToAuthenticate):
+      compute_auth.ComputeAuth(None, self.mock_config, self.mock_provider)
+
+  def testCreateConfigNoServiceAccount(self):
     self.mock_config.get.return_value = None
 
     with self.assertRaises(compute_auth.auth_handler.NotReadyToAuthenticate):
@@ -62,37 +71,30 @@ class ComputeAuthTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.boto.compute_auth.metadata_watcher')
   def testGetAccessToken(self, mock_watcher):
-    mock_watcher.MetadataWatcher.return_value = mock_watcher
+    mock_auth = mock.create_autospec(compute_auth.ComputeAuth)
+    mock_auth.watcher = mock_watcher
+    mock_auth.metadata_key = self.metadata_key
+    mock_auth.service_account = self.service_account
     mock_watcher.GetMetadata.side_effect = [
-        list(compute_auth.GS_SCOPES),  # The Google Storage scopes.
-        {'access_token': 'token'},  # The access token.
-        {},  # The access token second query.
+        {self.service_account: {'token': {'access_token': 'test'}}},
+        {},
     ]
-    mock_compute_auth = compute_auth.ComputeAuth(
-        None, self.mock_config, self.mock_provider)
-    self.assertEqual(mock_compute_auth._GetAccessToken(), 'token')
-    self.assertEqual(mock_compute_auth._GetAccessToken(), None)
 
-    token_key = 'instance/service-accounts/%s/token' % self.service_account
-    expected_calls = [
-        mock.ANY,
-        mock.call(metadata_key=token_key, recursive=False),
-        mock.call(metadata_key=token_key, recursive=False),
-    ]
+    self.assertEqual(
+        compute_auth.ComputeAuth._GetAccessToken(mock_auth), 'test')
+    self.assertEqual(
+        compute_auth.ComputeAuth._GetAccessToken(mock_auth), None)
+    expected_calls = [mock.call(metadata_key=self.metadata_key)] * 2
     self.assertEqual(mock_watcher.GetMetadata.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.boto.compute_auth.metadata_watcher')
   def testAddAuth(self, mock_watcher):
+    mock_auth = mock.create_autospec(compute_auth.ComputeAuth)
+    mock_auth._GetAccessToken.return_value = 'token'
     mock_request = mock.Mock()
     mock_request.headers = {}
-    mock_watcher.MetadataWatcher.return_value = mock_watcher
-    mock_watcher.GetMetadata.side_effect = [
-        list(compute_auth.GS_SCOPES),  # The Google Storage scopes.
-        {'access_token': 'token'},  # The access token.
-    ]
-    mock_compute_auth = compute_auth.ComputeAuth(
-        None, self.mock_config, self.mock_provider)
-    mock_compute_auth.add_auth(mock_request)
+
+    compute_auth.ComputeAuth.add_auth(mock_auth, mock_request)
     self.assertEqual(mock_request.headers['Authorization'], 'OAuth token')
 
 

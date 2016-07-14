@@ -35,6 +35,7 @@ class ComputeAuth(auth_handler.AuthHandler):
   """
 
   capability = ['google-oauth2', 's3']
+  metadata_key = 'instance/service-accounts'
 
   def __init__(self, path, config, provider):
     self.logger = logger.Logger(name='compute-auth')
@@ -48,15 +49,20 @@ class ComputeAuth(auth_handler.AuthHandler):
 
   def _GetGsScopes(self):
     """Return all Google Storage scopes available on this VM."""
-    scopes_key = 'instance/service-accounts/%s/scopes' % self.service_account
-    scopes = self.watcher.GetMetadata(metadata_key=scopes_key, recursive=False)
-    return list(GS_SCOPES.intersection(set(scopes))) if scopes else None
+    service_accounts = self.watcher.GetMetadata(metadata_key=self.metadata_key)
+    try:
+      scopes = service_accounts[self.service_account]['scopes']
+      return list(GS_SCOPES.intersection(set(scopes))) if scopes else None
+    except KeyError:
+      return None
 
   def _GetAccessToken(self):
-    """Return an oauth2 access token for Google Storage."""
-    token_key = 'instance/service-accounts/%s/token' % self.service_account
-    token = self.watcher.GetMetadata(metadata_key=token_key, recursive=False)
-    return token['access_token'] if token else None
+    """Return an OAuth 2.0 access token for Google Storage."""
+    service_accounts = self.watcher.GetMetadata(metadata_key=self.metadata_key)
+    try:
+      return service_accounts[self.service_account]['token']['access_token']
+    except KeyError:
+      return None
 
   def add_auth(self, http_request):
     http_request.headers['Authorization'] = 'OAuth %s' % self._GetAccessToken()
