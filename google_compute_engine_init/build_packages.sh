@@ -20,7 +20,8 @@ function build_distro() {
   declare -r pkg_type="$2"
   declare -r init_config="$3"
   declare -r init_prefix="$4"
-  declare depends='google-compute-engine'
+  declare py_depends='google-compute-engine'
+  declare config_depends='google-config'
   declare file_pattern='*[^.sh]'
   declare init_files=(${init_config}/${file_pattern})
   declare name='google-compute-engine-init'
@@ -32,7 +33,8 @@ function build_distro() {
   done
 
   if [[ "${pkg_type}" == 'deb' ]]; then
-    depends="${depends}-${distro}"
+    py_depends="${py_depends}-${distro}"
+    config_depends="${config_depends}-${distro}"
     name="${name}-${distro}"
   fi
 
@@ -41,7 +43,8 @@ function build_distro() {
     -t "${pkg_type}" \
     --after-install "${init_config}/postinst.sh" \
     --before-remove "${init_config}/prerm.sh" \
-    --depends "${depends}" \
+    --depends "${py_depends}" \
+    --depends "${config_depends}" \
     --description 'Google Compute Engine Linux initialization scripts' \
     --iteration "0.${TIMESTAMP}" \
     --license 'Apache Software License' \
@@ -54,7 +57,7 @@ function build_distro() {
     --rpm-dist "${distro}" \
     --url 'https://github.com/GoogleCloudPlatform/compute-image-packages' \
     --vendor 'Google Compute Engine Team' \
-    --version '2.0.0' \
+    --version '2.0.1' \
     "${init_files[@]}"
 }
 
