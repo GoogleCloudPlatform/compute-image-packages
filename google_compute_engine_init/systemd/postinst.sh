@@ -26,6 +26,9 @@ systemctl enable google-ip-forwarding-daemon.service
 systemctl enable google-shutdown-scripts.service
 systemctl enable google-startup-scripts.service
 
+# Run instance setup.
+systemctl start --no-block google-instance-setup
+
 # Start daemons.
 systemctl start --no-block google-accounts-daemon
 systemctl start --no-block google-clock-skew-daemon
