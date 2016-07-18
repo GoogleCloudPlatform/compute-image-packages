@@ -19,3 +19,6 @@ update-rc.d google-instance-setup defaults
 update-rc.d google-ip-forwarding-daemon defaults
 update-rc.d google-shutdown-scripts defaults
 update-rc.d google-startup-scripts defaults
+
+# Run instance setup.
+/etc/init.d/google-instance-setup start
