@@ -26,8 +26,8 @@ systemctl enable google-ip-forwarding-daemon.service
 systemctl enable google-shutdown-scripts.service
 systemctl enable google-startup-scripts.service
 
-# Run instance setup.
-systemctl start --no-block google-instance-setup
+# Run instance setup manually to prevent startup script execution.
+/usr/bin/google_instance_setup
 
 # Start daemons.
 systemctl start --no-block google-accounts-daemon

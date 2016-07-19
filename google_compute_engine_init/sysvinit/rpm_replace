@@ -1,0 +1,4 @@
+# Replace existing guest.
+
+# Run instance setup.
+/usr/bin/google_instance_setup
