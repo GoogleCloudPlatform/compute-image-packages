@@ -18,8 +18,8 @@ stop --no-wait google-accounts-daemon
 stop --no-wait google-clock-skew-daemon
 stop --no-wait google-ip-forwarding-daemon
 
-# Run instance setup
-start --no-wait google-instance-setup
+# Run instance setup manually to prevent startup script execution.
+/usr/bin/google_instance_setup
 
 # Start daemons
 start --no-wait google-accounts-daemon

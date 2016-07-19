@@ -55,9 +55,11 @@ function build_distro() {
     --replaces 'google-compute-daemon' \
     --replaces 'google-startup-scripts' \
     --rpm-dist "${distro}" \
+    --rpm-trigger-after-target-uninstall \
+      "google-compute-daemon: ${init_config}/rpm_replace" \
     --url 'https://github.com/GoogleCloudPlatform/compute-image-packages' \
     --vendor 'Google Compute Engine Team' \
-    --version '2.0.1' \
+    --version '2.0.2' \
     "${init_files[@]}"
 }
 
