@@ -41,7 +41,7 @@ class InstanceConfig(config_manager.ConfigManager):
   instance_config_options = {
       'Accounts': {
           'deprovision_remove': 'false',
-          'groups': 'adm,dip,lxd,plugdev,video',
+          'groups': 'adm,dip,docker,lxd,plugdev,video',
       },
       'Daemons': {
           'accounts_daemon': 'true',
