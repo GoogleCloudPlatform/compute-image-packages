@@ -38,46 +38,59 @@ class MetadataWatcherTest(unittest.TestCase):
     self.mock_watcher = metadata_watcher.MetadataWatcher(
         logger=self.mock_logger, timeout=self.timeout)
 
-  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.urlopen')
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.build_opener')
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.ProxyHandler')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
-  def testGetMetadataRequest(self, mock_request, mock_urlopen):
-    mock_request.return_value = mock_request
+  def testGetMetadataRequest(self, mock_request, mock_proxy, mock_opener):
+    mock_open = mock.Mock()
+    mock_handler = mock.Mock()
     mock_response = mock.Mock()
-    mock_response.getcode.return_value = metadata_watcher.httpclient.OK
-    mock_urlopen.return_value = mock_response
-    request_url = '%s?' % self.url
-    headers = {'Metadata-Flavor': 'Google'}
-    timeout = self.timeout * 1.1
-
-    self.mock_watcher._GetMetadataRequest(self.url)
-    mock_request.assert_called_once_with(request_url, headers=headers)
-    mock_urlopen.assert_called_once_with(mock_request, timeout=timeout)
-
-  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.urlopen')
-  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
-  def testGetMetadataRequestArgs(self, mock_request, mock_urlopen):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_request, 'request')
+    mocks.attach_mock(mock_proxy, 'proxy')
+    mocks.attach_mock(mock_handler, 'handler')
+    mocks.attach_mock(mock_opener, 'opener')
+    mocks.attach_mock(mock_open, 'open')
+    mocks.attach_mock(mock_response, 'response')
     mock_request.return_value = mock_request
-    mock_response = mock.Mock()
+    mock_proxy.return_value = mock_handler
+    mock_opener.return_value = mock_open
     mock_response.getcode.return_value = metadata_watcher.httpclient.OK
-    mock_urlopen.return_value = mock_response
+    mock_open.open.return_value = mock_response
     params = {'hello': 'world'}
     request_url = '%s?hello=world' % self.url
     headers = {'Metadata-Flavor': 'Google'}
     timeout = self.timeout * 1.1
 
     self.mock_watcher._GetMetadataRequest(self.url, params=params)
-    mock_request.assert_called_once_with(request_url, headers=headers)
-    mock_urlopen.assert_called_once_with(mock_request, timeout=timeout)
+    expected_calls = [
+        mock.call.request(request_url, headers=headers),
+        mock.call.proxy({}),
+        mock.call.opener(mock_handler),
+        mock.call.open.open(mock_request, timeout=timeout),
+        mock.call.response.getcode(),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.metadata_watcher.time')
-  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.urlopen')
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.build_opener')
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.ProxyHandler')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
-  def testGetMetadataRequestRetry(self, mock_request, mock_urlopen, mock_time):
+  def testGetMetadataRequestRetry(self, mock_request, mock_proxy, mock_opener,
+                                  mock_time):
+    mock_open = mock.Mock()
+    mock_handler = mock.Mock()
     mocks = mock.Mock()
     mocks.attach_mock(mock_request, 'request')
-    mocks.attach_mock(mock_urlopen, 'urlopen')
+    mocks.attach_mock(mock_proxy, 'proxy')
+    mocks.attach_mock(mock_handler, 'handler')
+    mocks.attach_mock(mock_opener, 'opener')
+    mocks.attach_mock(mock_open, 'open')
     mocks.attach_mock(mock_time, 'time')
     mock_request.return_value = mock_request
+    mock_proxy.return_value = mock_handler
+    mock_opener.return_value = mock_open
+
     mock_unavailable = mock.Mock()
     mock_unavailable.getcode.return_value = (
         metadata_watcher.httpclient.SERVICE_UNAVAILABLE)
@@ -85,49 +98,70 @@ class MetadataWatcherTest(unittest.TestCase):
     mock_success.getcode.return_value = metadata_watcher.httpclient.OK
 
     # Retry after a service unavailable error response.
-    mock_urlopen.side_effect = [
+    mock_open.open.side_effect = [
         metadata_watcher.StatusException(mock_unavailable),
         mock_success,
     ]
-
-    self.mock_watcher._GetMetadataRequest(self.url)
     request_url = '%s?' % self.url
     headers = {'Metadata-Flavor': 'Google'}
     timeout = self.timeout * 1.1
+
+    self.mock_watcher._GetMetadataRequest(self.url)
     expected_calls = [
         mock.call.request(request_url, headers=headers),
-        mock.call.urlopen(mock_request, timeout=timeout),
+        mock.call.proxy({}),
+        mock.call.opener(mock_handler),
+        mock.call.open.open(mock_request, timeout=timeout),
         mock.call.time.sleep(mock.ANY),
         mock.call.request(request_url, headers=headers),
-        mock.call.urlopen(mock_request, timeout=timeout),
+        mock.call.proxy({}),
+        mock.call.opener(mock_handler),
+        mock.call.open.open(mock_request, timeout=timeout),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.urlopen')
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.build_opener')
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.ProxyHandler')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
-  def testGetMetadataRequestHttpException(self, mock_request, mock_urlopen):
-    mock_request.return_value = mock_request
+  def testGetMetadataRequestHttpException(self, mock_request, mock_proxy,
+                                          mock_opener):
+    mock_open = mock.Mock()
+    mock_handler = mock.Mock()
     mock_response = mock.Mock()
+    mock_request.return_value = mock_request
+    mock_proxy.return_value = mock_handler
+    mock_opener.return_value = mock_open
     mock_response.getcode.return_value = metadata_watcher.httpclient.NOT_FOUND
-    mock_urlopen.side_effect = metadata_watcher.StatusException(mock_response),
+    mock_open.open.side_effect = metadata_watcher.StatusException(mock_response)
 
     with self.assertRaises(metadata_watcher.StatusException):
       self.mock_watcher._GetMetadataRequest(self.url)
     self.assertEqual(mock_request.call_count, 1)
-    self.assertEqual(mock_urlopen.call_count, 1)
+    self.assertEqual(mock_proxy.call_count, 1)
+    self.assertEqual(mock_opener.call_count, 1)
+    self.assertEqual(mock_open.open.call_count, 1)
+    self.assertEqual(mock_response.getcode.call_count, 1)
 
-  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.urlopen')
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.build_opener')
+  @mock.patch('google_compute_engine.metadata_watcher.urlrequest.ProxyHandler')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
-  def testGetMetadataRequestException(self, mock_request, mock_urlopen):
-    mock_request.return_value = mock_request
+  def testGetMetadataRequestException(self, mock_request, mock_proxy,
+                                      mock_opener):
+    mock_open = mock.Mock()
+    mock_handler = mock.Mock()
     mock_response = mock.Mock()
+    mock_request.return_value = mock_request
+    mock_proxy.return_value = mock_handler
+    mock_opener.return_value = mock_open
     mock_response.getcode.return_value = metadata_watcher.httpclient.NOT_FOUND
-    mock_urlopen.side_effect = mock_response
+    mock_open.open.side_effect = mock_response
 
     with self.assertRaises(metadata_watcher.StatusException):
       self.mock_watcher._GetMetadataRequest(self.url)
     self.assertEqual(mock_request.call_count, 1)
-    self.assertEqual(mock_urlopen.call_count, 1)
+    self.assertEqual(mock_proxy.call_count, 1)
+    self.assertEqual(mock_opener.call_count, 1)
+    self.assertEqual(mock_open.open.call_count, 1)
 
   def testUpdateEtag(self):
     mock_response = mock.Mock()

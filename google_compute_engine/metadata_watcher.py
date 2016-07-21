@@ -93,7 +93,8 @@ class MetadataWatcher(object):
     params = urlparse.urlencode(params or {})
     url = '%s?%s' % (metadata_url, params)
     request = urlrequest.Request(url, headers=headers)
-    return urlrequest.urlopen(request, timeout=self.timeout*1.1)
+    request_opener = urlrequest.build_opener(urlrequest.ProxyHandler({}))
+    return request_opener.open(request, timeout=self.timeout*1.1)
 
   def _UpdateEtag(self, response):
     """Update the etag from an API response.
