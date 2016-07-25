@@ -101,7 +101,7 @@ class ConfigManagerTest(unittest.TestCase):
 
   def testGetOptionBoolNoOption(self):
     option = 'test-option'
-    self.assertFalse(
+    self.assertTrue(
         self.mock_config_manager.GetOptionBool(self.section, option))
     expected_calls = [
         mock.call.read(self.config_file),
