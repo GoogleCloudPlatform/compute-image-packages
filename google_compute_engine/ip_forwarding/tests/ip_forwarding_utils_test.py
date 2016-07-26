@@ -20,25 +20,36 @@ from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
 
+def _create_mock_process(returncode, stdout, stderr):
+    mock_process = mock.Mock()
+    mock_process.returncode = returncode
+    mock_process.communicate.return_value = (stdout, stderr)
+    return mock_process
+
+
 class IpForwardingUtilsTest(unittest.TestCase):
 
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.options = {'hello': 'world'}
-    self.mock_utils = ip_forwarding_utils.IpForwardingUtils(self.mock_logger)
+    with mock.patch(
+            'google_compute_engine.ip_forwarding.ip_forwarding_utils'
+            '.subprocess') as mock_subprocess:
+        mock_subprocess.Popen.return_value = _create_mock_process(
+            0, b'out', b'')
+        self.mock_utils = ip_forwarding_utils.IpForwardingUtils(
+            self.mock_logger)
     self.mock_utils.options = self.options
 
   @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_utils.subprocess')
   def testRunIpRoute(self, mock_subprocess):
-    mock_process = mock.Mock()
-    mock_process.returncode = 0
-    mock_process.communicate.return_value = ('out', '')
+    mock_process = _create_mock_process(0, b'out', b'')
     mock_subprocess.Popen.return_value = mock_process
     args = ['foo', 'bar']
     options = {'one': 'two'}
 
     self.assertEqual(
-        self.mock_utils._RunIpRoute(args=args, options=options), 'out')
+        self.mock_utils._RunIpRoute(args=args, options=options), b'out')
     command = ['ip', 'route', 'foo', 'bar', 'one', 'two']
     mock_subprocess.Popen.assert_called_once_with(
         command, stdout=mock_subprocess.PIPE, stderr=mock_subprocess.PIPE)
@@ -47,16 +58,15 @@ class IpForwardingUtilsTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_utils.subprocess')
   def testRunIpRouteReturnCode(self, mock_subprocess):
-    mock_process = mock.Mock()
-    mock_process.returncode = 1
-    mock_process.communicate.return_value = ('out', 'error\n')
-    mock_subprocess.Popen.return_value = mock_process
+    mock_subprocess.Popen.return_value = _create_mock_process(
+        1, b'out', b'error\n')
 
     self.assertEqual(
         self.mock_utils._RunIpRoute(args=['foo', 'bar'], options=self.options),
         '')
     command = ['ip', 'route', 'foo', 'bar', 'hello', 'world']
-    self.mock_logger.warning.assert_called_once_with(mock.ANY, command, 'error')
+    self.mock_logger.warning.assert_called_once_with(
+        mock.ANY, command, b'error')
 
   @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_utils.subprocess')
   def testRunIpRouteException(self, mock_subprocess):
