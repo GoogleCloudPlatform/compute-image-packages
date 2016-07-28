@@ -65,6 +65,10 @@ class InstanceConfig(config_manager.ConfigManager):
           'startup': 'true',
           'shutdown': 'true',
       },
+      'NetworkInterfaces': {
+          'setup': 'true',
+          'network_manager': 'dhclient',
+      },
   }
 
   def __init__(self):

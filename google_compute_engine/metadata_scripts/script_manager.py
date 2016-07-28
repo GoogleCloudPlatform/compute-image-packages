@@ -64,6 +64,7 @@ class ScriptManager(object):
     self._RunScripts()
 
   def _RunScripts(self):
+    """Retrieve metadata scripts and execute them."""
     with _CreateTempDir(self.script_type) as dest_dir:
       try:
         self.logger.info('Starting %s scripts.', self.script_type)
@@ -76,10 +77,11 @@ class ScriptManager(object):
 def main():
   script_types = ('startup', 'shutdown')
   parser = optparse.OptionParser()
-  parser.add_option('-d', '--debug', action='store_true', dest='debug',
-                    help='print debug output to the console.')
-  parser.add_option('--script-type', dest='script_type',
-                    help='metadata script type.')
+  parser.add_option(
+      '-d', '--debug', action='store_true', dest='debug',
+      help='print debug output to the console.')
+  parser.add_option(
+      '--script-type', dest='script_type', help='metadata script type.')
   (options, _) = parser.parse_args()
   if options.script_type and options.script_type.lower() in script_types:
     script_type = options.script_type.lower()

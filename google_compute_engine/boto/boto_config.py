@@ -42,13 +42,14 @@ class BotoConfig(object):
       'not edit this file directly. If you need to add items to this file, '
       'create or edit %s instead and then re-run the script.')
 
-  def __init__(self, project_id=None):
+  def __init__(self, project_id=None, debug=False):
     """Constructor.
 
     Args:
       project_id: string, the project ID to use in the config file.
+      debug: bool, True if debug output should write to the console.
     """
-    self.logger = logger.Logger(name='boto-setup')
+    self.logger = logger.Logger(name='boto-setup', debug=debug)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self._CreateConfig(project_id)
 

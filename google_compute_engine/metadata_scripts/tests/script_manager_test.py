@@ -27,8 +27,9 @@ class ScriptManagerTest(unittest.TestCase):
   @mock.patch('google_compute_engine.metadata_scripts.script_manager.script_executor')
   @mock.patch('google_compute_engine.metadata_scripts.script_manager.shutil.rmtree')
   @mock.patch('google_compute_engine.metadata_scripts.script_manager.tempfile.mkdtemp')
-  def testRunScripts(self, mock_mkdir, mock_rmtree, mock_executor, mock_logger,
-                     mock_retriever):
+  def testRunScripts(
+      self, mock_mkdir, mock_rmtree, mock_executor, mock_logger,
+      mock_retriever):
     mock_logger_instance = mock.Mock()
     mock_logger.Logger.return_value = mock_logger_instance
     mock_retriever_instance = mock.Mock()

@@ -101,8 +101,8 @@ class InstanceConfigTest(unittest.TestCase):
   @mock.patch('google_compute_engine.instance_setup.instance_config.parser')
   @mock.patch('google_compute_engine.instance_setup.instance_config.config_manager.ConfigManager.SetOption')
   @mock.patch('google_compute_engine.instance_setup.instance_config.config_manager.ConfigManager.__init__')
-  def testInstanceConfigDistroExists(self, mock_init, mock_set, mock_parser,
-                                     mock_exists):
+  def testInstanceConfigDistroExists(
+      self, mock_init, mock_set, mock_parser, mock_exists):
     mock_config = mock.create_autospec(instance_config.parser.SafeConfigParser)
     mock_config.read = mock.Mock()
     mock_config.sections = mock.Mock()

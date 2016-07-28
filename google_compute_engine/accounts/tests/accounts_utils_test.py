@@ -99,8 +99,8 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
-  def testCreateSudoersGroupSkip(self, mock_exists, mock_call,
-                                 mock_permissions):
+  def testCreateSudoersGroupSkip(
+      self, mock_exists, mock_call, mock_permissions):
     mock_open = mock.mock_open()
     mocks = mock.Mock()
     mocks.attach_mock(mock_exists, 'exists')
@@ -125,8 +125,8 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
-  def testCreateSudoersGroupError(self, mock_exists, mock_call,
-                                  mock_permissions):
+  def testCreateSudoersGroupError(
+      self, mock_exists, mock_call, mock_permissions):
     mocks = mock.Mock()
     mocks.attach_mock(mock_exists, 'exists')
     mocks.attach_mock(mock_call, 'call')
@@ -227,8 +227,8 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.shutil.copy')
   @mock.patch('google_compute_engine.accounts.accounts_utils.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
-  def testUpdateAuthorizedKeys(self, mock_exists, mock_tempfile, mock_copy,
-                               mock_permissions):
+  def testUpdateAuthorizedKeys(
+      self, mock_exists, mock_tempfile, mock_copy, mock_permissions):
     mock_open = mock.mock_open()
     user = 'user'
     ssh_keys = ['Google key 1', 'Google key 2']
@@ -287,8 +287,8 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.shutil.copy')
   @mock.patch('google_compute_engine.accounts.accounts_utils.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
-  def testUpdateAuthorizedKeysNoKeys(self, mock_exists, mock_tempfile,
-                                     mock_copy, mock_permissions):
+  def testUpdateAuthorizedKeysNoKeys(
+      self, mock_exists, mock_tempfile, mock_copy, mock_permissions):
     user = 'user'
     ssh_keys = ['Google key 1']
     temp_dest = '/tmp/dest'
@@ -418,8 +418,9 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.accounts.accounts_utils.shutil.copy')
   @mock.patch('google_compute_engine.accounts.accounts_utils.tempfile.NamedTemporaryFile')
-  def testSetConfiguredUsers(self, mock_tempfile, mock_copy, mock_permissions,
-                             mock_exists, mock_makedirs):
+  def testSetConfiguredUsers(
+      self, mock_tempfile, mock_copy, mock_permissions, mock_exists,
+      mock_makedirs):
     temp_dest = '/temp/dest'
     users = ['a', 'b', 'c']
     mock_tempfile.return_value = mock_tempfile
