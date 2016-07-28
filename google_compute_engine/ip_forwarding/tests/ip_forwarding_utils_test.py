@@ -16,6 +16,7 @@
 """Unittest for ip_forwarding_utils.py module."""
 
 from google_compute_engine.ip_forwarding import ip_forwarding_utils
+from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -24,9 +25,70 @@ class IpForwardingUtilsTest(unittest.TestCase):
 
   def setUp(self):
     self.mock_logger = mock.Mock()
+    self.interfaces = {'address': 'interface'}
     self.options = {'hello': 'world'}
     self.mock_utils = ip_forwarding_utils.IpForwardingUtils(self.mock_logger)
-    self.mock_utils.options = self.options
+    self.mock_utils.interfaces = self.interfaces
+    self.mock_utils.proto_id = 'proto'
+
+  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_utils.os.listdir')
+  def testCreateInterfaceMap(self, mock_listdir):
+    mock_open = mock.mock_open()
+    interface_map = {
+        '1': 'a',
+        '2': 'b',
+        '3': 'c',
+    }
+    mock_listdir.return_value = interface_map.values()
+
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
+      addresses = interface_map.keys()
+      addresses = ['%s\n' % address for address in addresses]
+      mock_open().read.side_effect = interface_map.keys()
+      self.assertEqual(self.mock_utils._CreateInterfaceMap(), interface_map)
+
+  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_utils.os.listdir')
+  def testCreateInterfaceMapError(self, mock_listdir):
+    mock_open = mock.mock_open()
+    mock_listdir.return_value = ['a', 'b', 'c']
+
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
+      mock_open().read.side_effect = [
+          '1', OSError('OSError'), IOError('IOError')]
+      self.assertEqual(self.mock_utils._CreateInterfaceMap(), {'1': 'a'})
+      expected_calls = [
+          mock.call.warning(mock.ANY, 'b', 'OSError'),
+          mock.call.warning(mock.ANY, 'c', 'IOError'),
+      ]
+      self.assertEqual(self.mock_logger.mock_calls, expected_calls)
+
+  def testCreateRouteOptions(self):
+    # Default options.
+    expected_options = {
+        'proto': 'proto',
+        'scope': 'host',
+    }
+    self.assertEqual(self.mock_utils._CreateRouteOptions(), expected_options)
+
+    # Update dictionary when arguments are specified.
+    expected_options = {
+        'proto': 'proto',
+        'scope': 'host',
+        'num': 1,
+        'string': 'hello world',
+    }
+    self.assertEqual(
+        self.mock_utils._CreateRouteOptions(num=1, string='hello world'),
+        expected_options)
+
+    # Update the default options.
+    expected_options = {
+        'proto': 'test 1',
+        'scope': 'test 2',
+    }
+    self.assertEqual(
+        self.mock_utils._CreateRouteOptions(proto='test 1', scope='test 2'),
+        expected_options)
 
   @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_utils.subprocess')
   def testRunIpRoute(self, mock_subprocess):
@@ -69,29 +131,10 @@ class IpForwardingUtilsTest(unittest.TestCase):
     self.mock_logger.warning.assert_called_once_with(
         mock.ANY, command, 'Test Error')
 
-  def testGetDefaultInterface(self):
-    mock_run = mock.Mock()
-    mock_run.side_effect = [
-        bytes(b''),
-        bytes(b'invalid route\n'),
-        bytes(b'default invalid interface\n'),
-        bytes(b'default dev\n'),
-        bytes(b'\n\n\ndefault dev interface\n\n\n'),
-        bytes(b'default via ip dev interface\nip default eth0\n'),
-        bytes(b'ip default eth0\ndefault via ip dev interface\n'),
-    ]
-    self.mock_utils._RunIpRoute = mock_run
-
-    # Invalid routes default to 'eth0'.
-    self.assertEqual(self.mock_utils._GetDefaultInterface(), 'eth0')
-    self.assertEqual(self.mock_utils._GetDefaultInterface(), 'eth0')
-    self.assertEqual(self.mock_utils._GetDefaultInterface(), 'eth0')
-    self.assertEqual(self.mock_utils._GetDefaultInterface(), 'eth0')
-
-    # Valid routes where the expected response is 'interface'.
-    self.assertEqual(self.mock_utils._GetDefaultInterface(), 'interface')
-    self.assertEqual(self.mock_utils._GetDefaultInterface(), 'interface')
-    self.assertEqual(self.mock_utils._GetDefaultInterface(), 'interface')
+  def testGetNetworkInterface(self):
+    self.assertIsNone(self.mock_utils.GetNetworkInterface('invalid'))
+    self.assertEqual(
+        self.mock_utils.GetNetworkInterface('address'), 'interface')
 
   def testParseForwardedIps(self):
     self.assertEqual(self.mock_utils.ParseForwardedIps(None), [])
@@ -133,41 +176,43 @@ class IpForwardingUtilsTest(unittest.TestCase):
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
   def testGetForwardedIps(self):
-    mock_run = mock.Mock()
-    mock_run.return_value = ''
-    mock_parse = mock.Mock()
-    mock_parse.return_value = ['Test']
-    self.mock_utils._RunIpRoute = mock_run
-    self.mock_utils.ParseForwardedIps = mock_parse
-
-    self.assertEqual(self.mock_utils.GetForwardedIps(), ['Test'])
-    mock_run.assert_called_once_with(
-        args=['ls', 'table', 'local', 'type', 'local'], options=self.options)
-    mock_parse.assert_called_once_with([])
-
-  def testGetForwardedIpsSplit(self):
+    mock_options = mock.Mock()
+    mock_options.return_value = self.options
     mock_run = mock.Mock()
     mock_run.return_value = 'a\nb\n'
     mock_parse = mock.Mock()
+    mock_parse.return_value = ['Test']
+    self.mock_utils._CreateRouteOptions = mock_options
     self.mock_utils._RunIpRoute = mock_run
     self.mock_utils.ParseForwardedIps = mock_parse
 
-    self.mock_utils.GetForwardedIps()
+    self.assertEqual(self.mock_utils.GetForwardedIps('interface'), ['Test'])
+    mock_options.assert_called_once_with(dev='interface')
+    mock_run.assert_called_once_with(
+        args=['ls', 'table', 'local', 'type', 'local'], options=self.options)
     mock_parse.assert_called_once_with(['a', 'b'])
 
   def testAddForwardedIp(self):
+    mock_options = mock.Mock()
+    mock_options.return_value = self.options
     mock_run = mock.Mock()
+    self.mock_utils._CreateRouteOptions = mock_options
     self.mock_utils._RunIpRoute = mock_run
 
-    self.mock_utils.AddForwardedIp('1.1.1.1')
+    self.mock_utils.AddForwardedIp('1.1.1.1', 'interface')
+    mock_options.assert_called_once_with(dev='interface')
     mock_run.assert_called_once_with(
         args=['add', 'to', 'local', '1.1.1.1/32'], options=self.options)
 
   def testRemoveForwardedIp(self):
+    mock_options = mock.Mock()
+    mock_options.return_value = self.options
     mock_run = mock.Mock()
+    self.mock_utils._CreateRouteOptions = mock_options
     self.mock_utils._RunIpRoute = mock_run
 
-    self.mock_utils.RemoveForwardedIp('1.1.1.1')
+    self.mock_utils.RemoveForwardedIp('1.1.1.1', 'interface')
+    mock_options.assert_called_once_with(dev='interface')
     mock_run.assert_called_once_with(
         args=['delete', 'to', 'local', '1.1.1.1/32'], options=self.options)
 
