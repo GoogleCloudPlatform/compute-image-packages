@@ -1,9 +1,12 @@
 # Replace existing guest in EL6.
 
-# Run instance setup
+# Run instance setup.
 /usr/bin/google_instance_setup
 
-# Manually start daemon's
+# Enable network interfaces.
+/usr/bin/google_network_setup
+
+# Manually start daemons.
 start --no-wait google-accounts-daemon
 start --no-wait google-clock-skew-daemon
 start --no-wait google-ip-forwarding-daemon

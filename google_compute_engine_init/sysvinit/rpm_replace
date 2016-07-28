@@ -2,3 +2,6 @@
 
 # Run instance setup.
 /usr/bin/google_instance_setup
+
+# Enable network interfaces.
+/usr/bin/google_network_setup

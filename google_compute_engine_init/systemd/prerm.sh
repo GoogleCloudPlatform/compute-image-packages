@@ -22,6 +22,7 @@ if [ "$1" = purge ]; then
   systemctl --no-reload disable google-clock-skew-daemon.service
   systemctl --no-reload disable google-instance-setup.service
   systemctl --no-reload disable google-ip-forwarding-daemon.service
+  systemctl --no-reload disable google-network-setup.service
   systemctl --no-reload disable google-shutdown-scripts.service
   systemctl --no-reload disable google-startup-scripts.service
 fi
