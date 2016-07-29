@@ -13,17 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Manage IP forwarding on a Google Compute Engine instance.
-
-Fetch a list of public endpoint IPs from the metadata server, compare it with
-the IPs configured on eth0, and add or remove addresses from eth0 to make them
-match. Only remove those which match our proto code.
-
-Command used to add IPs:
-  ip route add to local $IP/32 dev eth0 proto 66
-Command used to fetch list of configured IPs:
-  ip route ls table local type local dev eth0 scope host proto 66
-"""
+"""Enables the network interfaces provided in metadata."""
 
 import logging.handlers
 import optparse
