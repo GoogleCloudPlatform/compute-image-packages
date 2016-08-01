@@ -30,14 +30,14 @@ class NetworkSetupTest(unittest.TestCase):
     self.mock_ip_forwarding_utils = mock.Mock()
     self.mock_network_utils = mock.Mock()
     self.metadata_key = 'metadata_key'
-    self.network_manager = 'manager'
+    self.dhcp_binary = 'binary'
 
     self.mock_setup = mock.create_autospec(network_setup.NetworkSetup)
     self.mock_setup.logger = self.mock_logger
     self.mock_setup.watcher = self.mock_watcher
     self.mock_setup.network_utils = self.mock_network_utils
     self.mock_setup.network_interfaces = self.metadata_key
-    self.mock_setup.network_manager = self.network_manager
+    self.mock_setup.dhcp_binary = self.dhcp_binary
 
   @mock.patch('google_compute_engine.network_setup.network_setup.network_utils')
   @mock.patch('google_compute_engine.network_setup.network_setup.metadata_watcher')
@@ -51,7 +51,7 @@ class NetworkSetupTest(unittest.TestCase):
     mocks.attach_mock(mock_network_utils, 'network')
     with mock.patch.object(
         network_setup.NetworkSetup, '_SetupNetworkInterfaces'):
-      network_setup.NetworkSetup(network_manager='manager', debug=True)
+      network_setup.NetworkSetup(dhcp_binary='binary', debug=True)
       expected_calls = [
           mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
@@ -78,11 +78,11 @@ class NetworkSetupTest(unittest.TestCase):
         # Successfully enable the network interface.
         mock.call.network.IsEnabled('b'),
         mock.call.logger.info(mock.ANY, 'b'),
-        mock.call.call([self.network_manager, 'b']),
+        mock.call.call([self.dhcp_binary, 'b']),
         # Exception while enabling the network interface.
         mock.call.network.IsEnabled('c'),
         mock.call.logger.info(mock.ANY, 'c'),
-        mock.call.call([self.network_manager, 'c']),
+        mock.call.call([self.dhcp_binary, 'c']),
         mock.call.logger.warning(mock.ANY, 'c'),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)

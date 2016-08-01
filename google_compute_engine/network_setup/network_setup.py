@@ -30,14 +30,14 @@ class NetworkSetup(object):
 
   network_interfaces = 'instance/network-interfaces'
 
-  def __init__(self, network_manager=None, debug=False):
+  def __init__(self, dhcp_binary=None, debug=False):
     """Constructor.
 
     Args:
-      network_manager: string, an executable to enable an ethernet interface.
+      dhcp_binary: string, an executable to enable an ethernet interface.
       debug: bool, True if debug output should write to the console.
     """
-    network_manager = network_manager or 'dhclient'
+    dhcp_binary = dhcp_binary or 'dhclient'
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
         name='network-setup', debug=debug, facility=facility)
@@ -54,7 +54,7 @@ class NetworkSetup(object):
     if self.network_utils.IsEnabled(interface):
       return
 
-    command = [self.network_manager, interface]
+    command = [self.dhcp_binary, interface]
     try:
       self.logger.info('Enabling the ethernet interface %s.', interface)
       subprocess.check_call(command)
@@ -85,8 +85,8 @@ def main():
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('NetworkInterfaces', 'setup'):
     NetworkSetup(
-        network_manager=instance_config.GetOptionString(
-            'NetworkInterfaces', 'network_manager'),
+        dhcp_binary=instance_config.GetOptionString(
+            'NetworkInterfaces', 'dhcp_binary'),
         debug=bool(options.debug))
 
 
