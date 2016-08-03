@@ -73,9 +73,9 @@ class ConfigManager(object):
       option: string, the option to retrieve the value of.
 
     Returns:
-      bool, True if the option is enabled.
+      bool, True if the option is enabled or not set.
     """
-    return (self.config.has_option(section, option) and
+    return (not self.config.has_option(section, option) or
             self.config.getboolean(section, option))
 
   def SetOption(self, section, option, value, overwrite=True):

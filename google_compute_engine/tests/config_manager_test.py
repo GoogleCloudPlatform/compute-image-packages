@@ -21,38 +21,40 @@ from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
 
+def _HasOption(_, option):
+  """Validate the option exists in the config file.
+
+  Args:
+    option: string, the config option to check.
+
+  Returns:
+    bool, True if test is not in the option name.
+  """
+  return 'test' not in option
+
+
+def _HasSection(section):
+  """Validate the section exists in the config file.
+
+  Args:
+    section: string, the config section to check.
+
+  Returns:
+    bool, True if test is not in the section name.
+  """
+  return 'test' not in section
+
+
 class ConfigManagerTest(unittest.TestCase):
 
   option = 'option'
   section = 'section'
   value = 'value'
 
-  def HasOption(self, _, option):
-    """Validate the option exists in the config file.
-
-    Args:
-      option: string, the config option to check.
-
-    Returns:
-      bool, True if test is not in the option name.
-    """
-    return 'test' not in option
-
-  def HasSection(self, section):
-    """Validate the section exists in the config file.
-
-    Args:
-      section: string, the config section to check.
-
-    Returns:
-      bool, True if test is not in the section name.
-    """
-    return 'test' not in section
-
   def setUp(self):
     self.mock_config = mock.Mock()
-    self.mock_config.has_option.side_effect = self.HasOption
-    self.mock_config.has_section.side_effect = self.HasSection
+    self.mock_config.has_option.side_effect = _HasOption
+    self.mock_config.has_section.side_effect = _HasSection
     config_manager.parser.SafeConfigParser = mock.Mock()
     config_manager.parser.SafeConfigParser.return_value = self.mock_config
 
@@ -101,7 +103,7 @@ class ConfigManagerTest(unittest.TestCase):
 
   def testGetOptionBoolNoOption(self):
     option = 'test-option'
-    self.assertFalse(
+    self.assertTrue(
         self.mock_config_manager.GetOptionBool(self.section, option))
     expected_calls = [
         mock.call.read(self.config_file),

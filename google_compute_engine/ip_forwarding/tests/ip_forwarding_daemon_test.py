@@ -46,10 +46,10 @@ class IpForwardingDaemonTest(unittest.TestCase):
     mocks.attach_mock(mock_logger, 'logger')
     mocks.attach_mock(mock_utils, 'utils')
     mocks.attach_mock(mock_watcher, 'watcher')
-    metadata_key = ip_forwarding_daemon.IpForwardingDaemon.forwarded_ips
+    metadata_key = ip_forwarding_daemon.IpForwardingDaemon.network_interfaces
     with mock.patch.object(
         ip_forwarding_daemon.IpForwardingDaemon,
-        'HandleForwardedIps') as mock_handle:
+        'HandleNetworkInterfaces') as mock_handle:
       ip_forwarding_daemon.IpForwardingDaemon(proto_id='66', debug=True)
       expected_calls = [
           mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
@@ -80,7 +80,7 @@ class IpForwardingDaemonTest(unittest.TestCase):
     mocks.attach_mock(mock_watcher, 'watcher')
     mock_lock.LockFile.side_effect = IOError('Test Error')
     with mock.patch.object(
-        ip_forwarding_daemon.IpForwardingDaemon, 'HandleForwardedIps'):
+        ip_forwarding_daemon.IpForwardingDaemon, 'HandleNetworkInterfaces'):
       ip_forwarding_daemon.IpForwardingDaemon()
       expected_calls = [
           mock.call.logger.Logger(
@@ -95,47 +95,47 @@ class IpForwardingDaemonTest(unittest.TestCase):
 
   def testLogForwardedIpChanges(self):
     ip_forwarding_daemon.IpForwardingDaemon._LogForwardedIpChanges(
-        self.mock_setup, [], [], [], [])
+        self.mock_setup, [], [], [], [], '1')
     ip_forwarding_daemon.IpForwardingDaemon._LogForwardedIpChanges(
-        self.mock_setup, ['a'], ['a'], [], [])
+        self.mock_setup, ['a'], ['a'], [], [], '2')
     ip_forwarding_daemon.IpForwardingDaemon._LogForwardedIpChanges(
-        self.mock_setup, ['a'], [], [], ['a'])
+        self.mock_setup, ['a'], [], [], ['a'], '3')
     ip_forwarding_daemon.IpForwardingDaemon._LogForwardedIpChanges(
-        self.mock_setup, ['a', 'b'], ['b'], [], ['a'])
+        self.mock_setup, ['a', 'b'], ['b'], [], ['a'], '4')
     ip_forwarding_daemon.IpForwardingDaemon._LogForwardedIpChanges(
-        self.mock_setup, ['a'], ['b'], ['b'], ['a'])
+        self.mock_setup, ['a'], ['b'], ['b'], ['a'], '5')
     expected_calls = [
-        mock.call.info(mock.ANY, ['a'], None, None, ['a']),
-        mock.call.info(mock.ANY, ['a', 'b'], ['b'], None, ['a']),
-        mock.call.info(mock.ANY, ['a'], ['b'], ['b'], ['a']),
+        mock.call.info(mock.ANY, '3', ['a'], None, None, ['a']),
+        mock.call.info(mock.ANY, '4', ['a', 'b'], ['b'], None, ['a']),
+        mock.call.info(mock.ANY, '5', ['a'], ['b'], ['b'], ['a']),
     ]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
   def testAddForwardedIp(self):
     ip_forwarding_daemon.IpForwardingDaemon._AddForwardedIps(
-        self.mock_setup, [])
+        self.mock_setup, [], 'interface')
     self.assertEqual(self.mock_utils.mock_calls, [])
 
     ip_forwarding_daemon.IpForwardingDaemon._AddForwardedIps(
-        self.mock_setup, ['a', 'b', 'c'])
+        self.mock_setup, ['a', 'b', 'c'], 'interface')
     expected_calls = [
-        mock.call.AddForwardedIp('a'),
-        mock.call.AddForwardedIp('b'),
-        mock.call.AddForwardedIp('c'),
+        mock.call.AddForwardedIp('a', 'interface'),
+        mock.call.AddForwardedIp('b', 'interface'),
+        mock.call.AddForwardedIp('c', 'interface'),
     ]
     self.assertEqual(self.mock_utils.mock_calls, expected_calls)
 
   def testRemoveForwardedIp(self):
     ip_forwarding_daemon.IpForwardingDaemon._RemoveForwardedIps(
-        self.mock_setup, [])
+        self.mock_setup, [], 'interface')
     self.assertEqual(self.mock_utils.mock_calls, [])
 
     ip_forwarding_daemon.IpForwardingDaemon._RemoveForwardedIps(
-        self.mock_setup, ['a', 'b', 'c'])
+        self.mock_setup, ['a', 'b', 'c'], 'interface')
     expected_calls = [
-        mock.call.RemoveForwardedIp('a'),
-        mock.call.RemoveForwardedIp('b'),
-        mock.call.RemoveForwardedIp('c'),
+        mock.call.RemoveForwardedIp('a', 'interface'),
+        mock.call.RemoveForwardedIp('b', 'interface'),
+        mock.call.RemoveForwardedIp('c', 'interface'),
     ]
     self.assertEqual(self.mock_utils.mock_calls, expected_calls)
 
@@ -147,19 +147,47 @@ class IpForwardingDaemonTest(unittest.TestCase):
     mocks.attach_mock(self.mock_setup, 'setup')
     self.mock_utils.ParseForwardedIps.return_value = desired
     self.mock_utils.GetForwardedIps.return_value = configured
-    result = 'result'
+    forwarded_ips = 'forwarded ips'
+    interface = 'interface'
     expected_add = ['d']
     expected_remove = ['a', 'b']
 
-    ip_forwarding_daemon.IpForwardingDaemon.HandleForwardedIps(
+    ip_forwarding_daemon.IpForwardingDaemon._HandleForwardedIps(
+        self.mock_setup, forwarded_ips, interface)
+    expected_calls = [
+        mock.call.utils.ParseForwardedIps(forwarded_ips),
+        mock.call.utils.GetForwardedIps(interface),
+        mock.call.setup._LogForwardedIpChanges(
+            configured, desired, expected_add, expected_remove, interface),
+        mock.call.setup._AddForwardedIps(expected_add, interface),
+        mock.call.setup._RemoveForwardedIps(expected_remove, interface),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  def testHandleNetworkInterfaces(self):
+    mocks = mock.Mock()
+    mocks.attach_mock(self.mock_utils, 'utils')
+    mocks.attach_mock(self.mock_setup, 'setup')
+    self.mock_utils.GetNetworkInterface.side_effect = [
+        'eth0', 'eth1', 'eth2', None]
+    result = [
+        {'mac': '1', 'forwardedIps': 'a'},
+        {'mac': '2', 'forwardedIps': 'b'},
+        {'mac': '3'},
+        {'forwardedIps': 'c'},
+    ]
+
+    ip_forwarding_daemon.IpForwardingDaemon.HandleNetworkInterfaces(
         self.mock_setup, result)
     expected_calls = [
-        mock.call.utils.ParseForwardedIps(result),
-        mock.call.utils.GetForwardedIps(),
-        mock.call.setup._LogForwardedIpChanges(
-            configured, desired, expected_add, expected_remove),
-        mock.call.setup._AddForwardedIps(expected_add),
-        mock.call.setup._RemoveForwardedIps(expected_remove),
+        mock.call.utils.GetNetworkInterface('1'),
+        mock.call.setup._HandleForwardedIps('a', 'eth0'),
+        mock.call.utils.GetNetworkInterface('2'),
+        mock.call.setup._HandleForwardedIps('b', 'eth1'),
+        mock.call.utils.GetNetworkInterface('3'),
+        mock.call.setup._HandleForwardedIps(None, 'eth2'),
+        mock.call.utils.GetNetworkInterface(None),
+        mock.call.setup.logger.warning(mock.ANY, None),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 

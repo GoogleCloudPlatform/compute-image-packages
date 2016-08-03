@@ -41,7 +41,7 @@ LOCKFILE = '/var/lock/google_ip_forwarding.lock'
 class IpForwardingDaemon(object):
   """Manage IP forwarding based on changes to forwarded IPs metadata."""
 
-  forwarded_ips = 'instance/network-interfaces/0/forwarded-ips'
+  network_interfaces = 'instance/network-interfaces'
 
   def __init__(self, proto_id=None, debug=False):
     """Constructor.
@@ -60,12 +60,12 @@ class IpForwardingDaemon(object):
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google IP Forwarding daemon.')
         self.watcher.WatchMetadata(
-            self.HandleForwardedIps, metadata_key=self.forwarded_ips,
+            self.HandleNetworkInterfaces, metadata_key=self.network_interfaces,
             recursive=True)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
-  def _LogForwardedIpChanges(self, configured, desired, to_add, to_remove):
+  def _LogForwardedIpChanges(self, configured, desired, to_add, to_remove, interface):
     """Log the planned IP address changes.
 
     Args:
@@ -73,44 +73,66 @@ class IpForwardingDaemon(object):
       desired: list, the IP address strings that will be configured.
       to_add: list, the forwarded IP address strings to configure.
       to_remove: list, the forwarded IP address strings to delete.
+      interface: string, the output device to modify.
     """
     if not to_add and not to_remove:
       return
     self.logger.info(
-        'Changing forwarded IPs from %s to %s by adding %s and removing %s.',
-        configured or None, desired or None, to_add or None, to_remove or None)
+        'Changing %s forwarded IPs from %s to %s by adding %s and removing %s.',
+        interface, configured or None, desired or None, to_add or None,
+        to_remove or None)
 
-  def _AddForwardedIps(self, forwarded_ips):
+  def _AddForwardedIps(self, forwarded_ips, interface):
     """Configure the forwarded IP address on the network interface.
 
     Args:
       forwarded_ips: list, the forwarded IP address strings to configure.
+      interface: string, the output device to use.
     """
     for address in forwarded_ips:
-      self.utils.AddForwardedIp(address)
+      self.utils.AddForwardedIp(address, interface)
 
-  def _RemoveForwardedIps(self, forwarded_ips):
+  def _RemoveForwardedIps(self, forwarded_ips, interface):
     """Remove the forwarded IP addresses from the network interface.
 
     Args:
       forwarded_ips: list, the forwarded IP address strings to delete.
+      interface: string, the output device to use.
     """
     for address in forwarded_ips:
-      self.utils.RemoveForwardedIp(address)
+      self.utils.RemoveForwardedIp(address, interface)
 
-  def HandleForwardedIps(self, result):
-    """Called when forwarded IPs metadata changes.
+  def _HandleForwardedIps(self, forwarded_ips, interface):
+    """Handle changes to the forwarded IPs on a network interface.
 
     Args:
-      result: string, the metadata response with the new forwarded IP addresses.
+      forwarded_ips: list, the forwarded IP address strings desired.
+      interface: string, the output device to configure.
     """
-    desired = self.utils.ParseForwardedIps(result)
-    configured = self.utils.GetForwardedIps()
+    desired = self.utils.ParseForwardedIps(forwarded_ips)
+    configured = self.utils.GetForwardedIps(interface)
     to_add = sorted(set(desired) - set(configured))
     to_remove = sorted(set(configured) - set(desired))
-    self._LogForwardedIpChanges(configured, desired, to_add, to_remove)
-    self._AddForwardedIps(to_add)
-    self._RemoveForwardedIps(to_remove)
+    self._LogForwardedIpChanges(
+        configured, desired, to_add, to_remove, interface)
+    self._AddForwardedIps(to_add, interface)
+    self._RemoveForwardedIps(to_remove, interface)
+
+  def HandleNetworkInterfaces(self, result):
+    """Called when network interface metadata changes.
+
+    Args:
+      result: string, the metadata response with the new network interfaces.
+    """
+    for network_interface in result:
+      mac_address = network_interface.get('mac')
+      interface = self.utils.GetNetworkInterface(mac_address)
+      if interface:
+        forwarded_ips = network_interface.get('forwardedIps')
+        self._HandleForwardedIps(forwarded_ips, interface)
+      else:
+        message = 'Network interface not found for MAC address: %s.'
+        self.logger.warning(message, mac_address)
 
 
 def main():

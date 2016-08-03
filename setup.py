@@ -32,7 +32,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     scripts=glob.glob('scripts/*'),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages',
-    version='2.1.2',
+    version='2.1.3',
     # Entry points create scripts in /usr/bin that call a function.
     entry_points={
         'console_scripts': [
