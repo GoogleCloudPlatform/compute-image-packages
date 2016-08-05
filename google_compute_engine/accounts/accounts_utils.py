@@ -43,7 +43,10 @@ class AccountsUtils(object):
     """
     self.logger = logger
     self.google_sudoers_group = 'google-sudoers'
-    self.google_sudoers_file = '/etc/sudoers.d/google_sudoers'
+    if os.path.exists('/etc/sudoers.d'):
+        self.google_sudoers_file = '/etc/sudoers.d/google_sudoers'
+    else:
+        self.google_sudoers_file = '/etc/sudoers'
     self.google_users_dir = '/var/lib/google'
     self.google_users_file = os.path.join(self.google_users_dir, 'google_users')
 
@@ -75,11 +78,17 @@ class AccountsUtils(object):
       except subprocess.CalledProcessError as e:
         self.logger.warning('Could not create the sudoers group. %s.', str(e))
 
-    if not os.path.exists(self.google_sudoers_file):
-      with open(self.google_sudoers_file, 'w') as group:
-        message = '%{0} ALL=(ALL:ALL) NOPASSWD:ALL'.format(
-            self.google_sudoers_group)
-        group.write(message)
+    with open(self.google_sudoers_file, 'a+') as group:
+      """Check if the group is already in the sudoers file"""
+      found = False
+      message = '%{0} ALL=(ALL:ALL) NOPASSWD:ALL'.format(
+          self.google_sudoers_group)
+      for line in group:
+        if message in line:
+          found = True
+          break
+      if not found:
+        group.write('\n' + message)
 
     file_utils.SetPermissions(
         self.google_sudoers_file, mode=0o440, uid=0, gid=0)

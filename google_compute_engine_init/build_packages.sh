@@ -22,7 +22,7 @@ function build_distro() {
   declare -r init_prefix="$4"
   declare py_depends='google-compute-engine'
   declare config_depends='google-config'
-  declare file_pattern='*[^.sh]'
+  declare file_pattern='*[^.s][^.h]'
   declare init_files=(${init_config}/${file_pattern})
   declare name='google-compute-engine-init'
 
@@ -64,6 +64,7 @@ function build_distro() {
 }
 
 # RHEL/CentOS
+build_distro 'el5' 'rpm' 'sysvinit-rhel5' '/etc/init.d'
 build_distro 'el6' 'rpm' 'upstart' '/etc/init'
 build_distro 'el7' 'rpm' 'systemd' '/usr/lib/systemd/system'
 

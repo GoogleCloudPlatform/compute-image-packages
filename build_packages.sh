@@ -21,6 +21,7 @@ function build_distro() {
   declare -r distro="$1"
   declare -r pkg_type="$2"
   declare -r py_path="$3"
+  declare -r py_pkt="$4"
   declare depends='google-compute-engine-init'
   declare name='google-compute-engine'
 
@@ -35,8 +36,8 @@ function build_distro() {
     -s python \
     -t "${pkg_type}" \
     --depends "${depends}" \
-    --depends 'python-boto' \
-    --depends 'python-setuptools' \
+    --depends "${py_pkt}-boto" \
+    --depends "${py_pkt}-setuptools" \
     --iteration "0.${TIMESTAMP}" \
     --maintainer 'gc-team@google.com' \
     --name "${name}" \
@@ -45,13 +46,15 @@ function build_distro() {
     --python-install-lib "${py_path}" \
     --python-install-data "/usr/share/doc/${name}" \
     --rpm-dist "${distro}" \
+    --python-scripts-executable "/usr/bin/${py_pkt}" \
     setup.py
 }
 
 # RHEL/CentOS
-build_distro 'el6' 'rpm' '/usr/lib/python2.6/site-packages'
-build_distro 'el7' 'rpm' '/usr/lib/python2.7/site-packages'
+build_distro 'el5' 'rpm' '/usr/lib/python2.6/site-packages' 'python26'
+build_distro 'el6' 'rpm' '/usr/lib/python2.6/site-packages' 'python'
+build_distro 'el7' 'rpm' '/usr/lib/python2.7/site-packages' 'python'
 
 # Debian
-build_distro 'wheezy' 'deb' '/usr/lib/python2.7/dist-packages'
-build_distro 'jessie' 'deb' '/usr/lib/python2.7/dist-packages'
+build_distro 'wheezy' 'deb' '/usr/lib/python2.7/dist-packages' 'python'
+build_distro 'jessie' 'deb' '/usr/lib/python2.7/dist-packages' 'python'
