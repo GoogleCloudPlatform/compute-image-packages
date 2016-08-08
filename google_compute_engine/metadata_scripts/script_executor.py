@@ -54,7 +54,7 @@ class ScriptExecutor(object):
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     while True:
       for line in iter(process.stdout.readline, b''):
-        message = line.decode('utf-8').rstrip('\n')
+        message = line.decode('utf-8', 'replace').rstrip('\n')
         if message:
           self.logger.info('%s: %s', metadata_key, message)
       if process.poll() is not None:
