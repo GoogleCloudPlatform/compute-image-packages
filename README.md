@@ -268,7 +268,7 @@ We build the following packages for the Linux guest environment.
     for the `google-compute-engine` Python package. Installing this package
     will configure the `google-compute-engine` package to run on system
     startup on sysvinit, upstart, or systemd init systems.
-*   `google-configs` is a package containing non-Python scripts and guest
+*   `google-config` is a package containing non-Python scripts and guest
     configuration.
     *   Sets up udev rules and sysctl rules.
     *   Configures the SysLog output that gets sent to serial port output.
@@ -335,6 +335,15 @@ yum install -y google-compute-engine google-compute-engine-init google-config
 ```
 
 ## Troubleshooting
+
+**An old CentOS 6 image fails to install the packages with an error on SCL**
+
+CentOS 6 images prior to v20160526 may fail to install the package with the following error:
+```
+http://mirror.centos.org/centos/6/SCL/x86_64/repodata/repomd.xml: [Errno 14] PYCURL ERROR 22 - "The requested URL returned error: 404 Not Found" 
+```
+
+You need to remove the stale repository file: `sudo rm -f /etc/yum.repos.d/CentOS-SCL.repo`
 
 **Using boto with virtualenv**
 
