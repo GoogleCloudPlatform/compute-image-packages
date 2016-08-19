@@ -40,6 +40,7 @@ setuptools.setup(
             'google_clock_skew_daemon=google_compute_engine.clock_skew.clock_skew_daemon:main',
             'google_ip_forwarding_daemon=google_compute_engine.ip_forwarding.ip_forwarding_daemon:main',
             'google_instance_setup=google_compute_engine.instance_setup.instance_setup:main',
+            'google_network_setup=google_compute_engine.network_setup.network_setup:main',
             'google_metadata_script_runner=google_compute_engine.metadata_scripts.script_manager:main',
         ],
     },

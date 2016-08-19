@@ -25,42 +25,9 @@ class IpForwardingUtilsTest(unittest.TestCase):
 
   def setUp(self):
     self.mock_logger = mock.Mock()
-    self.interfaces = {'address': 'interface'}
     self.options = {'hello': 'world'}
     self.mock_utils = ip_forwarding_utils.IpForwardingUtils(self.mock_logger)
-    self.mock_utils.interfaces = self.interfaces
     self.mock_utils.proto_id = 'proto'
-
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_utils.os.listdir')
-  def testCreateInterfaceMap(self, mock_listdir):
-    mock_open = mock.mock_open()
-    interface_map = {
-        '1': 'a',
-        '2': 'b',
-        '3': 'c',
-    }
-    mock_listdir.return_value = interface_map.values()
-
-    with mock.patch('%s.open' % builtin, mock_open, create=False):
-      addresses = interface_map.keys()
-      addresses = ['%s\n' % address for address in addresses]
-      mock_open().read.side_effect = interface_map.keys()
-      self.assertEqual(self.mock_utils._CreateInterfaceMap(), interface_map)
-
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_utils.os.listdir')
-  def testCreateInterfaceMapError(self, mock_listdir):
-    mock_open = mock.mock_open()
-    mock_listdir.return_value = ['a', 'b', 'c']
-
-    with mock.patch('%s.open' % builtin, mock_open, create=False):
-      mock_open().read.side_effect = [
-          '1', OSError('OSError'), IOError('IOError')]
-      self.assertEqual(self.mock_utils._CreateInterfaceMap(), {'1': 'a'})
-      expected_calls = [
-          mock.call.warning(mock.ANY, 'b', 'OSError'),
-          mock.call.warning(mock.ANY, 'c', 'IOError'),
-      ]
-      self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
   def testCreateRouteOptions(self):
     # Default options.
@@ -130,11 +97,6 @@ class IpForwardingUtilsTest(unittest.TestCase):
     command = ['ip', 'route', 'foo', 'bar', 'hello', 'world']
     self.mock_logger.warning.assert_called_once_with(
         mock.ANY, command, 'Test Error')
-
-  def testGetNetworkInterface(self):
-    self.assertIsNone(self.mock_utils.GetNetworkInterface('invalid'))
-    self.assertEqual(
-        self.mock_utils.GetNetworkInterface('address'), 'interface')
 
   def testParseForwardedIps(self):
     self.assertEqual(self.mock_utils.ParseForwardedIps(None), [])

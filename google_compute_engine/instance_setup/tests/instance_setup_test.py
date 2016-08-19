@@ -28,6 +28,7 @@ class InstanceSetupTest(unittest.TestCase):
     self.mock_instance_config = mock.Mock()
     self.mock_logger = mock.Mock()
     self.mock_setup = mock.create_autospec(instance_setup.InstanceSetup)
+    self.mock_setup.debug = False
     self.mock_setup.instance_config = self.mock_instance_config
     self.mock_setup.logger = self.mock_logger
 
@@ -154,8 +155,8 @@ class InstanceSetupTest(unittest.TestCase):
   @mock.patch('google_compute_engine.instance_setup.instance_setup.shutil.move')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess.check_call')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.tempfile.NamedTemporaryFile')
-  def testGenerateSshKey(self, mock_tempfile, mock_call, mock_move,
-                         mock_permissions):
+  def testGenerateSshKey(
+      self, mock_tempfile, mock_call, mock_move, mock_permissions):
     mocks = mock.Mock()
     mocks.attach_mock(mock_tempfile, 'tempfile')
     mocks.attach_mock(mock_call, 'call')
@@ -306,7 +307,7 @@ class InstanceSetupTest(unittest.TestCase):
     mock_project_id.return_value = '123'
     self.mock_setup._GetNumericProjectId = mock_project_id
     instance_setup.InstanceSetup._SetupBotoConfig(self.mock_setup)
-    mock_boto.assert_called_once_with('123')
+    mock_boto.assert_called_once_with('123', debug=False)
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.boto_config.BotoConfig')
   def testSetupBotoConfigLocked(self, mock_boto):

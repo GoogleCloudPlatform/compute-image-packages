@@ -1,0 +1,13 @@
+[Unit]
+Description=Google Compute Engine Network Setup
+After=local-fs.target network-online.target network.target rsyslog.service
+After=google-instance-setup.service
+Wants=local-fs.target network-online.target network.target
+
+[Service]
+ExecStart=/usr/bin/google_network_setup
+KillMode=process
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target

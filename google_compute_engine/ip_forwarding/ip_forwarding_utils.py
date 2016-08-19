@@ -15,7 +15,6 @@
 
 """Utilities for configuring IP address forwarding."""
 
-import os
 import re
 import subprocess
 
@@ -34,24 +33,6 @@ class IpForwardingUtils(object):
     """
     self.logger = logger
     self.proto_id = proto_id or '66'
-    self.interfaces = self._CreateInterfaceMap()
-
-  def _CreateInterfaceMap(self):
-    """Generate a dictionary mapping MAC address to ethernet interfaces.
-
-    Returns:
-      dict, string MAC addresses mapped to the string network interface name.
-    """
-    interfaces = {}
-    for interface in os.listdir('/sys/class/net'):
-      try:
-        mac_address = open('/sys/class/net/%s/address' % interface).read().strip()
-      except (IOError, OSError) as e:
-        message = 'Unable to determine MAC address for %s. %s.'
-        self.logger.warning(message, interface, str(e))
-      else:
-        interfaces[mac_address] = interface
-    return interfaces
 
   def _CreateRouteOptions(self, **kwargs):
     """Create a dictionary of parameters to append to the ip route command.
@@ -98,17 +79,6 @@ class IpForwardingUtils(object):
       else:
         return stdout
     return ''
-
-  def GetNetworkInterface(self, mac_address):
-    """Get the name of the network interface associated with a MAC address.
-
-    Args:
-      mac_address: string, the hardware address of the network interface.
-
-    Returns:
-      string, the network interface associated with a MAC address or None.
-    """
-    return self.interfaces.get(mac_address)
 
   def ParseForwardedIps(self, forwarded_ips):
     """Parse and validate forwarded IP addresses.
