@@ -44,9 +44,9 @@ class BotoConfigTest(unittest.TestCase):
     mock_logger_instance = mock.Mock()
     mock_logger.Logger.return_value = mock_logger_instance
 
-    boto_config.BotoConfig(self.project_id)
+    boto_config.BotoConfig(self.project_id, debug=True)
     expected_calls = [
-        mock.call.logger.Logger(name=mock.ANY),
+        mock.call.logger.Logger(name=mock.ANY, debug=True),
         mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
         mock.call.config(
             config_file='template', config_header='/tmp/test.py template'),

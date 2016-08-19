@@ -55,8 +55,8 @@ class FileUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.file_utils.os.mkdir')
   @mock.patch('google_compute_engine.file_utils.os.chown')
   @mock.patch('google_compute_engine.file_utils.os.chmod')
-  def testSetPermissions(self, mock_chmod, mock_chown, mock_mkdir, mock_exists,
-                         mock_context):
+  def testSetPermissions(
+      self, mock_chmod, mock_chown, mock_mkdir, mock_exists, mock_context):
     mocks = mock.Mock()
     mocks.attach_mock(mock_chmod, 'chmod')
     mocks.attach_mock(mock_chown, 'chown')

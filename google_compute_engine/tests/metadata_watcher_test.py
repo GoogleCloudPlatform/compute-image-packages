@@ -76,8 +76,8 @@ class MetadataWatcherTest(unittest.TestCase):
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.build_opener')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.ProxyHandler')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
-  def testGetMetadataRequestRetry(self, mock_request, mock_proxy, mock_opener,
-                                  mock_time):
+  def testGetMetadataRequestRetry(
+      self, mock_request, mock_proxy, mock_opener, mock_time):
     mock_open = mock.Mock()
     mock_handler = mock.Mock()
     mocks = mock.Mock()
@@ -123,8 +123,8 @@ class MetadataWatcherTest(unittest.TestCase):
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.build_opener')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.ProxyHandler')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
-  def testGetMetadataRequestHttpException(self, mock_request, mock_proxy,
-                                          mock_opener):
+  def testGetMetadataRequestHttpException(
+      self, mock_request, mock_proxy, mock_opener):
     mock_open = mock.Mock()
     mock_handler = mock.Mock()
     mock_response = mock.Mock()
@@ -145,8 +145,8 @@ class MetadataWatcherTest(unittest.TestCase):
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.build_opener')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.ProxyHandler')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
-  def testGetMetadataRequestException(self, mock_request, mock_proxy,
-                                      mock_opener):
+  def testGetMetadataRequestException(
+      self, mock_request, mock_proxy, mock_opener):
     mock_open = mock.Mock()
     mock_handler = mock.Mock()
     mock_response = mock.Mock()

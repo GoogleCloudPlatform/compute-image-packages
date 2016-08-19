@@ -40,9 +40,10 @@ class InstanceSetup(object):
     Args:
       debug: bool, True if debug output should write to the console.
     """
+    self.debug = debug
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
-        name='instance-setup', debug=debug, facility=facility)
+        name='instance-setup', debug=self.debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.metadata_dict = None
     self.instance_config = instance_config.InstanceConfig()
@@ -168,15 +169,16 @@ class InstanceSetup(object):
     """Set the boto config so GSUtil works with provisioned service accounts."""
     project_id = self._GetNumericProjectId()
     try:
-      boto_config.BotoConfig(project_id)
+      boto_config.BotoConfig(project_id, debug=self.debug)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
 
 def main():
   parser = optparse.OptionParser()
-  parser.add_option('-d', '--debug', action='store_true', dest='debug',
-                    help='print debug output to the console.')
+  parser.add_option(
+      '-d', '--debug', action='store_true', dest='debug',
+      help='print debug output to the console.')
   (options, _) = parser.parse_args()
   InstanceSetup(debug=bool(options.debug))
 

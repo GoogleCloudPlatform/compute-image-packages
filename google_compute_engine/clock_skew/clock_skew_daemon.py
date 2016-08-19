@@ -69,8 +69,9 @@ class ClockSkewDaemon(object):
 
 def main():
   parser = optparse.OptionParser()
-  parser.add_option('-d', '--debug', action='store_true', dest='debug',
-                    help='print debug output to the console.')
+  parser.add_option(
+      '-d', '--debug', action='store_true', dest='debug',
+      help='print debug output to the console.')
   (options, _) = parser.parse_args()
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('Daemons', 'clock_skew_daemon'):

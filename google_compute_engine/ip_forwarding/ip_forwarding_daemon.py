@@ -32,6 +32,7 @@ from google_compute_engine import config_manager
 from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
+from google_compute_engine import network_utils
 
 from google_compute_engine.ip_forwarding import ip_forwarding_utils
 
@@ -54,7 +55,8 @@ class IpForwardingDaemon(object):
     self.logger = logger.Logger(
         name='google-ip-forwarding', debug=debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
-    self.utils = ip_forwarding_utils.IpForwardingUtils(
+    self.network_utils = network_utils.NetworkUtils(logger=self.logger)
+    self.ip_forwarding_utils = ip_forwarding_utils.IpForwardingUtils(
         logger=self.logger, proto_id=proto_id)
     try:
       with file_utils.LockFile(LOCKFILE):
@@ -65,7 +67,8 @@ class IpForwardingDaemon(object):
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
-  def _LogForwardedIpChanges(self, configured, desired, to_add, to_remove, interface):
+  def _LogForwardedIpChanges(
+      self, configured, desired, to_add, to_remove, interface):
     """Log the planned IP address changes.
 
     Args:
@@ -90,7 +93,7 @@ class IpForwardingDaemon(object):
       interface: string, the output device to use.
     """
     for address in forwarded_ips:
-      self.utils.AddForwardedIp(address, interface)
+      self.ip_forwarding_utils.AddForwardedIp(address, interface)
 
   def _RemoveForwardedIps(self, forwarded_ips, interface):
     """Remove the forwarded IP addresses from the network interface.
@@ -100,7 +103,7 @@ class IpForwardingDaemon(object):
       interface: string, the output device to use.
     """
     for address in forwarded_ips:
-      self.utils.RemoveForwardedIp(address, interface)
+      self.ip_forwarding_utils.RemoveForwardedIp(address, interface)
 
   def _HandleForwardedIps(self, forwarded_ips, interface):
     """Handle changes to the forwarded IPs on a network interface.
@@ -109,8 +112,8 @@ class IpForwardingDaemon(object):
       forwarded_ips: list, the forwarded IP address strings desired.
       interface: string, the output device to configure.
     """
-    desired = self.utils.ParseForwardedIps(forwarded_ips)
-    configured = self.utils.GetForwardedIps(interface)
+    desired = self.ip_forwarding_utils.ParseForwardedIps(forwarded_ips)
+    configured = self.ip_forwarding_utils.GetForwardedIps(interface)
     to_add = sorted(set(desired) - set(configured))
     to_remove = sorted(set(configured) - set(desired))
     self._LogForwardedIpChanges(
@@ -126,7 +129,7 @@ class IpForwardingDaemon(object):
     """
     for network_interface in result:
       mac_address = network_interface.get('mac')
-      interface = self.utils.GetNetworkInterface(mac_address)
+      interface = self.network_utils.GetNetworkInterface(mac_address)
       if interface:
         forwarded_ips = network_interface.get('forwardedIps')
         self._HandleForwardedIps(forwarded_ips, interface)
@@ -137,8 +140,9 @@ class IpForwardingDaemon(object):
 
 def main():
   parser = optparse.OptionParser()
-  parser.add_option('-d', '--debug', action='store_true', dest='debug',
-                    help='print debug output to the console.')
+  parser.add_option(
+      '-d', '--debug', action='store_true', dest='debug',
+      help='print debug output to the console.')
   (options, _) = parser.parse_args()
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('Daemons', 'ip_forwarding_daemon'):
