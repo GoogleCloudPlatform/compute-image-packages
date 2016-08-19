@@ -88,24 +88,21 @@ class InstanceConfig(config_manager.ConfigManager):
     # Use the settings in an instance config file if one exists. If a config
     # file does not already exist, try to use the distro provided defaults. If
     # no file exists, use the default configuration settings.
-    if os.path.exists(self.instance_config):
-      instance_config = self.instance_config
-    elif os.path.exists(self.instance_config_distro):
-      instance_config = self.instance_config_distro
-    else:
-      instance_config = None
+    config_files = [self.instance_config, self.instance_config_distro]
+    config_defaults = []
+    for config_file in config_files:
+      if os.path.exists(config_file):
+        config = parser.SafeConfigParser()
+        config.read(config_file)
+        config_defaults.append(
+            dict((s, dict(config.items(s))) for s in config.sections()))
+    config_defaults.append(self.instance_config_options)
 
-    if instance_config:
-      config = parser.SafeConfigParser()
-      config.read(instance_config)
-      defaults = dict((s, dict(config.items(s))) for s in config.sections())
-    else:
-      defaults = self.instance_config_options
-
-    for section, options in sorted(defaults.items()):
-      for option, value in sorted(options.items()):
-        super(InstanceConfig, self).SetOption(
-            section, option, value, overwrite=False)
+    for defaults in config_defaults:
+      for section, options in sorted(defaults.items()):
+        for option, value in sorted(options.items()):
+          super(InstanceConfig, self).SetOption(
+              section, option, value, overwrite=False)
 
   def WriteConfig(self):
     """Write the config values to the instance defaults file."""
