@@ -37,7 +37,7 @@ class NetworkSetup(object):
       dhcp_binary: string, an executable to enable an ethernet interface.
       debug: bool, True if debug output should write to the console.
     """
-    dhcp_binary = dhcp_binary or 'dhclient'
+    self.dhcp_binary = dhcp_binary or 'dhclient'
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
         name='network-setup', debug=debug, facility=facility)
