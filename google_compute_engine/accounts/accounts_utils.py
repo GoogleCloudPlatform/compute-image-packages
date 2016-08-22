@@ -50,7 +50,7 @@ class AccountsUtils(object):
     self._CreateSudoersGroup()
     self.groups = groups.split(',') if groups else []
     self.groups.append(self.google_sudoers_group)
-    self.groups = filter(self._GetGroup, self.groups)
+    self.groups = list(filter(self._GetGroup, self.groups))
     self.remove = remove
 
   def _GetGroup(self, group):
