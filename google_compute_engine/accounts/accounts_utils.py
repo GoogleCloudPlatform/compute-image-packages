@@ -50,7 +50,7 @@ class AccountsUtils(object):
     self._CreateSudoersGroup()
     self.groups = groups.split(',') if groups else []
     self.groups.append(self.google_sudoers_group)
-    self.groups = filter(self._GetGroup, self.groups)
+    self.groups = list(filter(self._GetGroup, self.groups))
     self.remove = remove
 
   def _GetGroup(self, group):
@@ -140,8 +140,9 @@ class AccountsUtils(object):
     Returns:
       bool, True if user update succeeded.
     """
+    groups = ','.join(groups)
     self.logger.debug('Updating user %s with groups %s.', user, groups)
-    command = ['usermod', '-G', ','.join(groups), user]
+    command = ['usermod', '-G', groups, user]
     try:
       subprocess.check_call(command)
     except subprocess.CalledProcessError as e:

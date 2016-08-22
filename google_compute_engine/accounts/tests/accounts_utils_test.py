@@ -194,14 +194,15 @@ class AccountsUtilsTest(unittest.TestCase):
   def testUpdateUserGroups(self, mock_call):
     user = 'user'
     groups = ['a', 'b', 'c']
-    command = ['usermod', '-G', 'a,b,c', user]
+    groups_string = ','.join(groups)
+    command = ['usermod', '-G', groups_string, user]
 
     self.assertTrue(
         accounts_utils.AccountsUtils._UpdateUserGroups(
             self.mock_utils, user, groups))
     mock_call.assert_called_once_with(command)
     expected_calls = [
-        mock.call.debug(mock.ANY, user, groups),
+        mock.call.debug(mock.ANY, user, groups_string),
         mock.call.debug(mock.ANY, user),
     ]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
@@ -210,7 +211,8 @@ class AccountsUtilsTest(unittest.TestCase):
   def testUpdateUserGroupsError(self, mock_call):
     user = 'user'
     groups = ['a', 'b', 'c']
-    command = ['usermod', '-G', 'a,b,c', user]
+    groups_string = ','.join(groups)
+    command = ['usermod', '-G', groups_string, user]
     mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
 
     self.assertFalse(
@@ -218,7 +220,7 @@ class AccountsUtilsTest(unittest.TestCase):
             self.mock_utils, user, groups))
     mock_call.assert_called_once_with(command)
     expected_calls = [
-        mock.call.debug(mock.ANY, user, groups),
+        mock.call.debug(mock.ANY, user, groups_string),
         mock.call.warning(mock.ANY, user, mock.ANY),
     ]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
