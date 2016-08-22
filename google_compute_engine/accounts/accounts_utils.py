@@ -140,8 +140,9 @@ class AccountsUtils(object):
     Returns:
       bool, True if user update succeeded.
     """
+    groups = ','.join(groups)
     self.logger.debug('Updating user %s with groups %s.', user, groups)
-    command = ['usermod', '-G', ','.join(groups), user]
+    command = ['usermod', '-G', groups, user]
     try:
       subprocess.check_call(command)
     except subprocess.CalledProcessError as e:
