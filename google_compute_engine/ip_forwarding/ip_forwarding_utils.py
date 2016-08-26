@@ -77,7 +77,7 @@ class IpForwardingUtils(object):
         message = 'Non-zero exit status running %s. %s.'
         self.logger.warning(message, command, stderr.strip())
       else:
-        return stdout
+        return stdout.decode('utf-8', 'replace')
     return ''
 
   def ParseForwardedIps(self, forwarded_ips):
