@@ -14,12 +14,14 @@ Compute Engine [images](https://cloud.google.com/compute/docs/images).
     * [Logging](#logging)
     * [Configuration Management](#configuration-management)
     * [File Management](#file-management)
+    * [Network Utilities](#network-utilities)
 * [Daemons](#daemons)
     * [Accounts](#accounts)
     * [Clock Skew](#clock-skew)
     * [IP Forwarding](#ip-forwarding)
 * [Instance Setup](#instance-setup)
 * [Metadata Scripts](#metadata-scripts)
+* [Network Setup](#network-setup)
 * [Configuration](#configuration)
 * [Packaging](#packaging)
 * [Package Distribution](#package-distribution)
@@ -51,8 +53,9 @@ The guest environment is made up of the following components:
 *   **Instance setup** scripts to execute VM configuration scripts during boot.
 *   **IP forwarding** daemon that integrates network load balancing with
     forwarding rule changes into the guest.
-*   **Metadata scripts** running user provided scripts at VM startup and
+*   **Metadata scripts** to run user provided scripts at VM startup and
     shutdown.
+*   **Network setup** service to enable multiple network interfaces on boot.
 
 The Linux guest environment is written in Python, and is version agnostic
 between Python 2.6 and 3.5. There is complete unittest coverage for every Python
@@ -129,6 +132,18 @@ The library provides the following functions:
     locking in Python. The function sets up an flock and releases the lock on
     exit.
 
+#### Network Utilities
+
+A network utilities library retrieves information about a network interface. The
+library is used for IP forwarding and for setting up an Ethernet interface on
+boot.
+
+The library exposes the following functions:
+
+*   **GetNetworkInterface** retrieves the network interface name associated
+    with a MAC address.
+*   **IsEnabled** checks whether a network interface is enabled.
+
 ## Daemons
 
 The guest environment daemons import and use the common libraries described
@@ -168,7 +183,7 @@ The IP forwarding daemon uses IP forwarding metadata to setup or remove IP
 routes in the guest.
 
 *   Only IPv4 IP addresses are currently supported.
-*   Routes are set on the default ethernet interface determined dynamically.
+*   Routes are set on the default Ethernet interface determined dynamically.
 *   Google routes are configured, by default, with the routing protocol ID `66`.
     This ID is a namespace for daemon configured IP addresses.
 
@@ -204,6 +219,12 @@ design details.
     `startup-script-url`) a URL is executed first.
 *   The exit status of a metadata script is logged after completed execution.
 
+## Network Setup
+
+A network setup service runs on boot and enables all associated network
+interfaces. Network interfaces are specified by MAC address in instance
+metadata.
+
 ## Configuration
 
 Users of Google provided images may configure the guest environment behaviors
@@ -213,21 +234,23 @@ guest.
 
 The following are valid user configuration options.
 
-Section         | Option               | Value
---------------- | -------------------- | -----
-Accounts        | deprovision_remove   | `true` makes deprovisioning a user destructive.
-Accounts        | groups               | Comma separated list of groups for newly provisioned users.
-Daemons         | accounts_daemon      | `false` disables the accounts daemon.
-Daemons         | clock_skew_daemon    | `false` disables the clock skew daemon.
-Daemons         | ip_forwarding_daemon | `false` disables the IP forwarding daemon.
-InstanceSetup   | optimize_local_ssd   | `false` prevents optimizing for local SSD.
-InstanceSetup   | network_enabled      | `false` skips all metadata related-functionality during instance setup.
-InstanceSetup   | set_boto_config      | `false` skips setting up a boto config.
-InstanceSetup   | set_host_keys        | `false` skips generating host keys on first boot.
-InstanceSetup   | set_multiqueue       | `false` skips multiqueue driver support.
-IpForwarding    | ethernet_proto_id    | Protocol ID string for daemon added routes.
-MetadataScripts | startup              | `false` disables startup script execution.
-MetadataScripts | shutdown             | `false` disables shutdown script execution.
+Section           | Option               | Value
+----------------- | -------------------- | -----
+Accounts          | deprovision_remove   | `true` makes deprovisioning a user destructive.
+Accounts          | groups               | Comma separated list of groups for newly provisioned users.
+Daemons           | accounts_daemon      | `false` disables the accounts daemon.
+Daemons           | clock_skew_daemon    | `false` disables the clock skew daemon.
+Daemons           | ip_forwarding_daemon | `false` disables the IP forwarding daemon.
+InstanceSetup     | optimize_local_ssd   | `false` prevents optimizing for local SSD.
+InstanceSetup     | network_enabled      | `false` skips instance setup functions that require metadata.
+InstanceSetup     | set_boto_config      | `false` skips setting up a boto config.
+InstanceSetup     | set_host_keys        | `false` skips generating host keys on first boot.
+InstanceSetup     | set_multiqueue       | `false` skips multiqueue driver support.
+IpForwarding      | ethernet_proto_id    | Protocol ID string for daemon added routes.
+MetadataScripts   | startup              | `false` disables startup script execution.
+MetadataScripts   | shutdown             | `false` disables shutdown script execution.
+NetworkInterfaces | dhcp_binary          | DHCP binary string that enables a network interface parameter.
+NetworkInterfaces | setup                | `false` disables network interface setup.
 
 Setting `network_enabled` to `false` will skip setting up host keys and the
 boto config in the guest. The setting may also prevent startup and shutdown

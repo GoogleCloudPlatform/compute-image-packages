@@ -34,7 +34,7 @@ class NetworkSetup(object):
     """Constructor.
 
     Args:
-      dhcp_binary: string, an executable to enable an ethernet interface.
+      dhcp_binary: string, an executable to enable an Ethernet interface.
       debug: bool, True if debug output should write to the console.
     """
     self.dhcp_binary = dhcp_binary or 'dhclient'
@@ -56,13 +56,13 @@ class NetworkSetup(object):
 
     command = [self.dhcp_binary, interface]
     try:
-      self.logger.info('Enabling the ethernet interface %s.', interface)
+      self.logger.info('Enabling the Ethernet interface %s.', interface)
       subprocess.check_call(command)
     except subprocess.CalledProcessError:
       self.logger.warning('Could not enable the interface %s.', interface)
 
   def _SetupNetworkInterfaces(self):
-    """Get network interfaces metadata and enable each ethernet interface."""
+    """Get network interfaces metadata and enable each Ethernet interface."""
     result = self.watcher.GetMetadata(
         metadata_key=self.network_interfaces, recursive=True)
 

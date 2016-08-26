@@ -20,7 +20,7 @@ import os
 
 
 class NetworkUtils(object):
-  """System network ethernet interface utilities."""
+  """System network Ethernet interface utilities."""
 
   def __init__(self, logger=logging):
     """Constructor.
@@ -32,7 +32,7 @@ class NetworkUtils(object):
     self.interfaces = self._CreateInterfaceMap()
 
   def _CreateInterfaceMap(self):
-    """Generate a dictionary mapping MAC address to ethernet interfaces.
+    """Generate a dictionary mapping MAC address to Ethernet interfaces.
 
     Returns:
       dict, string MAC addresses mapped to the string network interface name.
