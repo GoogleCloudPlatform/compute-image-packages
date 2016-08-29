@@ -13,12 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-COMMON_FILES=(
-  'rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf'
-  'sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf'
-  'udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules'
-  'udev/65-gce-disk-naming.rules=/etc/udev/rules.d/65-gce-disk-naming.rules')
-TIMESTAMP="$(date +%s)"
+#/ Usage: build_packages.sh [options]
+#/
+#/ Build the package containing non-Python scripts and guest configuration.
+#/
+#/ OPTIONS:
+#/   -h             Show this message
+#/   -o DISTRO,...  Build only specified distros
+
+function usage() {
+  grep '^#/' < "$0" | cut -c 4-
+}
 
 function build_distro() {
   declare -r distro="$1"
@@ -46,19 +51,57 @@ function build_distro() {
     "${files[@]:2}"
 }
 
-# RHEL/CentOS 6
-build_distro 'el6' 'rpm' \
-  'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks'
+COMMON_FILES=(
+  'rsyslog/90-google.conf=/etc/rsyslog.d/90-google.conf'
+  'sysctl/11-gce-network-security.conf=/etc/sysctl.d/11-gce-network-security.conf'
+  'udev/64-gce-disk-removal.rules=/etc/udev/rules.d/64-gce-disk-removal.rules'
+  'udev/65-gce-disk-naming.rules=/etc/udev/rules.d/65-gce-disk-naming.rules')
+TIMESTAMP="$(date +%s)"
 
-# RHEL/CentOS 7
-build_distro 'el7' 'rpm' \
-  'bin/set_hostname=/usr/bin/set_hostname' \
-  'dhcp/google_hostname.sh=/etc/dhcp/dhclient.d/google_hostname.sh'
+while getopts 'ho:' OPTION; do
+  case "$OPTION" in
+    h)
+      usage
+      exit 2
+      ;;
+    o)
+      set -f
+      IFS=','
+      BUILD=($OPTARG)
+      set +f
+      ;;
+    ?)
+      usage
+      exit
+      ;;
+  esac
+done
 
-# Debian 7
-build_distro 'wheezy' 'deb' \
-  'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
+if [ -z "$BUILD" ]; then
+  BUILD=('el6' 'el7' 'wheezy' 'jessie')
+fi
 
-# Debian 8
-build_distro 'jessie' 'deb' \
-  'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
+for build in "${BUILD[@]}"; do
+  case "$build" in
+    el6) # RHEL/CentOS 6
+      build_distro 'el6' 'rpm' \
+        'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks'
+      ;;
+    el7) # RHEL/CentOS 7
+      build_distro 'el7' 'rpm' \
+        'bin/set_hostname=/usr/bin/set_hostname' \
+        'dhcp/google_hostname.sh=/etc/dhcp/dhclient.d/google_hostname.sh'
+      ;;
+    wheezy) # Debian 7
+      build_distro 'wheezy' 'deb' \
+        'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
+      ;;
+    jessie) # Debian 8
+      build_distro 'jessie' 'deb' \
+        'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks.d/set_hostname'
+      ;;
+    *)
+      echo "Invalid build '${build}'. Use 'el6', 'el7', 'wheezy', or 'jessie'."
+      ;;
+  esac
+done
