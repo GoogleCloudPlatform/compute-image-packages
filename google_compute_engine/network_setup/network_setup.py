@@ -73,6 +73,8 @@ class NetworkSetup(object):
         message = 'Network interface not found for MAC address: %s.'
         self.logger.warning(message, mac_address)
 
+    # The default Ethernet interface is enabled by default. Do not attempt to
+    # enable interfaces if only one interface is specified in metadata.
     if len(interfaces) <= 1:
       return
 
