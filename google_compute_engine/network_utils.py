@@ -59,21 +59,3 @@ class NetworkUtils(object):
       string, the network interface associated with a MAC address or None.
     """
     return self.interfaces.get(mac_address)
-
-  def IsEnabled(self, interface):
-    """Check whether a network interface is enabled.
-
-    Args:
-      interface: string, the network interface.
-
-    Returns:
-      bool, True if the network interface is enabled.
-    """
-    try:
-      state = open('/sys/class/net/%s/operstate' % interface).read().strip()
-    except (IOError, OSError) as e:
-      message = 'Unable to determine the state for %s. %s.'
-      self.logger.warning(message, interface, str(e))
-      return False
-    else:
-      return 'up' == state

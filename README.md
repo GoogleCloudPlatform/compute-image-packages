@@ -136,13 +136,8 @@ The library provides the following functions:
 
 A network utilities library retrieves information about a network interface. The
 library is used for IP forwarding and for setting up an Ethernet interface on
-boot.
-
-The library exposes the following functions:
-
-*   **GetNetworkInterface** retrieves the network interface name associated
-    with a MAC address.
-*   **IsEnabled** checks whether a network interface is enabled.
+boot. The library exposes a `GetNetworkInterface` function that retrieves the
+network interface name associated with a MAC address.
 
 ## Daemons
 
@@ -249,7 +244,7 @@ InstanceSetup     | set_multiqueue       | `false` skips multiqueue driver suppo
 IpForwarding      | ethernet_proto_id    | Protocol ID string for daemon added routes.
 MetadataScripts   | startup              | `false` disables startup script execution.
 MetadataScripts   | shutdown             | `false` disables shutdown script execution.
-NetworkInterfaces | dhcp_binary          | DHCP binary string that enables a network interface parameter.
+NetworkInterfaces | dhcp_command         | String to execute to enable network interfaces.
 NetworkInterfaces | setup                | `false` disables network interface setup.
 
 Setting `network_enabled` to `false` will skip setting up host keys and the
