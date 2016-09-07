@@ -6,6 +6,9 @@
 .tox
 .coverage
 *.egg-info
+build
+*.deb
+*.rpm
 
 # emacs backup files
 *.*~
