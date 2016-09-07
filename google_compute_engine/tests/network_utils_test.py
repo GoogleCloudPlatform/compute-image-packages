@@ -64,23 +64,3 @@ class NetworkUtilsTest(unittest.TestCase):
     self.assertIsNone(self.mock_utils.GetNetworkInterface('invalid'))
     self.assertEqual(
         self.mock_utils.GetNetworkInterface('address'), 'interface')
-
-  def testIsEnabled(self):
-    mock_open = mock.mock_open()
-
-    with mock.patch('%s.open' % builtin, mock_open, create=False):
-      mock_open().read.side_effect = ['up', 'down', 'up\n', '', 'Garbage']
-      self.assertEqual(self.mock_utils.IsEnabled('a'), True)
-      self.assertEqual(self.mock_utils.IsEnabled('a'), False)
-      self.assertEqual(self.mock_utils.IsEnabled('a'), True)
-      self.assertEqual(self.mock_utils.IsEnabled('a'), False)
-      self.assertEqual(self.mock_utils.IsEnabled('a'), False)
-
-  def testIsEnabledError(self):
-    mock_open = mock.mock_open()
-
-    with mock.patch('%s.open' % builtin, mock_open, create=False):
-      mock_open().read.side_effect = [OSError('OSError')]
-      self.assertEqual(self.mock_utils.IsEnabled('a'), False)
-      self.mock_logger.warning.assert_called_once_with(
-          mock.ANY, 'a', 'OSError'),

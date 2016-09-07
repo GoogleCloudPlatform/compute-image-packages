@@ -30,14 +30,14 @@ class NetworkSetup(object):
 
   network_interfaces = 'instance/network-interfaces'
 
-  def __init__(self, dhcp_binary=None, debug=False):
+  def __init__(self, dhcp_command=None, debug=False):
     """Constructor.
 
     Args:
-      dhcp_binary: string, an executable to enable an Ethernet interface.
+      dhcp_command: string, a command to enable Ethernet interfaces.
       debug: bool, True if debug output should write to the console.
     """
-    self.dhcp_binary = dhcp_binary or 'dhclient'
+    self.dhcp_command = dhcp_command
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
         name='network-setup', debug=debug, facility=facility)
@@ -45,35 +45,46 @@ class NetworkSetup(object):
     self.network_utils = network_utils.NetworkUtils(logger=self.logger)
     self._SetupNetworkInterfaces()
 
-  def _EnableNetworkInterface(self, interface):
-    """Enable the network interface.
+  def _EnableNetworkInterfaces(self, interfaces):
+    """Enable the list of network interfaces.
 
     Args:
-      interface: string, the output device to enable.
+      interface: list of string, the output devices to enable.
     """
-    if self.network_utils.IsEnabled(interface):
-      return
-
-    command = [self.dhcp_binary, interface]
     try:
-      self.logger.info('Enabling the Ethernet interface %s.', interface)
-      subprocess.check_call(command)
+      self.logger.info('Enabling the Ethernet interface %s.', interfaces)
+      subprocess.check_call(['dhclient', '-r'] + interfaces)
+      subprocess.check_call(['dhclient'] + interfaces)
     except subprocess.CalledProcessError:
-      self.logger.warning('Could not enable the interface %s.', interface)
+      self.logger.warning('Could not enable interfaces %s.', interfaces)
 
   def _SetupNetworkInterfaces(self):
     """Get network interfaces metadata and enable each Ethernet interface."""
     result = self.watcher.GetMetadata(
         metadata_key=self.network_interfaces, recursive=True)
+    interfaces = []
 
     for network_interface in result:
       mac_address = network_interface.get('mac')
       interface = self.network_utils.GetNetworkInterface(mac_address)
       if interface:
-        self._EnableNetworkInterface(interface)
+        interfaces.append(interface)
       else:
         message = 'Network interface not found for MAC address: %s.'
         self.logger.warning(message, mac_address)
+
+    # The default Ethernet interface is enabled by default. Do not attempt to
+    # enable interfaces if only one interface is specified in metadata.
+    if len(interfaces) <= 1:
+      return
+
+    if self.dhcp_command:
+      try:
+        subprocess.check_call([self.dhcp_command])
+      except subprocess.CalledProcessError:
+        self.logger.warning('Could not enable Ethernet interfaces.')
+    else:
+      self._EnableNetworkInterfaces(interfaces)
 
 
 def main():
@@ -85,8 +96,8 @@ def main():
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('NetworkInterfaces', 'setup'):
     NetworkSetup(
-        dhcp_binary=instance_config.GetOptionString(
-            'NetworkInterfaces', 'dhcp_binary'),
+        dhcp_command=instance_config.GetOptionString(
+            'NetworkInterfaces', 'dhcp_command'),
         debug=bool(options.debug))
 
 

@@ -67,7 +67,7 @@ class InstanceConfig(config_manager.ConfigManager):
       },
       'NetworkInterfaces': {
           'setup': 'true',
-          'dhcp_binary': 'dhclient',
+          'dhcp_command': '',
       },
   }
 
