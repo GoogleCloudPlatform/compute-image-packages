@@ -97,7 +97,7 @@ class InstanceSetup(object):
       key_type: string, the type of the SSH key.
       key_dest: string, a file location to store the SSH key.
     """
-    # Create a temporary file to save create the RSA keys.
+    # Create a temporary file to save the created RSA keys.
     with tempfile.NamedTemporaryFile(prefix=key_type, delete=True) as temp:
       temp_key = temp.name
 

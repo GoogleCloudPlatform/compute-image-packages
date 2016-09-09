@@ -67,6 +67,7 @@ class InstanceConfig(config_manager.ConfigManager):
       },
       'NetworkInterfaces': {
           'setup': 'true',
+          'dhclient_script': '/sbin/google-dhclient-script',
           'dhcp_command': '',
       },
   }
