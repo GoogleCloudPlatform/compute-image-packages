@@ -278,10 +278,12 @@ class AccountsUtils(object):
     if not bool(USER_REGEX.match(user)):
       self.logger.warning('Invalid user account name %s.', user)
       return False
-    if not self._GetUser(user) and not self._AddUser(user):
-      return False
-    if not self._UpdateUserGroups(user, self.groups):
-      return False
+    if not self._GetUser(user):
+      # User does not exist. Attempt to create the user and add them to the
+      # appropriate user groups.
+      if not (self._AddUser(user) and
+              self._UpdateUserGroups(user, self.groups)):
+        return False
 
     # Don't try to manage account SSH keys with a shell set to disable
     # logins. This helps avoid problems caused by operator and root sharing
