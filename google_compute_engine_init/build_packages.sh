@@ -70,7 +70,7 @@ function build_distro() {
       "google-compute-daemon: ${init_config}/rpm_replace" \
     --url 'https://github.com/GoogleCloudPlatform/compute-image-packages' \
     --vendor 'Google Compute Engine Team' \
-    --version '2.1.0' \
+    --version '2.1.1' \
     "${init_files[@]}"
 }
 
