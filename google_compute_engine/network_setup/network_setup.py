@@ -81,8 +81,6 @@ class NetworkSetup(object):
         self._ModifyInterface(
             interface_config, 'DEVICE', interface, replace=False)
         self._ModifyInterface(
-            interface_config, 'IPV6INIT', 'no', replace=True)
-        self._ModifyInterface(
             interface_config, 'NM_CONTROLLED', 'no', replace=True)
       else:
         with open(interface_config, 'w') as interface_file:

@@ -118,7 +118,6 @@ class NetworkSetupTest(unittest.TestCase):
       expected_calls = [
           mock.call.exists('/etc/sysconfig/network-scripts/ifcfg-eth0'),
           mock.call.modify(mock.ANY, 'DEVICE', 'eth0', replace=False),
-          mock.call.modify(mock.ANY, 'IPV6INIT', 'no', replace=True),
           mock.call.modify(mock.ANY, 'NM_CONTROLLED', 'no', replace=True),
           mock.call.exists('/etc/sysconfig/network-scripts/ifcfg-eth1'),
           mock.call.open('/etc/sysconfig/network-scripts/ifcfg-eth1', 'w'),
