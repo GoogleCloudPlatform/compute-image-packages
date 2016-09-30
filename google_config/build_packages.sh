@@ -85,7 +85,8 @@ for build in "${BUILD[@]}"; do
   case "$build" in
     el6) # RHEL/CentOS 6
       build_distro 'el6' 'rpm' \
-        'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks'
+        'bin/set_hostname=/etc/dhcp/dhclient-exit-hooks' \
+        'sbin/google-dhclient-script=/sbin/google-dhclient-script'
       ;;
     el7) # RHEL/CentOS 7
       build_distro 'el7' 'rpm' \

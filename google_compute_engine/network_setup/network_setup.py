@@ -15,8 +15,11 @@
 
 """Enables the network interfaces provided in metadata."""
 
+import fileinput
 import logging.handlers
 import optparse
+import os
+import re
 import subprocess
 
 from google_compute_engine import config_manager
@@ -30,13 +33,15 @@ class NetworkSetup(object):
 
   network_interfaces = 'instance/network-interfaces'
 
-  def __init__(self, dhcp_command=None, debug=False):
+  def __init__(self, dhclient_script=None, dhcp_command=None, debug=False):
     """Constructor.
 
     Args:
+      dhclient_script: string, the path to a dhclient script used by dhclient.
       dhcp_command: string, a command to enable Ethernet interfaces.
       debug: bool, True if debug output should write to the console.
     """
+    self.dhclient_script = dhclient_script or '/sbin/google-dhclient-script'
     self.dhcp_command = dhcp_command
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
@@ -45,18 +50,89 @@ class NetworkSetup(object):
     self.network_utils = network_utils.NetworkUtils(logger=self.logger)
     self._SetupNetworkInterfaces()
 
+  def _ModifyInterface(
+      self, interface_config, config_key, config_value, replace=False):
+    """Write a value to a config file if not already present.
+
+    Args:
+      interface_config: string, the path to a config file.
+      config_key: string, the configuration key to set.
+      config_value: string, the value to set for the configuration key.
+      replace: bool, replace the configuration option if already present.
+    """
+    config_entry = '%s=%s' % (config_key, config_value)
+    if not open(interface_config).read().count(config_key):
+      with open(interface_config, 'a') as config:
+        config.write('%s\n' % config_entry)
+    elif replace:
+      for line in fileinput.input(interface_config, inplace=True):
+        print(re.sub(r'%s=.*' % config_key, config_entry, line.rstrip()))
+
+  def _DisableNetworkManager(self, interfaces):
+    """Disable network manager management on a list of network interfaces.
+
+    Args:
+      interfaces: list of string, the output device names enable.
+    """
+    interface_path = '/etc/sysconfig/network-scripts'
+    for interface in interfaces:
+      interface_config = os.path.join(interface_path, 'ifcfg-%s' % interface)
+      if os.path.exists(interface_config):
+        self._ModifyInterface(
+            interface_config, 'DEVICE', interface, replace=False)
+        self._ModifyInterface(
+            interface_config, 'NM_CONTROLLED', 'no', replace=True)
+      else:
+        with open(interface_config, 'w') as interface_file:
+          interface_content = [
+              '# Added by Google.',
+              'BOOTPROTO=none',
+              'DEFROUTE=no',
+              'DEVICE=%s' % interface,
+              'IPV6INIT=no',
+              'NM_CONTROLLED=no',
+              'NOZEROCONF=yes',
+              '',
+          ]
+          interface_file.write('\n'.join(interface_content))
+        self.logger.info('Created config file for interface %s.', interface)
+
+  def _ConfigureNetwork(self, interfaces):
+    """Enable the list of network interfaces.
+
+    Args:
+      interfaces: list of string, the output device names enable.
+    """
+    self.logger.info('Enabling the Ethernet interfaces %s.', interfaces)
+    dhclient_command = ['dhclient']
+    if os.path.exists(self.dhclient_script):
+      dhclient_command += ['-sf', self.dhclient_script]
+    try:
+      subprocess.check_call(dhclient_command + ['-x'] + interfaces)
+      subprocess.check_call(dhclient_command + interfaces)
+    except subprocess.CalledProcessError:
+      self.logger.warning('Could not enable interfaces %s.', interfaces)
+
   def _EnableNetworkInterfaces(self, interfaces):
     """Enable the list of network interfaces.
 
     Args:
-      interface: list of string, the output devices to enable.
+      interfaces: list of string, the output device names to enable.
     """
-    try:
-      self.logger.info('Enabling the Ethernet interface %s.', interfaces)
-      subprocess.check_call(['dhclient', '-r'] + interfaces)
-      subprocess.check_call(['dhclient'] + interfaces)
-    except subprocess.CalledProcessError:
-      self.logger.warning('Could not enable interfaces %s.', interfaces)
+    # The default Ethernet interface is enabled by default. Do not attempt to
+    # enable interfaces if only one interface is specified in metadata.
+    if not interfaces or len(interfaces) <= 1:
+      return
+
+    if self.dhcp_command:
+      try:
+        subprocess.check_call([self.dhcp_command])
+      except subprocess.CalledProcessError:
+        self.logger.warning('Could not enable Ethernet interfaces.')
+    else:
+      if os.path.exists('/etc/sysconfig/network-scripts'):
+        self._DisableNetworkManager(interfaces)
+      self._ConfigureNetwork(interfaces)
 
   def _SetupNetworkInterfaces(self):
     """Get network interfaces metadata and enable each Ethernet interface."""
@@ -73,18 +149,7 @@ class NetworkSetup(object):
         message = 'Network interface not found for MAC address: %s.'
         self.logger.warning(message, mac_address)
 
-    # The default Ethernet interface is enabled by default. Do not attempt to
-    # enable interfaces if only one interface is specified in metadata.
-    if len(interfaces) <= 1:
-      return
-
-    if self.dhcp_command:
-      try:
-        subprocess.check_call([self.dhcp_command])
-      except subprocess.CalledProcessError:
-        self.logger.warning('Could not enable Ethernet interfaces.')
-    else:
-      self._EnableNetworkInterfaces(interfaces)
+    self._EnableNetworkInterfaces(interfaces)
 
 
 def main():
@@ -96,6 +161,8 @@ def main():
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('NetworkInterfaces', 'setup'):
     NetworkSetup(
+        dhclient_script=instance_config.GetOptionString(
+            'NetworkInterfaces', 'dhclient_script'),
         dhcp_command=instance_config.GetOptionString(
             'NetworkInterfaces', 'dhcp_command'),
         debug=bool(options.debug))
