@@ -27,8 +27,9 @@
 # dhclient-script for Linux. Dan Halbert, March, 1997.
 # Updated for Linux 2.[12] by Brian J. Murrell, January 1999.
 # Modified by David Cantrell <dcantrell@redhat.com> for Fedora and RHEL
-# ----------
 #
+# This script is found in EL 7 and used to fix local routing in EL 6.
+# ----------
 
 PATH=/bin:/usr/bin:/sbin
 # scripts in dhclient.d/ use $SAVEDIR (#833054)
