@@ -51,7 +51,8 @@ class AccountsDaemon(object):
     try:
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google Accounts daemon.')
-        self.watcher.WatchMetadata(self.HandleAccounts, recursive=True)
+        self.watcher.WatchMetadata(
+            self.HandleAccounts, recursive=True, timeout=60)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
