@@ -68,7 +68,8 @@ class IpForwardingDaemon(object):
       self.logger.warning(str(e))
 
   def _LogForwardedIpChanges(
-      self, configured, desired, to_add, to_remove, interface):
+      self, configured, desired, to_add, to_remove, interface,
+      ip_aliases=False):
     """Log the planned IP address changes.
 
     Args:
@@ -80,10 +81,11 @@ class IpForwardingDaemon(object):
     """
     if not to_add and not to_remove:
       return
+    message = 'IP aliases' if ip_aliases else 'forwarded IPs' 
     self.logger.info(
-        'Changing %s forwarded IPs from %s to %s by adding %s and removing %s.',
-        interface, configured or None, desired or None, to_add or None,
-        to_remove or None)
+        'Changing %s %s from %s to %s by adding %s and removing %s.',
+        interface, message, configured or None, desired or None,
+        to_add or None, to_remove or None)
 
   def _AddForwardedIps(self, forwarded_ips, interface):
     """Configure the forwarded IP address on the network interface.
@@ -105,19 +107,23 @@ class IpForwardingDaemon(object):
     for address in forwarded_ips:
       self.ip_forwarding_utils.RemoveForwardedIp(address, interface)
 
-  def _HandleForwardedIps(self, forwarded_ips, interface):
+  def _HandleForwardedIps(self, forwarded_ips, interface, ip_aliases=False):
     """Handle changes to the forwarded IPs on a network interface.
 
     Args:
       forwarded_ips: list, the forwarded IP address strings desired.
       interface: string, the output device to configure.
+      ip_aliases: bool, True if the list should match IP aliases.
     """
-    desired = self.ip_forwarding_utils.ParseForwardedIps(forwarded_ips)
-    configured = self.ip_forwarding_utils.GetForwardedIps(interface)
+    desired = self.ip_forwarding_utils.ParseForwardedIps(
+        forwarded_ips, ip_aliases=ip_aliases)
+    configured = self.ip_forwarding_utils.GetForwardedIps(
+        interface, ip_aliases=ip_aliases)
     to_add = sorted(set(desired) - set(configured))
     to_remove = sorted(set(configured) - set(desired))
     self._LogForwardedIpChanges(
-        configured, desired, to_add, to_remove, interface)
+        configured, desired, to_add, to_remove, interface,
+        ip_aliases=ip_aliases)
     self._AddForwardedIps(to_add, interface)
     self._RemoveForwardedIps(to_remove, interface)
 
@@ -132,7 +138,9 @@ class IpForwardingDaemon(object):
       interface = self.network_utils.GetNetworkInterface(mac_address)
       if interface:
         forwarded_ips = network_interface.get('forwardedIps')
-        self._HandleForwardedIps(forwarded_ips, interface)
+        self._HandleForwardedIps(forwarded_ips, interface, ip_aliases=False)
+        ip_aliases = network_interface.get('ipAliases')
+        self._HandleForwardedIps(ip_aliases, interface, ip_aliases=True)
       else:
         message = 'Network interface not found for MAC address: %s.'
         self.logger.warning(message, mac_address)
