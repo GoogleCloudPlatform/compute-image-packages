@@ -125,15 +125,15 @@ class IpForwardingDaemon(object):
     """Called when network interface metadata changes.
 
     Args:
-      result: string, the metadata response with the new network interfaces.
+      result: dict, the metadata response with the new network interfaces.
     """
     for network_interface in result:
       mac_address = network_interface.get('mac')
       interface = self.network_utils.GetNetworkInterface(mac_address)
       ip_addresses = []
       if interface:
-        ip_addresses.extend(network_interface.get('forwardedIps'))
-        ip_addresses.extend(network_interface.get('ipAliases'))
+        ip_addresses.extend(network_interface.get('forwardedIps', []))
+        ip_addresses.extend(network_interface.get('ipAliases', []))
         self._HandleForwardedIps(ip_addresses, interface)
       else:
         message = 'Network interface not found for MAC address: %s.'
