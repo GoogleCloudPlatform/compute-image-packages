@@ -81,12 +81,11 @@ class IpForwardingUtils(object):
         return stdout.decode('utf-8', 'replace')
     return ''
 
-  def ParseForwardedIps(self, forwarded_ips, ip_aliases=False):
+  def ParseForwardedIps(self, forwarded_ips):
     """Parse and validate forwarded IP addresses.
 
     Args:
       forwarded_ips: list, the IP address strings to parse.
-      ip_aliases: bool, True if the list should match IP aliases.
 
     Returns:
       list, the valid IP address strings.
@@ -94,17 +93,13 @@ class IpForwardingUtils(object):
     addresses = []
     forwarded_ips = forwarded_ips or []
     for ip in forwarded_ips:
-      if ip and IP_REGEX.match(ip):
-        if not ip_aliases:
-          addresses.append(ip)
-      elif ip and IP_ALIAS_REGEX.match(ip):
-        if ip_aliases:
-          addresses.append(ip)
+      if ip and (IP_REGEX.match(ip) or IP_ALIAS_REGEX.match(ip)):
+        addresses.append(ip)
       else:
         self.logger.warning('Could not parse IP address: "%s".', ip)
     return addresses
 
-  def GetForwardedIps(self, interface, ip_aliases=False):
+  def GetForwardedIps(self, interface):
     """Retrieve the list of configured forwarded IP addresses.
 
     Args:
@@ -116,7 +111,7 @@ class IpForwardingUtils(object):
     args = ['ls', 'table', 'local', 'type', 'local']
     options = self._CreateRouteOptions(dev=interface)
     result = self._RunIpRoute(args=args, options=options)
-    return self.ParseForwardedIps(result.split(), ip_aliases=ip_aliases)
+    return self.ParseForwardedIps(result.split())
 
   def AddForwardedIp(self, address, interface):
     """Configure a new IP address on the network interface.
