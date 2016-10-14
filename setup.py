@@ -25,7 +25,7 @@ setuptools.setup(
     author_email='gc-team@google.com',
     description='Google Compute Engine',
     include_package_data=True,
-    install_requires=['boto'],
+    install_requires=['boto', 'setuptools'],
     license='Apache Software License',
     long_description='Google Compute Engine guest environment.',
     name='google-compute-engine',
