@@ -52,14 +52,10 @@ class ScriptRetriever(object):
     """
     try:
        subprocess.check_call(
-         ['which', 'gsutil'],
-         stdout=subprocess.PIPE,
-         stderr=subprocess.PIPE
-       )
+         ['which', 'gsutil'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except subprocess.CalledProcessError:
       self.logger.warning(
-        'gsutil is not installed, cannot download items from Google Storage'
-      )
+        'gsutil is not installed, cannot download items from Google Storage')
       return None
 
     dest_file = tempfile.NamedTemporaryFile(dir=dest_dir, delete=False)
