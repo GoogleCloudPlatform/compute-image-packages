@@ -63,7 +63,7 @@ class IpForwardingDaemon(object):
         self.logger.info('Starting Google IP Forwarding daemon.')
         self.watcher.WatchMetadata(
             self.HandleNetworkInterfaces, metadata_key=self.network_interfaces,
-            recursive=True)
+            recursive=True, timeout=60)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
