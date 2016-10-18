@@ -34,6 +34,15 @@ class ScriptRetrieverTest(unittest.TestCase):
         self.mock_logger, self.script_type)
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.subprocess.check_call')
+  def testDownloadGsNoExec(self, mock_call):
+    mock_call.side_effect = subprocess.CalledProcessError('foo', 'bar')
+    gs_url = 'gs://fake/url'
+    self.assertIsNone(self.retriever._DownloadGsUrl(gs_url, self.dest_dir))
+    mock_call.assert_called_once_with(
+        ['which', 'gsutil'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    self.mock_logger.warning.assert_called_once_with(mock.ANY)
+
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.subprocess.check_call')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   def testDownloadGsUrl(self, mock_tempfile, mock_call):
     gs_url = 'gs://fake/url'
@@ -44,7 +53,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     mock_tempfile.assert_called_once_with(dir=self.dest_dir, delete=False)
     mock_tempfile.close.assert_called_once_with()
     self.mock_logger.info.assert_called_once_with(mock.ANY, gs_url, self.dest)
-    mock_call.assert_called_once_with(['gsutil', 'cp', gs_url, self.dest])
+    mock_call.assert_called_with(['gsutil', 'cp', gs_url, self.dest])
     self.mock_logger.warning.assert_not_called()
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.subprocess.check_call')
@@ -53,7 +62,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     gs_url = 'gs://fake/url'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
+    mock_call.side_effect = [0, subprocess.CalledProcessError(1, 'Test')]
     self.assertIsNone(self.retriever._DownloadGsUrl(gs_url, self.dest_dir))
     self.assertEqual(self.mock_logger.warning.call_count, 1)
 
@@ -63,7 +72,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     gs_url = 'gs://fake/url'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    mock_call.side_effect = Exception('Error.')
+    mock_call.side_effect = [0, Exception('Error.')]
     self.assertIsNone(self.retriever._DownloadGsUrl(gs_url, self.dest_dir))
     self.assertEqual(self.mock_logger.warning.call_count, 1)
 
