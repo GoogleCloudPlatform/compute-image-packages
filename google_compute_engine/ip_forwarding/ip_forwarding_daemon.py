@@ -16,8 +16,9 @@
 """Manage IP forwarding on a Google Compute Engine instance.
 
 Fetch a list of public endpoint IPs from the metadata server, compare it with
-the IPs configured on eth0, and add or remove addresses from eth0 to make them
-match. Only remove those which match our proto code.
+the IPs configured the associated interfaces, and add or remove addresses from
+the interfaces to make them match. Only remove those which match our proto
+code.
 
 Command used to add IPs:
   ip route add to local $IP/32 dev eth0 proto 66
