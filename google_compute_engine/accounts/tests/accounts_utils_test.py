@@ -148,6 +148,27 @@ class AccountsUtilsTest(unittest.TestCase):
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
+  @mock.patch('google_compute_engine.accounts.accounts_utils.open')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
+  def testCreateSudoersGroupWriteError(self, mock_exists, mock_open):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_exists, 'exists')
+    mocks.attach_mock(mock_open, 'open')
+    mocks.attach_mock(self.mock_utils._GetGroup, 'group')
+    mocks.attach_mock(self.mock_logger, 'logger')
+    self.mock_utils._GetGroup.return_value = True
+    mock_exists.return_value = False
+    mock_open.side_effect = IOError()
+    accounts_utils.AccountsUtils._CreateSudoersGroup(self.mock_utils)
+
+    expected_calls = [
+        mock.call.group(self.sudoers_group),
+        mock.call.exists(self.sudoers_file),
+        mock.call.open(self.sudoers_file, 'w'),
+        mock.call.logger.error('Could not write sudoers file. /sudoers/file. '),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
   @mock.patch('google_compute_engine.accounts.accounts_utils.pwd')
   def testGetUser(self, mock_pwd):
     mock_pwd.getpwnam.return_value = 'Test'
