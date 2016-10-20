@@ -66,7 +66,8 @@ class IpForwardingDaemonTest(unittest.TestCase):
           mock.call.lock.LockFile().__enter__(),
           mock.call.logger.Logger().info(mock.ANY),
           mock.call.watcher.MetadataWatcher().WatchMetadata(
-              mock_handle, metadata_key=metadata_key, recursive=True),
+              mock_handle, metadata_key=metadata_key, recursive=True,
+              timeout=mock.ANY),
           mock.call.lock.LockFile().__exit__(None, None, None),
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)

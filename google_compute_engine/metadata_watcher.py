@@ -76,12 +76,13 @@ class MetadataWatcher(object):
     self.timeout = timeout
 
   @RetryOnUnavailable
-  def _GetMetadataRequest(self, metadata_url, params=None):
+  def _GetMetadataRequest(self, metadata_url, params=None, timeout=None):
     """Performs a GET request with the metadata headers.
 
     Args:
       metadata_url: string, the URL to perform a GET request on.
       params: dictionary, the query parameters in the GET request.
+      timeout: int, timeout in seconds for metadata requests.
 
     Returns:
       HTTP response from the GET request.
@@ -94,7 +95,8 @@ class MetadataWatcher(object):
     url = '%s?%s' % (metadata_url, params)
     request = urlrequest.Request(url, headers=headers)
     request_opener = urlrequest.build_opener(urlrequest.ProxyHandler({}))
-    return request_opener.open(request, timeout=self.timeout*1.1)
+    timeout = timeout or self.timeout
+    return request_opener.open(request, timeout=timeout*1.1)
 
   def _UpdateEtag(self, response):
     """Update the etag from an API response.
@@ -110,13 +112,15 @@ class MetadataWatcher(object):
     self.etag = etag
     return etag_updated
 
-  def _GetMetadataUpdate(self, metadata_key='', recursive=True, wait=True):
+  def _GetMetadataUpdate(
+      self, metadata_key='', recursive=True, wait=True, timeout=None):
     """Request the contents of metadata server and deserialize the response.
 
     Args:
       metadata_key: string, the metadata key to watch for changes.
       recursive: bool, True if we should recursively watch for metadata changes.
       wait: bool, True if we should wait for a metadata change.
+      timeout: int, timeout in seconds for returning metadata output.
 
     Returns:
       json, the deserialized contents of the metadata server.
@@ -127,27 +131,33 @@ class MetadataWatcher(object):
         'alt': 'json',
         'last_etag': self.etag,
         'recursive': recursive,
-        'timeout_sec': self.timeout,
+        'timeout_sec': timeout or self.timeout,
         'wait_for_change': wait,
     }
     while True:
-      response = self._GetMetadataRequest(metadata_url, params=params)
+      response = self._GetMetadataRequest(
+          metadata_url, params=params, timeout=timeout)
       etag_updated = self._UpdateEtag(response)
-      if wait and not etag_updated:
+      if wait and not etag_updated and not timeout:
         # Retry until the etag is updated.
         continue
       else:
-        # Waiting for change is not required or the etag is updated.
+        # One of the following are true:
+        # - Waiting for change is not required.
+        # - The etag is updated.
+        # - The user specified a request timeout.
         break
     return json.loads(response.read().decode('utf-8'))
 
-  def _HandleMetadataUpdate(self, metadata_key='', recursive=True, wait=True):
+  def _HandleMetadataUpdate(
+      self, metadata_key='', recursive=True, wait=True, timeout=None):
     """Wait for a successful metadata response.
 
     Args:
       metadata_key: string, the metadata key to watch for changes.
       recursive: bool, True if we should recursively watch for metadata changes.
       wait: bool, True if we should wait for a metadata change.
+      timeout: int, timeout in seconds for returning metadata output.
 
     Returns:
       json, the deserialized contents of the metadata server.
@@ -156,7 +166,8 @@ class MetadataWatcher(object):
     while True:
       try:
         return self._GetMetadataUpdate(
-            metadata_key=metadata_key, recursive=recursive, wait=wait)
+            metadata_key=metadata_key, recursive=recursive, wait=wait,
+            timeout=timeout)
       except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
         if isinstance(e, type(exception)):
           continue
@@ -164,31 +175,36 @@ class MetadataWatcher(object):
           exception = e
           self.logger.exception('GET request error retrieving metadata.')
 
-  def WatchMetadata(self, handler, metadata_key='', recursive=True):
+  def WatchMetadata(
+      self, handler, metadata_key='', recursive=True, timeout=None):
     """Watch for changes to the contents of the metadata server.
 
     Args:
       handler: callable, a function to call with the updated metadata contents.
       metadata_key: string, the metadata key to watch for changes.
       recursive: bool, True if we should recursively watch for metadata changes.
+      timeout: int, timeout in seconds for returning metadata output.
     """
     while True:
       response = self._HandleMetadataUpdate(
-          metadata_key=metadata_key, recursive=recursive, wait=True)
+          metadata_key=metadata_key, recursive=recursive, wait=True,
+          timeout=timeout)
       try:
         handler(response)
       except Exception as e:
         self.logger.exception('Exception calling the response handler. %s.', e)
 
-  def GetMetadata(self, metadata_key='', recursive=True):
+  def GetMetadata(self, metadata_key='', recursive=True, timeout=None):
     """Retrieve the contents of metadata server for a metadata key.
 
     Args:
       metadata_key: string, the metadata key to watch for changes.
       recursive: bool, True if we should recursively watch for metadata changes.
+      timeout: int, timeout in seconds for returning metadata output.
 
     Returns:
       json, the deserialized contents of the metadata server or None if error.
     """
     return self._HandleMetadataUpdate(
-        metadata_key=metadata_key, recursive=recursive, wait=False)
+        metadata_key=metadata_key, recursive=recursive, wait=False,
+        timeout=timeout)

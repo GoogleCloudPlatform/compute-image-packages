@@ -227,6 +227,11 @@ using a configuration file. To make configuration changes, add settings to
 `/etc/default/instance_configs.cfg.template`. Settings are not overridden in the
 guest.
 
+Linux distributions looking to include their own defaults can specify settings
+in `/etc/default/instance_configs.cfg.distro`. These settings will not override
+`/etc/default/instance_configs.cfg.template`. This enables distribution settings
+that do not override user configuration during package update.
+
 The following are valid user configuration options.
 
 Section           | Option               | Value
