@@ -16,8 +16,9 @@
 """Manage IP forwarding on a Google Compute Engine instance.
 
 Fetch a list of public endpoint IPs from the metadata server, compare it with
-the IPs configured on eth0, and add or remove addresses from eth0 to make them
-match. Only remove those which match our proto code.
+the IPs configured the associated interfaces, and add or remove addresses from
+the interfaces to make them match. Only remove those which match our proto
+code.
 
 Command used to add IPs:
   ip route add to local $IP/32 dev eth0 proto 66
@@ -27,6 +28,7 @@ Command used to fetch list of configured IPs:
 
 import logging.handlers
 import optparse
+import random
 
 from google_compute_engine import config_manager
 from google_compute_engine import file_utils
@@ -61,9 +63,10 @@ class IpForwardingDaemon(object):
     try:
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google IP Forwarding daemon.')
+        timeout = 60 + random.randint(0, 30)
         self.watcher.WatchMetadata(
             self.HandleNetworkInterfaces, metadata_key=self.network_interfaces,
-            recursive=True)
+            recursive=True, timeout=timeout)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
