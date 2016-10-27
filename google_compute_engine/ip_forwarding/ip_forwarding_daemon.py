@@ -84,7 +84,7 @@ class IpForwardingDaemon(object):
     if not to_add and not to_remove:
       return
     self.logger.info(
-        'Changing %s forwarded IPs from %s to %s by adding %s and removing %s.',
+        'Changing %s IPs from %s to %s by adding %s and removing %s.',
         interface, configured or None, desired or None, to_add or None,
         to_remove or None)
 
@@ -128,14 +128,16 @@ class IpForwardingDaemon(object):
     """Called when network interface metadata changes.
 
     Args:
-      result: string, the metadata response with the new network interfaces.
+      result: dict, the metadata response with the new network interfaces.
     """
     for network_interface in result:
       mac_address = network_interface.get('mac')
       interface = self.network_utils.GetNetworkInterface(mac_address)
+      ip_addresses = []
       if interface:
-        forwarded_ips = network_interface.get('forwardedIps')
-        self._HandleForwardedIps(forwarded_ips, interface)
+        ip_addresses.extend(network_interface.get('forwardedIps', []))
+        ip_addresses.extend(network_interface.get('ipAliases', []))
+        self._HandleForwardedIps(ip_addresses, interface)
       else:
         message = 'Network interface not found for MAC address: %s.'
         self.logger.warning(message, mac_address)

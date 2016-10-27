@@ -19,6 +19,7 @@ import re
 import subprocess
 
 IP_REGEX = re.compile(r'\A(\d{1,3}\.){3}\d{1,3}\Z')
+IP_ALIAS_REGEX = re.compile(r'\A(\d{1,3}\.){3}\d{1,3}/\d{1,2}\Z')
 
 
 class IpForwardingUtils(object):
@@ -92,7 +93,7 @@ class IpForwardingUtils(object):
     addresses = []
     forwarded_ips = forwarded_ips or []
     for ip in forwarded_ips:
-      if ip and IP_REGEX.match(ip):
+      if ip and (IP_REGEX.match(ip) or IP_ALIAS_REGEX.match(ip)):
         addresses.append(ip)
       else:
         self.logger.warning('Could not parse IP address: "%s".', ip)
@@ -119,7 +120,8 @@ class IpForwardingUtils(object):
       address: string, the IP address to configure.
       interface: string, the output device to use.
     """
-    args = ['add', 'to', 'local', '%s/32' % address]
+    address = address if IP_ALIAS_REGEX.match(address) else '%s/32' % address
+    args = ['add', 'to', 'local', address]
     options = self._CreateRouteOptions(dev=interface)
     self._RunIpRoute(args=args, options=options)
 
@@ -130,6 +132,7 @@ class IpForwardingUtils(object):
       address: string, the IP address to configure.
       interface: string, the output device to use.
     """
-    args = ['delete', 'to', 'local', '%s/32' % address]
+    address = address if IP_ALIAS_REGEX.match(address) else '%s/32' % address
+    args = ['delete', 'to', 'local', address]
     options = self._CreateRouteOptions(dev=interface)
     self._RunIpRoute(args=args, options=options)

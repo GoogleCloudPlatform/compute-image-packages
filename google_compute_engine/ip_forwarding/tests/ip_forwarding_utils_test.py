@@ -137,6 +137,12 @@ class IpForwardingUtilsTest(unittest.TestCase):
         '1.1.1.a': False,
         None: False,
         '1.0.0.0': True,
+        '1.1.1.1/1': True,
+        '1.1.1.1/11': True,
+        '123.123.123.123/1': True,
+        '123.123.123.123/123': False,
+        '123.123.123.123/a': False,
+        '123.123.123.123/': False,
     }
     input_ips = forwarded_ips.keys()
     valid_ips = [ip for ip, valid in forwarded_ips.items() if valid]
@@ -175,6 +181,18 @@ class IpForwardingUtilsTest(unittest.TestCase):
     mock_run.assert_called_once_with(
         args=['add', 'to', 'local', '1.1.1.1/32'], options=self.options)
 
+  def testAddIpAlias(self):
+    mock_options = mock.Mock()
+    mock_options.return_value = self.options
+    mock_run = mock.Mock()
+    self.mock_utils._CreateRouteOptions = mock_options
+    self.mock_utils._RunIpRoute = mock_run
+
+    self.mock_utils.AddForwardedIp('1.1.1.1/24', 'interface')
+    mock_options.assert_called_once_with(dev='interface')
+    mock_run.assert_called_once_with(
+        args=['add', 'to', 'local', '1.1.1.1/24'], options=self.options)
+
   def testRemoveForwardedIp(self):
     mock_options = mock.Mock()
     mock_options.return_value = self.options
@@ -186,6 +204,18 @@ class IpForwardingUtilsTest(unittest.TestCase):
     mock_options.assert_called_once_with(dev='interface')
     mock_run.assert_called_once_with(
         args=['delete', 'to', 'local', '1.1.1.1/32'], options=self.options)
+
+  def testRemoveAliasIp(self):
+    mock_options = mock.Mock()
+    mock_options.return_value = self.options
+    mock_run = mock.Mock()
+    self.mock_utils._CreateRouteOptions = mock_options
+    self.mock_utils._RunIpRoute = mock_run
+
+    self.mock_utils.RemoveForwardedIp('1.1.1.1/24', 'interface')
+    mock_options.assert_called_once_with(dev='interface')
+    mock_run.assert_called_once_with(
+        args=['delete', 'to', 'local', '1.1.1.1/24'], options=self.options)
 
 
 if __name__ == '__main__':
