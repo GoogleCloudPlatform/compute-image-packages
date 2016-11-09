@@ -16,8 +16,9 @@
 """Manage IP forwarding on a Google Compute Engine instance.
 
 Fetch a list of public endpoint IPs from the metadata server, compare it with
-the IPs configured on eth0, and add or remove addresses from eth0 to make them
-match. Only remove those which match our proto code.
+the IPs configured the associated interfaces, and add or remove addresses from
+the interfaces to make them match. Only remove those which match our proto
+code.
 
 Command used to add IPs:
   ip route add to local $IP/32 dev eth0 proto 66
@@ -27,6 +28,7 @@ Command used to fetch list of configured IPs:
 
 import logging.handlers
 import optparse
+import random
 
 from google_compute_engine import config_manager
 from google_compute_engine import file_utils
@@ -61,9 +63,10 @@ class IpForwardingDaemon(object):
     try:
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google IP Forwarding daemon.')
+        timeout = 60 + random.randint(0, 30)
         self.watcher.WatchMetadata(
             self.HandleNetworkInterfaces, metadata_key=self.network_interfaces,
-            recursive=True)
+            recursive=True, timeout=timeout)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
@@ -81,7 +84,7 @@ class IpForwardingDaemon(object):
     if not to_add and not to_remove:
       return
     self.logger.info(
-        'Changing %s forwarded IPs from %s to %s by adding %s and removing %s.',
+        'Changing %s IPs from %s to %s by adding %s and removing %s.',
         interface, configured or None, desired or None, to_add or None,
         to_remove or None)
 
@@ -125,14 +128,16 @@ class IpForwardingDaemon(object):
     """Called when network interface metadata changes.
 
     Args:
-      result: string, the metadata response with the new network interfaces.
+      result: dict, the metadata response with the new network interfaces.
     """
     for network_interface in result:
       mac_address = network_interface.get('mac')
       interface = self.network_utils.GetNetworkInterface(mac_address)
+      ip_addresses = []
       if interface:
-        forwarded_ips = network_interface.get('forwardedIps')
-        self._HandleForwardedIps(forwarded_ips, interface)
+        ip_addresses.extend(network_interface.get('forwardedIps', []))
+        ip_addresses.extend(network_interface.get('ipAliases', []))
+        self._HandleForwardedIps(ip_addresses, interface)
       else:
         message = 'Network interface not found for MAC address: %s.'
         self.logger.warning(message, mac_address)

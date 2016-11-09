@@ -19,6 +19,7 @@ import datetime
 import json
 import logging.handlers
 import optparse
+import random
 
 from google_compute_engine import config_manager
 from google_compute_engine import file_utils
@@ -51,7 +52,9 @@ class AccountsDaemon(object):
     try:
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google Accounts daemon.')
-        self.watcher.WatchMetadata(self.HandleAccounts, recursive=True)
+        timeout = 60 + random.randint(0, 30)
+        self.watcher.WatchMetadata(
+            self.HandleAccounts, recursive=True, timeout=timeout)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
