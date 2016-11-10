@@ -148,6 +148,18 @@ class AccountsDaemonTest(unittest.TestCase):
     self.assertEqual(accounts_daemon.AccountsDaemon._ParseAccountsData(
         self.mock_setup, accounts_data), expected_users)
 
+  def testParseAccountsDataNonAscii(self):
+    accounts_data = [
+        'username:rsa ssh-ke%s invalid\n' % chr(165),
+        'use%sname:rsa ssh-key\n' % chr(174),
+        'username:rsa ssh-key\n',
+    ]
+    accounts_data = ''.join(accounts_data)
+    self.mock_setup._HasExpired.return_value = False
+    expected_users = {'username': ['rsa ssh-key']}
+    self.assertEqual(accounts_daemon.AccountsDaemon._ParseAccountsData(
+        self.mock_setup, accounts_data), expected_users)
+
   def testGetAccountsData(self):
 
     def _AssertAccountsData(data, expected):

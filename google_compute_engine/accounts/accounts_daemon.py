@@ -124,6 +124,9 @@ class AccountsDaemon(object):
     lines = [line for line in account_data.splitlines() if line]
     user_map = {}
     for line in lines:
+      if not all(ord(c) < 128 for c in line):
+        self.logger.info('SSH key contains non-ascii character: %s.', line)
+        continue
       split_line = line.split(':', 1)
       if len(split_line) != 2:
         self.logger.info('SSH key is not a complete entry: %s.', split_line)
