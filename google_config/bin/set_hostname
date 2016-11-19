@@ -21,6 +21,9 @@ if [ -n "$new_host_name" ] && [ -n "$new_ip_address" ]; then
 
   # Add an entry for our new_host_name/new_ip_address in /etc/hosts.
   echo "${new_ip_address} ${new_host_name} ${new_host_name%%.*}  # Added by Google" >> /etc/hosts
+
+  # Add an entry for reaching the metadata server in /etc/hosts.
+  echo "169.254.169.254 metadata.google.internal  # Added by Google" >> /etc/hosts
 fi
 
 # /sbin/dhclient-scripts in both ubuntu and centos have some problems for us:
