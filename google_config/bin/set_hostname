@@ -36,6 +36,10 @@ fi
 if [ -n "$new_host_name" ]; then
   hostname "${new_host_name%%.*}"
 
-  # Let syslogd know we've changed the hostname.
-  pkill -HUP syslogd
+  # Restart syslog to update the hostname if we're not using systemd.
+  # systemd rsyslog jobs wait for networking to finish starting and consequently
+  # syslog or rsyslog is running with the correct hostname.
+  if [ ! -f /bin/systemctl ]; then
+    pkill -HUP syslogd
+  fi
 fi
