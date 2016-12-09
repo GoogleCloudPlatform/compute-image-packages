@@ -16,7 +16,6 @@
 """Unittest for ip_forwarding_utils.py module."""
 
 from google_compute_engine.ip_forwarding import ip_forwarding_utils
-from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -151,6 +150,17 @@ class IpForwardingUtilsTest(unittest.TestCase):
     self.assertEqual(self.mock_utils.ParseForwardedIps(input_ips), valid_ips)
     expected_calls = [mock.call.warning(mock.ANY, ip) for ip in invalid_ips]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
+
+  def testParseForwardedIpsSubnet(self):
+    forwarded_ips = {
+        '1.1.1.1': '1.1.1.1',
+        '1.1.1.1/32': '1.1.1.1',
+        '1.1.1.1/1': '1.1.1.1/1',
+        '1.1.1.1/10': '1.1.1.1/10',
+        '1.1.1.1/24': '1.1.1.1/24',
+    }
+    for ip, value in forwarded_ips.items():
+      self.assertEqual(self.mock_utils.ParseForwardedIps([ip]), [value])
 
   def testGetForwardedIps(self):
     mock_options = mock.Mock()

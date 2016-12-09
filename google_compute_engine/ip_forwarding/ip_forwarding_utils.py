@@ -94,7 +94,7 @@ class IpForwardingUtils(object):
     forwarded_ips = forwarded_ips or []
     for ip in forwarded_ips:
       if ip and (IP_REGEX.match(ip) or IP_ALIAS_REGEX.match(ip)):
-        addresses.append(ip)
+        addresses.append(ip[:-3] if ip.endswith('/32') else ip)
       else:
         self.logger.warning('Could not parse IP address: "%s".', ip)
     return addresses
