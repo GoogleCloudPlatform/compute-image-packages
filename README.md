@@ -269,6 +269,7 @@ Distro       | Package Type | Python Version | Init System
 ------------ | ------------ | -------------- | -----------
 Debian 7     | deb          | 2.7            | sysvinit
 Debian 8     | deb          | 2.7            | systemd
+Debian 9     | deb          | 2.7            | systemd
 CentOS 6     | rpm          | 2.6            | upstart
 CentOS 7     | rpm          | 2.7            | systemd
 RHEL 6       | rpm          | 2.6            | upstart
@@ -302,10 +303,10 @@ The package build tools are published in this project.
 ## Package Distribution
 
 The deb and rpm packages used in some GCE images are published to Google Cloud
-repositories. Debian 8, CentOS 6 and 7, and RHEL 6 and 7 use these repositories
-to install and update the `google-compute-engine`,`google-compute-engine-init`,
-and `google-config` packages. If you are creating a custom image, you can also
-use these repositories in your image.
+repositories. Debian 8, Debian 9, CentOS 6 and 7, and RHEL 6 and 7 use these
+repositories to install and update the `google-compute-engine`,
+`google-compute-engine-init`, and `google-config` packages. If you are creating
+a custom image, you can also use these repositories in your image.
 
 **For Debian 8, run the following commands as root:**
 
@@ -331,6 +332,32 @@ Install the `google-compute-engine-jessie`,
 `google-compute-engine-init-jessie`, and `google-config-jessie` packages:
 ```
 apt-get update; apt-get install -y google-config-jessie google-compute-engine-jessie google-compute-engine-init-jessie
+```
+
+**For Debian 9, run the following commands as root:**
+
+Add the public repo key to your system:
+```
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+```
+
+Add a source list file `/etc/apt/sources.list.d/google-cloud.list`:
+```
+tee /etc/apt/sources.list.d/google-cloud.list << EOM
+deb http://packages.cloud.google.com/apt google-cloud-compute-stretch main
+deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-stretch main
+EOM
+```
+
+Install the packages to maintain the public key over time:
+```
+apt-get update; apt-get install google-cloud-packages-archive-keyring
+```
+
+Install the `google-compute-engine-stretch`,
+`google-compute-engine-init-stretch`, and `google-config-stretch` packages:
+```
+apt-get update; apt-get install -y google-config-stretch google-compute-engine-stretch google-compute-engine-init-stretch
 ```
 
 **For EL6 and EL7 based distributions, run the following commands as root:**
