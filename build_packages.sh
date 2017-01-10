@@ -78,7 +78,7 @@ while getopts 'ho:' OPTION; do
 done
 
 if [ -z "$BUILD" ]; then
-  BUILD=('el6' 'el7' 'wheezy' 'jessie')
+  BUILD=('el6' 'el7' 'jessie' 'stretch')
 fi
 
 for build in "${BUILD[@]}"; do
@@ -95,8 +95,11 @@ for build in "${BUILD[@]}"; do
     jessie) # Debian 8
       build_distro 'jessie' 'deb' '/usr/lib/python2.7/dist-packages'
       ;;
+    stretch) # Debian 9
+      build_distro 'stretch' 'deb' '/usr/lib/python2.7/dist-packages'
+      ;;
     *)
-      echo "Invalid build '${build}'. Use 'el6', 'el7', 'wheezy', or 'jessie'."
+      echo "Invalid build '${build}'. Use 'el6', 'el7', 'wheezy', 'jessie', or 'stretch'."
       ;;
   esac
 done
