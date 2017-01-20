@@ -39,6 +39,13 @@ fi
 if [ -n "$new_host_name" ]; then
   hostname "${new_host_name%%.*}"
 
+  # If NetworkManager is installed set the hostname with nmcli.
+  # to resolve issues with NetworkManager resetting the hostname
+  # to the FQDN on DHCP renew.
+  if [ -x /bin/nmcli ]; then
+    nmcli general hostname "${new_host_name%%.*}"
+  fi
+
   # Restart syslog to update the hostname if we're not using systemd.
   # systemd rsyslog jobs wait for networking to finish starting and consequently
   # syslog or rsyslog is running with the correct hostname.
