@@ -94,12 +94,14 @@ class MetadataWatcherTest(unittest.TestCase):
     mock_unavailable = mock.Mock()
     mock_unavailable.getcode.return_value = (
         metadata_watcher.httpclient.SERVICE_UNAVAILABLE)
+    mock_timeout = metadata_watcher.socket.timeout('Test timeout')
     mock_success = mock.Mock()
     mock_success.getcode.return_value = metadata_watcher.httpclient.OK
 
     # Retry after a service unavailable error response.
     mock_open.open.side_effect = [
         metadata_watcher.StatusException(mock_unavailable),
+        mock_timeout,
         mock_success,
     ]
     request_url = '%s?' % self.url
@@ -117,14 +119,20 @@ class MetadataWatcherTest(unittest.TestCase):
         mock.call.proxy({}),
         mock.call.opener(mock_handler),
         mock.call.open.open(mock_request, timeout=timeout),
+        mock.call.time.sleep(mock.ANY),
+        mock.call.request(request_url, headers=headers),
+        mock.call.proxy({}),
+        mock.call.opener(mock_handler),
+        mock.call.open.open(mock_request, timeout=timeout),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
+  @mock.patch('google_compute_engine.metadata_watcher.time')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.build_opener')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.ProxyHandler')
   @mock.patch('google_compute_engine.metadata_watcher.urlrequest.Request')
   def testGetMetadataRequestHttpException(
-      self, mock_request, mock_proxy, mock_opener):
+      self, mock_request, mock_proxy, mock_opener, mock_time):
     mock_open = mock.Mock()
     mock_handler = mock.Mock()
     mock_response = mock.Mock()
@@ -263,7 +271,7 @@ class MetadataWatcherTest(unittest.TestCase):
           timeout=None),
     ] * 4
     self.assertEqual(mock_response.mock_calls, expected_calls)
-    expected_calls = [mock.call.exception(mock.ANY)] * 2
+    expected_calls = [mock.call.error(mock.ANY, mock.ANY)] * 2
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
   def testWatchMetadata(self):
@@ -285,7 +293,7 @@ class MetadataWatcherTest(unittest.TestCase):
     mock_response = mock.Mock()
     mock_response.side_effect = metadata_watcher.socket.timeout()
     self.mock_watcher._GetMetadataUpdate = mock_response
-    self.mock_logger.exception.side_effect = RuntimeError()
+    self.mock_logger.error.side_effect = RuntimeError()
     metadata_key = 'instance/id'
     recursive = False
 
