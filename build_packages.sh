@@ -42,6 +42,7 @@ function build_distro() {
   fpm \
     -s python \
     -t "${pkg_type}" \
+    --conflicts 'irqbalance' \
     --depends "${depends}" \
     --depends 'python-boto' \
     --depends 'python-setuptools' \
