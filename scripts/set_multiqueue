@@ -39,13 +39,13 @@ echo "Running $(basename "$0")."
 NET_DEVS=/sys/bus/virtio/drivers/virtio_net/virtio*
 
 # Loop through all the virtionet devices and enable multi-queue
-if [ -x /sbin/ethtool ]; then
+if [ -x "$(command -v ethtool)" ]; then
   for dev in $NET_DEVS; do
     ETH_DEVS=${dev}/net/*
     for eth_dev in $ETH_DEVS; do
       eth_dev=$(basename "$eth_dev")
       if ! errormsg=$(ethtool -l "$eth_dev" 2>&1); then
-        echo "/sbin/ethtool says that $eth_dev does not support virtionet multiqueue: $errormsg."
+        echo "ethtool says that $eth_dev does not support virtionet multiqueue: $errormsg."
         continue
       fi
       num_max_channels=$(ethtool -l "$eth_dev" | grep -m 1 Combined | cut -f2)
@@ -59,7 +59,7 @@ if [ -x /sbin/ethtool ]; then
     done
   done
 else
-  echo "/sbin/ethtool not found: cannot configure virtionet multiqueue."
+  echo "ethtool not found: cannot configure virtionet multiqueue."
 fi
 
 for dev in $NET_DEVS
