@@ -167,6 +167,8 @@ class AccountsUtils(object):
 
     Raises:
       IOError, raised when there is an exception updating a file.
+      OSError, raised when setting permissions or writing to a read-only
+          file system.
     """
     pw_entry = self._GetUser(user)
     if not pw_entry:
@@ -302,7 +304,7 @@ class AccountsUtils(object):
 
     try:
       self._UpdateAuthorizedKeys(user, ssh_keys)
-    except IOError as e:
+    except (IOError, OSError) as e:
       message = 'Could not update the authorized keys file for user %s. %s.'
       self.logger.warning(message, user, str(e))
       return False
