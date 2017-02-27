@@ -62,6 +62,7 @@ class InstanceConfig(config_manager.ConfigManager):
           'ethernet_proto_id': '66',
       },
       'MetadataScripts': {
+          'run_dir': '',
           'startup': 'true',
           'shutdown': 'true',
       },

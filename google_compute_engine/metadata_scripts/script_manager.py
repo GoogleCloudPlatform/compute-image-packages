@@ -29,16 +29,17 @@ from google_compute_engine.metadata_scripts import script_retriever
 
 
 @contextlib.contextmanager
-def _CreateTempDir(prefix):
+def _CreateTempDir(prefix, run_dir=None):
   """Context manager for creating a temporary directory.
 
   Args:
     prefix: string, the prefix for the temporary directory.
+    run_dir: string, the base directory location of the temporary directory.
 
   Yields:
     string, the temporary directory created.
   """
-  temp_dir = tempfile.mkdtemp(prefix=prefix + '-')
+  temp_dir = tempfile.mkdtemp(prefix=prefix + '-', dir=run_dir)
   try:
     yield temp_dir
   finally:
@@ -48,11 +49,12 @@ def _CreateTempDir(prefix):
 class ScriptManager(object):
   """A class for retrieving and executing metadata scripts."""
 
-  def __init__(self, script_type, debug=False):
+  def __init__(self, script_type, run_dir=None, debug=False):
     """Constructor.
 
     Args:
       script_type: string, the metadata script type to run.
+      run_dir: string, the base directory location of the temporary directory.
       debug: bool, True if debug output should write to the console.
     """
     self.script_type = script_type
@@ -61,11 +63,15 @@ class ScriptManager(object):
     self.logger = logger.Logger(name=name, debug=debug, facility=facility)
     self.retriever = script_retriever.ScriptRetriever(self.logger, script_type)
     self.executor = script_executor.ScriptExecutor(self.logger, script_type)
-    self._RunScripts()
+    self._RunScripts(run_dir=run_dir)
 
-  def _RunScripts(self):
-    """Retrieve metadata scripts and execute them."""
-    with _CreateTempDir(self.script_type) as dest_dir:
+  def _RunScripts(self, run_dir=None):
+    """Retrieve metadata scripts and execute them.
+
+    Args:
+      run_dir: string, the base directory location of the temporary directory.
+    """
+    with _CreateTempDir(self.script_type, run_dir=run_dir) as dest_dir:
       try:
         self.logger.info('Starting %s scripts.', self.script_type)
         script_dict = self.retriever.GetScripts(dest_dir)
@@ -92,7 +98,10 @@ def main():
 
   instance_config = config_manager.ConfigManager()
   if instance_config.GetOptionBool('MetadataScripts', script_type):
-    ScriptManager(script_type, debug=bool(options.debug))
+    ScriptManager(
+        script_type,
+        run_dir=instance_config.GetOptionString('MetadataScripts', 'run_dir'),
+        debug=bool(options.debug))
 
 
 if __name__ == '__main__':

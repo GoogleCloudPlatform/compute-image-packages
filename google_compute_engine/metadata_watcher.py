@@ -48,11 +48,14 @@ def RetryOnUnavailable(func):
     while True:
       try:
         response = func(*args, **kwargs)
-      except urlerror.HTTPError as e:
-        if e.getcode() == httpclient.SERVICE_UNAVAILABLE:
-          time.sleep(5)
-        else:
-          raise
+      except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
+        time.sleep(5)
+        if (isinstance(e, urlerror.HTTPError) and
+            e.getcode() == httpclient.SERVICE_UNAVAILABLE):
+          continue
+        elif isinstance(e, socket.timeout):
+          continue
+        raise
       else:
         if response.getcode() == httpclient.OK:
           return response
@@ -173,7 +176,7 @@ class MetadataWatcher(object):
           continue
         else:
           exception = e
-          self.logger.exception('GET request error retrieving metadata.')
+          self.logger.error('GET request error retrieving metadata. %s.', e)
 
   def WatchMetadata(
       self, handler, metadata_key='', recursive=True, timeout=None):

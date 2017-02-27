@@ -247,6 +247,7 @@ InstanceSetup     | set_boto_config      | `false` skips setting up a boto confi
 InstanceSetup     | set_host_keys        | `false` skips generating host keys on first boot.
 InstanceSetup     | set_multiqueue       | `false` skips multiqueue driver support.
 IpForwarding      | ethernet_proto_id    | Protocol ID string for daemon added routes.
+MetadataScripts   | run_dir              | String base directory where metadata scripts are executed.
 MetadataScripts   | startup              | `false` disables startup script execution.
 MetadataScripts   | shutdown             | `false` disables shutdown script execution.
 NetworkInterfaces | dhcp_command         | String to execute to enable network interfaces.
