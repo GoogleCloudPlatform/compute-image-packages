@@ -179,7 +179,7 @@ class AccountsUtils(object):
     home_dir = pw_entry.pw_dir
     ssh_dir = os.path.join(home_dir, '.ssh')
     file_utils.SetPermissions(
-        home_dir, mode=0o755, uid=uid, gid=gid, mkdir=True)
+        home_dir, mode=0o750, uid=uid, gid=gid, mkdir=True)
     file_utils.SetPermissions(
         ssh_dir, mode=0o700, uid=uid, gid=gid, mkdir=True)
 
