@@ -267,6 +267,10 @@ class AccountsDaemonTest(unittest.TestCase):
         'c': '3',
         'invalid': '4',
         'valid': '5',
+        'unchanged': ['1', '2', '3'],
+    }
+    self.mock_setup.user_ssh_keys = {
+        'unchanged': ['3', '2', '1'],
     }
     self.mock_setup.invalid_users = set(['invalid'])
     # Make UpdateUser succeed for fake names longer than one character.
@@ -283,6 +287,9 @@ class AccountsDaemonTest(unittest.TestCase):
         self.mock_utils.UpdateUser.call_count, len(expected_calls))
     self.assertEqual(
         self.mock_setup.invalid_users, set(['invalid', 'a', 'b', 'c']))
+    self.assertEqual(
+        self.mock_setup.user_ssh_keys,
+        {'valid': '5', 'unchanged': ['3', '2', '1']})
 
   def testRemoveUsers(self):
     remove_users = ['a', 'b', 'c', 'valid']
