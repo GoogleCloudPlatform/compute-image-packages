@@ -262,6 +262,7 @@ class AccountsUtilsTest(unittest.TestCase):
     pw_entry = accounts_utils.pwd.struct_passwd(
         ('', '', pw_uid, pw_gid, '', pw_dir, ''))
     self.mock_utils._GetUser.return_value = pw_entry
+    self.mock_utils.overwrite_attributes = True
     mock_exists.return_value = True
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
@@ -321,6 +322,7 @@ class AccountsUtilsTest(unittest.TestCase):
     pw_entry = accounts_utils.pwd.struct_passwd(
         ('', '', pw_uid, pw_gid, '', pw_dir, ''))
     self.mock_utils._GetUser.return_value = pw_entry
+    self.mock_utils.overwrite_attributes = True
     mock_exists.return_value = False
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
@@ -480,6 +482,7 @@ class AccountsUtilsTest(unittest.TestCase):
     keys = ['Key 1', 'Key 2']
     pw_entry = accounts_utils.pwd.struct_passwd(tuple(['']*7))
     self.mock_utils.groups = groups
+    self.mock_utils.overwrite_attributes = True
     self.mock_utils._GetUser.return_value = pw_entry
     self.mock_utils._AddUser.return_value = True
     self.mock_utils._UpdateUserGroups.return_value = True

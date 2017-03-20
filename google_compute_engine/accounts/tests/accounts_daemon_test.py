@@ -49,12 +49,12 @@ class AccountsDaemonTest(unittest.TestCase):
     mocks.attach_mock(mock_utils, 'utils')
     with mock.patch.object(
         accounts_daemon.AccountsDaemon, 'HandleAccounts') as mock_handle:
-      accounts_daemon.AccountsDaemon(groups='foo,bar', remove=True, debug=True)
+      accounts_daemon.AccountsDaemon(groups='foo,bar', remove=True, debug=True, overwrite_attributes=True)
       expected_calls = [
           mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.AccountsUtils(
-              logger=mock_logger_instance, groups='foo,bar', remove=True),
+              logger=mock_logger_instance, groups='foo,bar', remove=True, overwrite_attributes=True),
           mock.call.lock.LockFile(accounts_daemon.LOCKFILE),
           mock.call.lock.LockFile().__enter__(),
           mock.call.logger.Logger().info(mock.ANY),
@@ -85,7 +85,7 @@ class AccountsDaemonTest(unittest.TestCase):
               name=mock.ANY, debug=False, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.AccountsUtils(
-              logger=mock_logger_instance, groups=None, remove=False),
+              logger=mock_logger_instance, groups=None, remove=False, overwrite_attributes=True),
           mock.call.lock.LockFile(accounts_daemon.LOCKFILE),
           mock.call.logger.Logger().warning('Test Error'),
       ]
