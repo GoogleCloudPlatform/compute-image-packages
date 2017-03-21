@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A library used to set up the instance defaults file.
+"""A library used to set up the instance's default configurations file.
 
-Note that this starts with whatever is in
-/etc/defaults/instance_config.cfg.template and then persists it into
-/etc/defaults/instance_config.cfg. This is done so that the system
-instance_config.cfg can be removed prior to image packaging.
+Note that the configurations in
+/etc/default/instance_configs.cfg.template override the values set in
+/etc/default/instance_configs.cfg. The system instance_configs.cfg may be
+overridden during package upgrade.
 """
 
 import os
@@ -37,7 +37,8 @@ class InstanceConfig(config_manager.ConfigManager):
   instance_config_header = (
       'This file is automatically created at boot time by the %s script. Do '
       'not edit this file directly. If you need to add items to this file, '
-      'create or edit %s instead and then re-run the script.')
+      'create or edit %s instead and then run '
+      '/usr/bin/google_instance_setup.')
   instance_config_options = {
       'Accounts': {
           'deprovision_remove': 'false',

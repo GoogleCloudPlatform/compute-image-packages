@@ -224,8 +224,9 @@ metadata.
 
 Users of Google provided images may configure the guest environment behaviors
 using a configuration file. To make configuration changes, add settings to
-`/etc/default/instance_configs.cfg.template`. Settings are not overridden in the
-guest.
+`/etc/default/instance_configs.cfg.template`. If you are attempting to change
+the behavior of a running instance, run `/usr/bin/google_instance_setup` before
+reloading the affected daemons.
 
 Linux distributions looking to include their own defaults can specify settings
 in `/etc/default/instance_configs.cfg.distro`. These settings will not override
