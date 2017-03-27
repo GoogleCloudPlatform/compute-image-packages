@@ -34,6 +34,7 @@ class AccountsDaemon(object):
   """Manage user accounts based on changes to metadata."""
 
   invalid_users = set()
+  user_ssh_keys = {}
 
   def __init__(self, groups=None, remove=False, debug=False):
     """Constructor.
@@ -180,8 +181,12 @@ class AccountsDaemon(object):
     for user, ssh_keys in update_users.items():
       if not user or user in self.invalid_users:
         continue
-      if not self.utils.UpdateUser(user, ssh_keys):
-        self.invalid_users.add(user)
+      configured_keys = self.user_ssh_keys.get(user, [])
+      if set(ssh_keys) != set(configured_keys):
+        if not self.utils.UpdateUser(user, ssh_keys):
+          self.invalid_users.add(user)
+        else:
+          self.user_ssh_keys[user] = ssh_keys[:]
 
   def _RemoveUsers(self, remove_users):
     """Deprovision Linux user accounts that do not appear in account metadata.
