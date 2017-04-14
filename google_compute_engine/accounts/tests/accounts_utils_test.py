@@ -298,7 +298,6 @@ class AccountsUtilsTest(unittest.TestCase):
     self.assertEqual(mock_tempfile.mock_calls, expected_calls)
     mock_copy.assert_called_once_with(temp_dest, authorized_keys_file)
     expected_calls = [
-        mock.call(pw_dir, mode=0o750, uid=pw_uid, gid=pw_gid, mkdir=True),
         mock.call(ssh_dir, mode=0o700, uid=pw_uid, gid=pw_gid, mkdir=True),
         mock.call(authorized_keys_file, mode=0o600, uid=pw_uid, gid=pw_gid),
     ]
@@ -340,7 +339,6 @@ class AccountsUtilsTest(unittest.TestCase):
     self.assertEqual(mock_tempfile.mock_calls, expected_calls)
     mock_copy.assert_called_once_with(temp_dest, authorized_keys_file)
     expected_calls = [
-        mock.call(pw_dir, mode=0o750, uid=pw_uid, gid=pw_gid, mkdir=True),
         mock.call(ssh_dir, mode=0o700, uid=pw_uid, gid=pw_gid, mkdir=True),
         mock.call(authorized_keys_file, mode=0o600, uid=pw_uid, gid=pw_gid),
     ]
