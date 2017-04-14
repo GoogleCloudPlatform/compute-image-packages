@@ -239,6 +239,7 @@ Section           | Option               | Value
 ----------------- | -------------------- | -----
 Accounts          | deprovision_remove   | `true` makes deprovisioning a user destructive.
 Accounts          | groups               | Comma separated list of groups for newly provisioned users.
+Accounts          | overwrite_attributes | `false` disables overwriting user home, `.ssh` dir and `authorized_key` permissions and ownership
 Daemons           | accounts_daemon      | `false` disables the accounts daemon.
 Daemons           | clock_skew_daemon    | `false` disables the clock skew daemon.
 Daemons           | ip_forwarding_daemon | `false` disables the IP forwarding daemon.

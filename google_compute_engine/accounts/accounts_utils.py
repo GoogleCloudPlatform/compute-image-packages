@@ -33,7 +33,7 @@ class AccountsUtils(object):
 
   google_comment = '# Added by Google'
 
-  def __init__(self, logger, groups=None, remove=False):
+  def __init__(self, logger, groups=None, remove=False, overwrite_attributes=True):
     """Constructor.
 
     Args:
@@ -52,6 +52,7 @@ class AccountsUtils(object):
     self.groups.append(self.google_sudoers_group)
     self.groups = list(filter(self._GetGroup, self.groups))
     self.remove = remove
+    self.overwrite_attributes = overwrite_attributes
 
   def _GetGroup(self, group):
     """Retrieve a Linux group.
@@ -178,10 +179,12 @@ class AccountsUtils(object):
     gid = pw_entry.pw_gid
     home_dir = pw_entry.pw_dir
     ssh_dir = os.path.join(home_dir, '.ssh')
-    file_utils.SetPermissions(
-        home_dir, mode=0o750, uid=uid, gid=gid, mkdir=True)
-    file_utils.SetPermissions(
-        ssh_dir, mode=0o700, uid=uid, gid=gid, mkdir=True)
+
+    if self.overwrite_attributes or not os.path.exists(home_dir) or not os.path.exists(ssh_dir):
+      file_utils.SetPermissions(
+          home_dir, mode=0o750, uid=uid, gid=gid, mkdir=True)
+      file_utils.SetPermissions(
+          ssh_dir, mode=0o700, uid=uid, gid=gid, mkdir=True)
 
     # Not all sshd's support multiple authorized_keys files so we have to
     # share one with the user. We add each of our entries as follows:
@@ -220,8 +223,9 @@ class AccountsUtils(object):
       updated_keys.flush()
       shutil.copy(updated_keys_file, authorized_keys_file)
 
-    file_utils.SetPermissions(
-        authorized_keys_file, mode=0o600, uid=uid, gid=gid)
+    if self.overwrite_attributes:
+      file_utils.SetPermissions(
+          authorized_keys_file, mode=0o600, uid=uid, gid=gid)
 
   def _RemoveAuthorizedKeys(self, user):
     """Remove a Linux user account's authorized keys file to prevent login.
