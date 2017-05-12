@@ -169,6 +169,10 @@ string HttpGet(const string& url) {
 string UrlEncode(const string& param) {
   CURL* curl = curl_easy_init();
   char* encoded = curl_easy_escape(curl, param.c_str(), param.length());
+  if (encoded == NULL) {
+    curl_easy_cleanup(curl);
+    return "";
+  }
   string encoded_param = encoded;
   curl_free(encoded);
   curl_easy_cleanup(curl);
