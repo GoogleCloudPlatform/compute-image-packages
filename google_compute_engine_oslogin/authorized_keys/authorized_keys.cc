@@ -24,8 +24,6 @@ using std::string;
 
 using oslogin_utils::HttpGet;
 using oslogin_utils::UrlEncode;
-using oslogin_utils::ParseJsonToAuthorizeResponse;
-using oslogin_utils::ParseJsonToEmail;
 using oslogin_utils::ParseJsonToSshKeys;
 
 static const char kMetadataServerUrl[] =
