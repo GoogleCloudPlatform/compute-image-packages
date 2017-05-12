@@ -43,7 +43,7 @@ static const char kMetadataServerUrl[] =
 
 // Size of the NssCache. This also determines how many users will be requested
 // per HTTP call.
-static const uint64_t kNssCacheSize = 100;
+static const uint64_t kNssCacheSize = 2048;
 
 // NssCache for storing passwd entries.
 static NssCache nss_cache(kNssCacheSize);
@@ -122,8 +122,11 @@ int _nss_oslogin_getpwent_r(struct passwd *result, char *buffer, size_t buflen,
   MutexLock ml(&cache_mutex);
   if (!nss_cache.HasNextPasswd() && !nss_cache.OnLastPage()) {
     std::stringstream url;
-    url << kMetadataServerUrl << "users?pagesize=" << kNssCacheSize
-        << "&pagetoken=" << nss_cache.GetPageToken();
+    url << kMetadataServerUrl << "users?pagesize=" << kNssCacheSize;
+    string page_token = nss_cache.GetPageToken();
+    if (!page_token.empty()) {
+      url << "&pagetoken=" << page_token;
+    }
     string response = HttpGet(url.str());
     if (response.empty()) {
       *errnop = ENOENT;
