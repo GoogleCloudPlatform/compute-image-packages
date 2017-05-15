@@ -230,10 +230,11 @@ std::vector<string> ParseJsonToSshKeys(string response) {
     return result;
   }
 
-  int arraylen = json_object_array_length(ssh_public_keys);
-  for (int i = 0; i < arraylen; i++) {
+  json_object_object_foreach(ssh_public_keys, key, val) {
     json_object* iter;
-    iter = json_object_array_get_idx(ssh_public_keys, i);
+    if (!json_object_object_get_ex(ssh_public_keys, key, &iter)) {
+      return result;
+    }
     string key_to_add = "";
     bool expired = false;
     json_object_object_foreach(iter, key, val) {
