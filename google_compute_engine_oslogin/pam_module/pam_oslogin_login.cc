@@ -52,7 +52,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(str_user_name);
   string response = HttpGet(url.str());
-  if (reponse == "") {
+  if (response == "") {
     return PAM_SUCCESS;
   }
   // TODO(jonesdl) make sure we don't block out local users. We might want to
