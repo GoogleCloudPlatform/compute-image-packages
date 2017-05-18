@@ -6,7 +6,7 @@ MAJOR = 2
 MINOR = 0
 
 NSS_LIBRARY_NAME = libnss_$(NAME).so.$(MAJOR).$(MINOR)
-NSS_LIBRARY_SONAME = libnss_$(NAME).so.$(MAJOR)
+NSS_LIBRARY_SONAME = libnss_$(BASENAME).so.$(MAJOR)
 NSS_INSTALL_PATH = /lib
 PAM_INSTALL_PATH = /lib/security
 AUTHKEYS_INSTALL_PATH = /usr/bin
