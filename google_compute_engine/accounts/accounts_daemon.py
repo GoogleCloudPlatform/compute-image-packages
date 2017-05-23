@@ -196,6 +196,7 @@ class AccountsDaemon(object):
     """
     for username in remove_users:
       self.utils.RemoveUser(username)
+      self.user_ssh_keys.pop(username, None)
     self.invalid_users -= set(remove_users)
 
   def HandleAccounts(self, result):

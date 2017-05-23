@@ -293,6 +293,12 @@ class AccountsDaemonTest(unittest.TestCase):
 
   def testRemoveUsers(self):
     remove_users = ['a', 'b', 'c', 'valid']
+    self.mock_setup.user_ssh_keys = {
+        'a': ['1'],
+        'b': ['2'],
+        'c': ['3'],
+        'invalid': ['key'],
+    }
     self.mock_setup.invalid_users = set(['invalid', 'a', 'b', 'c'])
     accounts_daemon.AccountsDaemon._RemoveUsers(self.mock_setup, remove_users)
     expected_calls = [
@@ -303,6 +309,7 @@ class AccountsDaemonTest(unittest.TestCase):
     ]
     self.mock_utils.RemoveUser.assert_has_calls(expected_calls)
     self.assertEqual(self.mock_setup.invalid_users, set(['invalid']))
+    self.assertEqual(self.mock_setup.user_ssh_keys, {'invalid': ['key']})
 
   def testHandleAccounts(self):
     configured = ['c', 'c', 'b', 'b', 'a', 'a']
