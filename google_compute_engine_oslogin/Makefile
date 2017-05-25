@@ -51,7 +51,7 @@ SSHD_HELPER = $(BIN_DIR)/google_oslogin_sshd
 SUDOERS_HELPER = $(BIN_DIR)/google_oslogin_sudoers
 BIN_INSTALL_PATH = /usr/local/bin
 
-LIBS = -lcurl -ljson
+LIBS = -lcurl -ljson-c
 PAM_LIBS = -lpam $(LIBS)
 
 all: $(NSS) $(PAM) $(AUTHKEYS_BIN)
