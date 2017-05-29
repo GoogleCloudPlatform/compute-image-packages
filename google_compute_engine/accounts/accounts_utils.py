@@ -295,8 +295,8 @@ class AccountsUtils(object):
     # logins. This helps avoid problems caused by operator and root sharing
     # a home directory in CentOS and RHEL.
     pw_entry = self._GetUser(user)
-    if pw_entry and pw_entry.pw_shell == '/sbin/nologin':
-      message = 'Not updating user %s. User set /sbin/nologin as login shell.'
+    if pw_entry and os.path.basename(pw_entry.pw_shell) == 'nologin':
+      message = 'Not updating user %s. User set `nologin` as login shell.'
       self.logger.debug(message, user)
       return True
 
