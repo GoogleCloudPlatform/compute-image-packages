@@ -67,45 +67,54 @@ class InstanceConfigTest(unittest.TestCase):
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.instance_setup.instance_config.os.path.exists')
-  @mock.patch('google_compute_engine.instance_setup.instance_config.parser')
   @mock.patch('google_compute_engine.instance_setup.instance_config.config_manager.ConfigManager.SetOption')
   @mock.patch('google_compute_engine.instance_setup.instance_config.config_manager.ConfigManager.__init__')
-  def testInstanceConfigExists(self, mock_init, mock_set, mock_parser, mock_exists):
+  def testInstanceConfigExists(self, mock_init, mock_set, mock_exists):
+    config_parser = instance_config.parser.SafeConfigParser()
+    config_metadata = '[first]\na = true'
     mock_config = mock.create_autospec(instance_config.parser.SafeConfigParser)
-    mock_config.read = mock.Mock()
-    mock_config.sections = mock.Mock()
-    mock_config.sections.return_value = ['a', 'b']
-    mock_config.items = lambda key: {'key: %s' % key: 'value: %s' % key}
-    mock_parser.SafeConfigParser.return_value = mock_config
-    mocks = mock.Mock()
-    mocks.attach_mock(mock_init, 'init')
-    mocks.attach_mock(mock_set, 'set')
-    mocks.attach_mock(mock_parser, 'parser')
-    mocks.attach_mock(mock_exists, 'exists')
-    mock_exists.return_value = True
+    with mock.patch(
+        'google_compute_engine.instance_setup.instance_config'
+        '.parser') as mock_parser:
+      mock_config.read = mock.Mock()
+      mock_config.sections = mock.Mock()
+      mock_config.sections.return_value = ['a', 'b']
+      mock_config.items = lambda key: {'key: %s' % key: 'value: %s' % key}
+      mock_parser.SafeConfigParser.side_effect = [
+          config_parser, mock_config, mock_config]
+      mocks = mock.Mock()
+      mocks.attach_mock(mock_init, 'init')
+      mocks.attach_mock(mock_set, 'set')
+      mocks.attach_mock(mock_parser, 'parser')
+      mocks.attach_mock(mock_config, 'config')
+      mocks.attach_mock(mock_exists, 'exists')
+      mock_exists.return_value = True
 
-    instance_config.InstanceConfig()
-    expected_calls = [
-        mock.call.init(config_file='template', config_header='/tmp/test.py template'),
-        mock.call.exists('config'),
-        mock.call.parser.SafeConfigParser(),
-        mock.call.parser.SafeConfigParser().read('config'),
-        mock.call.parser.SafeConfigParser().sections(),
-        mock.call.exists('distro'),
-        mock.call.parser.SafeConfigParser(),
-        mock.call.parser.SafeConfigParser().read('distro'),
-        mock.call.parser.SafeConfigParser().sections(),
-        mock.call.set('a', 'key: a', 'value: a', overwrite=False),
-        mock.call.set('b', 'key: b', 'value: b', overwrite=False),
-        mock.call.set('a', 'key: a', 'value: a', overwrite=False),
-        mock.call.set('b', 'key: b', 'value: b', overwrite=False),
-        mock.call.set('first', 'a', 'false', overwrite=False),
-        mock.call.set('second', 'b', 'true', overwrite=False),
-        mock.call.set('third', 'c', '1', overwrite=False),
-        mock.call.set('third', 'd', '2', overwrite=False),
-        mock.call.set('third', 'e', '3', overwrite=False)
-    ]
-    self.assertEqual(mocks.mock_calls, expected_calls)
+      instance_config.InstanceConfig(instance_config_metadata=config_metadata)
+      expected_calls = [
+          mock.call.init(
+              config_file='template', config_header='/tmp/test.py template'),
+          mock.call.parser.SafeConfigParser(),
+          mock.call.exists('config'),
+          mock.call.parser.SafeConfigParser(),
+          mock.call.config.read('config'),
+          mock.call.config.sections(),
+          mock.call.exists('distro'),
+          mock.call.parser.SafeConfigParser(),
+          mock.call.config.read('distro'),
+          mock.call.config.sections(),
+          mock.call.set('first', 'a', 'true', overwrite=False),
+          mock.call.set('a', 'key: a', 'value: a', overwrite=False),
+          mock.call.set('b', 'key: b', 'value: b', overwrite=False),
+          mock.call.set('a', 'key: a', 'value: a', overwrite=False),
+          mock.call.set('b', 'key: b', 'value: b', overwrite=False),
+          mock.call.set('first', 'a', 'false', overwrite=False),
+          mock.call.set('second', 'b', 'true', overwrite=False),
+          mock.call.set('third', 'c', '1', overwrite=False),
+          mock.call.set('third', 'd', '2', overwrite=False),
+          mock.call.set('third', 'e', '3', overwrite=False)
+      ]
+      self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.instance_setup.instance_config.config_manager.ConfigManager.WriteConfig')
   def testWriteConfig(self, mock_write):

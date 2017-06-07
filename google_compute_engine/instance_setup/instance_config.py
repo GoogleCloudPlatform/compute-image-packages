@@ -25,6 +25,7 @@ import os
 
 from google_compute_engine import config_manager
 from google_compute_engine.compat import parser
+from google_compute_engine.compat import stringio
 
 
 class InstanceConfig(config_manager.ConfigManager):
@@ -75,13 +76,17 @@ class InstanceConfig(config_manager.ConfigManager):
       },
   }
 
-  def __init__(self):
+  def __init__(self, instance_config_metadata=None):
     """Constructor.
 
     Inherit from the ConfigManager class. Read the template for instance
     defaults and write new sections and options. This prevents package
     updates from overriding user set defaults.
+
+    Args:
+      instance_config_metadata: string, a config file specified in metadata.
     """
+    self.instance_config_metadata = instance_config_metadata
     self.instance_config_header %= (
         self.instance_config_script, self.instance_config_template)
     # User provided instance configs should always take precedence.
@@ -89,11 +94,17 @@ class InstanceConfig(config_manager.ConfigManager):
         config_file=self.instance_config_template,
         config_header=self.instance_config_header)
 
-    # Use the settings in an instance config file if one exists. If a config
+    # Use the instance config settings from metadata if specified. Then use
+    # settings in an instance config file if one exists. If a config
     # file does not already exist, try to use the distro provided defaults. If
     # no file exists, use the default configuration settings.
     config_files = [self.instance_config, self.instance_config_distro]
     config_defaults = []
+    if self.instance_config_metadata:
+      config = parser.SafeConfigParser()
+      config.readfp(stringio.StringIO(self.instance_config_metadata))
+      config_defaults.append(
+          dict((s, dict(config.items(s))) for s in config.sections()))
     for config_file in config_files:
       if os.path.exists(config_file):
         config = parser.SafeConfigParser()

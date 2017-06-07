@@ -50,6 +50,7 @@ class InstanceSetupTest(unittest.TestCase):
     mock_config_instance = mock.Mock()
     mock_config_instance.GetOptionBool.return_value = True
     mock_config.InstanceConfig.return_value = mock_config_instance
+    mock_setup._GetInstanceConfig.return_value = mock_config_instance
 
     instance_setup.InstanceSetup.__init__(mock_setup)
     expected_calls = [
@@ -58,18 +59,12 @@ class InstanceSetupTest(unittest.TestCase):
             name=mock.ANY, debug=False, facility=mock.ANY),
         mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
         mock.call.config.InstanceConfig(),
-        # Setup for local SSD.
-        mock.call.config.InstanceConfig().GetOptionBool(
-            'InstanceSetup', 'optimize_local_ssd'),
-        mock.call.setup._RunScript('optimize_local_ssd'),
-        # Setup for multiqueue virtio driver.
-        mock.call.config.InstanceConfig().GetOptionBool(
-            'InstanceSetup', 'set_multiqueue'),
-        mock.call.setup._RunScript('set_multiqueue'),
         # Check network access for reaching the metadata server.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'network_enabled'),
         mock.call.watcher.MetadataWatcher().GetMetadata(),
+        # Get the instance config if specified in metadata.
+        mock.call.setup._GetInstanceConfig(),
         # Setup for SSH host keys if necessary.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'set_host_keys'),
@@ -78,6 +73,14 @@ class InstanceSetupTest(unittest.TestCase):
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'set_boto_config'),
         mock.call.setup._SetupBotoConfig(),
+        # Setup for local SSD.
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'optimize_local_ssd'),
+        mock.call.setup._RunScript('optimize_local_ssd'),
+        # Setup for multiqueue virtio driver.
+        mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'set_multiqueue'),
+        mock.call.setup._RunScript('set_multiqueue'),
         # Write the updated config file.
         mock.call.config.InstanceConfig().WriteConfig(),
     ]
@@ -108,16 +111,71 @@ class InstanceSetupTest(unittest.TestCase):
         mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
         mock.call.config.InstanceConfig(),
         mock.call.config.InstanceConfig().GetOptionBool(
+            'InstanceSetup', 'network_enabled'),
+        mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'optimize_local_ssd'),
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'set_multiqueue'),
-        mock.call.config.InstanceConfig().GetOptionBool(
-            'InstanceSetup', 'network_enabled'),
         mock.call.config.InstanceConfig().WriteConfig(),
         mock.call.logger.Logger().warning('Test Error'),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
     self.assertIsNone(mock_setup.metadata_dict)
+
+  def testGetInstanceConfig(self):
+    instance_config = 'test'
+    self.mock_setup.metadata_dict = {
+        'instance': {
+            'attributes': {
+                'instance-configs': instance_config,
+            }
+        },
+        'project': {
+            'attributes': {
+                'instance-configs': 'Unused config.',
+            }
+        }
+    }
+    self.assertEqual(
+        instance_setup.InstanceSetup._GetInstanceConfig(self.mock_setup),
+        instance_config)
+    self.mock_logger.warning.assert_not_called()
+
+  def testGetInstanceConfigProject(self):
+    instance_config = 'test'
+    self.mock_setup.metadata_dict = {
+        'instance': {
+            'attributes': {}
+        },
+        'project': {
+            'attributes': {
+                'instance-configs': instance_config,
+            }
+        }
+    }
+    self.assertEqual(
+        instance_setup.InstanceSetup._GetInstanceConfig(self.mock_setup),
+        instance_config)
+    self.mock_logger.warning.assert_not_called()
+
+  def testGetInstanceConfigNone(self):
+    self.mock_setup.metadata_dict = {
+        'instance': {
+            'attributes': {}
+        },
+        'project': {
+            'attributes': {}
+        }
+    }
+    self.assertIsNone(
+        instance_setup.InstanceSetup._GetInstanceConfig(self.mock_setup))
+    self.mock_logger.warning.assert_not_called()
+
+  def testGetInstanceConfigNoMetadata(self):
+    self.mock_setup.metadata_dict = {}
+    self.assertIsNone(
+        instance_setup.InstanceSetup._GetInstanceConfig(self.mock_setup))
+    self.assertEqual(self.mock_logger.warning.call_count, 2)
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess')
   def testRunScript(self, mock_subprocess):

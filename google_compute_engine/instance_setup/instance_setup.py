@@ -48,21 +48,43 @@ class InstanceSetup(object):
     self.metadata_dict = None
     self.instance_config = instance_config.InstanceConfig()
 
+    if self.instance_config.GetOptionBool('InstanceSetup', 'network_enabled'):
+      self.metadata_dict = self.watcher.GetMetadata()
+      self.instance_config = self._GetInstanceConfig()
+      if self.instance_config.GetOptionBool('InstanceSetup', 'set_host_keys'):
+        self._SetSshHostKeys()
+      if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
+        self._SetupBotoConfig()
     if self.instance_config.GetOptionBool(
         'InstanceSetup', 'optimize_local_ssd'):
       self._RunScript('optimize_local_ssd')
     if self.instance_config.GetOptionBool('InstanceSetup', 'set_multiqueue'):
       self._RunScript('set_multiqueue')
-    if self.instance_config.GetOptionBool('InstanceSetup', 'network_enabled'):
-      self.metadata_dict = self.watcher.GetMetadata()
-      if self.instance_config.GetOptionBool('InstanceSetup', 'set_host_keys'):
-        self._SetSshHostKeys()
-      if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
-        self._SetupBotoConfig()
     try:
       self.instance_config.WriteConfig()
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
+
+  def _GetInstanceConfig(self):
+    """Get the instance configuration specified in metadata.
+
+    Returns:
+      string, the instance configuration data.
+    """
+    try:
+      instance_data = self.metadata_dict['instance']['attributes']
+    except KeyError:
+      instance_data = {}
+      self.logger.warning('Instance attributes were not found.')
+
+    try:
+      project_data = self.metadata_dict['project']['attributes']
+    except KeyError:
+      project_data = {}
+      self.logger.warning('Project attributes were not found.')
+
+    return (instance_data.get('instance-configs') or
+            project_data.get('instance-configs'))
 
   def _RunScript(self, script):
     """Run a script and log the streamed script output.
