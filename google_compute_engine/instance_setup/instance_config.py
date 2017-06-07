@@ -61,6 +61,7 @@ class InstanceConfig(config_manager.ConfigManager):
       },
       'IpForwarding': {
           'ethernet_proto_id': '66',
+          'ip_aliases': 'true',
       },
       'MetadataScripts': {
           'run_dir': '',
