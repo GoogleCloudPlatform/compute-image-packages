@@ -21,6 +21,7 @@ Note that the configurations in
 overridden during package upgrade.
 """
 
+import logging
 import os
 
 from google_compute_engine import config_manager
@@ -76,7 +77,7 @@ class InstanceConfig(config_manager.ConfigManager):
       },
   }
 
-  def __init__(self, instance_config_metadata=None):
+  def __init__(self, logger=logging, instance_config_metadata=None):
     """Constructor.
 
     Inherit from the ConfigManager class. Read the template for instance
@@ -84,8 +85,10 @@ class InstanceConfig(config_manager.ConfigManager):
     updates from overriding user set defaults.
 
     Args:
+      logger: logger object, used to write to SysLog and serial port.
       instance_config_metadata: string, a config file specified in metadata.
     """
+    self.logger = logger
     self.instance_config_metadata = instance_config_metadata
     self.instance_config_header %= (
         self.instance_config_script, self.instance_config_template)
@@ -102,15 +105,23 @@ class InstanceConfig(config_manager.ConfigManager):
     config_defaults = []
     if self.instance_config_metadata:
       config = parser.SafeConfigParser()
-      config.readfp(stringio.StringIO(self.instance_config_metadata))
-      config_defaults.append(
-          dict((s, dict(config.items(s))) for s in config.sections()))
+      try:
+        config.readfp(stringio.StringIO(self.instance_config_metadata))
+      except parser.Error as e:
+        self.logger.error('Error parsing metadata configs: %s', str(e))
+      else:
+        config_defaults.append(
+            dict((s, dict(config.items(s))) for s in config.sections()))
     for config_file in config_files:
       if os.path.exists(config_file):
         config = parser.SafeConfigParser()
-        config.read(config_file)
-        config_defaults.append(
-            dict((s, dict(config.items(s))) for s in config.sections()))
+        try:
+          config.read(config_file)
+        except parser.Error as e:
+          self.logger.error('Error parsing config file: %s', str(e))
+        else:
+          config_defaults.append(
+              dict((s, dict(config.items(s))) for s in config.sections()))
     config_defaults.append(self.instance_config_options)
 
     for defaults in config_defaults:

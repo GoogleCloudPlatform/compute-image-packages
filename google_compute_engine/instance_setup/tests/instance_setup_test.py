@@ -50,7 +50,7 @@ class InstanceSetupTest(unittest.TestCase):
     mock_config_instance = mock.Mock()
     mock_config_instance.GetOptionBool.return_value = True
     mock_config.InstanceConfig.return_value = mock_config_instance
-    mock_setup._GetInstanceConfig.return_value = mock_config_instance
+    mock_setup._GetInstanceConfig.return_value = 'config'
 
     instance_setup.InstanceSetup.__init__(mock_setup)
     expected_calls = [
@@ -58,13 +58,15 @@ class InstanceSetupTest(unittest.TestCase):
         mock.call.logger.Logger(
             name=mock.ANY, debug=False, facility=mock.ANY),
         mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
-        mock.call.config.InstanceConfig(),
+        mock.call.config.InstanceConfig(logger=mock_logger_instance),
         # Check network access for reaching the metadata server.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'network_enabled'),
         mock.call.watcher.MetadataWatcher().GetMetadata(),
         # Get the instance config if specified in metadata.
         mock.call.setup._GetInstanceConfig(),
+        mock.call.config.InstanceConfig(
+            logger=mock_logger_instance, instance_config_metadata='config'),
         # Setup for SSH host keys if necessary.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'set_host_keys'),
@@ -109,7 +111,7 @@ class InstanceSetupTest(unittest.TestCase):
         mock.call.logger.Logger(
             name=mock.ANY, debug=False, facility=mock.ANY),
         mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
-        mock.call.config.InstanceConfig(),
+        mock.call.config.InstanceConfig(logger=mock_logger_instance),
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'network_enabled'),
         mock.call.config.InstanceConfig().GetOptionBool(
@@ -127,12 +129,12 @@ class InstanceSetupTest(unittest.TestCase):
     self.mock_setup.metadata_dict = {
         'instance': {
             'attributes': {
-                'instance-configs': instance_config,
+                'google-instance-configs': instance_config,
             }
         },
         'project': {
             'attributes': {
-                'instance-configs': 'Unused config.',
+                'google-instance-configs': 'Unused config.',
             }
         }
     }
@@ -149,7 +151,7 @@ class InstanceSetupTest(unittest.TestCase):
         },
         'project': {
             'attributes': {
-                'instance-configs': instance_config,
+                'google-instance-configs': instance_config,
             }
         }
     }

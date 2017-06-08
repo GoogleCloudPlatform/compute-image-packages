@@ -46,11 +46,13 @@ class InstanceSetup(object):
         name='instance-setup', debug=self.debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.metadata_dict = None
-    self.instance_config = instance_config.InstanceConfig()
+    self.instance_config = instance_config.InstanceConfig(logger=self.logger)
 
     if self.instance_config.GetOptionBool('InstanceSetup', 'network_enabled'):
       self.metadata_dict = self.watcher.GetMetadata()
-      self.instance_config = self._GetInstanceConfig()
+      instance_config_metadata = self._GetInstanceConfig()
+      self.instance_config = instance_config.InstanceConfig(
+          logger=self.logger, instance_config_metadata=instance_config_metadata)
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_host_keys'):
         self._SetSshHostKeys()
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
@@ -83,8 +85,8 @@ class InstanceSetup(object):
       project_data = {}
       self.logger.warning('Project attributes were not found.')
 
-    return (instance_data.get('instance-configs') or
-            project_data.get('instance-configs'))
+    return (instance_data.get('google-instance-configs') or
+            project_data.get('google-instance-configs'))
 
   def _RunScript(self, script):
     """Run a script and log the streamed script output.
