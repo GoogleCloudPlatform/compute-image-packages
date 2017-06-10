@@ -176,6 +176,38 @@ class IpForwardingDaemonTest(unittest.TestCase):
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   def testHandleNetworkInterfaces(self):
+    self.mock_setup.ip_aliases = False
+    mocks = mock.Mock()
+    mocks.attach_mock(self.mock_network_utils, 'network')
+    mocks.attach_mock(self.mock_setup, 'setup')
+    self.mock_network_utils.GetNetworkInterface.side_effect = [
+        'eth0', 'eth1', 'eth2', 'eth3', None]
+    result = [
+        {'mac': '1', 'forwardedIps': ['a']},
+        {'mac': '2', 'forwardedIps': ['b'], 'ipAliases': ['banana']},
+        {'mac': '3', 'ipAliases': ['cherry']},
+        {'mac': '4'},
+        {'forwardedIps': ['d'], 'ipAliases': ['date']},
+    ]
+
+    ip_forwarding_daemon.IpForwardingDaemon.HandleNetworkInterfaces(
+        self.mock_setup, result)
+    expected_calls = [
+        mock.call.network.GetNetworkInterface('1'),
+        mock.call.setup._HandleForwardedIps(['a'], 'eth0'),
+        mock.call.network.GetNetworkInterface('2'),
+        mock.call.setup._HandleForwardedIps(['b'], 'eth1'),
+        mock.call.network.GetNetworkInterface('3'),
+        mock.call.setup._HandleForwardedIps([], 'eth2'),
+        mock.call.network.GetNetworkInterface('4'),
+        mock.call.setup._HandleForwardedIps([], 'eth3'),
+        mock.call.network.GetNetworkInterface(None),
+        mock.call.setup.logger.warning(mock.ANY, None),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  def testHandleNetworkInterfacesIpAliases(self):
+    self.mock_setup.ip_aliases = True
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_network_utils, 'network')
     mocks.attach_mock(self.mock_setup, 'setup')

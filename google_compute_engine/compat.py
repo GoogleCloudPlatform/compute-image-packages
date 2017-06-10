@@ -22,6 +22,7 @@ if sys.version_info >= (3,):
   # Python 3 imports.
   import configparser as parser
   import http.client as httpclient
+  import io as stringio
   import urllib.error as urlerror
   import urllib.parse as urlparse
   import urllib.request as urlrequest
@@ -30,6 +31,7 @@ else:
   # Python 2 imports.
   import ConfigParser as parser
   import httplib as httpclient
+  import StringIO as stringio
   import urllib as urlparse
   import urllib as urlretrieve
   import urllib2 as urlrequest
