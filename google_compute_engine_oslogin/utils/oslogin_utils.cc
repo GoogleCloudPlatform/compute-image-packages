@@ -114,6 +114,9 @@ bool NssCache::LoadJsonArrayToCache(string response) {
     page_token_ = "";
     return false;
   }
+  if (json_object_get_type(login_profiles) != json_type_array) {
+    return false;
+  }
   int arraylen = json_object_array_length(login_profiles);
   if (arraylen == 0 || arraylen > cache_size_) {
     page_token_ = "";
@@ -226,6 +229,9 @@ std::vector<string> ParseJsonToSshKeys(string response) {
   if (!json_object_object_get_ex(root, "loginProfiles", &login_profiles)) {
     return result;
   }
+  if (json_object_get_type(login_profiles) != json_type_array) {
+    return result;
+  }
   login_profiles = json_object_array_get_idx(login_profiles, 0);
 
   json_object* ssh_public_keys = NULL;
@@ -234,19 +240,32 @@ std::vector<string> ParseJsonToSshKeys(string response) {
     return result;
   }
 
+  if (json_object_get_type(ssh_public_keys) != json_type_object) {
+    return result;
+  }
   json_object_object_foreach(ssh_public_keys, key, val) {
     json_object* iter;
     if (!json_object_object_get_ex(ssh_public_keys, key, &iter)) {
       return result;
     }
+    if (json_object_get_type(iter) != json_type_object) {
+      continue;
+    }
     string key_to_add = "";
     bool expired = false;
     json_object_object_foreach(iter, key, val) {
       string string_key(key);
+      int val_type = json_object_get_type(val);
       if (string_key == "key") {
+        if (val_type != json_type_string) {
+          continue;
+        }
         key_to_add = (char*)json_object_get_string(val);
       }
       if (string_key == "expiration_time_usec") {
+        if (val_type != json_type_int) {
+          continue;
+        }
         uint64_t expiry_usec = (uint64_t)json_object_get_int64(val);
         struct timeval tp;
         gettimeofday(&tp, NULL);
@@ -272,6 +291,9 @@ bool ParseJsonToPasswd(string response, struct passwd* result,
   json_object* login_profiles = NULL;
   // If this is called from getpwent_r, loginProfiles won't be in the response.
   if (json_object_object_get_ex(root, "loginProfiles", &login_profiles)) {
+    if (json_object_get_type(login_profiles) != json_type_array) {
+      return false;
+    }
     root = login_profiles;
     root = json_object_array_get_idx(root, 0);
   }
@@ -279,6 +301,9 @@ bool ParseJsonToPasswd(string response, struct passwd* result,
   json_object* posix_accounts = NULL;
   if (!json_object_object_get_ex(root, "posixAccounts", &posix_accounts)) {
     *errnop = ENOENT;
+    return false;
+  }
+  if (json_object_get_type(posix_accounts) != json_type_array) {
     return false;
   }
   posix_accounts = json_object_array_get_idx(posix_accounts, 0);
@@ -291,6 +316,9 @@ bool ParseJsonToPasswd(string response, struct passwd* result,
   result->pw_dir = (char*)"";
 
   // Iterate through the json response and populate the passwd struct.
+  if (json_object_get_type(posix_accounts) != json_type_object) {
+    return false;
+  }
   json_object_object_foreach(posix_accounts, key, val) {
     int val_type = json_object_get_type(val);
     // Convert char* to c++ string for easier comparison.
@@ -350,6 +378,9 @@ string ParseJsonToEmail(string response) {
   // Locate the email object.
   json_object* login_profiles = NULL;
   if (!json_object_object_get_ex(root, "loginProfiles", &login_profiles)) {
+    return "";
+  }
+  if (json_object_get_type(login_profiles) != json_type_array) {
     return "";
   }
   login_profiles = json_object_array_get_idx(login_profiles, 0);
