@@ -32,14 +32,11 @@ using std::string;
 
 using oslogin_utils::BufferManager;
 using oslogin_utils::HttpGet;
+using oslogin_utils::kMetadataServerUrl;
 using oslogin_utils::MutexLock;
 using oslogin_utils::NssCache;
 using oslogin_utils::ParseJsonToPasswd;
 using oslogin_utils::UrlEncode;
-
-// Metadata server URL.
-static const char kMetadataServerUrl[] =
-   "http://metadata.google.internal/computeMetadata/v1/oslogin/";
 
 // Size of the NssCache. This also determines how many users will be requested
 // per HTTP call.
