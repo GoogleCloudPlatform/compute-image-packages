@@ -23,11 +23,11 @@ using std::endl;
 using std::string;
 
 using oslogin_utils::HttpGet;
-using oslogin_utils::kMetadataServerUrl;
-using oslogin_utils::UrlEncode;
 using oslogin_utils::ParseJsonToAuthorizeResponse;
 using oslogin_utils::ParseJsonToEmail;
 using oslogin_utils::ParseJsonToSshKeys;
+using oslogin_utils::UrlEncode;
+using oslogin_utils::kMetadataServerUrl;
 
 int main(int argc, char* argv[]) {
   if (argc != 2) {

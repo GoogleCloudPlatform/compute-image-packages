@@ -26,7 +26,6 @@ namespace oslogin_utils {
 static const char kMetadataServerUrl[] =
    "http://metadata.google.internal/computeMetadata/v1/oslogin/";
 
-
 // BufferManager encapsulates and manages a buffer and length. This class is not
 // thread safe.
 class BufferManager {

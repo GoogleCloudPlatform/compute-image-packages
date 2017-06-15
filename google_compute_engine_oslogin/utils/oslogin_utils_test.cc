@@ -54,7 +54,8 @@ TEST(BufferManagerTest, TestAppendStringTooLarge) {
   char* first_string;
   int test_errno = 0;
   oslogin_utils::BufferManager buffer_manager(buffer, buflen);
-  ASSERT_FALSE(buffer_manager.AppendString("test1", &first_string, &test_errno));
+  ASSERT_FALSE(
+      buffer_manager.AppendString("test1", &first_string, &test_errno));
   EXPECT_EQ(test_errno, ERANGE);
 }
 
