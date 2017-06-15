@@ -25,7 +25,7 @@ VERSION="2.0"
 working_dir=${PWD}
 
 # Build dependencies.
-sudo apt-get -y install make g++ libcurl4-openssl-dev libjson0 libjson0-dev libpam-dev
+sudo apt-get -y install make g++ libcurl4-openssl-dev libjson-c-dev libpam-dev
 
 # .deb creation tools.
 sudo apt-get -y install debhelper devscripts build-essential

@@ -62,14 +62,14 @@ TEST(BufferManagerTest, TestAppendStringTooLarge) {
 TEST(NssCacheTest, TestLoadJsonArray) {
   NssCache nss_cache(2);
   string test_user1 =
-      "{\"name\":\"jonesdl@google.com\",\"posixAccounts\":["
-      "{\"primary\":true,\"username\":\"jonesdl\",\"uid\":1337,\"gid\":1337,"
-      "\"homeDirectory\":\"/home/jonesdl\",\"shell\":\"/bin/bash\"}]}";
+      "{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\":1337,\"gid\":1337,"
+      "\"homeDirectory\":\"/home/foo\",\"shell\":\"/bin/bash\"}]}";
   string test_user2 =
-      "{\"name\":\"illfelder@google.com\","
+      "{\"name\":\"bar@example.com\","
       "\"posixAccounts\":["
-      "{\"primary\":true,\"username\":\"illfelder\",\"uid\":1338,\"gid\":1338,"
-      "\"homeDirectory\":\"/home/illfelder\",\"shell\":\"/bin/bash\"}]}";
+      "{\"primary\":true,\"username\":\"bar\",\"uid\":1338,\"gid\":1338,"
+      "\"homeDirectory\":\"/home/bar\",\"shell\":\"/bin/bash\"}]}";
   string response =
       "{\"loginProfiles\": [" + test_user1 + ", " + test_user2 + "]}";
 
@@ -88,9 +88,9 @@ TEST(NssCacheTest, TestLoadJsonArray) {
   EXPECT_EQ(test_errno, 0);
   EXPECT_EQ(result.pw_uid, 1337);
   EXPECT_EQ(result.pw_gid, 1337);
-  ASSERT_STREQ(result.pw_name, "jonesdl");
+  ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
-  ASSERT_STREQ(result.pw_dir, "/home/jonesdl");
+  ASSERT_STREQ(result.pw_dir, "/home/foo");
 
   // Verify that the second user was stored.
   ASSERT_TRUE(nss_cache.HasNextPasswd());
@@ -98,9 +98,9 @@ TEST(NssCacheTest, TestLoadJsonArray) {
   EXPECT_EQ(test_errno, 0);
   EXPECT_EQ(result.pw_uid, 1338);
   EXPECT_EQ(result.pw_gid, 1338);
-  ASSERT_STREQ(result.pw_name, "illfelder");
+  ASSERT_STREQ(result.pw_name, "bar");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
-  ASSERT_STREQ(result.pw_dir, "/home/illfelder");
+  ASSERT_STREQ(result.pw_dir, "/home/bar");
 
   // Verify that there are no more users stored.
   ASSERT_FALSE(nss_cache.HasNextPasswd());
@@ -112,9 +112,9 @@ TEST(NssCacheTest, TestLoadJsonArray) {
 TEST(NssCacheTest, TestLoadJsonPartialArray) {
   NssCache nss_cache(2);
   string test_user1 =
-      "{\"name\":\"jonesdl@google.com\",\"posixAccounts\":["
-      "{\"primary\":true,\"username\":\"jonesdl\",\"uid\":1337,\"gid\":1337,"
-      "\"homeDirectory\":\"/home/jonesdl\",\"shell\":\"/bin/bash\"}]}";
+      "{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\":1337,\"gid\":1337,"
+      "\"homeDirectory\":\"/home/foo\",\"shell\":\"/bin/bash\"}]}";
   string response =
       "{\"loginProfiles\": [" + test_user1 + "], \"nextPageToken\": \"token\"}";
 
@@ -133,9 +133,9 @@ TEST(NssCacheTest, TestLoadJsonPartialArray) {
   EXPECT_EQ(test_errno, 0);
   EXPECT_EQ(result.pw_uid, 1337);
   EXPECT_EQ(result.pw_gid, 1337);
-  ASSERT_STREQ(result.pw_name, "jonesdl");
+  ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
-  ASSERT_STREQ(result.pw_dir, "/home/jonesdl");
+  ASSERT_STREQ(result.pw_dir, "/home/foo");
 
   ASSERT_STREQ(nss_cache.GetPageToken().c_str(), "token");
 
@@ -155,9 +155,9 @@ TEST(NssCacheTest, ResetNullPtrTest) {
 // Test parsing a valid JSON response from the metadata server.
 TEST(ParseJsonPasswdTest, ParseJsonToPasswdSucceeds) {
   string test_user =
-      "{\"loginProfiles\":[{\"name\":\"jonesdl@google.com\",\"posixAccounts\":["
-      "{\"primary\":true,\"username\":\"jonesdl\",\"uid\":1337,\"gid\":1338,"
-      "\"homeDirectory\":\"/home/jonesdl\",\"shell\":\"/bin/bash\"}]}]}";
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\":1337,\"gid\":1338,"
+      "\"homeDirectory\":\"/home/foo\",\"shell\":\"/bin/bash\"}]}]}";
 
   size_t buflen = 200;
   char* buffer = (char*)malloc(buflen * sizeof(char));
@@ -168,16 +168,16 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdSucceeds) {
   ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
   EXPECT_EQ(result.pw_uid, 1337);
   EXPECT_EQ(result.pw_gid, 1338);
-  ASSERT_STREQ(result.pw_name, "jonesdl");
+  ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
-  ASSERT_STREQ(result.pw_dir, "/home/jonesdl");
+  ASSERT_STREQ(result.pw_dir, "/home/foo");
 }
 
 TEST(ParseJsonPasswdTest, ParseJsonToPasswdNoLoginProfilesSucceeds) {
   string test_user =
-      "{\"name\":\"jonesdl@google.com\",\"posixAccounts\":["
-      "{\"primary\":true,\"username\":\"jonesdl\",\"uid\":1337,\"gid\":1337,"
-      "\"homeDirectory\":\"/home/jonesdl\",\"shell\":\"/bin/bash\"}]}";
+      "{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\":1337,\"gid\":1337,"
+      "\"homeDirectory\":\"/home/foo\",\"shell\":\"/bin/bash\"}]}";
 
   size_t buflen = 200;
   char* buffer = (char*)malloc(buflen * sizeof(char));
@@ -188,17 +188,17 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdNoLoginProfilesSucceeds) {
   ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
   EXPECT_EQ(result.pw_uid, 1337);
   EXPECT_EQ(result.pw_gid, 1337);
-  ASSERT_STREQ(result.pw_name, "jonesdl");
+  ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
-  ASSERT_STREQ(result.pw_dir, "/home/jonesdl");
+  ASSERT_STREQ(result.pw_dir, "/home/foo");
 }
 
 // Test parsing a JSON response without enough space in the buffer.
 TEST(ParseJsonPasswdTest, ParseJsonToPasswdFailsWithERANGE) {
   string test_user =
-      "{\"loginProfiles\":[{\"name\":\"jonesdl@google.com\",\"posixAccounts\":["
-      "{\"primary\":true,\"username\":\"jonesdl\",\"uid\":1337,\"gid\":1337,"
-      "\"homeDirectory\":\"/home/jonesdl\",\"shell\":\"/bin/bash\"}]}]}";
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\":1337,\"gid\":1337,"
+      "\"homeDirectory\":\"/home/foo\",\"shell\":\"/bin/bash\"}]}]}";
 
   size_t buflen = 1;
   char* buffer = (char*)malloc(buflen * sizeof(char));
@@ -214,8 +214,8 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdFailsWithERANGE) {
 // with default values.
 TEST(ParseJsonPasswdTest, ValidatePartialJsonResponse) {
   string test_user =
-      "{\"loginProfiles\":[{\"name\":\"jonesdl@google.com\",\"posixAccounts\":["
-      "{\"primary\":true,\"username\":\"jonesdl\",\"uid\":1337,\"gid\":1337}]"
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\":1337,\"gid\":1337}]"
       "}]}";
 
   size_t buflen = 200;
@@ -227,17 +227,17 @@ TEST(ParseJsonPasswdTest, ValidatePartialJsonResponse) {
   ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
   EXPECT_EQ(result.pw_uid, 1337);
   EXPECT_EQ(result.pw_gid, 1337);
-  ASSERT_STREQ(result.pw_name, "jonesdl");
+  ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
-  ASSERT_STREQ(result.pw_dir, "/home/jonesdl");
+  ASSERT_STREQ(result.pw_dir, "/home/foo");
 }
 
 // Test parsing an invalid response. Validate should cause the parse to fail if
 // there is no uid.
 TEST(ParseJsonPasswdTest, ValidateInvalidJsonResponse) {
   string test_user =
-      "{\"loginProfiles\":[{\"name\":\"jonesdl@google.com\",\"posixAccounts\":["
-      "{\"primary\":true,\"username\":\"jonesdl\",\"gid\":1337}]"
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"gid\":1337}]"
       "}]}";
 
   size_t buflen = 200;
@@ -252,12 +252,12 @@ TEST(ParseJsonPasswdTest, ValidateInvalidJsonResponse) {
 
 TEST(ParseJsonEmailTest, SuccessfullyParsesEmail) {
   string test_user =
-      "{\"loginProfiles\":[{\"name\":\"jonesdl@google.com\",\"posixAccounts\":["
-      "{\"primary\":true,\"username\":\"jonesdl\",\"gid\":1337}]"
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"gid\":1337}]"
       "}]}";
 
   string email = ParseJsonToEmail(test_user);
-  ASSERT_STREQ(email.c_str(), "jonesdl@google.com");
+  ASSERT_STREQ(email.c_str(), "foo@example.com");
 }
 
 TEST(ParseJsonEmailTest, FailsParseEmail) {
@@ -267,8 +267,8 @@ TEST(ParseJsonEmailTest, FailsParseEmail) {
 
 TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysSucceeds) {
   string test_user =
-      "{\"loginProfiles\":[{\"name\":\"jonesdl@google.com\",\"sshPublicKeys\":["
-      "{\"key\":\"test_key\"}]}]}";
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"sshPublicKeys\":"
+      "{\"fingerprint\": {\"key\": \"test_key\"}}}]}";
 
   size_t buflen = 200;
   char* buffer = (char*)malloc(buflen * sizeof(char));
@@ -280,10 +280,11 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysSucceeds) {
   EXPECT_EQ(result[0], "test_key");
 }
 
-TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysMutipleKeys) {
+TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysMultipleKeys) {
   string test_user =
-      "{\"loginProfiles\":[{\"name\":\"jonesdl@google.com\",\"sshPublicKeys\":["
-      "{\"key\":\"test_key\"}, {\"key\":\"test_key2\"}]}]}";
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"sshPublicKeys\":"
+      "{\"fingerprint\": {\"key\": \"test_key\"}, \"fingerprint2\": {\"key\": "
+      "\"test_key2\"}}}]}";
 
   size_t buflen = 200;
   char* buffer = (char*)malloc(buflen * sizeof(char));
@@ -298,9 +299,9 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysMutipleKeys) {
 
 TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersExpiredKeys) {
   string test_user =
-      "{\"loginProfiles\":[{\"name\":\"jonesdl@google.com\",\"sshPublicKeys\":["
-      "{\"key\":\"test_key\"}, {\"key\":\"test_key2\", "
-      "\"expiration_time_usec\":0}]}]}";
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"sshPublicKeys\":"
+      "{\"fingerprint\": {\"key\": \"test_key\"}, \"fingerprint2\": {\"key\": "
+      "\"test_key2\", \"expiration_time_usec\": 0}}}]}";
 
   size_t buflen = 200;
   char* buffer = (char*)malloc(buflen * sizeof(char));
