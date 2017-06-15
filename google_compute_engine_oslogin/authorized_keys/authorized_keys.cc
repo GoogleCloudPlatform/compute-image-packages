@@ -23,13 +23,11 @@ using std::endl;
 using std::string;
 
 using oslogin_utils::HttpGet;
-using oslogin_utils::UrlEncode;
 using oslogin_utils::ParseJsonToAuthorizeResponse;
 using oslogin_utils::ParseJsonToEmail;
 using oslogin_utils::ParseJsonToSshKeys;
-
-static const char kMetadataServerUrl[] =
-    "http://metadata.google.internal/computeMetadata/v1/oslogin/";
+using oslogin_utils::UrlEncode;
+using oslogin_utils::kMetadataServerUrl;
 
 int main(int argc, char* argv[]) {
   if (argc != 2) {

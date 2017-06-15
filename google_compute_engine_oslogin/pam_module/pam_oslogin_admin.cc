@@ -31,12 +31,10 @@
 using std::string;
 
 using oslogin_utils::HttpGet;
-using oslogin_utils::ParseJsonToEmail;
 using oslogin_utils::ParseJsonToAuthorizeResponse;
+using oslogin_utils::ParseJsonToEmail;
 using oslogin_utils::UrlEncode;
-
-static const char kMetadataServerUrl[] =
-    "http://metadata.google.internal/computeMetadata/v1/oslogin/";
+using oslogin_utils::kMetadataServerUrl;
 
 static const char kSudoersDir[] = "/etc/google-sudoers.d/";
 
