@@ -14,9 +14,6 @@
 # limitations under the License.
 set -e
 
-google_oslogin_sshd activate
-google_oslogin_nss activate
-google_oslogin_pam activate
-google_oslogin_sudoers activate
+google_oslogin_control activate
 
 #DEBHELPER#

@@ -50,23 +50,14 @@ make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/lib64 PAM_INSTALL_PATH=/lib6
 %{pam_install_path}/pam_oslogin_admin.so
 %{pam_install_path}/pam_oslogin_login.so
 /usr/bin/google_authorized_keys
-/usr/local/bin/google_oslogin_sshd
-/usr/local/bin/google_oslogin_nss
-/usr/local/bin/google_oslogin_pam
-/usr/local/bin/google_oslogin_sudoers
+/usr/local/bin/google_oslogin_control
 
 %post
 /sbin/ldconfig
-/usr/local/bin/google_oslogin_sshd activate
-/usr/local/bin/google_oslogin_nss activate
-/usr/local/bin/google_oslogin_pam activate
-/usr/local/bin/google_oslogin_sudoers activate
+/usr/local/bin/google_oslogin_control activate
 
 %preun
-/usr/local/bin/google_oslogin_sshd deactivate
-/usr/local/bin/google_oslogin_nss deactivate
-/usr/local/bin/google_oslogin_pam deactivate
-/usr/local/bin/google_oslogin_sudoers deactivate
+/usr/local/bin/google_oslogin_control deactivate
 
 %postun
 /sbin/ldconfig
