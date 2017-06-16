@@ -139,12 +139,6 @@ std::string UrlEncode(const string& param);
 bool ValidatePasswd(struct passwd* result, BufferManager* buf,
                     int* errnop);
 
-// TODO(jonesdl) In the beginning, there was only one JSON parse method. Now
-// there are a whole bunch... It might be worthwhile to have a single parse
-// method that returns a LoginProfiles struct and access members as needed. This
-// is more expensive for things that only need portions of the object, but may
-// be worth the code cleanup.
-
 // Parses a JSON LoginProfiles response for SSH keys. Returns a vector of valid
 // ssh_keys. A key is considered valid if it's expiration date is greater than
 // current unix time.
