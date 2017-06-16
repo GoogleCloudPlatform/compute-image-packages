@@ -14,9 +14,6 @@
 # limitations under the License.
 set -e
 
-command -v google_oslogin_sshd > /dev/null && google_oslogin_sshd deactivate
-command -v google_oslogin_nss > /dev/null && google_oslogin_nss deactivate
-command -v google_oslogin_pam > /dev/null && google_oslogin_pam deactivate
-command -v google_oslogin_sudoers > /dev/null && google_oslogin_sudoers deactivate
+command -v google_oslogin_control > /dev/null && google_oslogin_control deactivate
 
 #DEBHELPER#
