@@ -1,0 +1,175 @@
+#!/bin/sh
+# Copyright 2017 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+script_name=$(basename "$0")
+nss_config="/etc/nsswitch.conf"
+pam_config="/etc/pam.d/sshd"
+sshd_config="/etc/ssh/sshd_config"
+
+
+usage() {
+    echo "Usage: ${script_name} {activate|deactivate} [--norestartsshd]"
+    echo "This script will activate or deactivate the features for"
+    echo "Google Compute Engine OS Login."
+    echo "This script must be run as root."
+    exit 1
+}
+
+added_comment="# Added by Google Compute Engine OS Login."
+sshd_command="AuthorizedKeysCommand /usr/bin/google_authorized_keys"
+sshd_user="AuthorizedKeysCommandUser root"
+pam_login="account    requisite    pam_oslogin_login.so"
+pam_admin="account    optional     pam_oslogin_admin.so"
+pam_homedir="session    optional     pam_mkhomedir.so"
+
+
+
+# User must be root to edit config files.
+if [ $(id -u) -ne 0 ]
+then
+    usage
+fi
+
+if [ $# -lt 1 ]
+then
+    usage
+fi
+
+copy_file() {
+    config=$1
+    cp ${config} ${config}.new
+}
+
+overwrite_file() {
+    config=$1
+    mv ${config}.new ${config}
+}
+
+remove_from_config() {
+    config=$1
+    sed -i "/${added_comment}/,+1d" ${config}.new
+}
+
+remove_from_nss_config() {
+    sed -i '/^passwd:/ s/ oslogin//' ${nss_config}.new
+}
+
+add_to_sshd_config() {
+    remove_from_config ${sshd_config}
+    sed -i "\$a${added_comment}\n${sshd_command}" ${sshd_config}.new
+    sed -i "\$a${added_comment}\n${sshd_user}" ${sshd_config}.new
+}
+
+add_to_nss_config() {
+    remove_from_nss_config
+    sed -i '/^passwd:/ s/$/ oslogin/' ${nss_config}.new
+}
+
+add_to_pam_config() {
+    remove_from_config ${pam_config}
+    sed -i "/pam_nologin.so/ a${added_comment}\n${pam_admin}" ${pam_config}.new
+    sed -i "/pam_nologin.so/ a${added_comment}\n${pam_login}" ${pam_config}.new
+    sed -i "/pam_selinux.so close/ a${pam_homedir}" ${pam_config}.new
+}
+
+
+restart_sshd() {
+    echo "Restarting sshd."
+    if which service >/dev/null 2>&1
+    then
+        service sshd restart
+    elif which invoke-rc.d >/dev/null 2>&1
+    then
+        invoke-rc.d sshd restart
+    else
+        /etc/init.d/sshd restart
+    fi
+}
+
+activate_sshd() {
+    copy_file ${sshd_config}
+    add_to_sshd_config
+    overwrite_file ${sshd_config}
+}
+
+deactivate_sshd() {
+    copy_file ${sshd_config}
+    remove_from_config ${sshd_config}
+    overwrite_file ${sshd_config}
+}
+
+activate_nss() {
+    copy_file ${nss_config}
+    add_to_nss_config
+    overwrite_file ${nss_config}
+}
+
+deactivate_nss() {
+    copy_file ${nss_config}
+    remove_from_nss_config
+    overwrite_file ${nss_config}
+}
+
+activate_pam() {
+    copy_file ${pam_config}
+    add_to_pam_config
+    overwrite_file ${pam_config}
+}
+
+deactivate_pam() {
+    copy_file ${pam_config}
+    remove_from_config ${pam_config}
+    overwrite_file ${pam_config}
+}
+
+activate_sudoers() {
+    mkdir -p /etc/google-sudoers.d
+    echo "#includedir /etc/google-sudoers.d" > /etc/sudoers.d/google-oslogin
+}
+
+deactivate_sudoers() {
+    rm -f /etc/sudoers.d/google-oslogin
+    rm -rf /etc/google-sudoers.d
+}
+
+case "$1" in
+
+    activate)
+        echo "Activating Google Compute Engine OS Login."
+        activate_sshd
+        activate_nss
+        activate_pam
+        activate_sudoers
+        ;;
+
+    deactivate)
+        echo "Deactivating Google Compute Engine OS Login."
+        deactivate_sshd
+        deactivate_nss
+        deactivate_pam
+        deactivate_sudoers
+        ;;
+
+    *)
+        usage
+        ;;
+
+esac
+
+# Restart sshd unless --norestartsshd flag is set.
+if [ $# -lt 2 ] || [ "$2" != "--norestartsshd" ]
+then
+    restart_sshd
+fi
