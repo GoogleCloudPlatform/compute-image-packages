@@ -46,7 +46,7 @@ PAM_LOGIN_MOD = $(PAM_LOGIN).so
 # HELPER SCRIPTS
 BIN_DIR = bin
 OSLOGIN_HELPER = $(BIN_DIR)/google_oslogin_control
-BIN_INSTALL_PATH = /usr/local/bin
+BIN_INSTALL_PATH = /usr/bin
 
 LIBS = -lcurl -ljson-c
 PAM_LIBS = -lpam $(LIBS)

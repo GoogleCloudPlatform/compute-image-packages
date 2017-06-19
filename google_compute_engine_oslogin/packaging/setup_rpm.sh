@@ -34,6 +34,7 @@ sudo yum -y install rpmdevtools
 rm -rf /tmp/rpmpackage
 mkdir -p ${rpm_working_dir}
 cp -r ${working_dir}/packaging/rpmbuild ${rpm_working_dir}/
+mkdir -p ${rpm_working_dir}/rpmbuild/SOURCES
 
 tar czvf ${rpm_working_dir}/rpmbuild/SOURCES/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
