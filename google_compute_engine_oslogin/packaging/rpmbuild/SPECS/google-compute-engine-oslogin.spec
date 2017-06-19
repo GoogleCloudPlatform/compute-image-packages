@@ -26,7 +26,7 @@ BuildRequires:  libcurl
 BuildRequires:  json-c
 BuildRequires:  pam-devel
 
-%define pam_install_path /lib64/security
+%define pam_install_path /%{_lib}/security
 
 %description
 This package contains several libraries and changes to enable OS Login functionality
