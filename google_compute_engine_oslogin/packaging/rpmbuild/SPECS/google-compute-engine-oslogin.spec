@@ -41,7 +41,7 @@ make %{?_smp_mflags} LIBS="-lcurl -ljson-c"
 %install
 rm -rf %{buildroot}
 #%make_install
-make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=/lib64/security
+make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path}
 
 %files
 %doc
