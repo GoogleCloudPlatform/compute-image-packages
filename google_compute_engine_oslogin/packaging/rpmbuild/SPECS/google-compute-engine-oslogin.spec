@@ -25,7 +25,7 @@ BuildRequires:  make
 BuildRequires:  libcurl
 BuildRequires:  json-c
 BuildRequires:  pam-devel
-BuildRequires:  policycoreutils-python
+Requires:  policycoreutils-python
 
 %define pam_install_path /%{_lib}/security
 
