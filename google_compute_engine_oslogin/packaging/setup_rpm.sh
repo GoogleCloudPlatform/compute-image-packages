@@ -26,7 +26,7 @@ working_dir=${PWD}
 rpm_working_dir=/tmp/rpmpackage/${NAME}-${VERSION}
 
 # Build dependencies.
-sudo yum -y install make gcc-c++ libcurl-devel json-c json-c-devel pam-devel
+sudo yum -y install make gcc-c++ libcurl-devel json-c json-c-devel pam-devel policycoreutils-python
 
 # .rpm creation tools.
 sudo yum -y install rpmdevtools
