@@ -25,6 +25,7 @@ BuildRequires:  make
 BuildRequires:  libcurl
 BuildRequires:  json-c
 BuildRequires:  pam-devel
+BuildRequires:  policycoreutils-python
 
 %define pam_install_path /%{_lib}/security
 
@@ -40,7 +41,6 @@ make %{?_smp_mflags} LIBS="-lcurl -ljson-c"
 
 %install
 rm -rf %{buildroot}
-#%make_install
 make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path}
 
 %files
@@ -54,6 +54,9 @@ make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{p
 %post
 /sbin/ldconfig
 /usr/bin/google_oslogin_control activate
+semanage fcontext -a -t sshd_exec_t /usr/bin/google_authorized_keys
+restorecon -R -v /usr/bin/google_authorized_keys
+setsebool -P nis_enabled on
 
 %preun
 /usr/bin/google_oslogin_control deactivate
