@@ -41,7 +41,7 @@ make %{?_smp_mflags} LIBS="-lcurl -ljson-c"
 
 %install
 rm -rf %{buildroot}
-make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path}
+make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true
 
 %files
 %doc
@@ -50,13 +50,12 @@ make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{p
 %{pam_install_path}/pam_oslogin_login.so
 /usr/bin/google_authorized_keys
 /usr/bin/google_oslogin_control
+/usr/share/selinux/packages/oslogin.pp
 
 %post
 /sbin/ldconfig
 /usr/bin/google_oslogin_control activate
-semanage fcontext -a -t sshd_exec_t /usr/bin/google_authorized_keys
-restorecon -R -v /usr/bin/google_authorized_keys
-setsebool -P nis_enabled on
+semodule -i /usr/share/selinux/packages/oslogin.pp
 
 %preun
 /usr/bin/google_oslogin_control deactivate
