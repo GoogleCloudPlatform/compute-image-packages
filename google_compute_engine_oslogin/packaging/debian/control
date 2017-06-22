@@ -3,7 +3,7 @@ Maintainer: Google Compute Engine <gc-team@google.com>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.6.1
-Build-Depends: debhelper (>= 9), libcurl4-openssl-dev, libjson0-dev, libpam-dev
+Build-Depends: debhelper (>= 9), libcurl4-openssl-dev, libjson-c-dev | libjson0-dev, libpam-dev
 
 Package: google-compute-engine-oslogin
 Architecture: any
