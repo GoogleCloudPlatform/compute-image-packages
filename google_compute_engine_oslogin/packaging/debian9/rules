@@ -1,0 +1,6 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	dh_auto_install -- PAM_INSTALL_PATH=/lib/x86_64-linux-gnu/security BIN_INSTALL_PATH=/usr/bin
