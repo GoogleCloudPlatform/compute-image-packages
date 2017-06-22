@@ -25,9 +25,9 @@ BuildRequires:  make
 BuildRequires:  libcurl
 BuildRequires:  json-c
 BuildRequires:  pam-devel
+Requires:  policycoreutils-python
 
-%define nss_install_path /lib64
-%define pam_install_path /lib64/security
+%define pam_install_path /%{_lib}/security
 
 %description
 This package contains several libraries and changes to enable OS Login functionality
@@ -41,23 +41,28 @@ make %{?_smp_mflags} LIBS="-lcurl -ljson-c"
 
 %install
 rm -rf %{buildroot}
-#%make_install
-make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/lib64 PAM_INSTALL_PATH=/lib64/security
+%if 0%{?el6}
+make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true DIST=".el6"
+%else
+make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true DIST=".el7"
+%endif
 
 %files
 %doc
-/lib64/libnss_%{name}.so.%{version}
+/%{_lib}/libnss_%{name}.so.%{version}
 %{pam_install_path}/pam_oslogin_admin.so
 %{pam_install_path}/pam_oslogin_login.so
 /usr/bin/google_authorized_keys
-/usr/local/bin/google_oslogin_control
+/usr/bin/google_oslogin_control
+/usr/share/selinux/packages/oslogin.pp
 
 %post
 /sbin/ldconfig
-/usr/local/bin/google_oslogin_control activate
+/usr/bin/google_oslogin_control activate
+semodule -i /usr/share/selinux/packages/oslogin.pp
 
 %preun
-/usr/local/bin/google_oslogin_control deactivate
+/usr/bin/google_oslogin_control deactivate
 
 %postun
 /sbin/ldconfig

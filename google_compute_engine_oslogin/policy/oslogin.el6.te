@@ -1,0 +1,25 @@
+
+module oslogin.el6 1.0;
+
+require {
+	type home_root_t;
+	type etc_t;
+	type sshd_t;
+	class dir { write remove_name create add_name setattr };
+	class file { setattr create write unlink open };
+}
+
+#============= sshd_t ==============
+#!!!! The source type 'sshd_t' can write to a 'dir' of the following types:
+# gitosis_var_lib_t, sshd_tmpfs_t, openshift_tmp_t, ssh_home_t, var_auth_t, tmpfs_t, tmp_t, var_t, user_tmp_t, auth_cache_t, admin_home_t, faillog_t, var_run_t, user_home_dir_t, pcscd_var_run_t, pam_var_run_t, root_t, krb5_host_rcache_t, cluster_conf_t, tmp_t, cluster_var_lib_t, cluster_var_run_t
+
+allow sshd_t etc_t:dir { write remove_name add_name };
+allow sshd_t etc_t:file { write create unlink setattr };
+
+#!!!! This avc can be allowed using the boolean 'allow_polyinstantiation'
+allow sshd_t home_root_t:dir { write add_name };
+allow sshd_t home_root_t:dir { create setattr };
+#!!!! The source type 'sshd_t' can write to a 'file' of the following types:
+# gitosis_var_lib_t, sshd_tmpfs_t, openshift_tmp_t, ssh_home_t, var_auth_t, user_tmp_t, auth_cache_t, faillog_t, pcscd_var_run_t, sshd_var_run_t, pam_var_run_t, root_t, krb5_host_rcache_t, cluster_conf_t, cluster_var_lib_t, cluster_var_run_t
+
+allow sshd_t home_root_t:file { write create open setattr };
