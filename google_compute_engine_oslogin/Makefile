@@ -2,11 +2,12 @@ SHELL = /bin/sh
 
 BASENAME = oslogin
 NAME = google-compute-engine-$(BASENAME)
-MAJOR = 2
+MAJOR = 1
 MINOR = 0
+REVISION = 0
 
-NSS_LIBRARY_NAME = libnss_$(NAME).so.$(MAJOR).$(MINOR)
-NSS_LIBRARY_SONAME = libnss_$(BASENAME).so.$(MAJOR)
+NSS_LIBRARY_NAME = libnss_$(NAME)-$(MAJOR).$(MINOR).$(REVISION).so
+NSS_LIBRARY_SONAME = libnss_$(BASENAME).so.2
 NSS_INSTALL_PATH = /lib
 PAM_INSTALL_PATH = /lib/security
 AUTHKEYS_INSTALL_PATH = /usr/bin

@@ -20,7 +20,7 @@
 
 # Run from the top of the source directory.
 NAME="google-compute-engine-oslogin"
-VERSION="2.0"
+VERSION="1.0.0"
 
 working_dir=${PWD}
 
@@ -40,7 +40,8 @@ tar xzvf ${NAME}_${VERSION}.orig.tar.gz
 
 cd ${NAME}-${VERSION}
 
-cp -r ${working_dir}/packaging/debian .
+deb_version=$(cut -d "." -f 1 /etc/debian_version) 
+cp -r ${working_dir}/packaging/debian${deb_version} debian
 
 debuild -us -uc
 
