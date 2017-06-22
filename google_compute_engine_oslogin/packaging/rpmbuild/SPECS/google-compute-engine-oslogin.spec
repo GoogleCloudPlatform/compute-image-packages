@@ -49,7 +49,7 @@ make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{p
 
 %files
 %doc
-/%{_lib}/libnss_%{name}.so.%{version}
+/%{_lib}/libnss_%{name}-%{version}.so
 %{pam_install_path}/pam_oslogin_admin.so
 %{pam_install_path}/pam_oslogin_login.so
 /usr/bin/google_authorized_keys
