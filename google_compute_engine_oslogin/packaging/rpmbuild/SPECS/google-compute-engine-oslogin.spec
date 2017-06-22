@@ -41,7 +41,11 @@ make %{?_smp_mflags} LIBS="-lcurl -ljson-c"
 
 %install
 rm -rf %{buildroot}
-make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true
+%if 0%{?el6}
+make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true DIST=".el6"
+%else
+make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true DIST=".el7"
+%endif
 
 %files
 %doc

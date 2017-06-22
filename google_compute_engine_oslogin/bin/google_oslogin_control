@@ -17,7 +17,7 @@ script_name=$(basename "$0")
 nss_config="/etc/nsswitch.conf"
 pam_config="/etc/pam.d/sshd"
 sshd_config="/etc/ssh/sshd_config"
-
+el_release_file="/etc/redhat-release"
 
 usage() {
     echo "Usage: ${script_name} {activate|deactivate} [--norestartsshd]"
@@ -34,7 +34,14 @@ pam_login="account    requisite    pam_oslogin_login.so"
 pam_admin="account    optional     pam_oslogin_admin.so"
 pam_homedir="session    optional     pam_mkhomedir.so"
 
-
+# Update AuthorizedKeysCommand to work on EL 6.
+if [ -f ${el_release_file} ]
+then
+  if grep -q "release 6" "/etc/redhat-release"
+  then
+    sshd_user="AuthorizedKeysCommandRunAs root"
+  fi
+fi
 
 # User must be root to edit config files.
 if [ $(id -u) -ne 0 ]
