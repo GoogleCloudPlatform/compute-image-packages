@@ -18,6 +18,8 @@ nss_config="/etc/nsswitch.conf"
 pam_config="/etc/pam.d/sshd"
 sshd_config="/etc/ssh/sshd_config"
 el_release_file="/etc/redhat-release"
+sudoers_dir="/var/google-sudoers.d"
+sudoers_file="/etc/sudoers.d/google-oslogin"
 
 usage() {
     echo "Usage: ${script_name} {activate|deactivate} [--norestartsshd]"
@@ -142,13 +144,14 @@ deactivate_pam() {
 }
 
 activate_sudoers() {
-    mkdir -p /etc/google-sudoers.d
-    echo "#includedir /etc/google-sudoers.d" > /etc/sudoers.d/google-oslogin
+    mkdir -p ${sudoers_dir}
+    chmod 750 ${sudoers_dir}
+    echo "#includedir ${sudoers_dir}" > ${sudoers_file}
 }
 
 deactivate_sudoers() {
-    rm -f /etc/sudoers.d/google-oslogin
-    rm -rf /etc/google-sudoers.d
+    rm -f ${sudoers_file}
+    rm -rf ${sudoers_dir}
 }
 
 case "$1" in
