@@ -36,7 +36,7 @@ using oslogin_utils::ParseJsonToEmail;
 using oslogin_utils::UrlEncode;
 using oslogin_utils::kMetadataServerUrl;
 
-static const char kSudoersDir[] = "/etc/google-sudoers.d/";
+static const char kSudoersDir[] = "/var/google-sudoers.d/";
 
 extern "C" {
 
@@ -84,6 +84,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
                    << "\n";
       sudoers_file.close();
       chown(filename.c_str(), 0, 0);
+      chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
     }
   } else if (file_exists) {
     remove(filename.c_str());
