@@ -26,6 +26,9 @@
 
 using std::string;
 
+// Maximum number of retries for HTTP requests.
+const int kMaxRetries = 1;
+
 namespace oslogin_utils {
 
 BufferManager::BufferManager(char* buf, size_t buflen)
@@ -146,6 +149,8 @@ string HttpGet(const string& url) {
   curl_global_init(CURL_GLOBAL_ALL);
   CURL* curl = curl_easy_init();
   std::ostringstream response;
+  int retry_count = 0;
+  long http_code = 0;
   if (curl) {
     struct curl_slist* header_list = NULL;
     header_list = curl_slist_append(header_list, "Metadata-Flavor: Google");
@@ -153,13 +158,18 @@ string HttpGet(const string& url) {
       curl_global_cleanup();
       return "";
     }
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &OnCurlWrite);
-    curl_easy_setopt(curl, CURLOPT_FILE, &response);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    code = curl_easy_perform(curl);
+    do {
+      response.str("");
+      response.clear();
+      curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
+      curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &OnCurlWrite);
+      curl_easy_setopt(curl, CURLOPT_FILE, &response);
+      curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
+      curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
+      code = curl_easy_perform(curl);
+      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    } while (retry_count++ < kMaxRetries && http_code == 500);
     curl_slist_free_all(header_list);
     curl_global_cleanup();
   }
