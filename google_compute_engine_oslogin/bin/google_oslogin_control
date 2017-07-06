@@ -98,7 +98,7 @@ restart_sshd() {
     echo "Restarting sshd."
     if which service >/dev/null 2>&1
     then
-      if [ -e ${el_release_file} ]; then
+      if service --status-all | grep -Fq 'sshd'; then
         service sshd restart
       else
         service ssh restart
