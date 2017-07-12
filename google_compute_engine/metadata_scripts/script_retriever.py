@@ -135,7 +135,10 @@ class ScriptRetriever(object):
     match = gs_regex.match(url)
     if match:
       gs_url = r'gs://%s/%s' % (match.group('bucket'), match.group('obj'))
-      return self._DownloadGsUrl(gs_url, dest_dir)
+      dest = self._DownloadGsUrl(gs_url, dest_dir)
+      # In case gsutil is not installed, continue as a normal URL
+      if dest is not None:
+        return dest
 
     # Check for the other possible Google Storage URLs:
     # http://storage.googleapis.com/<bucket>/<object>
@@ -149,7 +152,10 @@ class ScriptRetriever(object):
     match = gs_regex.match(url)
     if match:
       gs_url = r'gs://%s/%s' % (match.group('bucket'), match.group('obj'))
-      return self._DownloadGsUrl(gs_url, dest_dir)
+      dest = self._DownloadGsUrl(gs_url, dest_dir)
+      # In case gsutil is not installed, continue as a normal URL
+      if dest is not None:
+        return dest
 
     # Unauthenticated download of the object.
     return self._DownloadUrl(url, dest_dir)
