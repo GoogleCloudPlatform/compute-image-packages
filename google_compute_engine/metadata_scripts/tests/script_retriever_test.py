@@ -181,6 +181,16 @@ class ScriptRetrieverTest(unittest.TestCase):
       self.retriever._DownloadScript(url, self.dest_dir)
       mock_download_gs.assert_called_once_with(gs_url, self.dest_dir)
 
+    for url, gs_url in download_gs_urls.items():
+      if url.startswith('gs://'):
+        continue
+      mock_download_gs.reset_mock()
+      mock_download_gs.return_value = None
+      mock_download.reset_mock()
+      self.retriever._DownloadScript(url, self.dest_dir)
+      mock_download_gs.assert_called_once_with(gs_url, self.dest_dir)
+      mock_download.assert_called_once_with(url, self.dest_dir)
+
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   def testGetAttributeScripts(self, mock_tempfile):
     script = 'echo Hello World.\n'
