@@ -44,21 +44,6 @@ class ScriptRetrieverTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.subprocess.check_call')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
-  def testDownloadGsUrlFallback(self, mock_tempfile, mock_call):
-    mock_call.side_effect = subprocess.CalledProcessError('foo', 'bar')
-    gs_url = 'http://storage.googleapis.com/bucket/obj'
-    mock_tempfile.return_value = mock_tempfile
-    mock_tempfile.name = self.dest
-    self.assertEqual(
-        self.retriever._DownloadScript(gs_url, self.dest_dir), self.dest)
-    mock_call.assert_called_once_with(
-        ['which', 'gsutil'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    self.mock_logger.warning.assert_called_once_with(mock.ANY)
-    mock_tempfile.assert_called_once_with(dir=self.dest_dir, delete=False)
-    mock_tempfile.close.assert_called_once_with()
-
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.subprocess.check_call')
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   def testDownloadGsUrl(self, mock_tempfile, mock_call):
     gs_url = 'gs://fake/url'
     mock_tempfile.return_value = mock_tempfile

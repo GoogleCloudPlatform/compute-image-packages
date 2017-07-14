@@ -135,7 +135,7 @@ class ScriptRetriever(object):
     match = gs_regex.match(url)
     if match:
       gs_url = r'gs://%s/%s' % (match.group('bucket'), match.group('obj'))
-      # In case gsutil is not installed, continue as a normal URL
+      # In case gsutil is not installed, continue as a normal URL.
       return (self._DownloadGsUrl(gs_url, dest_dir) or
               self._DownloadUrl(url, dest_dir))
 
@@ -151,7 +151,7 @@ class ScriptRetriever(object):
     match = gs_regex.match(url)
     if match:
       gs_url = r'gs://%s/%s' % (match.group('bucket'), match.group('obj'))
-      # In case gsutil is not installed, continue as a normal URL
+      # In case gsutil is not installed, continue as a normal URL.
       return (self._DownloadGsUrl(gs_url, dest_dir) or
               self._DownloadUrl(url, dest_dir))
 
