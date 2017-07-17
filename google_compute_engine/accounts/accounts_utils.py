@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import tempfile
 
+from google_compute_engine import constants
 from google_compute_engine import file_utils
 
 USER_REGEX = re.compile(r'\A[A-Za-z0-9._][A-Za-z0-9._-]*\Z')
@@ -43,8 +44,9 @@ class AccountsUtils(object):
     """
     self.logger = logger
     self.google_sudoers_group = 'google-sudoers'
-    self.google_sudoers_file = '/etc/sudoers.d/google_sudoers'
-    self.google_users_dir = '/var/lib/google'
+    self.google_sudoers_file = (
+        constants.LOCALBASE + '/etc/sudoers.d/google_sudoers')
+    self.google_users_dir = constants.LOCALBASE + '/var/lib/google'
     self.google_users_file = os.path.join(self.google_users_dir, 'google_users')
 
     self._CreateSudoersGroup()

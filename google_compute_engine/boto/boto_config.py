@@ -27,6 +27,7 @@ packaging.
 import os
 
 from google_compute_engine import config_manager
+from google_compute_engine import constants
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 
@@ -34,8 +35,8 @@ from google_compute_engine import metadata_watcher
 class BotoConfig(object):
   """Creates a boto config file for standalone GSUtil."""
 
-  boto_config = '/etc/boto.cfg'
-  boto_config_template = '/etc/boto.cfg.template'
+  boto_config = constants.BOTOCONFDIR + '/etc/boto.cfg'
+  boto_config_template = constants.BOTOCONFDIR + '/etc/boto.cfg.template'
   boto_config_script = os.path.abspath(__file__)
   boto_config_header = (
       'This file is automatically created at boot time by the %s script. Do '

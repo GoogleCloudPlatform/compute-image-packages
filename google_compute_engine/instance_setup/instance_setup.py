@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import tempfile
 
+from google_compute_engine import constants
 from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
@@ -143,7 +144,7 @@ class InstanceSetup(object):
     """Initialize the SSH daemon."""
     # Exit as early as possible.
     # Instance setup systemd scripts block sshd from starting.
-    if os.path.exists('/bin/systemctl'):
+    if os.path.exists(constants.LOCALBASE + '/bin/systemctl'):
       return
     elif (os.path.exists('/etc/init.d/ssh') or
           os.path.exists('/etc/init/ssh.conf')):

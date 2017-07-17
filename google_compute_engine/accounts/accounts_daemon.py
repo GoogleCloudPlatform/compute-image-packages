@@ -22,12 +22,13 @@ import optparse
 import random
 
 from google_compute_engine import config_manager
+from google_compute_engine import constants
 from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine.accounts import accounts_utils
 
-LOCKFILE = '/var/lock/google_accounts.lock'
+LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_accounts.lock'
 
 
 class AccountsDaemon(object):

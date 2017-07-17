@@ -25,6 +25,7 @@ import logging
 import os
 
 from google_compute_engine import config_manager
+from google_compute_engine import constants
 from google_compute_engine.compat import parser
 from google_compute_engine.compat import stringio
 
@@ -32,7 +33,7 @@ from google_compute_engine.compat import stringio
 class InstanceConfig(config_manager.ConfigManager):
   """Creates a defaults config file for instance configuration."""
 
-  instance_config = '/etc/default/instance_configs.cfg'
+  instance_config = constants.SYSCONFDIR + '/instance_configs.cfg'
   instance_config_distro = '%s.distro' % instance_config
   instance_config_template = '%s.template' % instance_config
   instance_config_script = os.path.abspath(__file__)

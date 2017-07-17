@@ -43,6 +43,7 @@ class NetworkSetupTest(unittest.TestCase):
     self.mock_setup.watcher = self.mock_watcher
     self.mock_setup.network_utils = self.mock_network_utils
     self.mock_setup.network_interfaces = self.metadata_key
+    self.mock_setup.network_path = '/etc/sysconfig/network-scripts'
     self.mock_setup.dhclient_script = '/bin/script'
     self.mock_setup.dhcp_command = ''
 
