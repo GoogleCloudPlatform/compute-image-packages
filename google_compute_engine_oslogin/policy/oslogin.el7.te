@@ -1,25 +1,20 @@
 
-module oslogin 1.0;
+module oslogin.el7 1.0;
 
 require {
 	type oddjob_mkhomedir_t;
 	type etc_t;
+	type var_t;
 	type http_port_t;
 	type sshd_t;
 	class tcp_socket name_connect;
-	class file { create setattr unlink write };
+	class file { create setattr getattr open unlink write };
 }
 
-#============= oddjob_mkhomedir_t ==============
-
-#!!!! This avc can be allowed using the boolean 'nis_enabled'
+# These two could also be set with the nis_enabled_boolean
 allow oddjob_mkhomedir_t http_port_t:tcp_socket name_connect;
-
-#============= sshd_t ==============
-
-#!!!! WARNING: 'etc_t' is a base type.
-allow sshd_t etc_t:file { create setattr unlink write };
-
-#!!!! This avc can be allowed using one of the these booleans:
-#     authlogin_yubikey, nis_enabled
 allow sshd_t http_port_t:tcp_socket name_connect;
+
+# The NSS module needs to manipulate files in /etc and /var for sudo permissions
+allow sshd_t etc_t:file { create setattr unlink write };
+allow sshd_t var_t:file { create setattr getattr open unlink write };

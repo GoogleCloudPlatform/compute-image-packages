@@ -13,7 +13,7 @@
 # limitations under the License.
 
 Name:           google-compute-engine-oslogin
-Version:        1.0.0
+Version:        1.0.1
 Release:        1%{?dist}
 Summary:        OS Login Functionality for Google Compute Engine
 
@@ -25,6 +25,7 @@ BuildRequires:  make
 BuildRequires:  libcurl
 BuildRequires:  json-c
 BuildRequires:  pam-devel
+BuildRequires:  policycoreutils-python
 Requires:  policycoreutils-python
 
 %define pam_install_path /%{_lib}/security
