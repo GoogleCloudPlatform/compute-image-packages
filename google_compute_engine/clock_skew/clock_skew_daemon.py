@@ -20,11 +20,12 @@ import optparse
 import subprocess
 
 from google_compute_engine import config_manager
+from google_compute_engine import constants
 from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 
-LOCKFILE = '/var/lock/google_clock_skew.lock'
+LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_clock_skew.lock'
 
 
 class ClockSkewDaemon(object):

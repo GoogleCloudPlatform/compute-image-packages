@@ -18,10 +18,11 @@
 import os
 import textwrap
 
+from google_compute_engine import constants
 from google_compute_engine import file_utils
 from google_compute_engine.compat import parser
 
-CONFIG = '/etc/default/instance_configs.cfg'
+CONFIG = constants.SYSCONFDIR + '/instance_configs.cfg'
 
 
 class ConfigManager(object):
@@ -101,7 +102,8 @@ class ConfigManager(object):
     """
     config_file = config_file or self.config_file
     config_name = os.path.splitext(os.path.basename(config_file))[0]
-    config_lock = '/var/lock/google_%s.lock' % config_name
+    config_lock = (
+        '%s/lock/google_%s.lock' % (constants.LOCALSTATEDIR, config_name))
     with file_utils.LockFile(config_lock):
       with open(config_file, 'w') as config_fp:
         if self.config_header:

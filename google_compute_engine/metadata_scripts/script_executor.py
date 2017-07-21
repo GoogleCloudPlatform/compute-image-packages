@@ -19,6 +19,8 @@ import os
 import stat
 import subprocess
 
+from google_compute_engine import constants
+
 
 class ScriptExecutor(object):
   """A class for executing user provided metadata scripts."""
@@ -50,7 +52,8 @@ class ScriptExecutor(object):
       metadata_script: string, the file location of an executable script.
     """
     process = subprocess.Popen(
-        metadata_script, shell=True, executable='/bin/bash',
+        metadata_script, shell=True,
+        executable=constants.LOCALBASE + '/bin/bash',
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     while True:
       for line in iter(process.stdout.readline, b''):
