@@ -46,6 +46,22 @@ class InstanceConfig(config_manager.ConfigManager):
       'Accounts': {
           'deprovision_remove': 'false',
           'groups': 'adm,dip,docker,lxd,plugdev,video',
+
+          # The encrypted password is set to '*' for SSH on Linux systems
+          # without PAM.
+          #
+          # SSH uses '!' as its locked account token:
+          # https://github.com/openssh/openssh-portable/blob/master/configure.ac
+          #
+          # When the token is specified, SSH denies login:
+          # https://github.com/openssh/openssh-portable/blob/master/auth.c
+          #
+          # To solve the issue, make the password '*' which is also recognized
+          # as locked but does not prevent SSH login.
+          'useradd_cmd': 'useradd -m -s /bin/bash -p * {user}',
+          'userdel_cmd': 'userdel -r {user}',
+          'usermod_cmd': 'groupadd {group}',
+          'groupadd_cmd': 'usermod -G {groups} {user}',
       },
       'Daemons': {
           'accounts_daemon': 'true',

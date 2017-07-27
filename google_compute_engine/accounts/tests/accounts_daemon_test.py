@@ -54,7 +54,9 @@ class AccountsDaemonTest(unittest.TestCase):
           mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.AccountsUtils(
-              logger=mock_logger_instance, groups='foo,bar', remove=True),
+              logger=mock_logger_instance, groups='foo,bar', remove=True,
+              useradd_cmd=mock.ANY, userdel_cmd=mock.ANY, usermod_cmd=mock.ANY,
+              groupadd_cmd=mock.ANY),
           mock.call.lock.LockFile(accounts_daemon.LOCKFILE),
           mock.call.lock.LockFile().__enter__(),
           mock.call.logger.Logger().info(mock.ANY),
@@ -85,7 +87,9 @@ class AccountsDaemonTest(unittest.TestCase):
               name=mock.ANY, debug=False, facility=mock.ANY),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.AccountsUtils(
-              logger=mock_logger_instance, groups=None, remove=False),
+              logger=mock_logger_instance, groups=None, remove=False,
+              useradd_cmd=mock.ANY, userdel_cmd=mock.ANY, usermod_cmd=mock.ANY,
+              groupadd_cmd=mock.ANY),
           mock.call.lock.LockFile(accounts_daemon.LOCKFILE),
           mock.call.logger.Logger().warning('Test Error'),
       ]
