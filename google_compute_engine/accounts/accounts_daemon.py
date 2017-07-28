@@ -37,12 +37,18 @@ class AccountsDaemon(object):
   invalid_users = set()
   user_ssh_keys = {}
 
-  def __init__(self, groups=None, remove=False, debug=False):
+  def __init__(
+      self, groups=None, remove=False, useradd_cmd=None, userdel_cmd=None,
+      usermod_cmd=None, groupadd_cmd=None, debug=False):
     """Constructor.
 
     Args:
       groups: string, a comma separated list of groups.
       remove: bool, True if deprovisioning a user should be destructive.
+      useradd_cmd: string, command to create a new user.
+      userdel_cmd: string, command to delete a user.
+      usermod_cmd: string, command to modify user's groups.
+      groupadd_cmd: string, command to add a new group.
       debug: bool, True if debug output should write to the console.
     """
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
@@ -50,7 +56,9 @@ class AccountsDaemon(object):
         name='google-accounts', debug=debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.utils = accounts_utils.AccountsUtils(
-        logger=self.logger, groups=groups, remove=remove)
+        logger=self.logger, groups=groups, remove=remove,
+        useradd_cmd=useradd_cmd, userdel_cmd=userdel_cmd,
+        usermod_cmd=usermod_cmd, groupadd_cmd=groupadd_cmd)
     try:
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google Accounts daemon.')
@@ -226,6 +234,10 @@ def main():
     AccountsDaemon(
         groups=instance_config.GetOptionString('Accounts', 'groups'),
         remove=instance_config.GetOptionBool('Accounts', 'deprovision_remove'),
+        useradd_cmd=instance_config.GetOptionBool('Accounts', 'useradd_cmd'),
+        userdel_cmd=instance_config.GetOptionBool('Accounts', 'userdel_cmd'),
+        usermod_cmd=instance_config.GetOptionBool('Accounts', 'usermod_cmd'),
+        groupadd_cmd=instance_config.GetOptionBool('Accounts', 'groupadd_cmd'),
         debug=bool(options.debug))
 
 
