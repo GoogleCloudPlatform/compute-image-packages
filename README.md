@@ -239,6 +239,10 @@ Section           | Option               | Value
 ----------------- | -------------------- | -----
 Accounts          | deprovision_remove   | `true` makes deprovisioning a user destructive.
 Accounts          | groups               | Comma separated list of groups for newly provisioned users.
+Accounts          | useradd_cmd          | Command string to create a new user.
+Accounts          | userdel_cmd          | Command string to delete a user.
+Accounts          | usermod_cmd          | Command string to modify a user's groups.
+Accounts          | groupadd_cmd         | Command string to create a new group.
 Daemons           | accounts_daemon      | `false` disables the accounts daemon.
 Daemons           | clock_skew_daemon    | `false` disables the clock skew daemon.
 Daemons           | ip_forwarding_daemon | `false` disables the IP forwarding daemon.
