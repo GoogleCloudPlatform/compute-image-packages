@@ -144,11 +144,11 @@ size_t OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp) {
   return 0;
 }
 
-string HttpGet(const string& url) {
+bool HttpGet(const string& url, string* response) {
   CURLcode code(CURLE_FAILED_INIT);
   curl_global_init(CURL_GLOBAL_ALL);
   CURL* curl = curl_easy_init();
-  std::ostringstream response;
+  std::ostringstream response_stream;
   int retry_count = 0;
   long http_code = 0;
   if (curl) {
@@ -156,14 +156,14 @@ string HttpGet(const string& url) {
     header_list = curl_slist_append(header_list, "Metadata-Flavor: Google");
     if (header_list == NULL) {
       curl_global_cleanup();
-      return "";
+      return false;
     }
     do {
-      response.str("");
-      response.clear();
+      response_stream.str("");
+      response_stream.clear();
       curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &OnCurlWrite);
-      curl_easy_setopt(curl, CURLOPT_FILE, &response);
+      curl_easy_setopt(curl, CURLOPT_FILE, &response_stream);
       curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
@@ -174,9 +174,10 @@ string HttpGet(const string& url) {
     curl_global_cleanup();
   }
   if (code != CURLE_OK) {
-    return "";
+    return false;
   }
-  return response.str();
+  *response = response_stream.str();
+  return true;
 }
 
 string UrlEncode(const string& param) {

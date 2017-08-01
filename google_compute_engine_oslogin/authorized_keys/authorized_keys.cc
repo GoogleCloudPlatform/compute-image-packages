@@ -36,7 +36,8 @@ int main(int argc, char* argv[]) {
   }
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(argv[1]);
-  string user_response = HttpGet(url.str());
+  string user_response;
+  bool success = HttpGet(url.str(), &response);
   if (user_response.empty()) {
     // Return 0 if the user is not an oslogin user. If we returned a failure
     // code, we would populate auth.log with useless error messages.
@@ -54,7 +55,8 @@ int main(int argc, char* argv[]) {
   url.str("");
   url << kMetadataServerUrl << "authorize?email=" << UrlEncode(email)
       << "&policy=login";
-  string auth_response = HttpGet(url.str());
+  string auth_response;
+  success = HttpGet(url.str(), auth_response);
   if (auth_response.empty()) {
     return 1;
   }

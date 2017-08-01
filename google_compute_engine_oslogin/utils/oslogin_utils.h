@@ -128,7 +128,7 @@ OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp);
 
 // Uses Curl to issue a GET request to the given url. Returns the response as a
 // string.
-std::string HttpGet(const string& url);
+bool HttpGet(const string& url, string* response);
 
 // URL encodes the given parameter. Returns the encoded parameter.
 std::string UrlEncode(const string& param);

@@ -49,7 +49,8 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
 
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(str_user_name);
-  string response = HttpGet(url.str());
+  string response;
+  bool success = HttpGet(url.str(), &response);
   if (response == "") {
     return PAM_SUCCESS;
   }
@@ -61,8 +62,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   url.str("");
   url << kMetadataServerUrl << "authorize?email=" << UrlEncode(email)
       << "&policy=login";
-  response = HttpGet(url.str());
-  if (ParseJsonToAuthorizeResponse(response)) {
+  if (HttpGet(url.str(), &response) && ParseJsonToAuthorizeResponse(response)) {
     pam_syslog(pamh, LOG_INFO,
                "Granting login permission for organization user %s.",
                user_name);
