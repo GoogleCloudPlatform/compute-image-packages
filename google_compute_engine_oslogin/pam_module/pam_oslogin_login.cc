@@ -55,7 +55,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   }
   string email = ParseJsonToEmail(response);
   if (email == "") {
-    return PAM_SUCCESS;
+    return PAM_PERM_DENIED;
   }
 
   url.str("");
