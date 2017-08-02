@@ -55,25 +55,24 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   std::stringstream url;
   url << kMetadataServerUrl
       << "users?username=" << UrlEncode(str_user_name);
-  string response = HttpGet(url.str());
-  if (response == "") {
+  string response;
+  if (!HttpGet(url.str(), &response) || response.empty()) {
     return PAM_SUCCESS;
   }
   string email = ParseJsonToEmail(response);
-  if (email == "") {
+  if (email.empty()) {
     return PAM_SUCCESS;
   }
 
   url.str("");
   url << kMetadataServerUrl << "authorize?email=" << UrlEncode(email)
       << "&policy=adminLogin";
-  response = HttpGet(url.str());
 
   string filename = kSudoersDir;
   filename.append(user_name);
   struct stat buffer;
   bool file_exists = !stat(filename.c_str(), &buffer);
-  if (ParseJsonToAuthorizeResponse(response)) {
+  if (HttpGet(url.str(), &response) && ParseJsonToAuthorizeResponse(response)) {
     if (!file_exists) {
       pam_syslog(pamh, LOG_INFO,
                  "Granting sudo permissions to organization user %s.",
