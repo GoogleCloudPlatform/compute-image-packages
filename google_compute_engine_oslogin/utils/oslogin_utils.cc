@@ -145,6 +145,9 @@ size_t OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp) {
 }
 
 bool HttpGet(const string& url, string* response) {
+  if (response == NULL) {
+    return false;
+  }
   CURLcode code(CURLE_FAILED_INIT);
   curl_global_init(CURL_GLOBAL_ALL);
   CURL* curl = curl_easy_init();
@@ -379,6 +382,7 @@ bool ParseJsonToPasswd(string response, struct passwd* result,
 
   return ValidatePasswd(result, buf, errnop);
 }
+
 
 string ParseJsonToEmail(string response) {
   json_object* root = NULL;

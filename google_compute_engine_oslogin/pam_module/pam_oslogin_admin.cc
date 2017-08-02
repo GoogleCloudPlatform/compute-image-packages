@@ -56,12 +56,11 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   url << kMetadataServerUrl
       << "users?username=" << UrlEncode(str_user_name);
   string response;
-  bool success = HttpGet(url.str(), &response);
-  if (response == "") {
+  if (!HttpGet(url.str(), &response) || response.empty()) {
     return PAM_SUCCESS;
   }
   string email = ParseJsonToEmail(response);
-  if (email == "") {
+  if (email.empty()) {
     return PAM_SUCCESS;
   }
 
