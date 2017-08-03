@@ -149,10 +149,10 @@ that is intstalled in the appropriate SELinux directory.
 ## Packaging
 
 There is currently support for creating packages for the following distros:
-* Debian 8
-* Debian 9
-* CentOS/RHEL 6
-* CentOS/RHEL 7
+*   Debian 8
+*   Debian 9
+*   CentOS/RHEL 6
+*   CentOS/RHEL 7
 
 #### DEB
 
