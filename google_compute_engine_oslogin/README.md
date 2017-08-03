@@ -173,7 +173,7 @@ There is currently support for creating packages for the following distros:
 #### DEB
 
 _Note: the `packaging/setup_deb.sh` script performs these steps, but is not
-production production._
+production quality._
 
 1.  Install build dependencies:
     ```
@@ -199,7 +199,7 @@ production production._
 #### RPM
 
 _Note: the `packaging/setup_rpm.sh` script performs these steps, but is not
-production production._
+production quality._
 
 1.  Install build dependencies:
     ```
