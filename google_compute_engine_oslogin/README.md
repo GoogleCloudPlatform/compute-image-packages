@@ -1,6 +1,6 @@
-## OS Login Support for Google Compute Engine Guest OS
+## OS Login Guest Environment for Google Compute Engine
 
-This package enables Google OS Login features on Google Compute Engine
+This package enables Google Cloud OS Login features on Google Compute Engine
 instances.
 
 **Table of Contents**
