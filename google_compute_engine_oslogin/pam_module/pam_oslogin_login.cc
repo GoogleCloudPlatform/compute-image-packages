@@ -50,8 +50,11 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(str_user_name);
   string response;
-  if (!HttpGet(url.str(), &response) || response.empty()) {
-    // If we are not dealing with an oslogin, the default behavior is to permit.
+  if (!HttpGet(url.str(), &response)) {
+    // Deny login permissions if we can't get a response from the server.
+    return PAM_PERM_DENIED;
+  } else if (response.empty()) {
+    // If we are not dealing with an oslogin user, default to PAM_SUCCESS.
     return PAM_SUCCESS;
   }
   string email = ParseJsonToEmail(response);
