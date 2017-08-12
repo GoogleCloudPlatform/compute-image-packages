@@ -253,6 +253,7 @@ InstanceSetup     | set_host_keys        | `false` skips generating host keys on
 InstanceSetup     | set_multiqueue       | `false` skips multiqueue driver support.
 IpForwarding      | ethernet_proto_id    | Protocol ID string for daemon added routes.
 IpForwarding      | ip_aliases           | `false` disables setting up alias IP routes.
+IpForwarding      | target_instance_ips  | `false` disables internal IP address load balancing.
 MetadataScripts   | run_dir              | String base directory where metadata scripts are executed.
 MetadataScripts   | startup              | `false` disables startup script execution.
 MetadataScripts   | shutdown             | `false` disables shutdown script execution.

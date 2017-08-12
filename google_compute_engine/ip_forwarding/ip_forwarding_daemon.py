@@ -47,11 +47,15 @@ class IpForwardingDaemon(object):
 
   network_interfaces = 'instance/network-interfaces'
 
-  def __init__(self, proto_id=None, ip_aliases=True, debug=False):
+  def __init__(
+      self, proto_id=None, ip_aliases=True, target_instance_ips=True,
+      debug=False):
     """Constructor.
 
     Args:
       proto_id: string, the routing protocol identifier for Google IP changes.
+      ip_aliases: bool, True if the guest should configure IP alias routes.
+      target_instance_ips: bool, True supports internal IP load balancing.
       debug: bool, True if debug output should write to the console.
     """
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
@@ -62,6 +66,7 @@ class IpForwardingDaemon(object):
     self.ip_forwarding_utils = ip_forwarding_utils.IpForwardingUtils(
         logger=self.logger, proto_id=proto_id)
     self.ip_aliases = ip_aliases
+    self.target_instance_ips = target_instance_ips
     try:
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google IP Forwarding daemon.')
@@ -140,6 +145,8 @@ class IpForwardingDaemon(object):
         ip_addresses.extend(network_interface.get('forwardedIps', []))
         if self.ip_aliases:
           ip_addresses.extend(network_interface.get('ipAliases', []))
+        if self.target_instance_ips:
+          ip_addresses.extend(network_interface.get('targetInstanceIps', []))
         self._HandleForwardedIps(ip_addresses, interface)
       else:
         message = 'Network interface not found for MAC address: %s.'
@@ -159,6 +166,8 @@ def main():
             'IpForwarding', 'ethernet_proto_id'),
         ip_aliases=instance_config.GetOptionBool(
             'IpForwarding', 'ip_aliases'),
+        target_instance_ips=instance_config.GetOptionBool(
+            'IpForwarding', 'target_instance_ips'),
         debug=bool(options.debug))
 
 
