@@ -256,8 +256,10 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.shutil.copy')
   @mock.patch('google_compute_engine.accounts.accounts_utils.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.islink')
   def testUpdateAuthorizedKeys(
-      self, mock_exists, mock_tempfile, mock_copy, mock_permissions):
+      self, mock_islink, mock_exists, mock_tempfile, mock_copy,
+      mock_permissions):
     mock_open = mock.mock_open()
     user = 'user'
     ssh_keys = ['Google key 1', 'Google key 2']
@@ -270,6 +272,7 @@ class AccountsUtilsTest(unittest.TestCase):
     pw_entry = accounts_utils.pwd.struct_passwd(
         ('', '', pw_uid, pw_gid, '', pw_dir, ''))
     self.mock_utils._GetUser.return_value = pw_entry
+    mock_islink.return_value = False
     mock_exists.return_value = True
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
@@ -310,13 +313,16 @@ class AccountsUtilsTest(unittest.TestCase):
         mock.call(authorized_keys_file, mode=0o600, uid=pw_uid, gid=pw_gid),
     ]
     self.assertEqual(mock_permissions.mock_calls, expected_calls)
+    self.mock_logger.warning.assert_not_called()
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.accounts.accounts_utils.shutil.copy')
   @mock.patch('google_compute_engine.accounts.accounts_utils.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.islink')
   def testUpdateAuthorizedKeysNoKeys(
-      self, mock_exists, mock_tempfile, mock_copy, mock_permissions):
+      self, mock_islink, mock_exists, mock_tempfile, mock_copy,
+      mock_permissions):
     user = 'user'
     ssh_keys = ['Google key 1']
     temp_dest = '/tmp/dest'
@@ -328,6 +334,7 @@ class AccountsUtilsTest(unittest.TestCase):
     pw_entry = accounts_utils.pwd.struct_passwd(
         ('', '', pw_uid, pw_gid, '', pw_dir, ''))
     self.mock_utils._GetUser.return_value = pw_entry
+    mock_islink.return_value = False
     mock_exists.return_value = False
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
@@ -351,6 +358,7 @@ class AccountsUtilsTest(unittest.TestCase):
         mock.call(authorized_keys_file, mode=0o600, uid=pw_uid, gid=pw_gid),
     ]
     self.assertEqual(mock_permissions.mock_calls, expected_calls)
+    self.mock_logger.warning.assert_not_called()
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   def testUpdateAuthorizedKeysNoUser(self, mock_permissions):
@@ -362,6 +370,29 @@ class AccountsUtilsTest(unittest.TestCase):
     accounts_utils.AccountsUtils._UpdateAuthorizedKeys(
         self.mock_utils, user, ssh_keys)
     self.mock_utils._GetUser.assert_called_once_with(user)
+    mock_permissions.assert_not_called()
+    self.mock_logger.warning.assert_not_called()
+
+  @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.islink')
+  def testUpdateAuthorizedKeysSymlink(self, mock_islink, mock_permissions):
+    user = 'user'
+    ssh_keys = ['Google key 1']
+    pw_uid = 1
+    pw_gid = 2
+    pw_dir = '/home'
+    ssh_dir = '/home/.ssh'
+    authorized_keys_file = '/home/.ssh/authorized_keys'
+    pw_entry = accounts_utils.pwd.struct_passwd(
+        ('', '', pw_uid, pw_gid, '', pw_dir, ''))
+    self.mock_utils._GetUser.return_value = pw_entry
+    mock_islink.side_effect = [False, True]
+
+    accounts_utils.AccountsUtils._UpdateAuthorizedKeys(
+        self.mock_utils, user, ssh_keys)
+    expected_calls = [mock.call(ssh_dir), mock.call(authorized_keys_file)]
+    self.assertEqual(mock_islink.mock_calls, expected_calls)
+    self.mock_logger.warning.assert_called_once_with(mock.ANY, user)
     mock_permissions.assert_not_called()
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.remove')
