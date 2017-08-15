@@ -57,15 +57,16 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(str_user_name);
   string response;
-  if (!HttpGet(url.str(), &response)) {
-    // First check if there is a local file indicating that this user has logged
-    // in before.
+  long http_code = 0;
+  if (!HttpGet(url.str(), &response, &http_code) || http_code == 500) {
+    // First check if there is a local file indicating that this is an oslogin
+    // user that has logged in before.
     if (file_exists) {
-      return PAM_SUCCESS;
+      return PAM_PERM_DENIED;
     }
-    // Otherwise, fallback to denying permission on a transient failure.
-    return PAM_PERM_DENIED;
-  } else if (response.empty()) {
+    // Otherwise, allow local users to log in.
+    return PAM_SUCCESS;
+  } else if (http_code == 404 || response.empty()) {
     // Return success on non-oslogin users.
     return PAM_SUCCESS;
   }
@@ -77,7 +78,8 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   url.str("");
   url << kMetadataServerUrl << "authorize?email=" << UrlEncode(email)
       << "&policy=login";
-  if (HttpGet(url.str(), &response) && ParseJsonToAuthorizeResponse(response)) {
+  if (HttpGet(url.str(), &response, &http_code) && http_code == 200 &&
+      ParseJsonToAuthorizeResponse(response)) {
     if (!file_exists) {
       std::ofstream users_file(users_filename.c_str());
       chown(users_filename.c_str(), 0, 0);

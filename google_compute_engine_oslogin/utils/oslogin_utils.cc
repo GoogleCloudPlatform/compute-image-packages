@@ -144,8 +144,8 @@ size_t OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp) {
   return 0;
 }
 
-bool HttpGet(const string& url, string* response) {
-  if (response == NULL) {
+bool HttpGet(const string& url, string* response, long* http_code) {
+  if (response == NULL || http_code == NULL) {
     return false;
   }
   CURLcode code(CURLE_FAILED_INIT);
@@ -153,7 +153,6 @@ bool HttpGet(const string& url, string* response) {
   CURL* curl = curl_easy_init();
   std::ostringstream response_stream;
   int retry_count = 0;
-  long http_code = 0;
   if (curl) {
     struct curl_slist* header_list = NULL;
     header_list = curl_slist_append(header_list, "Metadata-Flavor: Google");
@@ -171,13 +170,13 @@ bool HttpGet(const string& url, string* response) {
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
       code = curl_easy_perform(curl);
-      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-    } while (retry_count++ < kMaxRetries && http_code == 500);
+      if (code != CURLE_OK) {
+        return false;
+      }
+      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, http_code);
+    } while (retry_count++ < kMaxRetries && *http_code == 500);
     curl_slist_free_all(header_list);
     curl_global_cleanup();
-  }
-  if (code != CURLE_OK) {
-    return false;
   }
   *response = response_stream.str();
   return true;

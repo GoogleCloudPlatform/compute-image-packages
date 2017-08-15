@@ -56,7 +56,9 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   url << kMetadataServerUrl
       << "users?username=" << UrlEncode(str_user_name);
   string response;
-  if (!HttpGet(url.str(), &response) || response.empty()) {
+  long http_code = 0;
+  if (!HttpGet(url.str(), &response, &http_code) || http_code >= 400 ||
+      response.empty()) {
     return PAM_SUCCESS;
   }
   string email = ParseJsonToEmail(response);
@@ -72,7 +74,8 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   filename.append(user_name);
   struct stat buffer;
   bool file_exists = !stat(filename.c_str(), &buffer);
-  if (HttpGet(url.str(), &response) && ParseJsonToAuthorizeResponse(response)) {
+  if (HttpGet(url.str(), &response, &http_code) && http_code == 200 &&
+      ParseJsonToAuthorizeResponse(response)) {
     if (!file_exists) {
       pam_syslog(pamh, LOG_INFO,
                  "Granting sudo permissions to organization user %s.",
