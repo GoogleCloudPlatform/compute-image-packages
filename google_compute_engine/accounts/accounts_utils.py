@@ -185,14 +185,21 @@ class AccountsUtils(object):
     gid = pw_entry.pw_gid
     home_dir = pw_entry.pw_dir
     ssh_dir = os.path.join(home_dir, '.ssh')
-    file_utils.SetPermissions(
-        ssh_dir, mode=0o700, uid=uid, gid=gid, mkdir=True)
 
     # Not all sshd's support multiple authorized_keys files so we have to
     # share one with the user. We add each of our entries as follows:
     #  # Added by Google
     #  authorized_key_entry
     authorized_keys_file = os.path.join(ssh_dir, 'authorized_keys')
+
+    # Do not write to the authorized keys file if it is a symlink.
+    if os.path.islink(ssh_dir) or os.path.islink(authorized_keys_file):
+      self.logger.warning(
+          'Not updating authorized keys for user %s. File is a symlink.', user)
+      return
+
+    file_utils.SetPermissions(ssh_dir, mode=0o700, uid=uid, gid=gid, mkdir=True)
+
     prefix = self.logger.name + '-'
     with tempfile.NamedTemporaryFile(
         mode='w', prefix=prefix, delete=True) as updated_keys:
