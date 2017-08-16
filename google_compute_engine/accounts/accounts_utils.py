@@ -27,10 +27,10 @@ from google_compute_engine import constants
 from google_compute_engine import file_utils
 
 USER_REGEX = re.compile(r'\A[A-Za-z0-9._][A-Za-z0-9._-]*\Z')
+DEFAULT_GROUPADD_CMD = 'groupadd {group}'
 DEFAULT_USERADD_CMD = 'useradd -m -s /bin/bash -p * {user}'
 DEFAULT_USERDEL_CMD = 'userdel -r {user}'
-DEFAULT_USERMOD_CMD = 'groupadd {group}'
-DEFAULT_GROUPADD_CMD = 'groupadd {group}'
+DEFAULT_USERMOD_CMD = 'usermod -G {groups} {user}'
 
 
 class AccountsUtils(object):
@@ -39,23 +39,23 @@ class AccountsUtils(object):
   google_comment = '# Added by Google'
 
   def __init__(
-      self, logger, groups=None, remove=False, useradd_cmd=None,
-      userdel_cmd=None, usermod_cmd=None, groupadd_cmd=None):
+      self, logger, groups=None, remove=False, groupadd_cmd=None,
+      useradd_cmd=None, userdel_cmd=None, usermod_cmd=None):
     """Constructor.
 
     Args:
       logger: logger object, used to write to SysLog and serial port.
       groups: string, a comma separated list of groups.
       remove: bool, True if deprovisioning a user should be destructive.
+      groupadd_cmd: string, command to add a new group.
       useradd_cmd: string, command to create a new user.
       userdel_cmd: string, command to delete a user.
       usermod_cmd: string, command to modify user's groups.
-      groupadd_cmd: string, command to add a new group.
     """
+    self.groupadd_cmd = groupadd_cmd or DEFAULT_GROUPADD_CMD
     self.useradd_cmd = useradd_cmd or DEFAULT_USERADD_CMD
     self.userdel_cmd = userdel_cmd or DEFAULT_USERDEL_CMD
     self.usermod_cmd = usermod_cmd or DEFAULT_USERMOD_CMD
-    self.groupadd_cmd = groupadd_cmd or DEFAULT_GROUPADD_CMD
     self.logger = logger
     self.google_sudoers_group = 'google-sudoers'
     self.google_sudoers_file = (
@@ -87,9 +87,8 @@ class AccountsUtils(object):
     """Create a Linux group for Google added sudo user accounts."""
     if not self._GetGroup(self.google_sudoers_group):
       try:
-        subprocess.check_call(
-            self.groupadd_cmd.format(group=self.google_sudoers_group),
-            shell=True)
+        command = self.groupadd_cmd.format(group=self.google_sudoers_group)
+        subprocess.check_call(command.split(' '))
       except subprocess.CalledProcessError as e:
         self.logger.warning('Could not create the sudoers group. %s.', str(e))
 
@@ -135,7 +134,7 @@ class AccountsUtils(object):
 
     command = self.useradd_cmd.format(user=user)
     try:
-      subprocess.check_call(command, shell=True)
+      subprocess.check_call(command.split(' '))
     except subprocess.CalledProcessError as e:
       self.logger.warning('Could not create user %s. %s.', user, str(e))
       return False
@@ -157,7 +156,7 @@ class AccountsUtils(object):
     self.logger.debug('Updating user %s with groups %s.', user, groups)
     command = self.usermod_cmd.format(user=user, groups=groups)
     try:
-      subprocess.check_call(command, shell=True)
+      subprocess.check_call(command.split(' '))
     except subprocess.CalledProcessError as e:
       self.logger.warning('Could not update user %s. %s.', user, str(e))
       return False
@@ -333,7 +332,7 @@ class AccountsUtils(object):
     if self.remove:
       command = self.userdel_cmd.format(user=user)
       try:
-        subprocess.check_call(command, shell=True)
+        subprocess.check_call(command.split(' '))
       except subprocess.CalledProcessError as e:
         self.logger.warning('Could not remove user %s. %s.', user, str(e))
       else:
