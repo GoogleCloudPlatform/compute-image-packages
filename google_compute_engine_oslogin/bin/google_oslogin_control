@@ -19,6 +19,7 @@ pam_config="/etc/pam.d/sshd"
 sshd_config="/etc/ssh/sshd_config"
 el_release_file="/etc/redhat-release"
 sudoers_dir="/var/google-sudoers.d"
+users_dir="/var/google-users.d"
 sudoers_file="/etc/sudoers.d/google-oslogin"
 
 usage() {
@@ -179,6 +180,15 @@ deactivate_sudoers() {
   rm -rf ${sudoers_dir}
 }
 
+activate_users() {
+  mkdir -p ${users_dir}
+  chmod 750 ${users_dir}
+}
+
+deactivate_users() {
+  rm -f ${users_dir}
+  rm -rf ${users_dir}
+}
 case "$1" in
   activate)
     echo "Activating Google Compute Engine OS Login."
@@ -186,6 +196,7 @@ case "$1" in
     activate_nss
     activate_pam
     activate_sudoers
+    activate_users
     ;;
   deactivate)
     echo "Deactivating Google Compute Engine OS Login."
@@ -193,6 +204,7 @@ case "$1" in
     deactivate_nss
     deactivate_pam
     deactivate_sudoers
+    deactivate_users
     ;;
   *)
     usage

@@ -37,13 +37,16 @@ int main(int argc, char* argv[]) {
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(argv[1]);
   string user_response;
-  if (!HttpGet(url.str(), &user_response)) {
+  long http_code = 0;
+  if (!HttpGet(url.str(), &user_response, &http_code)) {
     return 1;
   }
-  if (user_response.empty()) {
+  if (http_code == 404) {
     // Return 0 if the user is not an oslogin user. If we returned a failure
     // code, we would populate auth.log with useless error messages.
     return 0;
+  } else if (user_response.empty() || http_code == 500) {
+    return 1;
   }
   string email = ParseJsonToEmail(user_response);
   if (email.empty()) {
@@ -58,7 +61,8 @@ int main(int argc, char* argv[]) {
   url << kMetadataServerUrl << "authorize?email=" << UrlEncode(email)
       << "&policy=login";
   string auth_response;
-  if (!HttpGet(url.str(), &auth_response) || auth_response.empty()) {
+  if (!HttpGet(url.str(), &auth_response, &http_code) || http_code > 400 ||
+      auth_response.empty()) {
     return 1;
   }
   if (!ParseJsonToAuthorizeResponse(auth_response)) {

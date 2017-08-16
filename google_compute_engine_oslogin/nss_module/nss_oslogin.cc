@@ -57,7 +57,9 @@ int _nss_oslogin_getpwuid_r(uid_t uid, struct passwd *result, char *buffer,
   std::stringstream url;
   url << kMetadataServerUrl << "users?uid=" << uid;
   string response;
-  if (!HttpGet(url.str(), &response) || response.empty()) {
+  long http_code = 0;
+  if (!HttpGet(url.str(), &response, &http_code) || http_code >= 400 ||
+      response.empty()) {
     *errnop = ENOENT;
     return NSS_STATUS_NOTFOUND;
   }
@@ -80,7 +82,9 @@ int _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(name);
   string response;
-  if (!HttpGet(url.str(), &response) || response.empty()) {
+  long http_code = 0;
+  if (!HttpGet(url.str(), &response, &http_code) || http_code >= 400 ||
+      response.empty()) {
     *errnop = ENOENT;
     return NSS_STATUS_NOTFOUND;
   }
@@ -125,7 +129,9 @@ int _nss_oslogin_getpwent_r(struct passwd *result, char *buffer, size_t buflen,
       url << "&pagetoken=" << page_token;
     }
     string response;
-    if (!HttpGet(url.str(), &response) || response.empty()) {
+    long http_code = 0;
+    if (!HttpGet(url.str(), &response, &http_code) || http_code >= 400 ||
+        response.empty()) {
       *errnop = ENOENT;
       return NSS_STATUS_NOTFOUND;
     }

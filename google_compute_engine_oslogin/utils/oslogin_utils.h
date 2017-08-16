@@ -128,8 +128,8 @@ OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp);
 
 // Uses Curl to issue a GET request to the given url. Returns whether the
 // request was successful. If successful, the result from the server will be
-// stored in response.
-bool HttpGet(const string& url, string* response);
+// stored in response, and the HTTP response code will be stored in http_code.
+bool HttpGet(const string& url, string* response, long* http_code);
 
 // URL encodes the given parameter. Returns the encoded parameter.
 std::string UrlEncode(const string& param);
