@@ -234,10 +234,10 @@ def main():
     AccountsDaemon(
         groups=instance_config.GetOptionString('Accounts', 'groups'),
         remove=instance_config.GetOptionBool('Accounts', 'deprovision_remove'),
-        useradd_cmd=instance_config.GetOptionBool('Accounts', 'useradd_cmd'),
-        userdel_cmd=instance_config.GetOptionBool('Accounts', 'userdel_cmd'),
-        usermod_cmd=instance_config.GetOptionBool('Accounts', 'usermod_cmd'),
-        groupadd_cmd=instance_config.GetOptionBool('Accounts', 'groupadd_cmd'),
+        useradd_cmd=instance_config.GetOptionString('Accounts', 'useradd_cmd'),
+        userdel_cmd=instance_config.GetOptionString('Accounts', 'userdel_cmd'),
+        usermod_cmd=instance_config.GetOptionString('Accounts', 'usermod_cmd'),
+        groupadd_cmd=instance_config.GetOptionString('Accounts', 'groupadd_cmd'),
         debug=bool(options.debug))
 
 
