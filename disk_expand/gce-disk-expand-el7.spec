@@ -13,13 +13,14 @@
 # limitations under the License.
 Name: gce-disk-expand
 Summary: Google Compute Engine root disk expansion utilities for EL7
-Version: 1.0.2
+Version: 1.0.3
 Release: %(date +%s).el7
 License: GPLv3, Apache Software License
 Group: System Environment/Base
 URL: https://github.com/GoogleCloudPlatform/compute-image-packages
 Requires: gawk, e2fsprogs, file, grep, util-linux, gdisk
 Conflicts: cloud-utils-growpart, cloud-utils
+BuildRequires: systemd
 
 # Allow other files in the source that don't end up in the package.
 %define _unpackaged_files_terminate_build 0
@@ -40,10 +41,13 @@ cp -R $RPM_SOURCE_DIR/usr $RPM_BUILD_ROOT
 %attr(644,root,root) /usr/lib/systemd/system/expand-root.service
 
 %post
-systemctl enable expand-root.service
+%systemd_post expand-root.service
 # Remove barrier options in fstab for EL7.
 sed -i 's/defaults,barrier=1/defaults/' /etc/fstab
 restorecon /etc/fstab
 
+%preun
+%systemd_preun expand-root.service
+
 %postun
-systemctl disable expand-root.service
+%systemd_postun expand-root.service
