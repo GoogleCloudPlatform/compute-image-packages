@@ -31,6 +31,10 @@ class AccountsUtilsTest(unittest.TestCase):
     self.sudoers_file = '/sudoers/file'
     self.users_dir = '/users'
     self.users_file = '/users/file'
+    self.useradd_cmd = 'useradd -m -s /bin/bash -p * {user}'
+    self.userdel_cmd = 'userdel -r {user}'
+    self.usermod_cmd = 'usermod -G {groups} {user}'
+    self.groupadd_cmd = 'groupadd {group}'
 
     self.mock_utils = mock.create_autospec(accounts_utils.AccountsUtils)
     self.mock_utils.google_comment = accounts_utils.AccountsUtils.google_comment
@@ -39,6 +43,10 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils.google_users_dir = self.users_dir
     self.mock_utils.google_users_file = self.users_file
     self.mock_utils.logger = self.mock_logger
+    self.mock_utils.useradd_cmd = self.useradd_cmd
+    self.mock_utils.userdel_cmd = self.userdel_cmd
+    self.mock_utils.usermod_cmd = self.usermod_cmd
+    self.mock_utils.groupadd_cmd = self.groupadd_cmd
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.AccountsUtils._GetGroup')
   @mock.patch('google_compute_engine.accounts.accounts_utils.AccountsUtils._CreateSudoersGroup')
@@ -82,7 +90,7 @@ class AccountsUtilsTest(unittest.TestCase):
     mocks.attach_mock(self.mock_logger, 'logger')
     self.mock_utils._GetGroup.return_value = False
     mock_exists.return_value = False
-    command = ['groupadd', self.sudoers_group]
+    command = self.groupadd_cmd.format(group=self.sudoers_group)
 
     with mock.patch('%s.open' % builtin, mock_open, create=False):
       accounts_utils.AccountsUtils._CreateSudoersGroup(self.mock_utils)
@@ -90,7 +98,7 @@ class AccountsUtilsTest(unittest.TestCase):
 
     expected_calls = [
         mock.call.group(self.sudoers_group),
-        mock.call.call(command),
+        mock.call.call(command, shell=True),
         mock.call.exists(self.sudoers_file),
         mock.call.permissions(self.sudoers_file, mode=0o440, uid=0, gid=0),
     ]
@@ -136,12 +144,12 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils._GetGroup.return_value = False
     mock_exists.return_value = True
     mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
-    command = ['groupadd', self.sudoers_group]
+    command = self.groupadd_cmd.format(group=self.sudoers_group)
 
     accounts_utils.AccountsUtils._CreateSudoersGroup(self.mock_utils)
     expected_calls = [
         mock.call.group(self.sudoers_group),
-        mock.call.call(command),
+        mock.call.call(command, shell=True),
         mock.call.logger.warning(mock.ANY, mock.ANY),
         mock.call.exists(self.sudoers_file),
         mock.call.permissions(self.sudoers_file, mode=0o440, uid=0, gid=0),
@@ -186,23 +194,23 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   def testAddUser(self, mock_call):
     user = 'user'
-    command = ['useradd', '-m', '-s', '/bin/bash', '-p', '*', user]
+    command = self.useradd_cmd.format(user=user)
 
     self.assertTrue(
         accounts_utils.AccountsUtils._AddUser(self.mock_utils, user))
-    mock_call.assert_called_once_with(command)
+    mock_call.assert_called_once_with(command, shell=True)
     expected_calls = [mock.call.info(mock.ANY, user)] * 2
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   def testAddUserError(self, mock_call):
     user = 'user'
-    command = ['useradd', '-m', '-s', '/bin/bash', '-p', '*', user]
+    command = self.useradd_cmd.format(user=user)
     mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
 
     self.assertFalse(
         accounts_utils.AccountsUtils._AddUser(self.mock_utils, user))
-    mock_call.assert_called_once_with(command)
+    mock_call.assert_called_once_with(command, shell=True)
     expected_calls = [
         mock.call.info(mock.ANY, user),
         mock.call.warning(mock.ANY, user, mock.ANY),
@@ -214,12 +222,12 @@ class AccountsUtilsTest(unittest.TestCase):
     user = 'user'
     groups = ['a', 'b', 'c']
     groups_string = ','.join(groups)
-    command = ['usermod', '-G', groups_string, user]
+    command = self.usermod_cmd.format(user=user, groups=groups_string)
 
     self.assertTrue(
         accounts_utils.AccountsUtils._UpdateUserGroups(
             self.mock_utils, user, groups))
-    mock_call.assert_called_once_with(command)
+    mock_call.assert_called_once_with(command, shell=True)
     expected_calls = [
         mock.call.debug(mock.ANY, user, groups_string),
         mock.call.debug(mock.ANY, user),
@@ -231,13 +239,13 @@ class AccountsUtilsTest(unittest.TestCase):
     user = 'user'
     groups = ['a', 'b', 'c']
     groups_string = ','.join(groups)
-    command = ['usermod', '-G', groups_string, user]
+    command = self.usermod_cmd.format(user=user, groups=groups_string)
     mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
 
     self.assertFalse(
         accounts_utils.AccountsUtils._UpdateUserGroups(
             self.mock_utils, user, groups))
-    mock_call.assert_called_once_with(command)
+    mock_call.assert_called_once_with(command, shell=True)
     expected_calls = [
         mock.call.debug(mock.ANY, user, groups_string),
         mock.call.warning(mock.ANY, user, mock.ANY),
@@ -248,8 +256,10 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.shutil.copy')
   @mock.patch('google_compute_engine.accounts.accounts_utils.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.islink')
   def testUpdateAuthorizedKeys(
-      self, mock_exists, mock_tempfile, mock_copy, mock_permissions):
+      self, mock_islink, mock_exists, mock_tempfile, mock_copy,
+      mock_permissions):
     mock_open = mock.mock_open()
     user = 'user'
     ssh_keys = ['Google key 1', 'Google key 2']
@@ -262,6 +272,7 @@ class AccountsUtilsTest(unittest.TestCase):
     pw_entry = accounts_utils.pwd.struct_passwd(
         ('', '', pw_uid, pw_gid, '', pw_dir, ''))
     self.mock_utils._GetUser.return_value = pw_entry
+    mock_islink.return_value = False
     mock_exists.return_value = True
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
@@ -302,13 +313,16 @@ class AccountsUtilsTest(unittest.TestCase):
         mock.call(authorized_keys_file, mode=0o600, uid=pw_uid, gid=pw_gid),
     ]
     self.assertEqual(mock_permissions.mock_calls, expected_calls)
+    self.mock_logger.warning.assert_not_called()
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   @mock.patch('google_compute_engine.accounts.accounts_utils.shutil.copy')
   @mock.patch('google_compute_engine.accounts.accounts_utils.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.islink')
   def testUpdateAuthorizedKeysNoKeys(
-      self, mock_exists, mock_tempfile, mock_copy, mock_permissions):
+      self, mock_islink, mock_exists, mock_tempfile, mock_copy,
+      mock_permissions):
     user = 'user'
     ssh_keys = ['Google key 1']
     temp_dest = '/tmp/dest'
@@ -320,6 +334,7 @@ class AccountsUtilsTest(unittest.TestCase):
     pw_entry = accounts_utils.pwd.struct_passwd(
         ('', '', pw_uid, pw_gid, '', pw_dir, ''))
     self.mock_utils._GetUser.return_value = pw_entry
+    mock_islink.return_value = False
     mock_exists.return_value = False
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
@@ -343,6 +358,7 @@ class AccountsUtilsTest(unittest.TestCase):
         mock.call(authorized_keys_file, mode=0o600, uid=pw_uid, gid=pw_gid),
     ]
     self.assertEqual(mock_permissions.mock_calls, expected_calls)
+    self.mock_logger.warning.assert_not_called()
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   def testUpdateAuthorizedKeysNoUser(self, mock_permissions):
@@ -354,6 +370,29 @@ class AccountsUtilsTest(unittest.TestCase):
     accounts_utils.AccountsUtils._UpdateAuthorizedKeys(
         self.mock_utils, user, ssh_keys)
     self.mock_utils._GetUser.assert_called_once_with(user)
+    mock_permissions.assert_not_called()
+    self.mock_logger.warning.assert_not_called()
+
+  @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.islink')
+  def testUpdateAuthorizedKeysSymlink(self, mock_islink, mock_permissions):
+    user = 'user'
+    ssh_keys = ['Google key 1']
+    pw_uid = 1
+    pw_gid = 2
+    pw_dir = '/home'
+    ssh_dir = '/home/.ssh'
+    authorized_keys_file = '/home/.ssh/authorized_keys'
+    pw_entry = accounts_utils.pwd.struct_passwd(
+        ('', '', pw_uid, pw_gid, '', pw_dir, ''))
+    self.mock_utils._GetUser.return_value = pw_entry
+    mock_islink.side_effect = [False, True]
+
+    accounts_utils.AccountsUtils._UpdateAuthorizedKeys(
+        self.mock_utils, user, ssh_keys)
+    expected_calls = [mock.call(ssh_dir), mock.call(authorized_keys_file)]
+    self.assertEqual(mock_islink.mock_calls, expected_calls)
+    self.mock_logger.warning.assert_called_once_with(mock.ANY, user)
     mock_permissions.assert_not_called()
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.remove')
@@ -575,11 +614,11 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   def testRemoveUserForce(self, mock_call):
     user = 'user'
-    command = ['userdel', '-r', user]
+    command = self.userdel_cmd.format(user=user)
     self.mock_utils.remove = True
 
     accounts_utils.AccountsUtils.RemoveUser(self.mock_utils, user)
-    mock_call.assert_called_once_with(command)
+    mock_call.assert_called_once_with(command, shell=True)
     expected_calls = [mock.call.info(mock.ANY, user)] * 2
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
     self.mock_utils._RemoveAuthorizedKeys.assert_called_once_with(user)
@@ -587,12 +626,12 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   def testRemoveUserError(self, mock_call):
     user = 'user'
-    command = ['userdel', '-r', user]
+    command = self.userdel_cmd.format(user=user)
     mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
     self.mock_utils.remove = True
 
     accounts_utils.AccountsUtils.RemoveUser(self.mock_utils, user)
-    mock_call.assert_called_once_with(command)
+    mock_call.assert_called_once_with(command, shell=True)
     expected_calls = [
         mock.call.info(mock.ANY, user),
         mock.call.warning(mock.ANY, user, mock.ANY),

@@ -19,6 +19,7 @@ pam_config="/etc/pam.d/sshd"
 sshd_config="/etc/ssh/sshd_config"
 el_release_file="/etc/redhat-release"
 sudoers_dir="/var/google-sudoers.d"
+users_dir="/var/google-users.d"
 sudoers_file="/etc/sudoers.d/google-oslogin"
 
 usage() {
@@ -97,19 +98,22 @@ restart_service() {
       systemctl restart ${service}
       return $?
     fi
-  elif which service > /dev/null 2>&1; then
+  fi
+  if which service > /dev/null 2>&1; then
     if service --status-all | grep -Fq ${service}; then
       echo "Restarting ${service}."
       service ${service} restart
       return $?
     fi
-  elif which invoke-rc.d > /dev/null 2>&1; then
+  fi
+  if which invoke-rc.d > /dev/null 2>&1; then
     if invoke-rc.d ${service} status > /dev/null 2>&1; then
       echo "Restarting ${service}."
       invoke-rc.d ${service} restart
       return $?
     fi
-  elif which /etc/init.d/${service} > /dev/null 2>&1; then
+  fi
+  if which /etc/init.d/${service} > /dev/null 2>&1; then
     if /etc/init.d/${service} status > /dev/null 2>&1; then
       echo "Restarting ${service}."
       /etc/init.d/${service} restart
@@ -176,6 +180,15 @@ deactivate_sudoers() {
   rm -rf ${sudoers_dir}
 }
 
+activate_users() {
+  mkdir -p ${users_dir}
+  chmod 750 ${users_dir}
+}
+
+deactivate_users() {
+  rm -f ${users_dir}
+  rm -rf ${users_dir}
+}
 case "$1" in
   activate)
     echo "Activating Google Compute Engine OS Login."
@@ -183,6 +196,7 @@ case "$1" in
     activate_nss
     activate_pam
     activate_sudoers
+    activate_users
     ;;
   deactivate)
     echo "Deactivating Google Compute Engine OS Login."
@@ -190,6 +204,7 @@ case "$1" in
     deactivate_nss
     deactivate_pam
     deactivate_sudoers
+    deactivate_users
     ;;
   *)
     usage

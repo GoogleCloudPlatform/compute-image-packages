@@ -25,6 +25,7 @@ import logging
 import os
 
 from google_compute_engine import config_manager
+from google_compute_engine import constants
 from google_compute_engine.compat import parser
 from google_compute_engine.compat import stringio
 
@@ -32,7 +33,7 @@ from google_compute_engine.compat import stringio
 class InstanceConfig(config_manager.ConfigManager):
   """Creates a defaults config file for instance configuration."""
 
-  instance_config = '/etc/default/instance_configs.cfg'
+  instance_config = constants.SYSCONFDIR + '/instance_configs.cfg'
   instance_config_distro = '%s.distro' % instance_config
   instance_config_template = '%s.template' % instance_config
   instance_config_script = os.path.abspath(__file__)
@@ -45,6 +46,22 @@ class InstanceConfig(config_manager.ConfigManager):
       'Accounts': {
           'deprovision_remove': 'false',
           'groups': 'adm,dip,docker,lxd,plugdev,video',
+
+          # The encrypted password is set to '*' for SSH on Linux systems
+          # without PAM.
+          #
+          # SSH uses '!' as its locked account token:
+          # https://github.com/openssh/openssh-portable/blob/master/configure.ac
+          #
+          # When the token is specified, SSH denies login:
+          # https://github.com/openssh/openssh-portable/blob/master/auth.c
+          #
+          # To solve the issue, make the password '*' which is also recognized
+          # as locked but does not prevent SSH login.
+          'useradd_cmd': 'useradd -m -s /bin/bash -p * {user}',
+          'userdel_cmd': 'userdel -r {user}',
+          'usermod_cmd': 'groupadd {group}',
+          'groupadd_cmd': 'usermod -G {groups} {user}',
       },
       'Daemons': {
           'accounts_daemon': 'true',
@@ -64,6 +81,7 @@ class InstanceConfig(config_manager.ConfigManager):
       'IpForwarding': {
           'ethernet_proto_id': '66',
           'ip_aliases': 'true',
+          'target_instance_ips': 'true',
       },
       'MetadataScripts': {
           'run_dir': '',

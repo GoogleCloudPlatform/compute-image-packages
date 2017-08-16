@@ -23,6 +23,7 @@ import re
 import subprocess
 
 from google_compute_engine import config_manager
+from google_compute_engine import constants
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine import network_utils
@@ -32,6 +33,7 @@ class NetworkSetup(object):
   """Enable network interfaces specified by metadata."""
 
   network_interfaces = 'instance/network-interfaces'
+  network_path = constants.LOCALBASE + '/etc/sysconfig/network-scripts'
 
   def __init__(self, dhclient_script=None, dhcp_command=None, debug=False):
     """Constructor.
@@ -74,9 +76,8 @@ class NetworkSetup(object):
     Args:
       interfaces: list of string, the output device names enable.
     """
-    interface_path = '/etc/sysconfig/network-scripts'
     for interface in interfaces:
-      interface_config = os.path.join(interface_path, 'ifcfg-%s' % interface)
+      interface_config = os.path.join(self.network_path, 'ifcfg-%s' % interface)
       if os.path.exists(interface_config):
         self._ModifyInterface(
             interface_config, 'DEVICE', interface, replace=False)
@@ -130,7 +131,7 @@ class NetworkSetup(object):
       except subprocess.CalledProcessError:
         self.logger.warning('Could not enable Ethernet interfaces.')
     else:
-      if os.path.exists('/etc/sysconfig/network-scripts'):
+      if os.path.exists(self.network_path):
         self._DisableNetworkManager(interfaces)
       self._ConfigureNetwork(interfaces)
 

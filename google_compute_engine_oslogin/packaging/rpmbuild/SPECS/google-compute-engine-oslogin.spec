@@ -13,7 +13,7 @@
 # limitations under the License.
 
 Name:           google-compute-engine-oslogin
-Version:        1.0.1
+Version:        1.0.2
 Release:        1%{?dist}
 Summary:        OS Login Functionality for Google Compute Engine
 
