@@ -98,7 +98,7 @@ class AccountsUtilsTest(unittest.TestCase):
 
     expected_calls = [
         mock.call.group(self.sudoers_group),
-        mock.call.call(command, shell=True),
+        mock.call.call(command.split(' ')),
         mock.call.exists(self.sudoers_file),
         mock.call.permissions(self.sudoers_file, mode=0o440, uid=0, gid=0),
     ]
@@ -149,7 +149,7 @@ class AccountsUtilsTest(unittest.TestCase):
     accounts_utils.AccountsUtils._CreateSudoersGroup(self.mock_utils)
     expected_calls = [
         mock.call.group(self.sudoers_group),
-        mock.call.call(command, shell=True),
+        mock.call.call(command.split(' ')),
         mock.call.logger.warning(mock.ANY, mock.ANY),
         mock.call.exists(self.sudoers_file),
         mock.call.permissions(self.sudoers_file, mode=0o440, uid=0, gid=0),
@@ -198,7 +198,7 @@ class AccountsUtilsTest(unittest.TestCase):
 
     self.assertTrue(
         accounts_utils.AccountsUtils._AddUser(self.mock_utils, user))
-    mock_call.assert_called_once_with(command, shell=True)
+    mock.call.assert_called_once_with(command.split(' ')),
     expected_calls = [mock.call.info(mock.ANY, user)] * 2
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
@@ -210,7 +210,7 @@ class AccountsUtilsTest(unittest.TestCase):
 
     self.assertFalse(
         accounts_utils.AccountsUtils._AddUser(self.mock_utils, user))
-    mock_call.assert_called_once_with(command, shell=True)
+    mock.call.assert_called_once_with(command.split(' ')),
     expected_calls = [
         mock.call.info(mock.ANY, user),
         mock.call.warning(mock.ANY, user, mock.ANY),
@@ -227,7 +227,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.assertTrue(
         accounts_utils.AccountsUtils._UpdateUserGroups(
             self.mock_utils, user, groups))
-    mock_call.assert_called_once_with(command, shell=True)
+    mock.call.assert_called_once_with(command.split(' ')),
     expected_calls = [
         mock.call.debug(mock.ANY, user, groups_string),
         mock.call.debug(mock.ANY, user),
@@ -245,7 +245,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.assertFalse(
         accounts_utils.AccountsUtils._UpdateUserGroups(
             self.mock_utils, user, groups))
-    mock_call.assert_called_once_with(command, shell=True)
+    mock.call.assert_called_once_with(command.split(' ')),
     expected_calls = [
         mock.call.debug(mock.ANY, user, groups_string),
         mock.call.warning(mock.ANY, user, mock.ANY),
@@ -618,7 +618,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils.remove = True
 
     accounts_utils.AccountsUtils.RemoveUser(self.mock_utils, user)
-    mock_call.assert_called_once_with(command, shell=True)
+    mock.call.assert_called_once_with(command.split(' ')),
     expected_calls = [mock.call.info(mock.ANY, user)] * 2
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
     self.mock_utils._RemoveAuthorizedKeys.assert_called_once_with(user)
@@ -631,7 +631,7 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils.remove = True
 
     accounts_utils.AccountsUtils.RemoveUser(self.mock_utils, user)
-    mock_call.assert_called_once_with(command, shell=True)
+    mock.call.assert_called_once_with(command.split(' ')),
     expected_calls = [
         mock.call.info(mock.ANY, user),
         mock.call.warning(mock.ANY, user, mock.ANY),

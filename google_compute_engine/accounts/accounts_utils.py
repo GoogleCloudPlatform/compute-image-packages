@@ -87,9 +87,8 @@ class AccountsUtils(object):
     """Create a Linux group for Google added sudo user accounts."""
     if not self._GetGroup(self.google_sudoers_group):
       try:
-        subprocess.check_call(
-            self.groupadd_cmd.format(group=self.google_sudoers_group),
-            shell=True)
+        command = self.groupadd_cmd.format(group=self.google_sudoers_group)
+        subprocess.check_call(command.split(' '))
       except subprocess.CalledProcessError as e:
         self.logger.warning('Could not create the sudoers group. %s.', str(e))
 
@@ -135,7 +134,7 @@ class AccountsUtils(object):
 
     command = self.useradd_cmd.format(user=user)
     try:
-      subprocess.check_call(command, shell=True)
+      subprocess.check_call(command.split(' '))
     except subprocess.CalledProcessError as e:
       self.logger.warning('Could not create user %s. %s.', user, str(e))
       return False
@@ -157,7 +156,7 @@ class AccountsUtils(object):
     self.logger.debug('Updating user %s with groups %s.', user, groups)
     command = self.usermod_cmd.format(user=user, groups=groups)
     try:
-      subprocess.check_call(command, shell=True)
+      subprocess.check_call(command.split(' '))
     except subprocess.CalledProcessError as e:
       self.logger.warning('Could not update user %s. %s.', user, str(e))
       return False
@@ -333,7 +332,7 @@ class AccountsUtils(object):
     if self.remove:
       command = self.userdel_cmd.format(user=user)
       try:
-        subprocess.check_call(command, shell=True)
+        subprocess.check_call(command.split(' '))
       except subprocess.CalledProcessError as e:
         self.logger.warning('Could not remove user %s. %s.', user, str(e))
       else:
