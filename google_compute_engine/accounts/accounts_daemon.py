@@ -237,7 +237,8 @@ def main():
         useradd_cmd=instance_config.GetOptionString('Accounts', 'useradd_cmd'),
         userdel_cmd=instance_config.GetOptionString('Accounts', 'userdel_cmd'),
         usermod_cmd=instance_config.GetOptionString('Accounts', 'usermod_cmd'),
-        groupadd_cmd=instance_config.GetOptionString('Accounts', 'groupadd_cmd'),
+        groupadd_cmd=instance_config.GetOptionString(
+            'Accounts', 'groupadd_cmd'),
         debug=bool(options.debug))
 
 
