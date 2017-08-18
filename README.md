@@ -24,6 +24,7 @@ Compute Engine [images](https://cloud.google.com/compute/docs/images).
 * [Network Setup](#network-setup)
 * [Configuration](#configuration)
 * [Packaging](#packaging)
+* [Version Updates](#version-updates)
 * [Package Distribution](#package-distribution)
 * [Troubleshooting](#troubleshooting)
 * [Contributing](#contributing)
@@ -305,20 +306,20 @@ workflows for spinning up GCE VM's to automatically build the packages for
 Debian, Red Hat, and CentOS. See the [README](packaging/README.md) in the
 packaging directory for more details.
 
-### Versions
+## Version Updates
 
 There are several places where package versions have to be updated and must
 match to successfully release an update.
 
-* setup.py: `version=VER` This is the python package version that is used for
-  entry points through the python egg and pypi.
-* specs/google-compute-engine.spec: `Version: VER` This is the version of the
-  google-compute-engine package for EL6 and 7.
-* specs/python-google-compute-engine.spec: `Version: VER` This is the version
-  of the python-google-compute-engine package for EL6 and 7.
-* debian/changelog: `google-compute-image-packages (VER) stable` This is the
-  version of the Debian packages.
-* The variable `package_version` when invoking the package build workflows.
+* `setup.py` Update `version=`, the Python package version that is used for
+  entry points through the Python egg and PyPI.
+* `specs/google-compute-engine.spec` Update `Version:`, the version of the
+  `google-compute-engine` package for EL6 and 7.
+* `specs/python-google-compute-engine.spec` Update `Version:`, the version of
+   the `python-google-compute-engine` package for EL6 and 7.
+* `debian/changelog` Update `google-compute-image-packages (VERSION) stable`,
+  the version of the Debian packages.
+* Update the variable `package_version` when invoking the package build workflows.
 
 ## Package Distribution
 
