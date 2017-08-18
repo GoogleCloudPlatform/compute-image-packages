@@ -28,7 +28,7 @@ Depends: python:any,
          python3-google-compute-engine (= ${source:Version}),
          ntp,
          systemd
-Recommends: google-cloud-sdk, google-compute-engine-oslogin
+Recommends: google-cloud-sdk
 Conflicts: google-compute-engine-jessie,
            google-compute-engine-init-jessie,
            google-config-jessie,
