@@ -1,0 +1,69 @@
+Source: google-compute-image-packages
+Section: admin
+Priority: extra
+Maintainer: Google Cloud Team <gc-team@google.com>
+Build-Depends: debhelper (>= 9),
+               dh-python,
+               dh-systemd (>= 1.5),
+               python-all,
+               python-setuptools,
+               python3-all,
+               python3-setuptools,
+               python-pytest,
+               python3-pytest,
+               python-mock,
+               python-boto,
+               python3-boto
+Standards-Version: 3.9.8
+Homepage: https://github.com/GoogleCloudPlatform/compute-image-packages
+
+Package: google-compute-engine
+Architecture: all
+Depends: python:any,
+         python3:any,
+         ${python:Depends},
+         ${python3:Depends},
+         ${misc:Depends},
+         python-google-compute-engine (= ${source:Version}),
+         python3-google-compute-engine (= ${source:Version}),
+         ntp,
+         systemd
+Recommends: google-cloud-sdk, google-compute-engine-oslogin
+Conflicts: google-compute-engine-jessie,
+           google-compute-engine-init-jessie,
+           google-config-jessie,
+           google-compute-engine-stretch,
+           google-compute-engine-init-stretch,
+           google-config-stretch,
+           google-compute-daemon,
+           google-startup-scripts
+Replaces: google-compute-engine-jessie,
+          google-compute-engine-init-jessie,
+          google-config-jessie,
+          google-compute-engine-stretch,
+          google-compute-engine-init-stretch,
+          google-config-stretch,
+          google-compute-daemon,
+          google-startup-scripts
+Description: Google Compute Engine guest environment.
+ This package contains scripts, configuration, and systemd init files for features specific to the Google Compute Engine cloud environment.
+
+Package: python-google-compute-engine
+Section: python
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}
+Conflicts: google-compute-engine-jessie,
+           google-compute-engine-stretch,
+           google-compute-daemon,
+           google-startup-scripts
+Description: Google Compute Engine python library for Python 2.x.
+
+Package: python3-google-compute-engine
+Section: python
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}
+Conflicts: google-compute-engine-jessie,
+           google-compute-engine-stretch,
+           google-compute-daemon,
+           google-startup-scripts
+Description: Google Compute Engine python library for Python 3.x.
