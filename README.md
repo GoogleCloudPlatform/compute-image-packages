@@ -296,9 +296,9 @@ We build the following packages for the Linux guest environment.
     *  Entry point scripts, created by the Python package, located in /usr/bin.
     *  Includes bash scripts used by `instance_setup`.
 *   `python-google-compute-engine`
-    *  The python 2 package for Linux daemons and libraries.
+    *  The Python 2 package for Linux daemons and libraries.
 *   `python3-google-compute-engine`
-    *  The python 3 package for Linux daemons and libraries.
+    *  The Python 3 package for Linux daemons and libraries.
 
 The package source for Debian and RPM specs for Enterprise Linux 6 and 7 are
 included in this project. There are also [Daisy](https://github.com/GoogleCloudPlatform/compute-image-tools/tree/master/daisy)
