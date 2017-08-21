@@ -151,7 +151,7 @@ detailed below.
 
 The accounts daemon is responsible for provisioning and deprovisioning user
 accounts. The daemon grants permissions to user accounts, and updates the list
-of authorized keys that has access to accounts based on metadata SSH key
+of authorized keys that have access to accounts based on metadata SSH key
 updates. User account creation is based on
 [adding and remove SSH Keys](https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys)
 stored in metadata.
@@ -163,7 +163,7 @@ The accounts management daemon has the following behaviors.
     `google-sudoers` group.
 *   The daemon stores a file in the guest to preserve state for the user
     accounts managed by Google.
-*   The authorized keys file for a Google managed user is delete when all SSH
+*   The authorized keys file for a Google managed user is deleted when all SSH
     keys for the user are removed from metadata.
 *   User accounts not managed by Google are not modified by the accounts daemon.
 
