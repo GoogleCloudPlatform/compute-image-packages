@@ -30,8 +30,8 @@ For more information on Daisy and how workflows work, refer to the
 
 # Variables
 
-* output_path: Specify a different GCS path to save resulting packages to.
-* github_repo: Specify a different github repo (for example a forked repo).
-* github_branch: Specify a different github branch.
-* package_version: The version of the package- this version has to match the version
-  of the python setup.py files, spec files, and Debian changelog.
+* `output_path` Specify a different GCS path to save resulting packages to.
+* `github_repo` Specify a different github repo (for example a forked repo).
+* `github_branch` Specify a different github branch.
+* `package_version` The version of the package. This version has to match the
+  version of the python `setup.py` files, spec files, and Debian changelog.
