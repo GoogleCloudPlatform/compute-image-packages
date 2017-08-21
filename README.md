@@ -135,7 +135,7 @@ The library provides the following functions:
 
 #### Network Utilities
 
-A network utilities library retrieves information about a network interface. The
+A network-utilities library retrieves information about a network interface. The
 library is used for IP forwarding and for setting up an Ethernet interface on
 boot. The library exposes a `GetNetworkInterface` function that retrieves the
 network interface name associated with a MAC address.
