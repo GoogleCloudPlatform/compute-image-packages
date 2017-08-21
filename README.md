@@ -37,7 +37,7 @@ tooling inside of a [Google Compute Engine](https://cloud.google.com/compute/)
 (GCE) virtual machine. The
 [metadata server](https://cloud.google.com/compute/docs/metadata) is a
 communication channel for transferring information from a client into the guest.
-The Linux guest environment includes a set of scripts and daemons (long running
+The Linux guest environment includes a set of scripts and daemons (long-running
 processes) that read the content of the metadata server to make a virtual
 machine run properly on our platform.
 
@@ -54,7 +54,7 @@ The guest environment is made up of the following components:
 *   **Instance setup** scripts to execute VM configuration scripts during boot.
 *   **IP forwarding** daemon that integrates network load balancing with
     forwarding rule changes into the guest.
-*   **Metadata scripts** to run user provided scripts at VM startup and
+*   **Metadata scripts** to run user-provided scripts at VM startup and
     shutdown.
 *   **Network setup** service to enable multiple network interfaces on boot.
 
