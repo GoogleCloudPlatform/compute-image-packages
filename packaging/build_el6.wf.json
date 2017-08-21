@@ -1,0 +1,71 @@
+{
+  "Name": "build-el6-packages",
+  "Vars": {
+    "output_path": {
+      "Value": "${OUTSPATH}",
+      "Description": "GCS output path for packages."
+    },
+    "github_repo": {
+      "Value": "https://github.com/GoogleCloudPlatform/compute-image-packages.git",
+      "Description": "Github repo to build packages from."
+    },
+    "github_branch": {
+      "Value": "master",
+      "Description": "Github branch to build packages from."
+    },
+    "package_version": {
+      "Required": true,
+      "Description": "The package version to build."
+    }
+  },
+  "Sources": {
+    "build_el_packages.sh": "./build_el_packages.sh"
+  },
+  "Steps": {
+    "setup-disk": {
+      "CreateDisks": [
+        {
+          "Name": "disk-el6-build",
+          "SourceImage": "projects/centos-cloud/global/images/family/centos-6",
+          "SizeGb": "10",
+          "Type": "pd-ssd"
+        }
+      ]
+    },
+    "package-build": {
+      "CreateInstances": [
+        {
+          "Name": "inst-el6-build",
+          "Disks": [
+            {"Source": "disk-el6-build"}
+          ],
+          "MachineType": "n1-standard-2",
+          "Metadata": {
+            "github_branch": "${github_branch}",
+            "github_repo": "${github_repo}",
+            "output_path": "${output_path}",
+            "package_version": "${package_version}"
+          },
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"],
+          "StartupScript": "build_el_packages.sh"
+        }
+      ]
+    },
+    "wait-for-build": {
+      "WaitForInstancesSignal": [
+        {
+          "Name": "inst-el6-build",
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "BuildSuccess:",
+            "FailureMatch": "BuildFailed:"
+          }
+        }
+      ]
+    }
+  },
+  "Dependencies": {
+    "package-build": ["setup-disk"],
+    "wait-for-build": ["package-build"]
+  }
+}
