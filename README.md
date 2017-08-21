@@ -130,7 +130,7 @@ The library provides the following functions:
     UID, and GID, of a provided path. On supported OS configurations that user
     SELinux, the SELinux context is automatically set.
 *   **LockFile** is a context manager that simplifies the process of file
-    locking in Python. The function sets up an flock and releases the lock on
+    locking in Python. The function sets up an `flock` and releases the lock on
     exit.
 
 #### Network Utilities
