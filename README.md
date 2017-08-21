@@ -58,7 +58,7 @@ The guest environment is made up of the following components:
     shutdown.
 *   **Network setup** service to enable multiple network interfaces on boot.
 
-The Linux guest environment is written in Python, and is version agnostic
+The Linux guest environment is written in Python and is version agnostic
 between Python 2.6 and 3.5. There is complete unittest coverage for every Python
 library and script. The design of various guest libraries, daemons, and scripts,
 are detailed in the sections below.
