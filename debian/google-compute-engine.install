@@ -2,4 +2,3 @@ google_compute_engine_init/systemd/*.service lib/systemd/system
 google_config/rsyslog/* etc/rsyslog.d
 google_config/sysctl/* etc/sysctl.d
 google_config/udev/* lib/udev/rules.d
-
