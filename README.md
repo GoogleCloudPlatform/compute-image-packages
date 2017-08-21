@@ -291,9 +291,9 @@ We build the following packages for the Linux guest environment.
 
 *   `google-compute-engine`
     *  System init scripts (systemd, upstart, or sysvinit).
-    *  Udev rules, sysctl rules, rsyslog configs, dhcp configs for hostname
-       setting.
-    *  Entry point scripts, created by the Python package, located in /usr/bin.
+    *  Includes udev rules, sysctl rules, rsyslog configs, dhcp configs for
+       hostname setting.
+    *  Entry point scripts created by the Python package located in `/usr/bin`.
     *  Includes bash scripts used by `instance_setup`.
 *   `python-google-compute-engine`
     *  The Python 2 package for Linux daemons and libraries.
@@ -301,7 +301,8 @@ We build the following packages for the Linux guest environment.
     *  The Python 3 package for Linux daemons and libraries.
 
 The package source for Debian and RPM specs for Enterprise Linux 6 and 7 are
-included in this project. There are also [Daisy](https://github.com/GoogleCloudPlatform/compute-image-tools/tree/master/daisy)
+included in this project. There are also
+[Daisy](https://github.com/GoogleCloudPlatform/compute-image-tools/tree/master/daisy)
 workflows for spinning up GCE VM's to automatically build the packages for
 Debian, Red Hat, and CentOS. See the [README](packaging/README.md) in the
 packaging directory for more details.
@@ -311,12 +312,12 @@ packaging directory for more details.
 There are several places where package versions have to be updated and must
 match to successfully release an update.
 
-* `setup.py` Update `version=`, the Python package version that is used for
-  entry points through the Python egg and PyPI.
-* `specs/google-compute-engine.spec` Update `Version:`, the version of the
-  `google-compute-engine` package for EL6 and 7.
-* `specs/python-google-compute-engine.spec` Update `Version:`, the version of
-   the `python-google-compute-engine` package for EL6 and 7.
+* `setup.py` Update the version string with the Python package version. Used
+  for entry points through the Python egg and PyPI.
+* `specs/google-compute-engine.spec` Update the version of the
+  `google-compute-engine` package for EL6 and EL7.
+* `specs/python-google-compute-engine.spec` Update the version string of the
+  `python-google-compute-engine` package for EL6 and EL7.
 * `debian/changelog` Update `google-compute-image-packages (VERSION) stable`,
   the version of the Debian packages.
 * Update the variable `package_version` when invoking the package build workflows.
@@ -324,19 +325,19 @@ match to successfully release an update.
 ## Package Distribution
 
 The deb and rpm packages used in some GCE images are published to Google Cloud
-repositories. Debian 8, Debian 9, CentOS 6 and 7, and RHEL 6 and 7 use these
+repositories. Debian 8 and 9, CentOS 6 and 7, and RHEL 6 and 7 use these
 repositories to install and update the `google-compute-engine`, and
-`python-google-compute-engine` (and `python3-google-compute-engine` for python 3)
+`python-google-compute-engine` (and `python3-google-compute-engine` for Python 3)
 packages. If you are creating a custom image, you can also use these repositories
 in your image.
 
 The following older packages will be replaced by the new packages:
 
-*    `google-compute-engine` (-jessie, or -stretch for Debian) are replaced by
-     `google-compute-engine` and `python-google-compute-engine`.
-*    `google-compute-engine-init` (-jessie, or -stretch for Debian) are replaced
-     by `google-compute-engine`.
-*    `google-config` (-jessie, or -stretch for Debian) are replaced by
+*    `google-compute-engine` (`-jessie`, or `-stretch` for Debian) are replaced
+     by `google-compute-engine` and `python-google-compute-engine`.
+*    `google-compute-engine-init` (`-jessie`, or `-stretch` for Debian) are
+     replaced by `google-compute-engine`.
+*    `google-config` (`-jessie`, or `-stretch` for Debian) are replaced by
      `google-compute-engine`.
 *    `google-compute-daemon` is replaced by `python-google-compute-engine`.
 *    `google-startup-scripts` is replaced by `google-compute-engine`
