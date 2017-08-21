@@ -192,7 +192,7 @@ environment by performing the following tasks.
 *   Enable multi-queue on all the virtionet devices.
 *   Wait for network availability.
 *   Set SSH host keys the first time the instance is booted.
-*   Set the boto config for using Google Cloud Storage.
+*   Set the `boto` config for using Google Cloud Storage.
 *   Create the defaults configuration file.
 
 The defaults configuration file incorporates any user provided setting in
@@ -262,7 +262,7 @@ NetworkInterfaces | dhcp_command         | String to execute to enable network i
 NetworkInterfaces | setup                | `false` disables network interface setup.
 
 Setting `network_enabled` to `false` will skip setting up host keys and the
-boto config in the guest. The setting may also prevent startup and shutdown
+`boto` config in the guest. The setting may also prevent startup and shutdown
 script execution.
 
 ## Packaging
