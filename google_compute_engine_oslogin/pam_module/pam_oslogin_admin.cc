@@ -57,7 +57,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
       << "users?username=" << UrlEncode(str_user_name);
   string response;
   long http_code = 0;
-  if (!HttpGet(url.str(), &response, &http_code) || http_code >= 400 ||
+  if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
       response.empty()) {
     return PAM_SUCCESS;
   }
