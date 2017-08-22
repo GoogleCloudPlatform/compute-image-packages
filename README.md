@@ -24,6 +24,7 @@ Compute Engine [images](https://cloud.google.com/compute/docs/images).
 * [Network Setup](#network-setup)
 * [Configuration](#configuration)
 * [Packaging](#packaging)
+* [Version Updates](#version-updates)
 * [Package Distribution](#package-distribution)
 * [Troubleshooting](#troubleshooting)
 * [Contributing](#contributing)
@@ -275,14 +276,12 @@ provided Python versions.
 
 Distro       | Package Type | Python Version | Init System
 ------------ | ------------ | -------------- | -----------
-Debian 7     | deb          | 2.7            | sysvinit
 Debian 8     | deb          | 2.7            | systemd
-Debian 9     | deb          | 2.7            | systemd
+Debian 9     | deb          | 3.5 or 2.7     | systemd
 CentOS 6     | rpm          | 2.6            | upstart
 CentOS 7     | rpm          | 2.7            | systemd
 RHEL 6       | rpm          | 2.6            | upstart
 RHEL 7       | rpm          | 2.7            | systemd
-Ubuntu 12.04 | deb          | 2.7            | upstart
 Ubuntu 14.04 | deb          | 2.7            | upstart
 Ubuntu 16.04 | deb          | 3.5 or 2.7     | systemd
 SLES 11      | rpm          | 2.6            | sysvinit
@@ -290,31 +289,58 @@ SLES 12      | rpm          | 2.7            | systemd
 
 We build the following packages for the Linux guest environment.
 
-*   `google-compute-engine` is a Python package for Linux daemons, scripts, and
-    libraries.
-    *   The package is installed to its distro default Python package location
-        (e.g. `/usr/lib/python2.7/site-packages`).
-    *   Entry point scripts, created by the Python package, are located in
-        `/usr/bin`.
-*   `google-compute-engine-init` is a package that contains init configuration
-    for the `google-compute-engine` Python package. Installing this package
-    will configure the `google-compute-engine` package to run on system
-    startup on sysvinit, upstart, or systemd init systems.
-*   `google-config` is a package containing non-Python scripts and guest
-    configuration.
-    *   Sets up udev rules and sysctl rules.
-    *   Configures the SysLog output that gets sent to serial port output.
-    *   Includes bash scripts needed by `instance_setup`.
+*   `google-compute-engine`
+    *  System init scripts (systemd, upstart, or sysvinit).
+    *  Includes udev rules, sysctl rules, rsyslog configs, dhcp configs for
+       hostname setting.
+    *  Entry point scripts created by the Python package located in `/usr/bin`.
+    *  Includes bash scripts used by `instance_setup`.
+*   `python-google-compute-engine`
+    *  The Python 2 package for Linux daemons and libraries.
+*   `python3-google-compute-engine`
+    *  The Python 3 package for Linux daemons and libraries.
 
-The package build tools are published in this project.
+The package source for Debian and RPM specs for Enterprise Linux 6 and 7 are
+included in this project. There are also
+[Daisy](https://github.com/GoogleCloudPlatform/compute-image-tools/tree/master/daisy)
+workflows for spinning up GCE VM's to automatically build the packages for
+Debian, Red Hat, and CentOS. See the [README](packaging/README.md) in the
+packaging directory for more details.
+
+## Version Updates
+
+There are several places where package versions have to be updated and must
+match to successfully release an update.
+
+* `setup.py` Update the version string with the Python package version. Used
+  for entry points through the Python egg and PyPI.
+* `specs/google-compute-engine.spec` Update the version of the
+  `google-compute-engine` package for EL6 and EL7.
+* `specs/python-google-compute-engine.spec` Update the version string of the
+  `python-google-compute-engine` package for EL6 and EL7.
+* `debian/changelog` Update `google-compute-image-packages (VERSION) stable`,
+  the version of the Debian packages.
+* Update the variable `package_version` when invoking the package build workflows.
 
 ## Package Distribution
 
 The deb and rpm packages used in some GCE images are published to Google Cloud
-repositories. Debian 8, Debian 9, CentOS 6 and 7, and RHEL 6 and 7 use these
-repositories to install and update the `google-compute-engine`,
-`google-compute-engine-init`, and `google-config` packages. If you are creating
-a custom image, you can also use these repositories in your image.
+repositories. Debian 8 and 9, CentOS 6 and 7, and RHEL 6 and 7 use these
+repositories to install and update the `google-compute-engine`, and
+`python-google-compute-engine` (and `python3-google-compute-engine` for Python 3)
+packages. If you are creating a custom image, you can also use these repositories
+in your image.
+
+The following older packages will be replaced by the new packages:
+
+*    `google-compute-engine` (`-jessie`, or `-stretch` for Debian) are replaced
+     by `google-compute-engine` and `python-google-compute-engine`.
+*    `google-compute-engine-init` (`-jessie`, or `-stretch` for Debian) are
+     replaced by `google-compute-engine`.
+*    `google-config` (`-jessie`, or `-stretch` for Debian) are replaced by
+     `google-compute-engine`.
+*    `google-compute-daemon` is replaced by `python-google-compute-engine`.
+*    `google-startup-scripts` is replaced by `google-compute-engine`
 
 **For Debian 8, run the following commands as root:**
 
@@ -336,10 +362,9 @@ Install the packages to maintain the public key over time:
 apt-get update; apt-get install google-cloud-packages-archive-keyring
 ```
 
-Install the `google-compute-engine-jessie`,
-`google-compute-engine-init-jessie`, and `google-config-jessie` packages:
+Install the `google-compute-engine` and `python-google-compute-engine` packages:
 ```
-apt-get update; apt-get install -y google-config-jessie google-compute-engine-jessie google-compute-engine-init-jessie
+apt-get update; apt-get install -y google-compute-engine python-google-compute-engine
 ```
 
 **For Debian 9, run the following commands as root:**
@@ -362,10 +387,9 @@ Install the packages to maintain the public key over time:
 apt-get update; apt-get install google-cloud-packages-archive-keyring
 ```
 
-Install the `google-compute-engine-stretch`,
-`google-compute-engine-init-stretch`, and `google-config-stretch` packages:
+Install the `google-compute-engine` and `python-google-compute-engine` packages:
 ```
-apt-get update; apt-get install -y google-config-stretch google-compute-engine-stretch google-compute-engine-init-stretch
+apt-get update; apt-get install -y google-compute-engine python-google-compute-engine
 ```
 
 **For EL6 and EL7 based distributions, run the following commands as root:**
@@ -386,10 +410,9 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 EOM
 ```
 
-Install the `google-compute-engine`, `google-compute-engine-init`, and
-`google-config` packages:
+Install the `google-compute-engine`, `python-google-compute-engine` packages:
 ```
-yum install -y google-compute-engine google-compute-engine-init google-config
+yum install -y google-compute-engine python-google-compute-engine
 ```
 
 ## Troubleshooting
@@ -404,6 +427,14 @@ http://mirror.centos.org/centos/6/SCL/x86_64/repodata/repomd.xml: [Errno 14] PYC
 
 Remove the stale repository file:
 `sudo rm -f /etc/yum.repos.d/CentOS-SCL.repo`
+
+**On some CentOS or RHEL 6 systems, extraneous python egg directories can cause
+the python daemons to fail.**
+
+In `/usr/lib/python2.6/site-packages` look for
+`google_compute_engine-2.4.1-py27.egg-info` directories and
+`google_compute_engine-2.5.2.egg-info` directories and delete them if you run
+into this problem.
 
 **Using boto with virtualenv**
 
