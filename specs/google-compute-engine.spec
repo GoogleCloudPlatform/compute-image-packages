@@ -110,6 +110,11 @@ if [ $1 -eq 2 ]; then
   restart -q -n google-ip-forwarding-daemon
   /usr/bin/google_instance_setup
 fi
+
+# Install google-compute-engine from pypi into the SCL environment if it exists.
+if [ -d /opt/rh/python27/root/usr/lib/python2.7/site-packages/google_compute_engine ]; then
+  scl enable python27 "pip2.7 install --upgrade google_compute_engine"
+fi
 %endif
 
 %if 0%{?el7}
