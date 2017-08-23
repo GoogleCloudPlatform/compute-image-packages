@@ -112,6 +112,10 @@ if [ $1 -eq 2 ]; then
 fi
 
 # Install google-compute-engine from pypi into the SCL environment if it exists.
+# The google-compute-engine package in the SCL environment needs to be maintained
+# along with the python 2.6 package from the RPM. In particular, SCL python2.7
+# packages that use boto will need the up to date package available in case of
+# any changes in the shared libraries.
 if [ -d /opt/rh/python27/root/usr/lib/python2.7/site-packages/google_compute_engine ]; then
   scl enable python27 "pip2.7 install --upgrade google_compute_engine"
 fi
