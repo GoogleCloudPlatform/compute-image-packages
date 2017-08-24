@@ -105,10 +105,13 @@ cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google
 %if 0%{?el6}
 # On upgrade run instance setup again to handle any new configs and restart daemons.
 if [ $1 -eq 2 ]; then
-  restart -q -n google-accounts-daemon
-  restart -q -n google-clock-skew-daemon
-  restart -q -n google-ip-forwarding-daemon
+  stop -q -n google-accounts-daemon
+  stop -q -n google-clock-skew-daemon
+  stop -q -n google-ip-forwarding-daemon
   /usr/bin/google_instance_setup
+  start -q -n google-accounts-daemon
+  start -q -n google-clock-skew-daemon
+  start -q -n google-ip-forwarding-daemon
 fi
 
 # Install google-compute-engine from pypi into the SCL environment if it exists.
@@ -131,10 +134,10 @@ fi
 %systemd_post google-startup-scripts.service
 # On upgrade run instance setup again to handle any new configs and restart daemons.
 if [ $1 -eq 2 ]; then
+  /usr/bin/google_instance_setup
   systemctl reload-or-restart google-accounts-daemon.service
   systemctl reload-or-restart google-clock-skew-daemon.service
   systemctl reload-or-restart google-ip-forwarding-daemon.service
-  /usr/bin/google_instance_setup
 fi
 %endif
 
