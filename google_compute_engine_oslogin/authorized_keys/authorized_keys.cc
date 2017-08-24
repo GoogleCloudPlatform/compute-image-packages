@@ -38,14 +38,13 @@ int main(int argc, char* argv[]) {
   url << kMetadataServerUrl << "users?username=" << UrlEncode(argv[1]);
   string user_response;
   long http_code = 0;
-  if (!HttpGet(url.str(), &user_response, &http_code)) {
-    return 1;
-  }
-  if (http_code == 404) {
-    // Return 0 if the user is not an oslogin user. If we returned a failure
-    // code, we would populate auth.log with useless error messages.
-    return 0;
-  } else if (user_response.empty() || http_code == 500) {
+  if (!HttpGet(url.str(), &user_response, &http_code) ||
+      user_response.empty() || http_code != 200) {
+    if (http_code == 404) {
+      // Return 0 if the user is not an oslogin user. If we returned a failure
+      // code, we would populate auth.log with useless error messages.
+      return 0;
+    }
     return 1;
   }
   string email = ParseJsonToEmail(user_response);
@@ -61,7 +60,7 @@ int main(int argc, char* argv[]) {
   url << kMetadataServerUrl << "authorize?email=" << UrlEncode(email)
       << "&policy=login";
   string auth_response;
-  if (!HttpGet(url.str(), &auth_response, &http_code) || http_code > 400 ||
+  if (!HttpGet(url.str(), &auth_response, &http_code) || http_code != 200 ||
       auth_response.empty()) {
     return 1;
   }

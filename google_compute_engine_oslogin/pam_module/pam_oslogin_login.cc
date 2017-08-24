@@ -58,18 +58,21 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   url << kMetadataServerUrl << "users?username=" << UrlEncode(str_user_name);
   string response;
   long http_code = 0;
-  if (!HttpGet(url.str(), &response, &http_code) || http_code == 500) {
-    // First check if there is a local file indicating that this is an oslogin
-    // user that has logged in before.
+  if (!HttpGet(url.str(), &response, &http_code) || response.empty() ||
+      http_code != 200) {
+    if (http_code == 404) {
+      // Return success on non-oslogin users.
+      return PAM_SUCCESS;
+    }
+    // If we can't reliably tell if this is an oslogin user, check if there is
+    // a local file for that user as a last resort.
     if (file_exists) {
       return PAM_PERM_DENIED;
     }
-    // Otherwise, allow local users to log in.
-    return PAM_SUCCESS;
-  } else if (http_code == 404 || response.empty()) {
-    // Return success on non-oslogin users.
+    // Otherwise, fall back on success to allow local users to log in.
     return PAM_SUCCESS;
   }
+
   string email = ParseJsonToEmail(response);
   if (email.empty()) {
     return PAM_PERM_DENIED;

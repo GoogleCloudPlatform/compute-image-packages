@@ -37,7 +37,7 @@ tooling inside of a [Google Compute Engine](https://cloud.google.com/compute/)
 (GCE) virtual machine. The
 [metadata server](https://cloud.google.com/compute/docs/metadata) is a
 communication channel for transferring information from a client into the guest.
-The Linux guest environment includes a set of scripts and daemons (long running
+The Linux guest environment includes a set of scripts and daemons (long-running
 processes) that read the content of the metadata server to make a virtual
 machine run properly on our platform.
 
@@ -54,11 +54,11 @@ The guest environment is made up of the following components:
 *   **Instance setup** scripts to execute VM configuration scripts during boot.
 *   **IP forwarding** daemon that integrates network load balancing with
     forwarding rule changes into the guest.
-*   **Metadata scripts** to run user provided scripts at VM startup and
+*   **Metadata scripts** to run user-provided scripts at VM startup and
     shutdown.
 *   **Network setup** service to enable multiple network interfaces on boot.
 
-The Linux guest environment is written in Python, and is version agnostic
+The Linux guest environment is written in Python and is version agnostic
 between Python 2.6 and 3.5. There is complete unittest coverage for every Python
 library and script. The design of various guest libraries, daemons, and scripts,
 are detailed in the sections below.
@@ -130,12 +130,12 @@ The library provides the following functions:
     UID, and GID, of a provided path. On supported OS configurations that user
     SELinux, the SELinux context is automatically set.
 *   **LockFile** is a context manager that simplifies the process of file
-    locking in Python. The function sets up an flock and releases the lock on
+    locking in Python. The function sets up an `flock` and releases the lock on
     exit.
 
 #### Network Utilities
 
-A network utilities library retrieves information about a network interface. The
+A network-utilities library retrieves information about a network interface. The
 library is used for IP forwarding and for setting up an Ethernet interface on
 boot. The library exposes a `GetNetworkInterface` function that retrieves the
 network interface name associated with a MAC address.
@@ -151,7 +151,7 @@ detailed below.
 
 The accounts daemon is responsible for provisioning and deprovisioning user
 accounts. The daemon grants permissions to user accounts, and updates the list
-of authorized keys that has access to accounts based on metadata SSH key
+of authorized keys that have access to accounts based on metadata SSH key
 updates. User account creation is based on
 [adding and remove SSH Keys](https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys)
 stored in metadata.
@@ -163,7 +163,7 @@ The accounts management daemon has the following behaviors.
     `google-sudoers` group.
 *   The daemon stores a file in the guest to preserve state for the user
     accounts managed by Google.
-*   The authorized keys file for a Google managed user is delete when all SSH
+*   The authorized keys file for a Google managed user is deleted when all SSH
     keys for the user are removed from metadata.
 *   User accounts not managed by Google are not modified by the accounts daemon.
 
@@ -192,7 +192,7 @@ environment by performing the following tasks.
 *   Enable multi-queue on all the virtionet devices.
 *   Wait for network availability.
 *   Set SSH host keys the first time the instance is booted.
-*   Set the boto config for using Google Cloud Storage.
+*   Set the `boto` config for using Google Cloud Storage.
 *   Create the defaults configuration file.
 
 The defaults configuration file incorporates any user provided setting in
@@ -238,31 +238,31 @@ The following are valid user configuration options.
 
 Section           | Option               | Value
 ----------------- | -------------------- | -----
-Accounts          | deprovision_remove   | `true` makes deprovisioning a user destructive.
+Accounts          | deprovision\_remove   | `true` makes deprovisioning a user destructive.
 Accounts          | groups               | Comma separated list of groups for newly provisioned users.
-Accounts          | useradd_cmd          | Command string to create a new user.
-Accounts          | userdel_cmd          | Command string to delete a user.
-Accounts          | usermod_cmd          | Command string to modify a user's groups.
-Accounts          | groupadd_cmd         | Command string to create a new group.
-Daemons           | accounts_daemon      | `false` disables the accounts daemon.
-Daemons           | clock_skew_daemon    | `false` disables the clock skew daemon.
-Daemons           | ip_forwarding_daemon | `false` disables the IP forwarding daemon.
-InstanceSetup     | optimize_local_ssd   | `false` prevents optimizing for local SSD.
-InstanceSetup     | network_enabled      | `false` skips instance setup functions that require metadata.
-InstanceSetup     | set_boto_config      | `false` skips setting up a boto config.
-InstanceSetup     | set_host_keys        | `false` skips generating host keys on first boot.
-InstanceSetup     | set_multiqueue       | `false` skips multiqueue driver support.
-IpForwarding      | ethernet_proto_id    | Protocol ID string for daemon added routes.
-IpForwarding      | ip_aliases           | `false` disables setting up alias IP routes.
-IpForwarding      | target_instance_ips  | `false` disables internal IP address load balancing.
-MetadataScripts   | run_dir              | String base directory where metadata scripts are executed.
+Accounts          | useradd\_cmd          | Command string to create a new user.
+Accounts          | userdel\_cmd          | Command string to delete a user.
+Accounts          | usermod\_cmd          | Command string to modify a user's groups.
+Accounts          | groupadd\_cmd         | Command string to create a new group.
+Daemons           | accounts\_daemon      | `false` disables the accounts daemon.
+Daemons           | clock\_skew\_daemon    | `false` disables the clock skew daemon.
+Daemons           | ip\_forwarding\_daemon | `false` disables the IP forwarding daemon.
+InstanceSetup     | optimize\_local\_ssd   | `false` prevents optimizing for local SSD.
+InstanceSetup     | network\_enabled      | `false` skips instance setup functions that require metadata.
+InstanceSetup     | set\_boto\_config      | `false` skips setting up a `boto` config.
+InstanceSetup     | set\_host\_keys        | `false` skips generating host keys on first boot.
+InstanceSetup     | set\_multiqueue       | `false` skips multiqueue driver support.
+IpForwarding      | ethernet\_proto\_id    | Protocol ID string for daemon added routes.
+IpForwarding      | ip\_aliases           | `false` disables setting up alias IP routes.
+IpForwarding      | target\_instance\_ips  | `false` disables internal IP address load balancing.
+MetadataScripts   | run\_dir              | String base directory where metadata scripts are executed.
 MetadataScripts   | startup              | `false` disables startup script execution.
 MetadataScripts   | shutdown             | `false` disables shutdown script execution.
-NetworkInterfaces | dhcp_command         | String to execute to enable network interfaces.
+NetworkInterfaces | dhcp\_command         | String to execute to enable network interfaces.
 NetworkInterfaces | setup                | `false` disables network interface setup.
 
 Setting `network_enabled` to `false` will skip setting up host keys and the
-boto config in the guest. The setting may also prevent startup and shutdown
+`boto` config in the guest. The setting may also prevent startup and shutdown
 script execution.
 
 ## Packaging
