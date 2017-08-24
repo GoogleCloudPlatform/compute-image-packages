@@ -352,7 +352,7 @@ curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 Add a source list file `/etc/apt/sources.list.d/google-cloud.list`:
 ```
 tee /etc/apt/sources.list.d/google-cloud.list << EOM
-deb http://packages.cloud.google.com/apt google-cloud-compute-jessie main
+deb http://packages.cloud.google.com/apt google-compute-engine-jessie-stable main
 deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-jessie main
 EOM
 ```
@@ -377,7 +377,7 @@ curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 Add a source list file `/etc/apt/sources.list.d/google-cloud.list`:
 ```
 tee /etc/apt/sources.list.d/google-cloud.list << EOM
-deb http://packages.cloud.google.com/apt google-cloud-compute-stretch main
+deb http://packages.cloud.google.com/apt google-compute-engine-stretch-stable main
 deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-stretch main
 EOM
 ```
