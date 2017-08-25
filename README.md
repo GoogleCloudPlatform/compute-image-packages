@@ -24,8 +24,8 @@ Compute Engine [images](https://cloud.google.com/compute/docs/images).
 * [Network Setup](#network-setup)
 * [Configuration](#configuration)
 * [Packaging](#packaging)
-* [Version Updates](#version-updates)
-* [Package Distribution](#package-distribution)
+    * [Version Updates](#version-updates)
+    * [Package Distribution](#package-distribution)
 * [Troubleshooting](#troubleshooting)
 * [Contributing](#contributing)
 * [License](#license)
@@ -307,7 +307,7 @@ workflows for spinning up GCE VM's to automatically build the packages for
 Debian, Red Hat, and CentOS. See the [README](packaging/README.md) in the
 packaging directory for more details.
 
-## Version Updates
+#### Version Updates
 
 There are several places where package versions have to be updated and must
 match to successfully release an update.
@@ -322,7 +322,7 @@ match to successfully release an update.
   the version of the Debian packages.
 * Update the variable `package_version` when invoking the package build workflows.
 
-## Package Distribution
+#### Package Distribution
 
 The deb and rpm packages used in some GCE images are published to Google Cloud
 repositories. Debian 8 and 9, CentOS 6 and 7, and RHEL 6 and 7 use these
@@ -330,17 +330,6 @@ repositories to install and update the `google-compute-engine`, and
 `python-google-compute-engine` (and `python3-google-compute-engine` for Python 3)
 packages. If you are creating a custom image, you can also use these repositories
 in your image.
-
-The following older packages will be replaced by the new packages:
-
-*    `google-compute-engine` (`-jessie`, or `-stretch` for Debian) are replaced
-     by `google-compute-engine` and `python-google-compute-engine`.
-*    `google-compute-engine-init` (`-jessie`, or `-stretch` for Debian) are
-     replaced by `google-compute-engine`.
-*    `google-config` (`-jessie`, or `-stretch` for Debian) are replaced by
-     `google-compute-engine`.
-*    `google-compute-daemon` is replaced by `python-google-compute-engine`.
-*    `google-startup-scripts` is replaced by `google-compute-engine`
 
 **For Debian 8, run the following commands as root:**
 
@@ -416,6 +405,21 @@ yum install -y google-compute-engine python-google-compute-engine
 ```
 
 ## Troubleshooting
+
+**Deprecated Packages**
+
+Deprecated Package                   | Replacement
+------------------------------------ | ---------------------------------------------------------
+`google-compute-engine-jessie`       | `google-compute-engine` and `python-google-compute-engine`
+`google-compute-engine-stretch`      | `google-compute-engine` and `python-google-compute-engine`
+`google-compute-engine-init`         | `google-compute-engine`
+`google-compute-engine-init-jessie`  | `google-compute-engine`
+`google-compute-engine-init-stretch` | `google-compute-engine`
+`google-config`                      | `google-compute-engine`
+`google-config-jessie`               | `google-compute-engine`
+`google-config-stretch`              | `google-compute-engine`
+`google-compute-daemon`              | `python-google-compute-engine`
+`google-startup-scripts`             | `google-compute-engine`
 
 **An old CentOS 6 image fails to install the packages with an error on SCL**
 
