@@ -19,7 +19,7 @@
 
 Name: google-compute-engine
 Version: 2.6.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
@@ -78,7 +78,9 @@ cp google_config/sbin/google-dhclient-script %{buildroot}/sbin/
 %if 0%{?el7}
 mkdir -p %{buildroot}/etc/dhcp/dhclient.d
 mkdir -p %{buildroot}%{_unitdir}
+mkdir -p %{buildroot}%{_presetdir}
 cp google_compute_engine_init/systemd/*.service %{buildroot}%{_unitdir}
+cp google_compute_engine_init/systemd/99-google-compute-engine.preset %{buildroot}%{_presetdir}/99-google-compute-engine.preset
 cp google_config/bin/set_hostname %{buildroot}%{_bindir}
 cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google_hostname.sh
 %endif
@@ -94,6 +96,7 @@ cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google
 %if 0%{?el7}
 %attr(0755,root,root) /etc/dhcp/dhclient.d/google_hostname.sh
 %{_unitdir}/*.service
+%{_presetdir}/99-google-compute-engine.preset
 %endif
 %config /etc/rsyslog.d/90-google.conf
 %config /etc/sysctl.d/11-gce-network-security.conf

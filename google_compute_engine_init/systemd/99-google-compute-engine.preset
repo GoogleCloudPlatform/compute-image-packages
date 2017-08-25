@@ -1,0 +1,7 @@
+enable google-accounts-daemon.service
+enable google-clock-skew-daemon.service
+enable google-instance-setup.service
+enable google-ip-forwarding-daemon.service
+enable google-network-setup.service
+enable google-shutdown-scripts.service
+enable google-startup-scripts.service
