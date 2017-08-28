@@ -28,12 +28,14 @@ for spec_file in ${SPEC_FILES}; do
   mkdir -p ${RPM_TOP}/SOURCES/etc/init.d
   mkdir -p ${RPM_TOP}/SOURCES/usr/bin
   mkdir -p ${RPM_TOP}/SOURCES/usr/lib/systemd/system
+  mkdir -p ${RPM_TOP}/SOURCES/usr/lib/systemd/system-preset
   mkdir -p ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
 
   cp expand-root ${RPM_TOP}/SOURCES/etc/init.d
   cp expand-root ${RPM_TOP}/SOURCES/usr/bin
   cp third_party/cloud-utils/* ${RPM_TOP}/SOURCES/usr/bin
   cp expand-root.service ${RPM_TOP}/SOURCES/usr/lib/systemd/system
+  cp 90-gce-disk-expand.preset ${RPM_TOP}/SOURCES/usr/lib/systemd/system-preset
   cp third_party/dracut-modules-growroot/* \
     ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
 
