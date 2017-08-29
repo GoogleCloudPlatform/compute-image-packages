@@ -13,7 +13,7 @@
 # limitations under the License.
 Name: gce-disk-expand
 Summary: Google Compute Engine root disk expansion utilities for EL7
-Version: 1.0.3
+Version: 1.0.4
 Release: %(date +%s).el7
 License: GPLv3, Apache Software License
 Group: System Environment/Base
@@ -39,6 +39,7 @@ cp -R $RPM_SOURCE_DIR/usr $RPM_BUILD_ROOT
 %attr(755,root,root) /usr/bin/expand-root
 %attr(755,root,root) /usr/bin/growpart
 %attr(644,root,root) /usr/lib/systemd/system/expand-root.service
+%attr(644,root,root) /usr/lib/systemd/system-preset/90-gce-disk-expand.preset
 
 %post
 %systemd_post expand-root.service
@@ -47,7 +48,7 @@ sed -i 's/defaults,barrier=1/defaults/' /etc/fstab
 restorecon /etc/fstab
 
 %preun
-%systemd_preun expand-root.service
-
-%postun
-%systemd_postun expand-root.service
+# On uninstall only.
+if [ $1 -eq 0 ]; then
+  %systemd_preun expand-root.service
+fi

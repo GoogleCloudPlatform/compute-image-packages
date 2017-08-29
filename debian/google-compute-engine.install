@@ -1,4 +1,6 @@
 google_compute_engine_init/systemd/*.service lib/systemd/system
+google_compute_engine_init/systemd/90-google-compute-engine.preset lib/systemd/system-preset
+google_config/bin/set_hostname etc/dhcp/dhclient-exit-hooks.d
 google_config/rsyslog/* etc/rsyslog.d
 google_config/sysctl/* etc/sysctl.d
 google_config/udev/* lib/udev/rules.d
