@@ -17,6 +17,14 @@
 
 import logging
 import os
+import re
+try:
+  import netifaces
+except ImportError:
+  netifaces = None
+
+
+MAC_REGEX = re.compile(r'\A([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})\Z')
 
 
 class NetworkUtils(object):
@@ -37,6 +45,17 @@ class NetworkUtils(object):
     Returns:
       dict, string MAC addresses mapped to the string network interface name.
     """
+    if netifaces:
+      return self._CreateInterfaceMapNetifaces()
+    else:
+      return self._CreateInterfaceMapSysfs()
+
+  def _CreateInterfaceMapSysfs(self):
+    """Generate a dictionary mapping MAC address to Ethernet interfaces.
+
+    Returns:
+      dict, string MAC addresses mapped to the string network interface name.
+    """
     interfaces = {}
     for interface in os.listdir('/sys/class/net'):
       try:
@@ -47,6 +66,27 @@ class NetworkUtils(object):
         self.logger.warning(message, interface, str(e))
       else:
         interfaces[mac_address] = interface
+    return interfaces
+
+  def _CreateInterfaceMapNetifaces(self):
+    """Generate a dictionary mapping MAC address to Ethernet interfaces.
+
+    Returns:
+      dict, string MAC addresses mapped to the string network interface name.
+    """
+
+    interfaces = {}
+    for interface in netifaces.interfaces():
+      af_link = netifaces.ifaddresses(interface).get(netifaces.AF_LINK, [])
+      mac_address = next(iter(af_link), {}).get('addr', '')
+      # In some systems this field can come with an empty string or with the
+      # name of the interface when there is no MAC address associated with it.
+      # Check the regex to be sure.
+      if MAC_REGEX.match(mac_address):
+        interfaces[mac_address] = interface
+      else:
+        message = 'Unable to determine MAC address for %s.'
+        self.logger.warning(message, interface)
     return interfaces
 
   def GetNetworkInterface(self, mac_address):
