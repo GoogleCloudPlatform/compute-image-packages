@@ -1,3 +1,9 @@
+google-compute-image-packages (2.6.0-4) stable; urgency=low
+
+  * Fix DHCP exit hook install.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 28 Aug 2017 12:00:00 -0700
+
 google-compute-image-packages (2.6.0-3) stable; urgency=low
 
   * Add systemd preset.
