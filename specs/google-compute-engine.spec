@@ -31,9 +31,10 @@ BuildRequires: python2-devel python-setuptools python-boto
 BuildRequires: systemd
 %endif
 
-Requires: python-setuptools
-Requires: python-google-compute-engine
+Requires: curl
 Requires: ntp
+Requires: python-google-compute-engine
+Requires: python-setuptools
 Requires: rsyslog
 %if 0%{?el7}
 Requires: systemd
