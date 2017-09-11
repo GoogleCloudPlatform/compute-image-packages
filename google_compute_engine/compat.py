@@ -16,9 +16,13 @@
 """A module for resolving compatibility issues between Python 2 and Python 3."""
 
 import logging
+import subprocess
 import sys
 
-if sys.version_info >= (3,):
+RETRY_LIMIT = 3
+TIMEOUT = 10
+
+if sys.version_info >= (3, 0):
   # Python 3 imports.
   import configparser as parser
   import http.client as httpclient
@@ -37,8 +41,10 @@ else:
   import urllib2 as urlrequest
   import urllib2 as urlerror
 
-if sys.version_info < (2,7,):
+if sys.version_info < (2, 7):
+
   class NullHandler(logging.Handler):
+
     def emit(self, record):
       pass
 
@@ -49,3 +55,15 @@ if sys.version_info < (2,7,):
       pass
 
   logging.NullHandler = NullHandler
+
+if sys.version_info < (2, 7, 9):
+
+  # Native Python libraries do not check SSL certificates.
+  def curlretrieve(url, filename=None, *args, **kwargs):
+    command = ['curl', '--max-time', str(TIMEOUT), '--retry', str(RETRY_LIMIT)]
+    if filename:
+      command += ['-o', filename]
+    command += ['--', url]
+    subprocess.check_call(command)
+
+  urlretrieve.urlretrieve = curlretrieve
