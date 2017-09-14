@@ -29,8 +29,9 @@ class NetworkUtilsTest(unittest.TestCase):
     self.mock_utils = network_utils.NetworkUtils(self.mock_logger)
     self.mock_utils.interfaces = self.interfaces
 
+  @mock.patch('google_compute_engine.network_utils.netifaces', False)
   @mock.patch('google_compute_engine.network_utils.os.listdir')
-  def testCreateInterfaceMap(self, mock_listdir):
+  def testCreateInterfaceMapSysfs(self, mock_listdir):
     mock_open = mock.mock_open()
     interface_map = {
         '1': 'a',
@@ -45,8 +46,9 @@ class NetworkUtilsTest(unittest.TestCase):
       mock_open().read.side_effect = interface_map.keys()
       self.assertEqual(self.mock_utils._CreateInterfaceMap(), interface_map)
 
+  @mock.patch('google_compute_engine.network_utils.netifaces', False)
   @mock.patch('google_compute_engine.network_utils.os.listdir')
-  def testCreateInterfaceMapError(self, mock_listdir):
+  def testCreateInterfaceMapSysfsError(self, mock_listdir):
     mock_open = mock.mock_open()
     mock_listdir.return_value = ['a', 'b', 'c']
 
@@ -59,6 +61,44 @@ class NetworkUtilsTest(unittest.TestCase):
           mock.call.warning(mock.ANY, 'c', 'IOError'),
       ]
       self.assertEqual(self.mock_logger.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.network_utils.netifaces.AF_LINK', 88)
+  @mock.patch('google_compute_engine.network_utils.netifaces')
+  def testCreateInterfaceMapNetifaces(self, mock_netifaces):
+    interface_map = {
+        '11:11:11:11:11:11': 'a',
+        '22:22:22:22:22:22': 'b',
+        '33:33:33:33:33:33': 'c',
+    }
+    ifaddress_map = {
+        'a': {mock_netifaces.AF_LINK: [{'addr': '11:11:11:11:11:11'}]},
+        'b': {mock_netifaces.AF_LINK: [{'addr': '22:22:22:22:22:22'}]},
+        'c': {mock_netifaces.AF_LINK: [{'addr': '33:33:33:33:33:33'}]},
+    }
+    mock_netifaces.interfaces.return_value = interface_map.values()
+    mock_netifaces.ifaddresses.side_effect = (
+        lambda interface: ifaddress_map[interface])
+    self.assertEqual(self.mock_utils._CreateInterfaceMap(), interface_map)
+
+  @mock.patch('google_compute_engine.network_utils.netifaces.AF_LINK', 88)
+  @mock.patch('google_compute_engine.network_utils.netifaces')
+  def testCreateInterfaceMapNetifacesError(self, mock_netifaces):
+    ifaddress_map = {
+        'a': {mock_netifaces.AF_LINK: [{'addr': '11:11:11:11:11:11'}]},
+        'b': {},
+        'c': {mock_netifaces.AF_LINK: [{'addr': ''}]},
+    }
+    mock_netifaces.interfaces.return_value = ['a', 'b', 'c']
+    mock_netifaces.ifaddresses.side_effect = (
+        lambda interface: ifaddress_map[interface])
+
+    self.assertEqual(
+        self.mock_utils._CreateInterfaceMap(), {'11:11:11:11:11:11': 'a'})
+    expected_calls = [
+        mock.call.warning(mock.ANY, 'b'),
+        mock.call.warning(mock.ANY, 'c'),
+    ]
+    self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
   def testGetNetworkInterface(self):
     self.assertIsNone(self.mock_utils.GetNetworkInterface('invalid'))

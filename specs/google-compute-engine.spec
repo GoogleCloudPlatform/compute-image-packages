@@ -18,8 +18,8 @@
 %endif
 
 Name: google-compute-engine
-Version: 2.6.0
-Release: 3%{?dist}
+Version: 2.6.1
+Release: 1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
@@ -31,9 +31,10 @@ BuildRequires: python2-devel python-setuptools python-boto
 BuildRequires: systemd
 %endif
 
-Requires: python-setuptools
-Requires: python-google-compute-engine
+Requires: curl
 Requires: ntp
+Requires: python-google-compute-engine
+Requires: python-setuptools
 Requires: rsyslog
 %if 0%{?el7}
 Requires: systemd

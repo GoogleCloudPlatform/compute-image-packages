@@ -13,7 +13,7 @@
 # limitations under the License.
 Name: gce-disk-expand
 Summary: Google Compute Engine root disk expansion utilities for EL7
-Version: 1.0.4
+Version: 1.0.5
 Release: %(date +%s).el7
 License: GPLv3, Apache Software License
 Group: System Environment/Base
@@ -44,7 +44,7 @@ cp -R $RPM_SOURCE_DIR/usr $RPM_BUILD_ROOT
 %post
 %systemd_post expand-root.service
 # Remove barrier options in fstab for EL7.
-sed -i 's/defaults,barrier=1/defaults/' /etc/fstab
+sed -i 's/defaults,barrier[^ ,]*/defaults/' /etc/fstab
 restorecon /etc/fstab
 
 %preun
