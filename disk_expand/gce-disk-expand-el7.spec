@@ -44,7 +44,7 @@ cp -R $RPM_SOURCE_DIR/usr $RPM_BUILD_ROOT
 %post
 %systemd_post expand-root.service
 # Remove barrier options in fstab for EL7.
-sed -i 's/defaults,barrier=1/defaults/' /etc/fstab
+sed -i 's/defaults,barrier[^ ,]*/defaults/' /etc/fstab
 restorecon /etc/fstab
 
 %preun
