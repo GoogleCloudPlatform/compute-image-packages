@@ -13,7 +13,7 @@
 # limitations under the License.
 Name: gce-disk-expand
 Summary: Google Compute Engine root disk expansion utilities for EL7
-Version: 1.0.4
+Version: 1.0.5
 Release: %(date +%s).el7
 License: GPLv3, Apache Software License
 Group: System Environment/Base
