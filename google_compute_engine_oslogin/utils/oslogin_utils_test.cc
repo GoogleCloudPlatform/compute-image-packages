@@ -174,6 +174,27 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdSucceeds) {
   ASSERT_STREQ(result.pw_dir, "/home/foo");
 }
 
+// Test parsing a valid JSON response from the metadata server with uid > 2^31.
+TEST(ParseJsonPasswdTest, ParseJsonToPasswdSucceedsWithHighUid) {
+  string test_user =
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\":4294967295,\"gid\":"
+      "4294967295,\"homeDirectory\":\"/home/foo\",\"shell\":\"/bin/bash\"}]}]}";
+
+  size_t buflen = 200;
+  char* buffer = (char*)malloc(buflen * sizeof(char));
+  ASSERT_STRNE(buffer, NULL);
+  BufferManager buf(buffer, buflen);
+  struct passwd result;
+  int test_errno = 0;
+  ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
+  EXPECT_EQ(result.pw_uid, 4294967295);
+  EXPECT_EQ(result.pw_gid, 4294967295);
+  ASSERT_STREQ(result.pw_name, "foo");
+  ASSERT_STREQ(result.pw_shell, "/bin/bash");
+  ASSERT_STREQ(result.pw_dir, "/home/foo");
+}
+
 TEST(ParseJsonPasswdTest, ParseJsonToPasswdNoLoginProfilesSucceeds) {
   string test_user =
       "{\"name\":\"foo@example.com\",\"posixAccounts\":["

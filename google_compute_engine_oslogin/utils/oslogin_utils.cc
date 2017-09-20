@@ -342,13 +342,13 @@ bool ParseJsonToPasswd(string response, struct passwd* result,
         *errnop = EINVAL;
         return false;
       }
-      result->pw_uid = (int)json_object_get_int(val);
+      result->pw_uid = (uint32_t)json_object_get_int64(val);
     } else if (string_key == "gid") {
       if (val_type != json_type_int) {
         *errnop = EINVAL;
         return false;
       }
-      result->pw_gid = (int)json_object_get_int(val);
+      result->pw_gid = (uint32_t)json_object_get_int64(val);
     } else if (string_key == "username") {
       if (val_type != json_type_string) {
         *errnop = EINVAL;
