@@ -1,3 +1,9 @@
+google-compute-engine-oslogin (1.0.4-1+deb9) unstable; urgency=low
+
+  * JSON parser casts uid and gid to unsigned integers.
+
+ -- MAINTAINER <gc-team@google.com>  Tue, 20 Sept 2017 12:00:00 -0700
+
 google-compute-engine-oslogin (1.0.3-1+deb9) unstable; urgency=low
 
   * Strictly check for HTTP code 200.
