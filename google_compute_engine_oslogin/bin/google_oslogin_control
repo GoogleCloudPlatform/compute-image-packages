@@ -186,7 +186,6 @@ activate_users() {
 }
 
 deactivate_users() {
-  rm -f ${users_dir}
   rm -rf ${users_dir}
 }
 case "$1" in
