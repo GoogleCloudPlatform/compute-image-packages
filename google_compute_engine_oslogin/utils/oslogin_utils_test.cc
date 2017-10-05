@@ -195,6 +195,26 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdSucceedsWithHighUid) {
   ASSERT_STREQ(result.pw_dir, "/home/foo");
 }
 
+TEST(ParseJsonPasswdTest, ParseJsonToPasswdSucceedsWithStringUid) {
+  string test_user =
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\":\"1337\",\"gid\":"
+      "\"1338\",\"homeDirectory\":\"/home/foo\",\"shell\":\"/bin/bash\"}]}]}";
+
+  size_t buflen = 200;
+  char* buffer = (char*)malloc(buflen * sizeof(char));
+  ASSERT_STRNE(buffer, NULL);
+  BufferManager buf(buffer, buflen);
+  struct passwd result;
+  int test_errno = 0;
+  ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
+  EXPECT_EQ(result.pw_uid, 1337);
+  EXPECT_EQ(result.pw_gid, 1338);
+  ASSERT_STREQ(result.pw_name, "foo");
+  ASSERT_STREQ(result.pw_shell, "/bin/bash");
+  ASSERT_STREQ(result.pw_dir, "/home/foo");
+}
+
 TEST(ParseJsonPasswdTest, ParseJsonToPasswdNoLoginProfilesSucceeds) {
   string test_user =
       "{\"name\":\"foo@example.com\",\"posixAccounts\":["
@@ -230,6 +250,31 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdFailsWithERANGE) {
   int test_errno = 0;
   ASSERT_FALSE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
   EXPECT_EQ(test_errno, ERANGE);
+}
+
+// Test parsing malformed JSON responses.
+TEST(ParseJsonPasswdTest, ParseJsonToPasswdFailsWithEINVAL) {
+  string test_user =
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\": \"bad_stuff\""
+      ",\"gid\":1337,\"homeDirectory\":\"/home/foo\","
+      "\"shell\":\"/bin/bash\"}]}]}";
+  string test_user2 =
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"posixAccounts\":["
+      "{\"primary\":true,\"username\":\"foo\",\"uid\": 1337,"
+      "\"gid\":\"bad_stuff\",\"homeDirectory\":\"/home/foo\","
+      "\"shell\":\"/bin/bash\"}]}]}";
+
+  size_t buflen = 200;
+  char* buffer = (char*)malloc(buflen * sizeof(char));
+  ASSERT_STRNE(buffer, NULL);
+  BufferManager buf(buffer, buflen);
+  struct passwd result;
+  int test_errno = 0;
+  ASSERT_FALSE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
+  EXPECT_EQ(test_errno, EINVAL);
+  ASSERT_FALSE(ParseJsonToPasswd(test_user2, &result, &buf, &test_errno));
+  EXPECT_EQ(test_errno, EINVAL);
 }
 
 // Test parsing a partially filled response. Validate should fill empty fields
@@ -324,6 +369,22 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersExpiredKeys) {
       "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"sshPublicKeys\":"
       "{\"fingerprint\": {\"key\": \"test_key\"}, \"fingerprint2\": {\"key\": "
       "\"test_key2\", \"expiration_time_usec\": 0}}}]}";
+
+  size_t buflen = 200;
+  char* buffer = (char*)malloc(buflen * sizeof(char));
+  ASSERT_STRNE(buffer, NULL);
+  BufferManager buf(buffer, buflen);
+  int test_errno = 0;
+  std::vector<string> result = ParseJsonToSshKeys(test_user);
+  EXPECT_EQ(result.size(), 1);
+  EXPECT_EQ(result[0], "test_key");
+}
+
+TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersMalformedExpiration) {
+  string test_user =
+      "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"sshPublicKeys\":"
+      "{\"fingerprint\": {\"key\": \"test_key\"}, \"fingerprint2\": {\"key\": "
+      "\"test_key2\", \"expiration_time_usec\": \"bad_stuff\"}}}]}";
 
   size_t buflen = 200;
   char* buffer = (char*)malloc(buflen * sizeof(char));

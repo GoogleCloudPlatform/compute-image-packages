@@ -197,8 +197,12 @@ string UrlEncode(const string& param) {
 
 bool ValidatePasswd(struct passwd* result, BufferManager* buf,
                     int* errnop) {
-  // OSLogin disallows uids less than or equal to 1000
+  // OS Login disallows uids less than or equal to 1000
   if (result->pw_uid <= 1000) {
+    *errnop = EINVAL;
+    return false;
+  }
+  if (result->pw_gid == 0) {
     *errnop = EINVAL;
     return false;
   }
@@ -219,7 +223,7 @@ bool ValidatePasswd(struct passwd* result, BufferManager* buf,
     }
   }
 
-  // OSLogin does not utilize the passwd field and reserves the gecos field.
+  // OS Login does not utilize the passwd field and reserves the gecos field.
   // Set these to be empty.
   if (!buf->AppendString("", &result->pw_gecos, errnop)) {
     return false;
@@ -276,14 +280,15 @@ std::vector<string> ParseJsonToSshKeys(string response) {
         key_to_add = (char*)json_object_get_string(val);
       }
       if (string_key == "expiration_time_usec") {
-        if (val_type != json_type_int) {
+        if (val_type == json_type_int || val_type == json_type_string) {
+          uint64_t expiry_usec = (uint64_t)json_object_get_int64(val);
+          struct timeval tp;
+          gettimeofday(&tp, NULL);
+          uint64_t cur_usec = tp.tv_sec * 1000000 + tp.tv_usec;
+          expired = cur_usec > expiry_usec;
+        } else {
           continue;
         }
-        uint64_t expiry_usec = (uint64_t)json_object_get_int64(val);
-        struct timeval tp;
-        gettimeofday(&tp, NULL);
-        uint64_t cur_usec = tp.tv_sec * 1000000 + tp.tv_usec;
-        expired = cur_usec > expiry_usec;
       }
     }
     if (!key_to_add.empty() && !expired) {
@@ -338,17 +343,27 @@ bool ParseJsonToPasswd(string response, struct passwd* result,
     string string_key(key);
 
     if (string_key == "uid") {
-      if (val_type != json_type_int) {
+      if (val_type == json_type_int || val_type == json_type_string) {
+        result->pw_uid = (uint32_t)json_object_get_int64(val);
+        if (result->pw_uid == 0) {
+          *errnop = EINVAL;
+          return false;
+        }
+      } else {
         *errnop = EINVAL;
         return false;
       }
-      result->pw_uid = (uint32_t)json_object_get_int64(val);
     } else if (string_key == "gid") {
-      if (val_type != json_type_int) {
+      if (val_type == json_type_int || val_type == json_type_string) {
+        result->pw_gid = (uint32_t)json_object_get_int64(val);
+        if (result->pw_gid == 0) {
+          *errnop = EINVAL;
+          return false;
+        }
+      } else {
         *errnop = EINVAL;
         return false;
       }
-      result->pw_gid = (uint32_t)json_object_get_int64(val);
     } else if (string_key == "username") {
       if (val_type != json_type_string) {
         *errnop = EINVAL;
