@@ -273,8 +273,10 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdFailsWithEINVAL) {
   int test_errno = 0;
   ASSERT_FALSE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
   EXPECT_EQ(test_errno, EINVAL);
-  ASSERT_FALSE(ParseJsonToPasswd(test_user2, &result, &buf, &test_errno));
-  EXPECT_EQ(test_errno, EINVAL);
+  ASSERT_TRUE(ParseJsonToPasswd(test_user2, &result, &buf, &test_errno));
+  EXPECT_EQ(test_errno, 0);
+  EXPECT_EQ(result.pw_uid, 1337);
+  EXPECT_EQ(result.pw_gid, 1337);
 }
 
 // Test parsing a partially filled response. Validate should fill empty fields
