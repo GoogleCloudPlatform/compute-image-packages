@@ -358,7 +358,7 @@ bool ParseJsonToPasswd(string response, struct passwd* result,
         result->pw_gid = (uint32_t)json_object_get_int64(val);
         // Use the uid as the default group when gid is not set or is zero.
         if (result->pw_gid == 0) {
-          result->pw_gid = result->pw_uid
+          result->pw_gid = result->pw_uid;
         }
       } else {
         *errnop = EINVAL;
