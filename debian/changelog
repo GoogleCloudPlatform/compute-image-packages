@@ -1,3 +1,9 @@
+google-compute-image-packages (2.6.2-1) stable; urgency=low
+
+  * Fix system hang during VM shutdown.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 06 Oct 2017 12:00:00 -0700
+
 google-compute-image-packages (2.6.1-1) stable; urgency=low
 
   * Use curl to download metadata script files for SSL certificate validation.
