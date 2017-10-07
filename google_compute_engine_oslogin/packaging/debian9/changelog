@@ -1,3 +1,9 @@
+google-compute-engine-oslogin (1.0.5-1+deb9) unstable; urgency=low
+
+  * JSON parser accepts string types for int64 values.
+
+ -- MAINTAINER <gc-team@google.com>  Tue, 06 Oct 2017 12:00:00 -0700
+
 google-compute-engine-oslogin (1.0.4-1+deb9) unstable; urgency=low
 
   * JSON parser casts uid and gid to unsigned integers.
