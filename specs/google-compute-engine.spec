@@ -72,7 +72,7 @@ rm -Rf %{buildroot}/usr/lib/python*
 mkdir %{buildroot}/sbin
 mkdir -p %{buildroot}/etc/init
 cp google_compute_engine_init/upstart/*.conf %{buildroot}/etc/init/
-cp google_config/bin/set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
+cp google_config/bin/google_set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
 cp google_config/sbin/google-dhclient-script %{buildroot}/sbin/
 %endif
 
@@ -82,7 +82,7 @@ mkdir -p %{buildroot}%{_unitdir}
 mkdir -p %{buildroot}%{_presetdir}
 cp google_compute_engine_init/systemd/*.service %{buildroot}%{_unitdir}
 cp google_compute_engine_init/systemd/90-google-compute-engine.preset %{buildroot}%{_presetdir}/90-google-compute-engine.preset
-cp google_config/bin/set_hostname %{buildroot}%{_bindir}
+cp google_config/bin/google_set_hostname %{buildroot}%{_bindir}
 cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google_hostname.sh
 %endif
 
