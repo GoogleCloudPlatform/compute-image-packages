@@ -27,6 +27,7 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine.accounts import accounts_utils
+from google_compute_engine.accounts import oslogin_utils
 
 LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_accounts.lock'
 
@@ -225,14 +226,21 @@ class AccountsDaemon(object):
     self.invalid_users -= set(remove_users)
 
   def _GetEnableOsLoginValue(self, metadata_dict):
-    """Get the value of the enable-oslogin metadata key."""
+    """Get the value of the enable-oslogin metadata key.
+
+    Args:
+      metadata_dict: json, the deserialized contents of the metadata server.
+
+    Returns:
+      bool, True if OS Login is enabled for VM access.
+    """
     instance_data, project_data = self.GetInstanceAndProjectAttributes(
         metadata_dict)
     instance_value = instance_data.get('enable-oslogin')
     project_value = project_data.get('enable-oslogin')
     value = instance_value or project_value
 
-    return lower(value) == 'true':
+    return lower(value) == 'true'
 
   def HandleAccounts(self, result):
     """Called when there are changes to the contents of the metadata server.
@@ -245,10 +253,10 @@ class AccountsDaemon(object):
     enable_oslogin = self._GetEnableOsLoginValue(result)
     if enable_oslogin:
       desired_users = []
-      self.oslogin.CheckOsLoginStatusAndUpdate(enable=True)
+      self.oslogin.UpdateOsLogin(enable=True)
     else:
       desired_users = self._GetAccountsData(result)
-      self.oslogin.CheckOsLoginStatusAndUpdate(enable=False)
+      self.oslogin.UpdateOsLogin(enable=False)
     remove_users = sorted(set(configured_users) - set(desired_users.keys()))
     self._UpdateUsers(desired_users)
     self._RemoveUsers(remove_users)

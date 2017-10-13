@@ -38,10 +38,10 @@ class OsLoginUtils(object):
 
     Args:
       action: str, The action to pass to the script
-          (activate, deactivate or status)
+          (activate, deactivate or status).
 
     Returns:
-      int, The return code from the call, or None if the script is not found.
+      int, the return code from the call, or None if the script is not found.
     """
     try:
       return subprocess.call([constants.OSLOGIN_CONTROL_SCRIPT, action])
@@ -52,6 +52,11 @@ class OsLoginUtils(object):
         raise
 
   def _GetStatus(self):
+    """Check whether OS Login is installed.
+
+    Returns:
+      bool, True if OS Login is installed
+    """
     retcode = self._RunOsLoginControl('status')
     if retcode is None:
       if self.oslogin_installed:
@@ -62,19 +67,21 @@ class OsLoginUtils(object):
     self.oslogin_installed = True
     return not retcode
 
-  def CheckOsLoginStatusAndUpdate(self, enable):
+  def UpdateOsLogin(self, enable):
     """Check to see if OS Login is enabled, and switch if necessary.
 
     Args:
       enable: bool, Enable OS Login if True, disable if False.
     """
     status = self._GetStatus()
-    if (status is None) or (status == enable) :
+    if status is None or status == enable:
       return None
 
     if enable:
       action = 'activate'
+      self.logger.warning('Activating OS Login.')
     else:
       action = 'deactivate'
+      self.logger.warning('Deactivating OS Login.')
 
     return self._RunOsLoginControl(activate)
