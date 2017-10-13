@@ -13,24 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unittest for accounts_utils.py module."""
+"""Unittest for oslogin_utils.py module."""
 
 from google_compute_engine.accounts import oslogin_utils
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
 
-class AccountsUtilsTest(unittest.TestCase):
+class OsLoginUtilsTest(unittest.TestCase):
 
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.oslogin_control_script = 'google_oslogin_control'
-    #self.groupadd_cmd = 'groupadd {group}'
 
     self.mock_oslogin = mock.create_autospec(oslogin_utils.OsLoginUtils)
     self.mock_oslogin.logger = self.mock_logger
     self.mock_oslogin.oslogin_installed = True
-    #self.mock_utils.groupadd_cmd = self.groupadd_cmd
 
   def testRunOsLoginControl(self, mock_call):
     mock_logger = mock.Mock()
