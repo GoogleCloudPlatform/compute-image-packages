@@ -177,7 +177,7 @@ class AccountsDaemon(object):
       project_data = {}
       self.logger.warning('Project attributes were not found.')
 
-      return instance_data, project_data
+    return instance_data, project_data
 
   def _GetAccountsData(self, metadata_dict):
     """Get the user accounts specified in metadata server contents.
@@ -234,13 +234,13 @@ class AccountsDaemon(object):
     Returns:
       bool, True if OS Login is enabled for VM access.
     """
-    instance_data, project_data = self.GetInstanceAndProjectAttributes(
+    instance_data, project_data = self._GetInstanceAndProjectAttributes(
         metadata_dict)
     instance_value = instance_data.get('enable-oslogin')
     project_value = project_data.get('enable-oslogin')
-    value = instance_value or project_value
+    value = instance_value or project_value or ''
 
-    return lower(value) == 'true'
+    return value.lower() == 'true'
 
   def HandleAccounts(self, result):
     """Called when there are changes to the contents of the metadata server.
@@ -252,7 +252,7 @@ class AccountsDaemon(object):
     configured_users = self.utils.GetConfiguredUsers()
     enable_oslogin = self._GetEnableOsLoginValue(result)
     if enable_oslogin:
-      desired_users = []
+      desired_users = {}
       self.oslogin.UpdateOsLogin(enable=True)
     else:
       desired_users = self._GetAccountsData(result)

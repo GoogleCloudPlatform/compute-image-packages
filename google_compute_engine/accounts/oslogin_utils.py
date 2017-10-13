@@ -55,7 +55,7 @@ class OsLoginUtils(object):
     """Check whether OS Login is installed.
 
     Returns:
-      bool, True if OS Login is installed
+      bool, True if OS Login is installed.
     """
     retcode = self._RunOsLoginControl('status')
     if retcode is None:
@@ -84,4 +84,4 @@ class OsLoginUtils(object):
       action = 'deactivate'
       self.logger.warning('Deactivating OS Login.')
 
-    return self._RunOsLoginControl(activate)
+    return self._RunOsLoginControl(action)
