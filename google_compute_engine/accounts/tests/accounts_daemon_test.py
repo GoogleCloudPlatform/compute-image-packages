@@ -36,7 +36,6 @@ class AccountsDaemonTest(unittest.TestCase):
     self.mock_setup.utils = self.mock_utils
     self.mock_setup.oslogin = self.mock_oslogin
 
-
   @mock.patch('google_compute_engine.accounts.accounts_daemon.accounts_utils')
   @mock.patch('google_compute_engine.accounts.accounts_daemon.metadata_watcher')
   @mock.patch('google_compute_engine.accounts.accounts_daemon.logger')
@@ -176,18 +175,19 @@ class AccountsDaemonTest(unittest.TestCase):
         data: dictionary, the faux metadata server contents.
         expected: list, the faux SSH keys expected to be set.
       """
-      self.assertEqual(accounts_daemon.AccountsDaemon._GetInstanceAndProjectAttributes(
-        self.mock_setup, data), expected)
+      self.assertEqual(
+          accounts_daemon.AccountsDaemon._GetInstanceAndProjectAttributes(
+              self.mock_setup, data), expected)
 
     data = None
-    _AssertAttributeDict(data, ({},{}))
+    _AssertAttributeDict(data, ({}, {}))
 
     data = {'test': 'data'}
-    expected = ({},{})
+    expected = ({}, {})
     _AssertAttributeDict(data, expected)
 
     data = {'instance': {'attributes': {}}}
-    expected = ({},{})
+    expected = ({}, {})
     _AssertAttributeDict(data, expected)
 
     data = {'instance': {'attributes': {'ssh-keys': '1'}}}
@@ -312,15 +312,15 @@ class AccountsDaemonTest(unittest.TestCase):
     _AssertAccountsData(data, ['1', '2'])
 
     data = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
-                {'ssh-keys': '2'})
+            {'ssh-keys': '2'})
     _AssertAccountsData(data, ['1', '2'])
 
     data = ({'block-project-ssh-keys': 'true', 'ssh-keys': '1'},
-                {'ssh-keys': '2'})
+            {'ssh-keys': '2'})
     _AssertAccountsData(data, ['1'])
 
     data = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
-                {'sshKeys': '3', 'ssh-keys': '2'})
+            {'sshKeys': '3', 'ssh-keys': '2'})
     _AssertAccountsData(data, ['1', '2', '3'])
 
   def testGetEnableOsLoginValue(self):
@@ -333,7 +333,8 @@ class AccountsDaemonTest(unittest.TestCase):
         expected: bool, if True, OS Login is enabled.
       """
       self.mock_setup._GetInstanceAndProjectAttributes.return_value = data
-      actual = accounts_daemon.AccountsDaemon._GetEnableOsLoginValue(self.mock_setup, data)
+      actual = accounts_daemon.AccountsDaemon._GetEnableOsLoginValue(
+          self.mock_setup, data)
       self.assertEqual(actual, expected)
 
     data = ({}, {})
@@ -379,7 +380,6 @@ class AccountsDaemonTest(unittest.TestCase):
     data = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
             {'sshKeys': '3', 'ssh-keys': '2', 'enable-oslogin': 'true'})
     _AssertEnableOsLogin(data, True)
-
 
   def testUpdateUsers(self):
     update_users = {
