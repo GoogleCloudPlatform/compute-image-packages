@@ -495,5 +495,6 @@ class AccountsDaemonTest(unittest.TestCase):
     call_args, _ = self.mock_setup._RemoveUsers.call_args
     self.assertEqual(set(call_args[0]), set(expected_remove))
 
+
 if __name__ == '__main__':
   unittest.main()
