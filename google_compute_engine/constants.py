@@ -17,6 +17,8 @@
 
 import platform
 
+OSLOGIN_CONTROL_SCRIPT = 'google_oslogin_control'
+
 if platform.system() == 'FreeBSD':
     LOCALBASE = '/usr/local'
     BOTOCONFDIR = '/usr/local'

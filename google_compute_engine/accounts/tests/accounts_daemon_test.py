@@ -28,11 +28,13 @@ class AccountsDaemonTest(unittest.TestCase):
     self.mock_logger = mock.Mock()
     self.mock_watcher = mock.Mock()
     self.mock_utils = mock.Mock()
+    self.mock_oslogin = mock.Mock()
 
     self.mock_setup = mock.create_autospec(accounts_daemon.AccountsDaemon)
     self.mock_setup.logger = self.mock_logger
     self.mock_setup.watcher = self.mock_watcher
     self.mock_setup.utils = self.mock_utils
+    self.mock_setup.oslogin = self.mock_oslogin
 
   @mock.patch('google_compute_engine.accounts.accounts_daemon.accounts_utils')
   @mock.patch('google_compute_engine.accounts.accounts_daemon.metadata_watcher')
@@ -164,44 +166,45 @@ class AccountsDaemonTest(unittest.TestCase):
     self.assertEqual(accounts_daemon.AccountsDaemon._ParseAccountsData(
         self.mock_setup, accounts_data), expected_users)
 
-  def testGetAccountsData(self):
+  def testGetInstanceAndProjectAttributes(self):
 
-    def _AssertAccountsData(data, expected):
+    def _AssertAttributeDict(data, expected):
       """Test the correct accounts data is returned.
 
       Args:
         data: dictionary, the faux metadata server contents.
         expected: list, the faux SSH keys expected to be set.
       """
-      accounts_daemon.AccountsDaemon._GetAccountsData(self.mock_setup, data)
-      if expected:
-        call_args, _ = self.mock_setup._ParseAccountsData.call_args
-        actual = call_args[0]
-        self.assertEqual(set(actual.split()), set(expected))
-      else:
-        self.mock_setup._ParseAccountsData.assert_called_once_with(expected)
-      self.mock_setup._ParseAccountsData.reset_mock()
+      self.assertEqual(
+          accounts_daemon.AccountsDaemon._GetInstanceAndProjectAttributes(
+              self.mock_setup, data), expected)
 
     data = None
-    _AssertAccountsData(data, '')
+    _AssertAttributeDict(data, ({}, {}))
 
     data = {'test': 'data'}
-    _AssertAccountsData(data, '')
+    expected = ({}, {})
+    _AssertAttributeDict(data, expected)
 
     data = {'instance': {'attributes': {}}}
-    _AssertAccountsData(data, '')
+    expected = ({}, {})
+    _AssertAttributeDict(data, expected)
 
     data = {'instance': {'attributes': {'ssh-keys': '1'}}}
-    _AssertAccountsData(data, ['1'])
+    expected = ({'ssh-keys': '1'}, {})
+    _AssertAttributeDict(data, expected)
 
     data = {'instance': {'attributes': {'ssh-keys': '1', 'sshKeys': '2'}}}
-    _AssertAccountsData(data, ['1', '2'])
+    expected = ({'ssh-keys': '1', 'sshKeys': '2'}, {})
+    _AssertAttributeDict(data, expected)
 
     data = {'project': {'attributes': {'ssh-keys': '1'}}}
-    _AssertAccountsData(data, ['1'])
+    expected = ({}, {'ssh-keys': '1'})
+    _AssertAttributeDict(data, expected)
 
     data = {'project': {'attributes': {'ssh-keys': '1', 'sshKeys': '2'}}}
-    _AssertAccountsData(data, ['1', '2'])
+    expected = ({}, {'ssh-keys': '1', 'sshKeys': '2'})
+    _AssertAttributeDict(data, expected)
 
     data = {
         'instance': {
@@ -216,7 +219,8 @@ class AccountsDaemonTest(unittest.TestCase):
             },
         },
     }
-    _AssertAccountsData(data, ['1', '2'])
+    expected = ({'ssh-keys': '1', 'sshKeys': '2'}, {'ssh-keys': '3'})
+    _AssertAttributeDict(data, expected)
 
     data = {
         'instance': {
@@ -231,7 +235,9 @@ class AccountsDaemonTest(unittest.TestCase):
             },
         },
     }
-    _AssertAccountsData(data, ['1', '2'])
+    expected = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
+                {'ssh-keys': '2'})
+    _AssertAttributeDict(data, expected)
 
     data = {
         'instance': {
@@ -246,7 +252,9 @@ class AccountsDaemonTest(unittest.TestCase):
             },
         },
     }
-    _AssertAccountsData(data, ['1'])
+    expected = ({'block-project-ssh-keys': 'true', 'ssh-keys': '1'},
+                {'ssh-keys': '2'})
+    _AssertAttributeDict(data, expected)
 
     data = {
         'instance': {
@@ -262,7 +270,116 @@ class AccountsDaemonTest(unittest.TestCase):
             },
         },
     }
+    expected = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
+                {'sshKeys': '3', 'ssh-keys': '2'})
+    _AssertAttributeDict(data, expected)
+
+  def testGetAccountsData(self):
+
+    def _AssertAccountsData(data, expected):
+      """Test the correct accounts data is returned.
+
+      Args:
+        data: dictionary, the faux metadata server contents.
+        expected: list, the faux SSH keys expected to be set.
+      """
+      self.mock_setup._GetInstanceAndProjectAttributes.return_value = data
+      accounts_daemon.AccountsDaemon._GetAccountsData(self.mock_setup, data)
+      if expected:
+        call_args, _ = self.mock_setup._ParseAccountsData.call_args
+        actual = call_args[0]
+        self.assertEqual(set(actual.split()), set(expected))
+      else:
+        self.mock_setup._ParseAccountsData.assert_called_once_with(expected)
+      self.mock_setup._ParseAccountsData.reset_mock()
+
+    data = ({}, {})
+    _AssertAccountsData(data, '')
+
+    data = ({'ssh-keys': '1'}, {})
+    _AssertAccountsData(data, ['1'])
+
+    data = ({'ssh-keys': '1', 'sshKeys': '2'}, {})
+    _AssertAccountsData(data, ['1', '2'])
+
+    data = ({}, {'ssh-keys': '1'})
+    _AssertAccountsData(data, ['1'])
+
+    data = ({}, {'ssh-keys': '1', 'sshKeys': '2'})
+    _AssertAccountsData(data, ['1', '2'])
+
+    data = ({'ssh-keys': '1', 'sshKeys': '2'}, {'ssh-keys': '3'})
+    _AssertAccountsData(data, ['1', '2'])
+
+    data = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
+            {'ssh-keys': '2'})
+    _AssertAccountsData(data, ['1', '2'])
+
+    data = ({'block-project-ssh-keys': 'true', 'ssh-keys': '1'},
+            {'ssh-keys': '2'})
+    _AssertAccountsData(data, ['1'])
+
+    data = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
+            {'sshKeys': '3', 'ssh-keys': '2'})
     _AssertAccountsData(data, ['1', '2', '3'])
+
+  def testGetEnableOsLoginValue(self):
+
+    def _AssertEnableOsLogin(data, expected):
+      """Test the correct value for enable-oslogin is returned.
+
+      Args:
+        data: dictionary, the faux metadata server contents.
+        expected: bool, if True, OS Login is enabled.
+      """
+      self.mock_setup._GetInstanceAndProjectAttributes.return_value = data
+      actual = accounts_daemon.AccountsDaemon._GetEnableOsLoginValue(
+          self.mock_setup, data)
+      self.assertEqual(actual, expected)
+
+    data = ({}, {})
+    _AssertEnableOsLogin(data, False)
+
+    data = ({'enable-oslogin': 'true'}, {})
+    _AssertEnableOsLogin(data, True)
+
+    data = ({'enable-oslogin': 'false'}, {})
+    _AssertEnableOsLogin(data, False)
+
+    data = ({'enable-oslogin': 'yep'}, {})
+    _AssertEnableOsLogin(data, False)
+
+    data = ({'enable-oslogin': 'True'}, {})
+    _AssertEnableOsLogin(data, True)
+
+    data = ({'enable-oslogin': 'TRUE'}, {})
+    _AssertEnableOsLogin(data, True)
+
+    data = ({'enable-oslogin': ''}, {})
+    _AssertEnableOsLogin(data, False)
+
+    data = ({'enable-oslogin': 'true'}, {'enable-oslogin': 'true'})
+    _AssertEnableOsLogin(data, True)
+
+    data = ({'enable-oslogin': 'false'}, {'enable-oslogin': 'true'})
+    _AssertEnableOsLogin(data, False)
+
+    data = ({'enable-oslogin': ''}, {'enable-oslogin': 'true'})
+    _AssertEnableOsLogin(data, True)
+
+    data = ({}, {'enable-oslogin': 'true'})
+    _AssertEnableOsLogin(data, True)
+
+    data = ({}, {'enable-oslogin': 'false'})
+    _AssertEnableOsLogin(data, False)
+
+    data = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
+            {'sshKeys': '3', 'ssh-keys': '2'})
+    _AssertEnableOsLogin(data, False)
+
+    data = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
+            {'sshKeys': '3', 'ssh-keys': '2', 'enable-oslogin': 'true'})
+    _AssertEnableOsLogin(data, True)
 
   def testUpdateUsers(self):
     update_users = {
@@ -315,14 +432,17 @@ class AccountsDaemonTest(unittest.TestCase):
     self.assertEqual(self.mock_setup.invalid_users, set(['invalid']))
     self.assertEqual(self.mock_setup.user_ssh_keys, {'invalid': ['key']})
 
-  def testHandleAccounts(self):
+  def testHandleAccountsNoOsLogin(self):
     configured = ['c', 'c', 'b', 'b', 'a', 'a']
     desired = {'d': '1', 'c': '2'}
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_utils, 'utils')
     mocks.attach_mock(self.mock_setup, 'setup')
+    mocks.attach_mock(self.mock_oslogin, 'oslogin')
     self.mock_utils.GetConfiguredUsers.return_value = configured
     self.mock_setup._GetAccountsData.return_value = desired
+    self.mock_setup._GetEnableOsLoginValue.return_value = False
+    self.mock_oslogin.UpdateOsLogin.return_value = 0
     result = 'result'
     expected_add = ['c', 'd']
     expected_remove = ['a', 'b']
@@ -331,7 +451,40 @@ class AccountsDaemonTest(unittest.TestCase):
     expected_calls = [
         mock.call.setup.logger.debug(mock.ANY),
         mock.call.utils.GetConfiguredUsers(),
+        mock.call.setup._GetEnableOsLoginValue(result),
         mock.call.setup._GetAccountsData(result),
+        mock.call.oslogin.UpdateOsLogin(enable=False),
+        mock.call.setup._UpdateUsers(desired),
+        mock.call.setup._RemoveUsers(mock.ANY),
+        mock.call.utils.SetConfiguredUsers(mock.ANY),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+    call_args, _ = self.mock_utils.SetConfiguredUsers.call_args
+    self.assertEqual(set(call_args[0]), set(expected_add))
+    call_args, _ = self.mock_setup._RemoveUsers.call_args
+    self.assertEqual(set(call_args[0]), set(expected_remove))
+
+  def testHandleAccountsOsLogin(self):
+    configured = ['c', 'c', 'b', 'b', 'a', 'a']
+    desired = {}
+    mocks = mock.Mock()
+    mocks.attach_mock(self.mock_utils, 'utils')
+    mocks.attach_mock(self.mock_setup, 'setup')
+    mocks.attach_mock(self.mock_oslogin, 'oslogin')
+    self.mock_utils.GetConfiguredUsers.return_value = configured
+    self.mock_setup._GetAccountsData.return_value = desired
+    self.mock_setup._GetEnableOsLoginValue.return_value = True
+    self.mock_oslogin.UpdateOsLogin.return_value = 0
+    result = 'result'
+    expected_add = []
+    expected_remove = ['a', 'b', 'c']
+
+    accounts_daemon.AccountsDaemon.HandleAccounts(self.mock_setup, result)
+    expected_calls = [
+        mock.call.setup.logger.debug(mock.ANY),
+        mock.call.utils.GetConfiguredUsers(),
+        mock.call.setup._GetEnableOsLoginValue(result),
+        mock.call.oslogin.UpdateOsLogin(enable=True),
         mock.call.setup._UpdateUsers(desired),
         mock.call.setup._RemoveUsers(mock.ANY),
         mock.call.utils.SetConfiguredUsers(mock.ANY),
