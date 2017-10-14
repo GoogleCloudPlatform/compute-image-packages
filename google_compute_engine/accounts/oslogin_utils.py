@@ -37,8 +37,8 @@ class OsLoginUtils(object):
     """Run the OS Login control script.
 
     Args:
-      action: str, The action to pass to the script
-          (activate, deactivate or status).
+      action: str, the action to pass to the script
+          (activate, deactivate, or status).
 
     Returns:
       int, the return code from the call, or None if the script is not found.
@@ -71,7 +71,10 @@ class OsLoginUtils(object):
     """Check to see if OS Login is enabled, and switch if necessary.
 
     Args:
-      enable: bool, Enable OS Login if True, disable if False.
+      enable: bool, enable OS Login if True, disable if False.
+
+    Returns:
+      int, the return code from updating OS Login, or None if not present.
     """
     status = self._GetStatus()
     if status is None or status == enable:
