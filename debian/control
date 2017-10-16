@@ -19,7 +19,8 @@ Homepage: https://github.com/GoogleCloudPlatform/compute-image-packages
 
 Package: google-compute-engine
 Architecture: all
-Depends: python:any,
+Depends: google-compute-engine-oslogin,
+         python:any,
          python3:any,
          ${python:Depends},
          ${python3:Depends},
