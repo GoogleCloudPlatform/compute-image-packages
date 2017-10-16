@@ -32,6 +32,7 @@ BuildRequires: systemd
 %endif
 
 Requires: curl
+Requires: google-compute-engine-oslogin
 Requires: ntp
 Requires: python-google-compute-engine
 Requires: python-setuptools
