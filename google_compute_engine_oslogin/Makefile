@@ -3,8 +3,8 @@ SHELL = /bin/sh
 BASENAME = oslogin
 NAME = google-compute-engine-$(BASENAME)
 MAJOR = 1
-MINOR = 0
-REVISION = 5
+MINOR = 1
+REVISION = 0
 
 NSS_LIBRARY_NAME = libnss_$(NAME)-$(MAJOR).$(MINOR).$(REVISION).so
 NSS_LIBRARY_SONAME = libnss_$(BASENAME).so.2

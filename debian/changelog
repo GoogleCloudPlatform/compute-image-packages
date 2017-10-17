@@ -1,3 +1,9 @@
+google-compute-image-packages (2.7.0-1) stable; urgency=low
+
+  * Linux guest environment support for OS Login.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 17 Oct 2017 12:00:00 -0700
+
 google-compute-image-packages (2.6.2-1) stable; urgency=low
 
   * Fix system hang during VM shutdown.
@@ -9,7 +15,7 @@ google-compute-image-packages (2.6.1-1) stable; urgency=low
   * Use curl to download metadata script files for SSL certificate validation.
   * Use netifaces for retrieving MAC address names if the import exists.
 
- -- Google Cloud Team <gc-team@google.com>  Thurs, 14 Sept 2017 12:00:00 -0700
+ -- Google Cloud Team <gc-team@google.com>  Thurs, 14 Sep 2017 12:00:00 -0700
 
 google-compute-image-packages (2.6.0-4) stable; urgency=low
 
