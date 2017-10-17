@@ -10,11 +10,11 @@ export PYBUILD_SYSTEM=distutils
 
 override_dh_systemd_start:
 	# Google added services start on upgrade and on installation.
-	dh_systemd_start --name=google-instance-setup
-	dh_systemd_start --name=google-accounts-daemon
-	dh_systemd_start --name=google-clock-skew-daemon
-	dh_systemd_start --name=google-ip-forwarding-daemon
-	dh_systemd_start --name=google-network-setup
+	dh_systemd_start --restart-after-upgrade --name=google-instance-setup
+	dh_systemd_start --restart-after-upgrade --name=google-accounts-daemon
+	dh_systemd_start --restart-after-upgrade --name=google-clock-skew-daemon
+	dh_systemd_start --restart-after-upgrade --name=google-ip-forwarding-daemon
+	dh_systemd_start --restart-after-upgrade --name=google-network-setup
 	# Package updates should not trigger startup and shutdown script execution.
 	dh_systemd_start --no-restart-on-upgrade --no-start --name=google-startup-scripts
 	dh_systemd_start --no-restart-on-upgrade --no-start --name=google-shutdown-scripts
