@@ -18,7 +18,7 @@
 %endif
 
 Name: google-compute-engine
-Version: 2.6.2
+Version: 2.7.0
 Release: 1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
@@ -32,6 +32,7 @@ BuildRequires: systemd
 %endif
 
 Requires: curl
+Requires: google-compute-engine-oslogin
 Requires: ntp
 Requires: python-google-compute-engine
 Requires: python-setuptools

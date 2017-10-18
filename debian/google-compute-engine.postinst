@@ -12,8 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -e
-
-command -v google_oslogin_control > /dev/null && google_oslogin_control deactivate
 
 #DEBHELPER#
+
+# Manually added service start or restart. We do not start or restart
+# google-shutdown-scripts.service google-startup-scripts.service.
+set -e
+if [ -d /run/systemd/system ]; then
+  systemctl --system daemon-reload >/dev/null || true
+  if [ -n "$2" ]; then
+    _dh_action=try-restart
+  else
+    _dh_action=start
+  fi
+  deb-systemd-invoke $_dh_action \
+    google-instance-setup.service \
+    google-network-setup.service \
+    google-accounts-daemon.service \
+    google-clock-skew-daemon.service \
+    google-ip-forwarding-daemon.service >/dev/null || true
+fi

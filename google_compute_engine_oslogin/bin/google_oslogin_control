@@ -23,7 +23,7 @@ users_dir="/var/google-users.d"
 sudoers_file="/etc/sudoers.d/google-oslogin"
 
 usage() {
-  echo "Usage: ${script_name} {activate|deactivate} [--norestartsshd]"
+  echo "Usage: ${script_name} {activate|deactivate|status} [--norestartsshd]"
   echo "This script will activate or deactivate the features for"
   echo "Google Compute Engine OS Login."
   echo "This script must be run as root."
@@ -188,6 +188,17 @@ activate_users() {
 deactivate_users() {
   rm -rf ${users_dir}
 }
+
+get_status() {
+  if grep "^passwd:" ${nss_config} | grep -q "oslogin"; then
+    echo "Google Compute Engine OS Login is active."
+    exit 0
+  else
+    echo "Google Compute Engine OS Login is not active."
+    exit 3
+  fi
+}
+
 case "$1" in
   activate)
     echo "Activating Google Compute Engine OS Login."
@@ -204,6 +215,9 @@ case "$1" in
     deactivate_pam
     deactivate_sudoers
     deactivate_users
+    ;;
+  status)
+    get_status
     ;;
   *)
     usage

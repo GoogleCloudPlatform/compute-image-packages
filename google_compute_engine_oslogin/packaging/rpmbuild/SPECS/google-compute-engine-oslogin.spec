@@ -13,7 +13,7 @@
 # limitations under the License.
 
 Name:           google-compute-engine-oslogin
-Version:        1.0.5
+Version:        1.1.0
 Release:        1%{?dist}
 Summary:        OS Login Functionality for Google Compute Engine
 
@@ -59,11 +59,7 @@ make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{p
 
 %post
 /sbin/ldconfig
-/usr/bin/google_oslogin_control activate
 semodule -i /usr/share/selinux/packages/oslogin.pp
-
-%preun
-/usr/bin/google_oslogin_control deactivate
 
 %postun
 /sbin/ldconfig

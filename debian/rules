@@ -9,8 +9,7 @@ export PYBUILD_SYSTEM=distutils
 	dh $@ --with python2,python3,systemd --buildsystem=pybuild
 
 override_dh_systemd_start:
-	dh_systemd_start --no-restart-on-upgrade --no-start --name=google-startup-scripts
-	dh_systemd_start --no-restart-on-upgrade --no-start --name=google-shutdown-scripts
+	# Configured in google-compute-engine.postinst instead.
 
 override_dh_python3:
 	dh_python3

@@ -18,7 +18,7 @@
 %endif
 
 Name: python-google-compute-engine
-Version: 2.6.2
+Version: 2.7.0
 Release: 1%{?dist}
 Summary: Google Compute Engine python library
 License: ASL 2.0

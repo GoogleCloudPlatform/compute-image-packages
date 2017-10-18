@@ -12,8 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Manually stop all services.
 set -e
-
-command -v google_oslogin_control > /dev/null && google_oslogin_control deactivate
-
-#DEBHELPER#
+if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
+  deb-systemd-invoke stop \
+    google-instance-setup.service \
+    google-network-setup.service \
+    google-accounts-daemon.service \
+    google-clock-skew-daemon.service \
+    google-ip-forwarding-daemon.service \
+    google-shutdown-scripts.service \
+    google-startup-scripts.service >/dev/null
+fi

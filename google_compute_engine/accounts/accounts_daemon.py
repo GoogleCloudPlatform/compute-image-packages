@@ -27,6 +27,7 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine.accounts import accounts_utils
+from google_compute_engine.accounts import oslogin_utils
 
 LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_accounts.lock'
 
@@ -59,6 +60,8 @@ class AccountsDaemon(object):
         logger=self.logger, groups=groups, remove=remove,
         useradd_cmd=useradd_cmd, userdel_cmd=userdel_cmd,
         usermod_cmd=usermod_cmd, groupadd_cmd=groupadd_cmd)
+    self.oslogin = oslogin_utils.OsLoginUtils(logger=self.logger)
+
     try:
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google Accounts daemon.')
@@ -151,14 +154,14 @@ class AccountsDaemon(object):
     logging.debug('User accounts: %s.', user_map)
     return user_map
 
-  def _GetAccountsData(self, metadata_dict):
-    """Get the user accounts specified in metadata server contents.
+  def _GetInstanceAndProjectAttributes(self, metadata_dict):
+    """Get dictionaries for instance and project attributes.
 
     Args:
       metadata_dict: json, the deserialized contents of the metadata server.
 
     Returns:
-      dict, a mapping of the form: {'username': ['sshkey1, 'sshkey2', ...]}.
+      tuple, two dictionaries for instance and project attributes.
     """
     metadata_dict = metadata_dict or {}
 
@@ -173,6 +176,20 @@ class AccountsDaemon(object):
     except KeyError:
       project_data = {}
       self.logger.warning('Project attributes were not found.')
+
+    return instance_data, project_data
+
+  def _GetAccountsData(self, metadata_dict):
+    """Get the user accounts specified in metadata server contents.
+
+    Args:
+      metadata_dict: json, the deserialized contents of the metadata server.
+
+    Returns:
+      dict, a mapping of the form: {'username': ['sshkey1, 'sshkey2', ...]}.
+    """
+    instance_data, project_data = self._GetInstanceAndProjectAttributes(
+        metadata_dict)
     valid_keys = [instance_data.get('sshKeys'), instance_data.get('ssh-keys')]
     block_project = instance_data.get('block-project-ssh-keys', '').lower()
     if block_project != 'true' and not instance_data.get('sshKeys'):
@@ -208,6 +225,23 @@ class AccountsDaemon(object):
       self.user_ssh_keys.pop(username, None)
     self.invalid_users -= set(remove_users)
 
+  def _GetEnableOsLoginValue(self, metadata_dict):
+    """Get the value of the enable-oslogin metadata key.
+
+    Args:
+      metadata_dict: json, the deserialized contents of the metadata server.
+
+    Returns:
+      bool, True if OS Login is enabled for VM access.
+    """
+    instance_data, project_data = self._GetInstanceAndProjectAttributes(
+        metadata_dict)
+    instance_value = instance_data.get('enable-oslogin')
+    project_value = project_data.get('enable-oslogin')
+    value = instance_value or project_value or ''
+
+    return value.lower() == 'true'
+
   def HandleAccounts(self, result):
     """Called when there are changes to the contents of the metadata server.
 
@@ -216,7 +250,13 @@ class AccountsDaemon(object):
     """
     self.logger.debug('Checking for changes to user accounts.')
     configured_users = self.utils.GetConfiguredUsers()
-    desired_users = self._GetAccountsData(result)
+    enable_oslogin = self._GetEnableOsLoginValue(result)
+    if enable_oslogin:
+      desired_users = {}
+      self.oslogin.UpdateOsLogin(enable=True)
+    else:
+      desired_users = self._GetAccountsData(result)
+      self.oslogin.UpdateOsLogin(enable=False)
     remove_users = sorted(set(configured_users) - set(desired_users.keys()))
     self._UpdateUsers(desired_users)
     self._RemoveUsers(remove_users)
