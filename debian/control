@@ -27,7 +27,7 @@ Depends: google-compute-engine-oslogin,
          ${misc:Depends},
          python-google-compute-engine (= ${source:Version}),
          python3-google-compute-engine (= ${source:Version}),
-         ntp,
+         chrony | ntp | time-daemon,
          systemd
 Recommends: google-cloud-sdk
 Conflicts: google-compute-engine-jessie,
@@ -37,7 +37,8 @@ Conflicts: google-compute-engine-jessie,
            google-compute-engine-init-stretch,
            google-config-stretch,
            google-compute-daemon,
-           google-startup-scripts
+           google-startup-scripts,
+           irqbalance
 Replaces: google-compute-engine-jessie,
           google-compute-engine-init-jessie,
           google-config-jessie,
