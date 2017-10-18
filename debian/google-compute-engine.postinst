@@ -32,4 +32,3 @@ if [ -d /run/systemd/system ]; then
     google-clock-skew-daemon.service \
     google-ip-forwarding-daemon.service >/dev/null || true
 fi
-

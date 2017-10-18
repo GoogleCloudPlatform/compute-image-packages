@@ -25,4 +25,3 @@ if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
     google-shutdown-scripts.service \
     google-startup-scripts.service >/dev/null
 fi
-
