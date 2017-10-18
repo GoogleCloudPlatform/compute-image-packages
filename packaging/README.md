@@ -6,25 +6,26 @@ For more information on Daisy and how workflows work, refer to the
 # Workflow invocation
 
 ```shell
-# Builds Debian packages.
+# Builds Debian packages from the development branch.
 ./daisy -project YOUR_PROJECT \
         -zone ZONE \
         -gcs_path YOUR_GCS_PATCH \
-        -variables package_version=2.6.0 \
+        -var:package_version=2.6.0 \
+        -var:github_branch=development \
         build_debian.wf.json
 
 # Builds EL6 packages.
 ./daisy -project YOUR_PROJECT \
         -zone ZONE \
         -gcs_path YOUR_GCS_PATCH \
-        -variables package_version=2.6.0 \
+        -var:package_version=2.6.0 \
         build_el6.wf.json
 
 # Builds EL7 packages.
 ./daisy -project YOUR_PROJECT \
         -zone ZONE \
         -gcs_path YOUR_GCS_PATCH \
-        -variables package_version=2.6.0 \
+        -var:package_version=2.6.0 \
         build_el7.wf.json
 ```
 
