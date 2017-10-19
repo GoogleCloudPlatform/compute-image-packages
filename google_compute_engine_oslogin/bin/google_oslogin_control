@@ -191,10 +191,8 @@ deactivate_users() {
 
 get_status() {
   if grep "^passwd:" ${nss_config} | grep -q "oslogin"; then
-    echo "Google Compute Engine OS Login is active."
     exit 0
   else
-    echo "Google Compute Engine OS Login is not active."
     exit 3
   fi
 }
