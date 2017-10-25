@@ -1,0 +1,8 @@
+APT
+{
+  NeverAutoRemove
+  {
+    "google-compute-engine.*";
+    "python-google-compute-engine.*";
+  };
+};
