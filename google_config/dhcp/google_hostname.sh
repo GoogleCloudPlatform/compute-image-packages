@@ -14,7 +14,7 @@
 # limitations under the License.
 
 google_hostname_config() {
-  set_hostname
+  google_set_hostname
 }
 google_hostname_restore() {
   :
