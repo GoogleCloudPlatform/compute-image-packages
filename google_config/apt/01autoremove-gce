@@ -2,6 +2,7 @@ APT
 {
   NeverAutoRemove
   {
+    "gce-compute-image-packages.*";
     "google-compute-engine.*";
     "python-google-compute-engine.*";
   };
