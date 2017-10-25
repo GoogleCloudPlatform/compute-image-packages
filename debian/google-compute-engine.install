@@ -1,6 +1,6 @@
 google_compute_engine_init/systemd/*.service lib/systemd/system
 google_compute_engine_init/systemd/90-google-compute-engine.preset lib/systemd/system-preset
-google_confid/apt/01autoremove-gce etc/apt/apt.conf.d
+google_config/apt/01autoremove-gce etc/apt/apt.conf.d
 google_config/bin/google_set_hostname etc/dhcp/dhclient-exit-hooks.d
 google_config/rsyslog/* etc/rsyslog.d
 google_config/sysctl/* etc/sysctl.d
