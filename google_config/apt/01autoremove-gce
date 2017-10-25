@@ -1,0 +1,10 @@
+APT
+{
+  NeverAutoRemove
+  {
+    "gce-compute-image-packages.*";
+    "google-compute-engine.*";
+    "python-google-compute-engine.*";
+    "python3-google-compute-engine.*";
+  };
+};
