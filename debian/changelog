@@ -1,3 +1,10 @@
+google-compute-image-packages (2.7.1-1) stable; urgency=low
+
+  * Update set_hostname file name to prevent conflict.
+  * Add apt config to prevent auto-removal of google-compute-engine.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 25 Oct 2017 12:00:00 -0700
+
 google-compute-image-packages (2.7.0-6) stable; urgency=low
 
   * Linux guest environment support for OS Login.
