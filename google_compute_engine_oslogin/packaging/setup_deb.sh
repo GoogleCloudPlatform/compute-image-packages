@@ -20,7 +20,7 @@
 
 # Run from the top of the source directory.
 NAME="google-compute-engine-oslogin"
-VERSION="1.1.0"
+VERSION="1.1.1"
 
 working_dir=${PWD}
 
