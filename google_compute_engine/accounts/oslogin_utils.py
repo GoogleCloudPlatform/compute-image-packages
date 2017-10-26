@@ -82,9 +82,9 @@ class OsLoginUtils(object):
 
     if enable:
       action = 'activate'
-      self.logger.warning('Activating OS Login.')
+      self.logger.info('Activating OS Login.')
     else:
       action = 'deactivate'
-      self.logger.warning('Deactivating OS Login.')
+      self.logger.info('Deactivating OS Login.')
 
     return self._RunOsLoginControl(action)
