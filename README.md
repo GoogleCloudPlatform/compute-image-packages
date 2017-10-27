@@ -236,30 +236,31 @@ that do not override user configuration during package update.
 
 The following are valid user configuration options.
 
-Section           | Option               | Value
------------------ | -------------------- | -----
-Accounts          | deprovision\_remove   | `true` makes deprovisioning a user destructive.
-Accounts          | groups               | Comma separated list of groups for newly provisioned users.
-Accounts          | useradd\_cmd          | Command string to create a new user.
-Accounts          | userdel\_cmd          | Command string to delete a user.
-Accounts          | usermod\_cmd          | Command string to modify a user's groups.
-Accounts          | groupadd\_cmd         | Command string to create a new group.
-Daemons           | accounts\_daemon      | `false` disables the accounts daemon.
+Section           | Option                 | Value
+----------------- | ---------------------- | -----
+Accounts          | deprovision\_remove    | `true` makes deprovisioning a user destructive.
+Accounts          | groups                 | Comma separated list of groups for newly provisioned users.
+Accounts          | useradd\_cmd           | Command string to create a new user.
+Accounts          | userdel\_cmd           | Command string to delete a user.
+Accounts          | usermod\_cmd           | Command string to modify a user's groups.
+Accounts          | groupadd\_cmd          | Command string to create a new group.
+Daemons           | accounts\_daemon       | `false` disables the accounts daemon.
 Daemons           | clock\_skew\_daemon    | `false` disables the clock skew daemon.
 Daemons           | ip\_forwarding\_daemon | `false` disables the IP forwarding daemon.
+InstanceSetup     | host\_key\_types       | Comma separated list of host key types to generate.
 InstanceSetup     | optimize\_local\_ssd   | `false` prevents optimizing for local SSD.
-InstanceSetup     | network\_enabled      | `false` skips instance setup functions that require metadata.
+InstanceSetup     | network\_enabled       | `false` skips instance setup functions that require metadata.
 InstanceSetup     | set\_boto\_config      | `false` skips setting up a `boto` config.
 InstanceSetup     | set\_host\_keys        | `false` skips generating host keys on first boot.
-InstanceSetup     | set\_multiqueue       | `false` skips multiqueue driver support.
+InstanceSetup     | set\_multiqueue        | `false` skips multiqueue driver support.
 IpForwarding      | ethernet\_proto\_id    | Protocol ID string for daemon added routes.
-IpForwarding      | ip\_aliases           | `false` disables setting up alias IP routes.
+IpForwarding      | ip\_aliases            | `false` disables setting up alias IP routes.
 IpForwarding      | target\_instance\_ips  | `false` disables internal IP address load balancing.
-MetadataScripts   | run\_dir              | String base directory where metadata scripts are executed.
-MetadataScripts   | startup              | `false` disables startup script execution.
-MetadataScripts   | shutdown             | `false` disables shutdown script execution.
-NetworkInterfaces | dhcp\_command         | String to execute to enable network interfaces.
-NetworkInterfaces | setup                | `false` disables network interface setup.
+MetadataScripts   | run\_dir               | String base directory where metadata scripts are executed.
+MetadataScripts   | startup                | `false` disables startup script execution.
+MetadataScripts   | shutdown               | `false` disables shutdown script execution.
+NetworkInterfaces | dhcp\_command          | String to execute to enable network interfaces.
+NetworkInterfaces | setup                  | `false` disables network interface setup.
 
 Setting `network_enabled` to `false` will skip setting up host keys and the
 `boto` config in the guest. The setting may also prevent startup and shutdown

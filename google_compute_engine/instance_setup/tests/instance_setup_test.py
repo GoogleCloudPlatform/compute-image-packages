@@ -49,6 +49,7 @@ class InstanceSetupTest(unittest.TestCase):
     mock_watcher.MetadataWatcher.return_value = mock_watcher_instance
     mock_config_instance = mock.Mock()
     mock_config_instance.GetOptionBool.return_value = True
+    mock_config_instance.GetOptionString.return_value = 'type'
     mock_config.InstanceConfig.return_value = mock_config_instance
     mock_setup._GetInstanceConfig.return_value = 'config'
 
@@ -70,7 +71,9 @@ class InstanceSetupTest(unittest.TestCase):
         # Setup for SSH host keys if necessary.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'set_host_keys'),
-        mock.call.setup._SetSshHostKeys(),
+        mock.call.config.InstanceConfig().GetOptionString(
+            'InstanceSetup', 'host_key_types'),
+        mock.call.setup._SetSshHostKeys(host_key_types='type'),
         # Setup for the boto config if necessary.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'set_boto_config'),
@@ -325,7 +328,7 @@ class InstanceSetupTest(unittest.TestCase):
     self.mock_setup._GenerateSshKey = mock_generate_key
     mock_listdir.return_value = [
         'ssh_config',
-        'ssh_host_rsa_key',
+        'ssh_host_dsa_key',
         'ssh_host_dsa_key.pub',
         'ssh_host_ed25519_key',
         'ssh_host_ed25519_key.pub',
@@ -333,13 +336,15 @@ class InstanceSetupTest(unittest.TestCase):
         'ssh_host_rsa_key.pub',
     ]
 
-    instance_setup.InstanceSetup._SetSshHostKeys(self.mock_setup)
+    instance_setup.InstanceSetup._SetSshHostKeys(
+        self.mock_setup, host_key_types='rsa,dsa,abc')
     expected_calls = [
-        mock.call('rsa', '/etc/ssh/ssh_host_rsa_key'),
+        mock.call('abc', '/etc/ssh/ssh_host_abc_key'),
+        mock.call('dsa', '/etc/ssh/ssh_host_dsa_key'),
         mock.call('ed25519', '/etc/ssh/ssh_host_ed25519_key'),
         mock.call('rsa', '/etc/ssh/ssh_host_rsa_key'),
     ]
-    self.assertEqual(mock_generate_key.mock_calls, expected_calls)
+    self.assertEqual(sorted(mock_generate_key.mock_calls), expected_calls)
     self.mock_instance_config.SetOption.assert_called_once_with(
         'Instance', 'instance_id', '123')
 
