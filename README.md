@@ -259,6 +259,7 @@ IpForwarding      | target\_instance\_ips  | `false` disables internal IP addres
 MetadataScripts   | run\_dir               | String base directory where metadata scripts are executed.
 MetadataScripts   | startup                | `false` disables startup script execution.
 MetadataScripts   | shutdown               | `false` disables shutdown script execution.
+NetworkInterfaces | dhclient\_script       | String, the path to a dhclient script used by dhclient.
 NetworkInterfaces | dhcp\_command          | String to execute to enable network interfaces.
 NetworkInterfaces | setup                  | `false` disables network interface setup.
 
