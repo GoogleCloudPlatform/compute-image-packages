@@ -279,7 +279,7 @@ std::vector<string> ParseJsonToSshKeys(string response) {
         }
         key_to_add = (char*)json_object_get_string(val);
       }
-      if (string_key == "expiration_time_usec") {
+      if (string_key == "expirationTimeUsec") {
         if (val_type == json_type_int || val_type == json_type_string) {
           uint64_t expiry_usec = (uint64_t)json_object_get_int64(val);
           struct timeval tp;
