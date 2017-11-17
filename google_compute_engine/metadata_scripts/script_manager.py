@@ -23,7 +23,6 @@ import tempfile
 
 from google_compute_engine import config_manager
 from google_compute_engine import logger
-
 from google_compute_engine.metadata_scripts import script_executor
 from google_compute_engine.metadata_scripts import script_retriever
 
