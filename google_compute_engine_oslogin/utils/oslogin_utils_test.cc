@@ -372,7 +372,7 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersExpiredKeys) {
   string test_user =
       "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"sshPublicKeys\":"
       "{\"fingerprint\": {\"key\": \"test_key\"}, \"fingerprint2\": {\"key\": "
-      "\"test_key2\", \"expiration_time_usec\": 0}}}]}";
+      "\"test_key2\", \"expirationTimeUsec\": 0}}}]}";
 
   size_t buflen = 200;
   char* buffer = (char*)malloc(buflen * sizeof(char));
@@ -388,7 +388,7 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersMalformedExpiration) {
   string test_user =
       "{\"loginProfiles\":[{\"name\":\"foo@example.com\",\"sshPublicKeys\":"
       "{\"fingerprint\": {\"key\": \"test_key\"}, \"fingerprint2\": {\"key\": "
-      "\"test_key2\", \"expiration_time_usec\": \"bad_stuff\"}}}]}";
+      "\"test_key2\", \"expirationTimeUsec\": \"bad_stuff\"}}}]}";
 
   size_t buflen = 200;
   char* buffer = (char*)malloc(buflen * sizeof(char));
