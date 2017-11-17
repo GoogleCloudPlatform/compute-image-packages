@@ -36,7 +36,6 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine import network_utils
-
 from google_compute_engine.ip_forwarding import ip_forwarding_utils
 
 LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_ip_forwarding.lock'

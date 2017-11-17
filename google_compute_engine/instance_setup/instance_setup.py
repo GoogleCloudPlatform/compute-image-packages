@@ -27,7 +27,6 @@ from google_compute_engine import constants
 from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
-
 from google_compute_engine.boto import boto_config
 from google_compute_engine.instance_setup import instance_config
 
