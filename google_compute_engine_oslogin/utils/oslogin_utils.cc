@@ -15,7 +15,7 @@
 // Requires libcurl4-openssl-dev libjson0 and libjson0-dev
 #include <curl/curl.h>
 #include <errno.h>
-#include <json-c/json.h>
+#include <json.h>
 #include <stdio.h>
 #include <time.h>
 #include <cstring>
