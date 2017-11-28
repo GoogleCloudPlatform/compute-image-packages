@@ -85,9 +85,9 @@ add_to_nss_config() {
 
 add_to_pam_config() {
   remove_from_config ${pam_config}
-  sed -i "/pam_nologin.so/ a${added_comment}\n${pam_admin}" ${pam_config}.new
-  sed -i "/pam_nologin.so/ a${added_comment}\n${pam_login}" ${pam_config}.new
-  sed -i "/pam_selinux.so close/ a${pam_homedir}" ${pam_config}.new
+  sed -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_admin}" ${pam_config}.new
+  sed -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_login}" ${pam_config}.new
+  sed -i "/pam_loginuid.so/ a${added_comment}\n${pam_homedir}" ${pam_config}.new
 }
 
 restart_service() {
