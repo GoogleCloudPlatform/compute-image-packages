@@ -1,3 +1,10 @@
+google-compute-image-packages (2.7.2-1) stable; urgency=low
+
+  * Generate SSH host keys when none are present.
+  * Improve logging when activating OS Login.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 29 Nov 2017 12:00:00 -0700
+
 google-compute-image-packages (2.7.1-1) stable; urgency=low
 
   * Update set_hostname file name to prevent conflict.
