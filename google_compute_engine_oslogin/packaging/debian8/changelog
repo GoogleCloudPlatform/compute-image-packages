@@ -1,3 +1,10 @@
+google-compute-engine-oslogin (1.1.2-1+deb8) unstable; urgency=low
+
+  * Fix parsing logic for expiration time on SSH public keys.
+  * Fix home directory creation PAM config.
+
+ -- MAINTAINER <gc-team@google.com>  Wed, 29 Nov 2017 12:00:00 -0700
+
 google-compute-engine-oslogin (1.1.1-1+deb8) unstable; urgency=low
 
   * Remove logging when checking OS Login status.
