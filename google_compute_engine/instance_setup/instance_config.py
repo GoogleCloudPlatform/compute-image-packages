@@ -72,6 +72,7 @@ class InstanceConfig(config_manager.ConfigManager):
           'instance_id': '0',
       },
       'InstanceSetup': {
+          'host_key_types': 'ecdsa,ed25519,rsa',
           'optimize_local_ssd': 'true',
           'network_enabled': 'true',
           'set_boto_config': 'true',

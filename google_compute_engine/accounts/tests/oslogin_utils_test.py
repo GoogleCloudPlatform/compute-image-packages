@@ -128,7 +128,7 @@ class OsLoginUtilsTest(unittest.TestCase):
     oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True)
     expected_calls = [
         mock.call.oslogin._GetStatus(),
-        mock.call.logger.warning(mock.ANY),
+        mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl('activate'),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
@@ -143,7 +143,7 @@ class OsLoginUtilsTest(unittest.TestCase):
     oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, False)
     expected_calls = [
         mock.call.oslogin._GetStatus(),
-        mock.call.logger.warning(mock.ANY),
+        mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl('deactivate'),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)

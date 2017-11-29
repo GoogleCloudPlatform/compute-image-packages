@@ -27,7 +27,6 @@ from google_compute_engine import constants
 from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
-
 from google_compute_engine.boto import boto_config
 from google_compute_engine.instance_setup import instance_config
 
@@ -55,7 +54,9 @@ class InstanceSetup(object):
       self.instance_config = instance_config.InstanceConfig(
           logger=self.logger, instance_config_metadata=instance_config_metadata)
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_host_keys'):
-        self._SetSshHostKeys()
+        host_key_types = self.instance_config.GetOptionString(
+            'InstanceSetup', 'host_key_types')
+        self._SetSshHostKeys(host_key_types=host_key_types)
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
         self._SetupBotoConfig()
     if self.instance_config.GetOptionBool(
@@ -155,13 +156,16 @@ class InstanceSetup(object):
       subprocess.call(['service', 'sshd', 'start'])
       subprocess.call(['service', 'sshd', 'reload'])
 
-  def _SetSshHostKeys(self):
+  def _SetSshHostKeys(self, host_key_types=None):
     """Regenerates SSH host keys when the VM is restarted with a new IP address.
 
     Booting a VM from an image with a known SSH key allows a number of attacks.
     This function will regenerating the host key whenever the IP address
     changes. This applies the first time the instance is booted, and each time
     the disk is used to boot a new instance.
+
+    Args:
+      host_key_types: string, a comma separated list of host key types.
     """
     section = 'Instance'
     instance_id = self._GetInstanceId()
@@ -171,7 +175,9 @@ class InstanceSetup(object):
       file_regex = re.compile(r'ssh_host_(?P<type>[a-z0-9]*)_key\Z')
       key_dir = '/etc/ssh'
       key_files = [f for f in os.listdir(key_dir) if file_regex.match(f)]
-      for key_file in key_files:
+      key_types = host_key_types.split(',') if host_key_types else []
+      key_types_files = ['ssh_host_%s_key' % key_type for key_type in key_types]
+      for key_file in set(key_files) | set(key_types_files):
         key_type = file_regex.match(key_file).group('type')
         key_dest = os.path.join(key_dir, key_file)
         self._GenerateSshKey(key_type, key_dest)
