@@ -1,0 +1,2 @@
+# Force IPv4 for Apt.
+Acquire::ForceIPv4 "true";
