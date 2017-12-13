@@ -1,3 +1,9 @@
+google-compute-image-packages (2.7.2-2) stable; urgency=low
+
+  * Force IPv4 for apt.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 13 Dec 2017 12:00:00 -0700
+
 google-compute-image-packages (2.7.2-1) stable; urgency=low
 
   * Generate SSH host keys when none are present.
