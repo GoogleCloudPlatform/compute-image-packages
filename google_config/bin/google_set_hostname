@@ -46,10 +46,10 @@ if [ -n "$new_host_name" ]; then
     nmcli general hostname "${new_host_name%%.*}"
   fi
 
-  # Restart syslog to update the hostname if we're not using systemd.
-  # systemd rsyslog jobs wait for networking to finish starting and consequently
-  # syslog or rsyslog is running with the correct hostname.
-  if [ ! -f /bin/systemctl ]; then
-    pkill -HUP syslogd
+  # Restart rsyslog to update the hostname.
+  if [ -f /etc/init.d/rsyslog ]; then
+    /etc/init.d/rsyslog restart
+  elif [ -f /bin/systemctl ]; then
+    systemctl -q --no-block restart rsyslog
   fi
 fi
