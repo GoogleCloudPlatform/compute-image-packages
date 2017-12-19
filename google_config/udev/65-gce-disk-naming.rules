@@ -20,5 +20,7 @@ SUBSYSTEM!="block", GOTO="gce_disk_naming_end"
 KERNEL=="sd*|vd*", IMPORT{program}="scsi_id --export --whitelisted -d $tempnode"
 KERNEL=="sd*|vd*", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="disk", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}"
 KERNEL=="sd*|vd*", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="partition", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}-part%n"
+KERNEL=="nvme*", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="disk", SYMLINK+="disk/by-id/google-%k"
+KERNEL=="nvme*", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="partition", SYMLINK+="disk/by-id/google-%k"
 
 LABEL="gce_disk_naming_end"
