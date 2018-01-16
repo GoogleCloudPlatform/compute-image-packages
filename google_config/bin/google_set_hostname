@@ -41,7 +41,7 @@ if [ -n "$new_host_name" ]; then
   if [ -x "$hostnamectl" ]; then
     $hostnamectl set-hostname "$new_host_name"
   else
-    # Assume hostname command exists
+    # Assume hostname command exists.
     hostname "${new_host_name%%.*}"
   fi
 
