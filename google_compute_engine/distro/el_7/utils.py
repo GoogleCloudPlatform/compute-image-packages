@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +15,19 @@
 
 """Utilities that are distro specific for use on EL 7."""
 
-import subprocess
+import fileinput
+import os
+import re
 
+from google_compute_engine import constants
+from google_compute_engine.distro import helpers
 from google_compute_engine.distro import utils
+
 
 class Utils(utils.Utils):
   """Utilities used by Linux guest services on EL 7."""
+
+  network_path = constants.LOCALBASE + '/etc/sysconfig/network-scripts'
 
   def EnableNetworkInterfaces(
       self, interfaces, dhclient_script=None, logger=None):
@@ -32,18 +39,17 @@ class Utils(utils.Utils):
       logger: logger object, used to write to SysLog and serial port.
     """
     logger = logger or self.logger
-    logger.info('Enabling the Ethernet interfaces %s.', interfaces)
-    try:
-      subprocess.check_call(['dhclient', '-x'] + interfaces)
-      subprocess.check_call(['dhclient'] + interfaces)
-    except subprocess.CalledProcessError:
-      logger.warning('Could not enable interfaces %s.', interfaces)
+    # Should always exist in EL 7.
+    if os.path.exists(self.network_path):
+      self._DisableNetworkManager(interfaces, logger)
+    helpers.CallDhClient(interfaces, logger)
 
-  def _DisableNetworkManager(self, interfaces):
+  def _DisableNetworkManager(self, interfaces, logger):
     """Disable network manager management on a list of network interfaces.
 
     Args:
       interfaces: list of string, the output device names enable.
+      logger: logger object, used to write to SysLog and serial port.
     """
     for interface in interfaces:
       interface_config = os.path.join(self.network_path, 'ifcfg-%s' % interface)
@@ -65,20 +71,22 @@ class Utils(utils.Utils):
               '',
           ]
           interface_file.write('\n'.join(interface_content))
-        self.logger.info('Created config file for interface %s.', interface)
+        logger.info('Created config file for interface %s.', interface)
 
-  def _ConfigureNetwork(self, interfaces):
-    """Enable the list of network interfaces.
+  def _ModifyInterface(
+      self, interface_config, config_key, config_value, replace=False):
+    """Write a value to a config file if not already present.
 
     Args:
-      interfaces: list of string, the output device names enable.
+      interface_config: string, the path to a config file.
+      config_key: string, the configuration key to set.
+      config_value: string, the value to set for the configuration key.
+      replace: bool, replace the configuration option if already present.
     """
-    self.logger.info('Enabling the Ethernet interfaces %s.', interfaces)
-    dhclient_command = ['dhclient']
-    if os.path.exists(self.dhclient_script):
-      dhclient_command += ['-sf', self.dhclient_script]
-    try:
-      subprocess.check_call(dhclient_command + ['-x'] + interfaces)
-      subprocess.check_call(dhclient_command + interfaces)
-    except subprocess.CalledProcessError:
-      self.logger.warning('Could not enable interfaces %s.', interfaces)
+    config_entry = '%s=%s' % (config_key, config_value)
+    if not open(interface_config).read().count(config_key):
+      with open(interface_config, 'a') as config:
+        config.write('%s\n' % config_entry)
+    elif replace:
+      for line in fileinput.input(interface_config, inplace=True):
+        print(re.sub(r'%s=.*' % config_key, config_entry, line.rstrip()))

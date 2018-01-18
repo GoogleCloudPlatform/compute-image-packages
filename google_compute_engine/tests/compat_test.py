@@ -13,13 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unittest for logger.py module."""
+"""Unittest for compat.py module."""
 
 import sys
 
+import google_compute_engine.compat
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 from google_compute_engine.test_compat import urlretrieve
+
+try:
+  # Import `reload` regardless of Python version.
+  from importlib import reload
+  from imp import reload
+except:
+  pass
 
 
 class CompatTest(unittest.TestCase):
@@ -65,6 +73,68 @@ class CompatTest(unittest.TestCase):
       mock_call.assert_not_called()
     else:
       pass
+
+  def testGetDistroUtils_Debian8(self):
+    self.verifyDistroUtils(
+        ('debian', '8.10', ''),
+        google_compute_engine.distro.debian_8.utils)
+
+  def testGetDistroUtils_Debian9(self):
+    self.verifyDistroUtils(
+        ('debian', '9.3', ''),
+        google_compute_engine.distro.debian_9.utils)
+
+  def testGetDistroUtils_SUSE(self):
+    self.verifyDistroUtils(
+        ('SUSE Linux Enterprise Server ', '12', 'x86_64'),
+        google_compute_engine.distro.debian_9.utils)
+
+  def testGetDistroUtils_CentOS6(self):
+    self.verifyDistroUtils(
+        ('CentOS Linux', '6.4.3', 'Core'),
+        google_compute_engine.distro.el_6.utils)
+
+  def testGetDistroUtils_CentOS7(self):
+    self.verifyDistroUtils(
+        ('CentOS Linux', '7.4.1708', 'Core'),
+        google_compute_engine.distro.el_7.utils)
+
+  def testGetDistroUtils_CentOS8(self):
+    self.verifyDistroUtils(
+        ('CentOS Linux', '8.4.3', 'Core'),
+        google_compute_engine.distro.debian_9.utils)
+
+  def testGetDistroUtils_RHEL6(self):
+    self.verifyDistroUtils(
+        ('Red Hat Enterprise Linux Server', '6.3.2', ''),
+        google_compute_engine.distro.el_6.utils)
+
+  def testGetDistroUtils_RHEL7(self):
+    self.verifyDistroUtils(
+        ('Red Hat Enterprise Linux Server', '7.4', ''),
+        google_compute_engine.distro.el_7.utils)
+
+  def testGetDistroUtils_RHEL8(self):
+    self.verifyDistroUtils(
+        ('Red Hat Enterprise Linux Server', '8.5.1', ''),
+        google_compute_engine.distro.debian_9.utils)
+
+  def testGetDistroUtils_Empty(self):
+    self.verifyDistroUtils(
+        ('', '', ''),
+        google_compute_engine.distro.debian_9.utils)
+
+  def testGetDistroUtils_Unknown(self):
+    self.verifyDistroUtils(
+        ('xxxx', 'xxxx', 'xxxx'),
+        google_compute_engine.distro.debian_9.utils)
+
+  def verifyDistroUtils(self, actual, expected):
+    with mock.patch(
+        'google_compute_engine.compat.platform.linux_distribution',
+        return_value=actual):
+      reload(google_compute_engine.compat)
+      self.assertEqual(expected, google_compute_engine.compat.distro_utils)
 
 
 if __name__ == '__main__':

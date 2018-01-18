@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,25 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utilities that are distro specific for use on Debian 9."""
+"""Utilities that are distro specific for use on Debian 8."""
 
-import subprocess
-
+from google_compute_engine.distro import helpers
 from google_compute_engine.distro import utils
 
+
 class Utils(utils.Utils):
-  """Utilities used by Linux guest services on Debian 9."""
+  """Utilities used by Linux guest services on Debian 8."""
 
   def EnableNetworkInterfaces(self, interfaces, logger=None):
     """Enable the list of network interfaces.
 
     Args:
       interfaces: list of string, the output device names to enable.
+      logger: logger object, used to write to SysLog and serial port.
     """
-    logger = logger or self.logger
-    logger.info('Enabling the Ethernet interfaces %s.', interfaces)
-    try:
-      subprocess.check_call(['dhclient', '-x'] + interfaces)
-      subprocess.check_call(['dhclient'] + interfaces)
-    except subprocess.CalledProcessError:
-      logger.warning('Could not enable interfaces %s.', interfaces)
+    helpers.CallDhClient(interfaces, logger)

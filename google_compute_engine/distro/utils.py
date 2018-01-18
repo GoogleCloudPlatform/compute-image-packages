@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 
 import logging.handlers
 
-from google_compute_engine import logger
+from google_compute_engine import logger as loggger
+from google_compute_engine import network_utils
 
 
 class Utils(object):
@@ -32,8 +33,9 @@ class Utils(object):
     """
     self.debug = debug
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    self.logger = logger or logger.Logger(
+    self.logger = logger or loggger.Logger(
         name='google-utils', debug=self.debug, facility=facility)
+    self.network_utils = network_utils.NetworkUtils(logger=self.logger)
 
   def EnableNetworkInterfaces(
       self, interfaces, dhclient_script=None, logger=None):

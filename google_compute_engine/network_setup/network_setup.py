@@ -15,11 +15,8 @@
 
 """Enables the network interfaces provided in metadata."""
 
-import fileinput
 import logging.handlers
 import optparse
-import os
-import re
 import subprocess
 
 from google_compute_engine import config_manager
@@ -27,6 +24,7 @@ from google_compute_engine import constants
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine import network_utils
+from google_compute_engine.compat import distro_utils
 
 
 class NetworkSetup(object):
@@ -51,68 +49,7 @@ class NetworkSetup(object):
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.network_utils = network_utils.NetworkUtils(logger=self.logger)
     self._SetupNetworkInterfaces()
-
-  def _ModifyInterface(
-      self, interface_config, config_key, config_value, replace=False):
-    """Write a value to a config file if not already present.
-
-    Args:
-      interface_config: string, the path to a config file.
-      config_key: string, the configuration key to set.
-      config_value: string, the value to set for the configuration key.
-      replace: bool, replace the configuration option if already present.
-    """
-    config_entry = '%s=%s' % (config_key, config_value)
-    if not open(interface_config).read().count(config_key):
-      with open(interface_config, 'a') as config:
-        config.write('%s\n' % config_entry)
-    elif replace:
-      for line in fileinput.input(interface_config, inplace=True):
-        print(re.sub(r'%s=.*' % config_key, config_entry, line.rstrip()))
-
-  def _DisableNetworkManager(self, interfaces):
-    """Disable network manager management on a list of network interfaces.
-
-    Args:
-      interfaces: list of string, the output device names enable.
-    """
-    for interface in interfaces:
-      interface_config = os.path.join(self.network_path, 'ifcfg-%s' % interface)
-      if os.path.exists(interface_config):
-        self._ModifyInterface(
-            interface_config, 'DEVICE', interface, replace=False)
-        self._ModifyInterface(
-            interface_config, 'NM_CONTROLLED', 'no', replace=True)
-      else:
-        with open(interface_config, 'w') as interface_file:
-          interface_content = [
-              '# Added by Google.',
-              'BOOTPROTO=none',
-              'DEFROUTE=no',
-              'DEVICE=%s' % interface,
-              'IPV6INIT=no',
-              'NM_CONTROLLED=no',
-              'NOZEROCONF=yes',
-              '',
-          ]
-          interface_file.write('\n'.join(interface_content))
-        self.logger.info('Created config file for interface %s.', interface)
-
-  def _ConfigureNetwork(self, interfaces):
-    """Enable the list of network interfaces.
-
-    Args:
-      interfaces: list of string, the output device names enable.
-    """
-    self.logger.info('Enabling the Ethernet interfaces %s.', interfaces)
-    dhclient_command = ['dhclient']
-    if os.path.exists(self.dhclient_script):
-      dhclient_command += ['-sf', self.dhclient_script]
-    try:
-      subprocess.check_call(dhclient_command + ['-x'] + interfaces)
-      subprocess.check_call(dhclient_command + interfaces)
-    except subprocess.CalledProcessError:
-      self.logger.warning('Could not enable interfaces %s.', interfaces)
+    self.distro_utils = distro_utils.Utils(debug=debug)
 
   def _EnableNetworkInterfaces(self, interfaces):
     """Enable the list of network interfaces.
@@ -130,10 +67,11 @@ class NetworkSetup(object):
         subprocess.check_call([self.dhcp_command])
       except subprocess.CalledProcessError:
         self.logger.warning('Could not enable Ethernet interfaces.')
-    else:
-      if os.path.exists(self.network_path):
-        self._DisableNetworkManager(interfaces)
-      self._ConfigureNetwork(interfaces)
+      return
+
+    # Distro-specific setup for network interfaces
+    self.distro_utils.EnableNetworkInterfaces(
+        interfaces, self.dhclient_script, self.logger)
 
   def _SetupNetworkInterfaces(self):
     """Get network interfaces metadata and enable each Ethernet interface."""
