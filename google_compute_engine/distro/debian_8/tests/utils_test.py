@@ -27,7 +27,7 @@ class UtilsTest(unittest.TestCase):
     self.mock_setup = mock.create_autospec(utils.Utils)
     self.mock_setup.logger = self.mock_logger
 
-  @mock.patch('google_compute_engine.distro.helpers.CallDhClient')
+  @mock.patch('google_compute_engine.distro.helpers.CallDhclient')
   def testEnableNetworkInterfaces(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')

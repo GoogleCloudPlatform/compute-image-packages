@@ -19,7 +19,7 @@ import os
 import subprocess
 
 
-def CallDhClient(
+def CallDhclient(
     interfaces, logger, dhclient_script=None):
   """Configure the network interfaces using dhclient.
 

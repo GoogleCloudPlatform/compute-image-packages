@@ -32,4 +32,4 @@ class Utils(utils.Utils):
       logger: logger object, used to write to SysLog and serial port.
     """
     logger = logger or self.logger
-    helpers.CallDhClient(interfaces, logger, dhclient_script)
+    helpers.CallDhclient(interfaces, logger, dhclient_script)

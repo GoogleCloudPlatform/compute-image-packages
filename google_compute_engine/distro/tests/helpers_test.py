@@ -29,7 +29,7 @@ class HelpersTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.distro.helpers.os.path.exists')
   @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
-  def testCallDhClient(self, mock_call, mock_exists):
+  def testCallDhclient(self, mock_call, mock_exists):
     mocks = mock.Mock()
     mocks.attach_mock(mock_exists, 'exists')
     mocks.attach_mock(mock_call, 'call')
@@ -38,13 +38,13 @@ class HelpersTest(unittest.TestCase):
     mock_exists.side_effect = [False, True]
     mock_call.side_effect = [
         None, None, None, None, None, None,
-        subprocess.CalledProcessError(1, 'Test')
+        subprocess.CalledProcessError(1, 'Test'),
     ]
 
-    helpers.CallDhClient(['a', 'b'], self.mock_logger, 'test_script')
-    helpers.CallDhClient(['c', 'd'], self.mock_logger, 'test_script')
-    helpers.CallDhClient(['e', 'f'], self.mock_logger, None)
-    helpers.CallDhClient(['g', 'h'], self.mock_logger, None)
+    helpers.CallDhclient(['a', 'b'], self.mock_logger, 'test_script')
+    helpers.CallDhclient(['c', 'd'], self.mock_logger, 'test_script')
+    helpers.CallDhclient(['e', 'f'], self.mock_logger, None)
+    helpers.CallDhclient(['g', 'h'], self.mock_logger, None)
 
     expected_calls = [
         mock.call.logger.info(mock.ANY, ['a', 'b']),
@@ -60,7 +60,7 @@ class HelpersTest(unittest.TestCase):
         mock.call.call(['dhclient', 'e', 'f']),
         mock.call.logger.info(mock.ANY, ['g', 'h']),
         mock.call.call(['dhclient', '-x', 'g', 'h']),
-        mock.call.logger.warning(mock.ANY, ['g', 'h'])
+        mock.call.logger.warning(mock.ANY, ['g', 'h']),
     ]
 
     self.assertEqual(mocks.mock_calls, expected_calls)

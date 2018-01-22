@@ -29,4 +29,4 @@ class Utils(utils.Utils):
       interfaces: list of string, the output device names to enable.
       logger: logger object, used to write to SysLog and serial port.
     """
-    helpers.CallDhClient(interfaces, logger)
+    helpers.CallDhclient(interfaces, logger)

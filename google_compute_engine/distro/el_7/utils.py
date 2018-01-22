@@ -42,7 +42,7 @@ class Utils(utils.Utils):
     # Should always exist in EL 7.
     if os.path.exists(self.network_path):
       self._DisableNetworkManager(interfaces, logger)
-    helpers.CallDhClient(interfaces, logger)
+    helpers.CallDhclient(interfaces, logger)
 
   def _DisableNetworkManager(self, interfaces, logger):
     """Disable network manager management on a list of network interfaces.

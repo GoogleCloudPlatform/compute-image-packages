@@ -98,7 +98,7 @@ class UtilsTest(unittest.TestCase):
       self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro.el_7.utils.os.path.exists')
-  @mock.patch('google_compute_engine.distro.helpers.CallDhClient')
+  @mock.patch('google_compute_engine.distro.helpers.CallDhclient')
   def testEnableNetworkInterfaces(self, mock_call, mock_exists):
     mocks = mock.Mock()
     mocks.attach_mock(mock_exists, 'exists')

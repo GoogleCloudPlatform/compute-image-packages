@@ -30,7 +30,7 @@ class UtilsTest(unittest.TestCase):
   def tearDown(self):
     pass
 
-  @mock.patch('google_compute_engine.distro.helpers.CallDhClient')
+  @mock.patch('google_compute_engine.distro.helpers.CallDhclient')
   def testEnableNetworkInterfaces(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')
