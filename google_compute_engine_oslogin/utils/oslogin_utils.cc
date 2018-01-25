@@ -197,8 +197,8 @@ string UrlEncode(const string& param) {
 
 bool ValidatePasswd(struct passwd* result, BufferManager* buf,
                     int* errnop) {
-  // OS Login disallows uids less than or equal to 1000
-  if (result->pw_uid <= 1000) {
+  // OS Login disallows uids less than 1000.
+  if (result->pw_uid < 1000) {
     *errnop = EINVAL;
     return false;
   }
