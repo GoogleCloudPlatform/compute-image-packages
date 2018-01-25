@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unittest for el_7/utils.py module."""
+"""Unittest for utils.py module."""
 
 import os
 import shutil

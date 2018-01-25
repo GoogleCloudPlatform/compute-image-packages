@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unittest for distro/utils.py module."""
+"""Unittest for helpers.py module."""
 
 import subprocess
 

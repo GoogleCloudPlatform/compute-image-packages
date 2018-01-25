@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unittest for debian_9/utils.py module."""
+"""Unittest for utils.py module."""
 
 from google_compute_engine.distro.debian_9 import utils
 from google_compute_engine.test_compat import mock

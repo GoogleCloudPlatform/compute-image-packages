@@ -69,7 +69,7 @@ class NetworkSetup(object):
         self.logger.warning('Could not enable Ethernet interfaces.')
       return
 
-    # Distro-specific setup for network interfaces
+    # Distro-specific setup for network interfaces.
     self.distro_utils.EnableNetworkInterfaces(
         interfaces, self.dhclient_script, self.logger)
 

@@ -26,18 +26,20 @@ distro_name = distribution[0].lower()
 distro_version = distribution[1].split('.')[0]
 distro_utils = None
 
-if 'centos' in distro_name or 'red hat enterprise linux' in distro_name:
-  if distro_version == '6':
-    import google_compute_engine.distro.el_6.utils as distro_utils
-  elif distro_version == '7':
-    import google_compute_engine.distro.el_7.utils as distro_utils
+if 'centos' in distro_name and distro_version == '6':
+  import google_compute_engine.distro.el_6.utils as distro_utils
+elif 'centos' in distro_name and distro_version == '7':
+  import google_compute_engine.distro.el_7.utils as distro_utils
+elif 'red hat enterprise linux' in distro_name and distro_version == '6':
+  import google_compute_engine.distro.el_6.utils as distro_utils
+elif 'red hat enterprise linux' in distro_name and distro_version == '7':
+  import google_compute_engine.distro.el_7.utils as distro_utils
 elif 'debian' in distro_name and distro_version == '8':
   import google_compute_engine.distro.debian_8.utils as distro_utils
 elif 'debian' in distro_name and distro_version == '9':
   import google_compute_engine.distro.debian_9.utils as distro_utils
-
-# Default to Debian 9.
-if not distro_utils:
+else:
+  # Default to Debian 9.
   import google_compute_engine.distro.debian_9.utils as distro_utils
 
 RETRY_LIMIT = 3
