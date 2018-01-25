@@ -28,6 +28,7 @@ Depends: google-compute-engine-oslogin,
          python-google-compute-engine (= ${source:Version}),
          python3-google-compute-engine (= ${source:Version}),
          chrony | ntp | time-daemon | systemd,
+         rsyslog,
          systemd
 Recommends: google-cloud-sdk
 Conflicts: google-compute-engine-jessie,

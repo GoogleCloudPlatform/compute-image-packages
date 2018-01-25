@@ -1,3 +1,9 @@
+google-compute-image-packages (2.7.3-1) stable; urgency=low
+
+  * Improve hostname setting and correctly restart rsyslog.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 25 Jan 2018 12:00:00 -0700 
+
 google-compute-image-packages (2.7.2-2) stable; urgency=low
 
   * Force IPv4 for apt.
