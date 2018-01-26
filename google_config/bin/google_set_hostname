@@ -40,15 +40,9 @@ if [ -n "$new_host_name" ]; then
   hostnamectl=$( which hostnamectl 2> /dev/null )
   if [ -x "$hostnamectl" ]; then
     $hostnamectl set-hostname "$new_host_name"
-    if [ $? -ne 0 ]; then
-      # Fallback to use hostname. hostnamectl can fail, for example, if dbus is
-      # not installed as it is not in Debian by default.
-      hostname "${new_host_name%%.*}"
-    fi
-  else
-    # Assume hostname command exists.
-    hostname "${new_host_name%%.*}"
   fi
+  # Also set the transient hostname.
+  hostname "${new_host_name%%.*}"
 
   # If NetworkManager is installed set the hostname with nmcli.
   # to resolve issues with NetworkManager resetting the hostname
