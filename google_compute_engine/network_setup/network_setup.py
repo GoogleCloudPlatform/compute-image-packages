@@ -48,8 +48,8 @@ class NetworkSetup(object):
         name='network-setup', debug=debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.network_utils = network_utils.NetworkUtils(logger=self.logger)
-    self._SetupNetworkInterfaces()
     self.distro_utils = distro_utils.Utils(debug=debug)
+    self._SetupNetworkInterfaces()
 
   def _EnableNetworkInterfaces(self, interfaces):
     """Enable the list of network interfaces.
