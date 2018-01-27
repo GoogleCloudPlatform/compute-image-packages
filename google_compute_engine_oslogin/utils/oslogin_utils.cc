@@ -158,6 +158,7 @@ bool HttpGet(const string& url, string* response, long* http_code) {
     header_list = curl_slist_append(header_list, "Metadata-Flavor: Google");
     if (header_list == NULL) {
       curl_global_cleanup();
+      curl_easy_cleanup(curl);
       return false;
     }
     do {
@@ -171,14 +172,17 @@ bool HttpGet(const string& url, string* response, long* http_code) {
 
       code = curl_easy_perform(curl);
       if (code != CURLE_OK) {
+        curl_global_cleanup();
+        curl_easy_cleanup(curl);
         return false;
       }
       curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, http_code);
     } while (retry_count++ < kMaxRetries && *http_code == 500);
     curl_slist_free_all(header_list);
-    curl_global_cleanup();
   }
   *response = response_stream.str();
+  curl_global_cleanup();
+  curl_easy_cleanup(curl);
   return true;
 }
 
