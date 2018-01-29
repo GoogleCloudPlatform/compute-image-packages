@@ -85,9 +85,22 @@ add_to_nss_config() {
 
 add_to_pam_config() {
   remove_from_config ${pam_config}
-  sed -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_admin}" ${pam_config}.new
-  sed -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_login}" ${pam_config}.new
-  sed -i "/pam_loginuid.so/ a${added_comment}\n${pam_homedir}" ${pam_config}.new
+  if grep -q -s "ID=cos" /etc/os-release; then
+    # For COS simply prepend the new config.
+    added_config="\
+${added_comment}
+${pam_admin}
+${added_comment}
+${pam_login}
+${added_comment}
+${pam_homedir}
+"
+    echo "${added_config}$(cat ${pam_config}.new)" > ${pam_config}.new
+  else
+    sed -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_admin}" ${pam_config}.new
+    sed -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_login}" ${pam_config}.new
+    sed -i "/pam_loginuid.so/ a${added_comment}\n${pam_homedir}" ${pam_config}.new
+  fi
 }
 
 restart_service() {
