@@ -38,7 +38,7 @@ else:
 
 builtin = 'builtins' if sys.version_info >= (3,) else '__builtin__'
 
-# Import `reload` to re-import modules for testing compat.
+# Import the reload module to re-import modules for testing compat.
 if sys.version_info >= (3, 4):
   from importlib import reload as reload_import
 else:

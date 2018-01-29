@@ -37,6 +37,5 @@ class UtilsTest(unittest.TestCase):
 
     utils.Utils.EnableNetworkInterfaces(
         self.mock_setup, ['A', 'B'], 'test_script')
-
     expected_calls = [mock.call.call(['A', 'B'], mock.ANY, 'test_script')]
     self.assertEqual(mocks.mock_calls, expected_calls)

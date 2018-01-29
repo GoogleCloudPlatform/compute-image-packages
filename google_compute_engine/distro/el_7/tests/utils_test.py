@@ -113,7 +113,6 @@ class UtilsTest(unittest.TestCase):
     # Enable interfaces with network manager is not present.
     utils.Utils.EnableNetworkInterfaces(
         self.mock_setup, ['C', 'D'])
-
     expected_calls = [
         mock.call.exists('/etc/sysconfig/network-scripts'),
         mock.call.disable(['A', 'B'], mock.ANY),
