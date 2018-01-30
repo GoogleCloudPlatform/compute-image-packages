@@ -52,7 +52,7 @@ if [ -n "$new_host_name" ]; then
   if [ -f /etc/init.d/rsyslog ]; then
     /etc/init.d/rsyslog restart
   elif [ -x "$systemctl" ]; then
-    hasrsyslog=$( $systemctl | grep rsyslog | cut -f1 -d' ' )
+    hasrsyslog=$($systemctl | grep rsyslog | cut -f1 -d' ')
     if [ ! -z "$hasrsyslog" ]; then
       $systemctl -q --no-block restart "$hasrsyslog"
     fi
