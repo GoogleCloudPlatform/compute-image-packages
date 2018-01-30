@@ -1,6 +1,6 @@
 google-compute-image-packages (2.7.5-1) stable; urgency=low
 
-  * Revert back to using `hostname` to set hostname.
+  * Revert hostname setting change in Debian.
 
  -- Google Cloud Team <gc-team@google.com>  Mon, 29 Jan 2018 12:00:00 -0700
 
