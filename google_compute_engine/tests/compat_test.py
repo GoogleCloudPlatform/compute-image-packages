@@ -75,8 +75,10 @@ class CompatTest(unittest.TestCase):
             google_compute_engine.distro.debian_8.utils,
         ('debian', '9.3', ''):
             google_compute_engine.distro.debian_9.utils,
-        ('SUSE Linux Enterprise Server ', '12', 'x86_64'):
+        ('SUSE Linux Enterprise Server', '11', 'x86_64'):
             google_compute_engine.distro.debian_9.utils,
+        ('SUSE Linux Enterprise Server', '12', 'x86_64'):
+            google_compute_engine.distro.sles_12.utils,
         ('CentOS Linux', '6.4.3', 'Core'):
             google_compute_engine.distro.el_6.utils,
         ('CentOS Linux', '7.4.1708', 'Core'):
