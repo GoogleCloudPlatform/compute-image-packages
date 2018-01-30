@@ -1,3 +1,9 @@
+google-compute-engine-oslogin (1.1.4-1+deb8) unstable; urgency=low
+
+  * Close socket connections when requesting metadata.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 29 Jan 2018 12:00:00 -0700
+
 google-compute-engine-oslogin (1.1.3-1+deb8) unstable; urgency=low
 
   * Change the OS Login uid restriction to allow uid 1000.
