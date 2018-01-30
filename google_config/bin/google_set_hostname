@@ -48,7 +48,7 @@ if [ -n "$new_host_name" ]; then
   fi
 
   # Restart rsyslog to update the hostname.
-  systemctl=$( which systemctl 2> /dev/null )
+  systemctl=$(which systemctl 2> /dev/null)
   if [ -f /etc/init.d/rsyslog ]; then
     /etc/init.d/rsyslog restart
   elif [ -x "$systemctl" ]; then
