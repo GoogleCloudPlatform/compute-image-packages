@@ -25,7 +25,6 @@ class UtilsTest(unittest.TestCase):
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.mock_setup = mock.create_autospec(utils.Utils)
-    self.mock_setup.logger = self.mock_logger
 
   def tearDown(self):
     pass
@@ -36,6 +35,9 @@ class UtilsTest(unittest.TestCase):
     mocks.attach_mock(mock_call, 'call')
 
     utils.Utils.EnableNetworkInterfaces(
-        self.mock_setup, ['A', 'B'], 'test_script')
-    expected_calls = [mock.call.call(['A', 'B'], mock.ANY, 'test_script')]
+        self.mock_setup, ['A', 'B'], self.mock_logger,
+        dhclient_script='test_script')
+    expected_calls = [
+        mock.call.call(['A', 'B'], mock.ANY, dhclient_script='test_script'),
+    ]
     self.assertEqual(mocks.mock_calls, expected_calls)

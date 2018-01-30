@@ -32,7 +32,6 @@ class UtilsTest(unittest.TestCase):
     self.test_dir = tempfile.mkdtemp()
     self.mock_logger = mock.Mock()
     self.mock_setup = mock.create_autospec(utils.Utils)
-    self.mock_setup.logger = self.mock_logger
     self.mock_setup.network_path = '/etc/sysconfig/network-scripts'
 
   def tearDown(self):
@@ -109,10 +108,10 @@ class UtilsTest(unittest.TestCase):
 
     # Enable interfaces with network manager enabled.
     utils.Utils.EnableNetworkInterfaces(
-        self.mock_setup, ['A', 'B'])
+        self.mock_setup, ['A', 'B'], self.mock_logger)
     # Enable interfaces with network manager is not present.
     utils.Utils.EnableNetworkInterfaces(
-        self.mock_setup, ['C', 'D'])
+        self.mock_setup, ['C', 'D'], self.mock_logger)
     expected_calls = [
         mock.call.exists('/etc/sysconfig/network-scripts'),
         mock.call.disable(['A', 'B'], mock.ANY),

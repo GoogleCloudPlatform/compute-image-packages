@@ -25,13 +25,13 @@ class UtilsTest(unittest.TestCase):
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.mock_setup = mock.create_autospec(utils.Utils)
-    self.mock_setup.logger = self.mock_logger
 
   @mock.patch('google_compute_engine.distro.helpers.CallDhclient')
   def testEnableNetworkInterfaces(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')
 
-    utils.Utils.EnableNetworkInterfaces(self.mock_setup, ['A', 'B'])
+    utils.Utils.EnableNetworkInterfaces(
+        self.mock_setup, ['A', 'B'], self.mock_logger)
     expected_calls = [mock.call.call(['A', 'B'], mock.ANY)]
     self.assertEqual(mocks.mock_calls, expected_calls)

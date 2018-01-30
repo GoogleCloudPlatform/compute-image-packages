@@ -71,7 +71,7 @@ class NetworkSetup(object):
 
     # Distro-specific setup for network interfaces.
     self.distro_utils.EnableNetworkInterfaces(
-        interfaces, self.dhclient_script, self.logger)
+        interfaces, self.logger, dhclient_script=self.dhclient_script)
 
   def _SetupNetworkInterfaces(self):
     """Get network interfaces metadata and enable each Ethernet interface."""

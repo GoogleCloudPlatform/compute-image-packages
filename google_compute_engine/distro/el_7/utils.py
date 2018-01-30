@@ -30,15 +30,14 @@ class Utils(utils.Utils):
   network_path = constants.LOCALBASE + '/etc/sysconfig/network-scripts'
 
   def EnableNetworkInterfaces(
-      self, interfaces, dhclient_script=None, logger=None):
+      self, interfaces, logger, dhclient_script=None):
     """Enable the list of network interfaces.
 
     Args:
       interfaces: list of string, the output device names to enable.
-      dhclient_script: string, the path to a dhclient script used by dhclient.
       logger: logger object, used to write to SysLog and serial port.
+      dhclient_script: string, the path to a dhclient script used by dhclient.
     """
-    logger = logger or self.logger
     # Should always exist in EL 7.
     if os.path.exists(self.network_path):
       self._DisableNetworkManager(interfaces, logger)

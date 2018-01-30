@@ -63,6 +63,7 @@ class NetworkSetupTest(unittest.TestCase):
     mocks.attach_mock(mock_network_utils, 'network')
     with mock.patch.object(
         network_setup.NetworkSetup, '_SetupNetworkInterfaces'):
+
       network_setup.NetworkSetup(debug=True)
       expected_calls = [
           mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
@@ -77,7 +78,6 @@ class NetworkSetupTest(unittest.TestCase):
     mocks.attach_mock(mock_call, 'call')
     mocks.attach_mock(self.mock_logger, 'logger')
     mocks.attach_mock(self.mock_setup.distro_utils.EnableNetworkInterfaces, 'enable')
-
     mock_call.side_effect = [None, subprocess.CalledProcessError(1, 'Test')]
 
     # Return immediately with fewer than two interfaces.
@@ -97,11 +97,10 @@ class NetworkSetupTest(unittest.TestCase):
     self.mock_setup.dhcp_command = 'failure'
     network_setup.NetworkSetup._EnableNetworkInterfaces(
         self.mock_setup, ['G', 'H'])
-
     expected_calls = [
         # First calls with empty `interfaces` were no-ops.
-        mock.call.enable(['A', 'B'], '/bin/script', mock.ANY),
-        mock.call.enable(['C', 'D'], '/bin/script', mock.ANY),
+        mock.call.enable(['A', 'B'], mock.ANY, dhclient_script='/bin/script'),
+        mock.call.enable(['C', 'D'], mock.ANY, dhclient_script='/bin/script'),
         mock.call.call(['success']),
         mock.call.call(['failure']),
         mock.call.logger.warning(mock.ANY),
@@ -118,10 +117,10 @@ class NetworkSetupTest(unittest.TestCase):
         {'mac': '1'}, {'mac': '2'}, {'mac': '3'}, {}]
     self.mock_network_utils.GetNetworkInterface.side_effect = [
         'eth0', 'eth1', None, None]
-
     with mock.patch.object(
         network_setup.NetworkSetup, '_EnableNetworkInterfaces'):
       self.mock_setup.dhcp_command = 'command'
+
       network_setup.NetworkSetup._SetupNetworkInterfaces(self.mock_setup)
       expected_calls = [
           mock.call.watcher.GetMetadata(

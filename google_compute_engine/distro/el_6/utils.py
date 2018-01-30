@@ -23,13 +23,12 @@ class Utils(utils.Utils):
   """Utilities used by Linux guest services on Debian 8."""
 
   def EnableNetworkInterfaces(
-      self, interfaces, dhclient_script=None, logger=None):
+      self, interfaces, logger, dhclient_script=None):
     """Enable the list of network interfaces.
 
     Args:
       interfaces: list of string, the output device names to enable.
-      dhclient_script: string, the path to a dhclient script used by dhclient.
       logger: logger object, used to write to SysLog and serial port.
+      dhclient_script: string, the path to a dhclient script used by dhclient.
     """
-    logger = logger or self.logger
-    helpers.CallDhclient(interfaces, logger, dhclient_script)
+    helpers.CallDhclient(interfaces, logger, dhclient_script=dhclient_script)
