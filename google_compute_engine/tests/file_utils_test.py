@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unittest for file_utils_test.py module."""
+"""Unittest for file_utils.py module."""
 
 from google_compute_engine import file_utils
 from google_compute_engine.test_compat import mock
