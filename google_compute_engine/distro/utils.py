@@ -17,7 +17,7 @@
 
 import logging.handlers
 
-from google_compute_engine import logger as loggger
+from google_compute_engine import logger as utils_logger
 from google_compute_engine import network_utils
 
 
@@ -33,7 +33,7 @@ class Utils(object):
     """
     self.debug = debug
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    self.logger = logger or loggger.Logger(
+    self.logger = logger or utils_logger.Logger(
         name='google-utils', debug=self.debug, facility=facility)
     self.network_utils = network_utils.NetworkUtils(logger=self.logger)
 
