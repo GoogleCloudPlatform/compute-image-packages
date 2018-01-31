@@ -84,7 +84,7 @@ class UtilsTest(unittest.TestCase):
     utils.Utils._Ifup(self.mock_setup, ['eth1', 'eth2'], self.mock_logger)
     utils.Utils._Ifup(self.mock_setup, ['eth1', 'eth2'], self.mock_logger)
     expectedIfupCall = [
-        '/usr/sbin/wicked', 'ifup', '--timeout', '1', 'eth1', 'eth2'
+        '/usr/sbin/wicked', 'ifup', '--timeout', '1', 'eth1', 'eth2',
     ]
     expected_calls = [
         mock.call.call(expectedIfupCall),
