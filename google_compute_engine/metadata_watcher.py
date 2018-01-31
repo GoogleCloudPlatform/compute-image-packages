@@ -67,7 +67,7 @@ def RetryOnUnavailable(func):
 class MetadataWatcher(object):
   """Watches for changes in metadata."""
 
-  def __init__(self, logger=logging, timeout=60):
+  def __init__(self, logger=None, timeout=60):
     """Constructor.
 
     Args:
@@ -75,7 +75,7 @@ class MetadataWatcher(object):
       timeout: int, timeout in seconds for metadata requests.
     """
     self.etag = 0
-    self.logger = logger
+    self.logger = logger or logging
     self.timeout = timeout
 
   @RetryOnUnavailable
