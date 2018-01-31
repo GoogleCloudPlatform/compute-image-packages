@@ -15,27 +15,17 @@
 
 """Utilities that are distro specific."""
 
-import logging.handlers
-
-from google_compute_engine import logger as utils_logger
-from google_compute_engine import network_utils
-
 
 class Utils(object):
   """Utilities used by Linux guest services."""
 
-  def __init__(self, debug=False, logger=None):
+  def __init__(self, debug=False):
     """Constructor.
 
     Args:
       debug: bool, True if debug output should write to the console.
-      logger: logger object, used to write to SysLog and serial port.
     """
     self.debug = debug
-    facility = logging.handlers.SysLogHandler.LOG_DAEMON
-    self.logger = logger or utils_logger.Logger(
-        name='google-utils', debug=self.debug, facility=facility)
-    self.network_utils = network_utils.NetworkUtils(logger=self.logger)
 
   def EnableNetworkInterfaces(
       self, interfaces, logger, dhclient_script=None):
