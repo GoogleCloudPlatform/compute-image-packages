@@ -40,6 +40,8 @@ elif 'debian' in distro_name and distro_version == '9':
   import google_compute_engine.distro.debian_9.utils as distro_utils
 elif 'suse' in distro_name and distro_version == '12':
   import google_compute_engine.distro.sles_12.utils as distro_utils
+elif 'suse' in distro_name and distro_version == '11':
+  import google_compute_engine.distro.sles_11.utils as distro_utils
 else:
   # Default to Debian 9.
   import google_compute_engine.distro.debian_9.utils as distro_utils

@@ -38,7 +38,7 @@ class Utils(utils.Utils):
     """
     interfaces_to_up = [i for i in interfaces if i != 'eth0']
     if interfaces_to_up:
-      # Configure and up multiple interfaces.
+      logger.info('Enabling the Ethernet interfaces %s.', interfaces_to_up)
       self._WriteIfcfg(interfaces_to_up, logger)
       self._Ifup(interfaces_to_up, logger)
 
