@@ -55,6 +55,7 @@ class UtilsTest(unittest.TestCase):
     mock_call.side_effect = [
         None, None, None, None,
         subprocess.CalledProcessError(1, 'Test'),
+        subprocess.CalledProcessError(1, 'Test'),
     ]
 
     utils.Utils._Dhcpcd(
@@ -65,6 +66,8 @@ class UtilsTest(unittest.TestCase):
         mock.call.call(['/sbin/dhcpcd', '-x', 'eth2']),
         mock.call.call(['/sbin/dhcpcd', 'eth2']),
         mock.call.call(['/sbin/dhcpcd', '-x', 'eth3']),
+        mock.call.logger.info(mock.ANY, 'eth3'),
+        mock.call.call(['/sbin/dhcpcd','eth3']),
         mock.call.logger.warning(mock.ANY, 'eth3'),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)

@@ -47,10 +47,14 @@ class Utils(utils.Utils):
       logger: logger object, used to write to SysLog and serial port.
     """
     for interface in interfaces:
-      command = ['/sbin/dhcpcd']
+      dhcpcd = ['/sbin/dhcpcd']
       try:
-        subprocess.check_call(command + ['-x'] + [interface])
-        subprocess.check_call(command + [interface])
+        subprocess.check_call(dhcpcd + ['-x'] + [interface])
+      except subprocess.CalledProcessError:
+        # Dhcpcd not yet running for this device.
+        logger.info('Could not exit interface %s.', interface)
+      try:
+        subprocess.check_call(dhcpcd + [interface])
       except subprocess.CalledProcessError:
         # The interface is already active.
         logger.warning('Could not activate interface %s.', interface)
