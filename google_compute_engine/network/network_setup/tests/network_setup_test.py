@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import tempfile
 
-from google_compute_engine.network_setup import network_setup
+from google_compute_engine.network.network_setup import network_setup
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -51,9 +51,9 @@ class NetworkSetupTest(unittest.TestCase):
     # Remove the directory after the test.
     shutil.rmtree(self.test_dir)
 
-  @mock.patch('google_compute_engine.network_setup.network_setup.network_utils')
-  @mock.patch('google_compute_engine.network_setup.network_setup.metadata_watcher')
-  @mock.patch('google_compute_engine.network_setup.network_setup.logger')
+  @mock.patch('google_compute_engine.network.network_setup.network_setup.network_utils')
+  @mock.patch('google_compute_engine.network.network_setup.network_setup.metadata_watcher')
+  @mock.patch('google_compute_engine.network.network_setup.network_setup.logger')
   def testNetworkSetup(self, mock_logger, mock_watcher, mock_network_utils):
     mock_logger_instance = mock.Mock()
     mock_logger.Logger.return_value = mock_logger_instance
@@ -72,7 +72,7 @@ class NetworkSetupTest(unittest.TestCase):
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.network_setup.network_setup.subprocess.check_call')
+  @mock.patch('google_compute_engine.network.network_setup.network_setup.subprocess.check_call')
   def testEnableNetworkInterfaces(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')

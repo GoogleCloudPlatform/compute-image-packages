@@ -15,7 +15,7 @@
 
 """Unittest for ip_forwarding_daemon.py module."""
 
-from google_compute_engine.ip_forwarding import ip_forwarding_daemon
+from google_compute_engine.network.ip_forwarding import ip_forwarding_daemon
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -35,11 +35,11 @@ class IpForwardingDaemonTest(unittest.TestCase):
     self.mock_setup.ip_forwarding_utils = self.mock_ip_forwarding_utils
     self.mock_setup.network_utils = self.mock_network_utils
 
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.ip_forwarding_utils')
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.network_utils')
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.metadata_watcher')
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.logger')
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.file_utils')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.ip_forwarding_utils')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.network_utils')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.metadata_watcher')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.logger')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.file_utils')
   def testIpForwardingDaemon(
       self, mock_lock, mock_logger, mock_watcher, mock_network_utils,
       mock_ip_forwarding_utils):
@@ -72,11 +72,11 @@ class IpForwardingDaemonTest(unittest.TestCase):
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.ip_forwarding_utils')
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.network_utils')
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.metadata_watcher')
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.logger')
-  @mock.patch('google_compute_engine.ip_forwarding.ip_forwarding_daemon.file_utils')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.ip_forwarding_utils')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.network_utils')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.metadata_watcher')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.logger')
+  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_daemon.file_utils')
   def testIpForwardingDaemonError(
       self, mock_lock, mock_logger, mock_watcher, mock_network_utils,
       mock_ip_forwarding_utils):

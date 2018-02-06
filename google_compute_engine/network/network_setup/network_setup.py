@@ -23,8 +23,8 @@ from google_compute_engine import config_manager
 from google_compute_engine import constants
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
-from google_compute_engine import network_utils
 from google_compute_engine.compat import distro_utils
+from google_compute_engine.network import network_utils
 
 
 class NetworkSetup(object):

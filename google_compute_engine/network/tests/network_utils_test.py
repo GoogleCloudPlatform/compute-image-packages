@@ -15,7 +15,7 @@
 
 """Unittest for network_utils.py module."""
 
-from google_compute_engine import network_utils
+from google_compute_engine.network import network_utils
 from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
@@ -29,8 +29,8 @@ class NetworkUtilsTest(unittest.TestCase):
     self.mock_utils = network_utils.NetworkUtils(self.mock_logger)
     self.mock_utils.interfaces = self.interfaces
 
-  @mock.patch('google_compute_engine.network_utils.netifaces', False)
-  @mock.patch('google_compute_engine.network_utils.os.listdir')
+  @mock.patch('google_compute_engine.network.network_utils.netifaces', False)
+  @mock.patch('google_compute_engine.network.network_utils.os.listdir')
   def testCreateInterfaceMapSysfs(self, mock_listdir):
     mock_open = mock.mock_open()
     interface_map = {
@@ -46,8 +46,8 @@ class NetworkUtilsTest(unittest.TestCase):
       mock_open().read.side_effect = interface_map.keys()
       self.assertEqual(self.mock_utils._CreateInterfaceMap(), interface_map)
 
-  @mock.patch('google_compute_engine.network_utils.netifaces', False)
-  @mock.patch('google_compute_engine.network_utils.os.listdir')
+  @mock.patch('google_compute_engine.network.network_utils.netifaces', False)
+  @mock.patch('google_compute_engine.network.network_utils.os.listdir')
   def testCreateInterfaceMapSysfsError(self, mock_listdir):
     mock_open = mock.mock_open()
     mock_listdir.return_value = ['a', 'b', 'c']
@@ -62,8 +62,8 @@ class NetworkUtilsTest(unittest.TestCase):
       ]
       self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.network_utils.netifaces.AF_LINK', 88)
-  @mock.patch('google_compute_engine.network_utils.netifaces')
+  @mock.patch('google_compute_engine.network.network_utils.netifaces.AF_LINK', 88)
+  @mock.patch('google_compute_engine.network.network_utils.netifaces')
   def testCreateInterfaceMapNetifaces(self, mock_netifaces):
     interface_map = {
         '11:11:11:11:11:11': 'a',
@@ -80,8 +80,8 @@ class NetworkUtilsTest(unittest.TestCase):
         lambda interface: ifaddress_map[interface])
     self.assertEqual(self.mock_utils._CreateInterfaceMap(), interface_map)
 
-  @mock.patch('google_compute_engine.network_utils.netifaces.AF_LINK', 88)
-  @mock.patch('google_compute_engine.network_utils.netifaces')
+  @mock.patch('google_compute_engine.network.network_utils.netifaces.AF_LINK', 88)
+  @mock.patch('google_compute_engine.network.network_utils.netifaces')
   def testCreateInterfaceMapNetifacesError(self, mock_netifaces):
     ifaddress_map = {
         'a': {mock_netifaces.AF_LINK: [{'addr': '11:11:11:11:11:11'}]},
