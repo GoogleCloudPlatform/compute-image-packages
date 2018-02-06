@@ -2,7 +2,7 @@ google-compute-image-packages (2.7.5-2) stable; urgency=low
 
   * Fix dependencies for syslog.
 
- -- Google Cloud Team <gc-team@google.com>  Mon, 05 Feb 2018 12:00:00 -0700
+ -- Google Cloud Team <gc-team@google.com>  Tue, 06 Feb 2018 12:00:00 -0700
 
 google-compute-image-packages (2.7.5-1) stable; urgency=low
 
