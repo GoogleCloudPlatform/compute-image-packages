@@ -18,10 +18,9 @@ Compute Engine [images](https://cloud.google.com/compute/docs/images).
 * [Daemons](#daemons)
     * [Accounts](#accounts)
     * [Clock Skew](#clock-skew)
-    * [IP Forwarding](#ip-forwarding)
+    * [Network](#network)
 * [Instance Setup](#instance-setup)
 * [Metadata Scripts](#metadata-scripts)
-* [Network Setup](#network-setup)
 * [Configuration](#configuration)
 * [Packaging](#packaging)
     * [Version Updates](#version-updates)
@@ -52,11 +51,11 @@ The guest environment is made up of the following components:
 *   **Disk expand** scripts to expand the VM root partition for CentOS 6,
     CentOS 7, RHEL 6, and RHEL 7 images.
 *   **Instance setup** scripts to execute VM configuration scripts during boot.
-*   **IP forwarding** daemon that integrates network load balancing with
-    forwarding rule changes into the guest.
+*   **Network** daemon that handles network setup for multiple network interfaces
+    on boot, dhcp refresh, and integrates network load balancing with forwarding
+    rule changes into the guest.
 *   **Metadata scripts** to run user-provided scripts at VM startup and
     shutdown.
-*   **Network setup** service to enable multiple network interfaces on boot.
 
 The Linux guest environment is written in Python and is version agnostic
 between Python 2.6 and 3.5. There is complete unittest coverage for every Python
@@ -173,15 +172,19 @@ The clock skew daemon is responsible for syncing the software clock with the
 hypervisor clock after a stop/start event or after a migration. Preventing clock
 skew may result in `system time has changed` messages in VM logs.
 
-#### IP Forwarding
+#### Network
 
-The IP forwarding daemon uses IP forwarding metadata to setup or remove IP
-routes in the guest.
+The Network daemon uses network interface metadata manage the network interfaces
+in the guest by performing the following tasks:
 
-*   Only IPv4 IP addresses are currently supported.
-*   Routes are set on the default Ethernet interface determined dynamically.
-*   Google routes are configured, by default, with the routing protocol ID `66`.
-    This ID is a namespace for daemon configured IP addresses.
+*   Enabled all associated network interfaces on boot. Network interfaces are
+    specified by MAC address in instance metadata.
+*   Uses IP forwarding metadata to setup or remove IP routes in the guest.
+    *   Only IPv4 IP addresses are currently supported.
+    *   Routes are set on the default Ethernet interface determined dynamically.
+    *   Google routes are configured, by default, with the routing protocol ID
+        `66`. This ID is a namespace for daemon configured IP addresses.
+*   Uses dhcp refresh metadata to trigger dhcp refreshes.
 
 ## Instance Setup
 
@@ -215,12 +218,6 @@ design details.
     `startup-script-url`) a URL is executed first.
 *   The exit status of a metadata script is logged after completed execution.
 
-## Network Setup
-
-A network setup service runs on boot and enables all associated network
-interfaces. Network interfaces are specified by MAC address in instance
-metadata.
-
 ## Configuration
 
 Users of Google provided images may configure the guest environment behaviors
@@ -246,7 +243,8 @@ Accounts          | usermod\_cmd           | Command string to modify a user's g
 Accounts          | groupadd\_cmd          | Command string to create a new group.
 Daemons           | accounts\_daemon       | `false` disables the accounts daemon.
 Daemons           | clock\_skew\_daemon    | `false` disables the clock skew daemon.
-Daemons           | ip\_forwarding\_daemon | `false` disables the IP forwarding daemon.
+Daemons           | ip\_forwarding\_daemon | `false` (deprecated) skips IP forwarding.
+Daemons           | network\_daemon        | `false` disables the Network daemon.
 InstanceSetup     | host\_key\_types       | Comma separated list of host key types to generate.
 InstanceSetup     | optimize\_local\_ssd   | `false` prevents optimizing for local SSD.
 InstanceSetup     | network\_enabled       | `false` skips instance setup functions that require metadata.
@@ -259,9 +257,11 @@ IpForwarding      | target\_instance\_ips  | `false` disables internal IP addres
 MetadataScripts   | run\_dir               | String base directory where metadata scripts are executed.
 MetadataScripts   | startup                | `false` disables startup script execution.
 MetadataScripts   | shutdown               | `false` disables shutdown script execution.
+NetworkInterfaces | setup                  | `false` skips network interface setup.
+NetworkInterfaces | ip\_forwarding         | `false` skips IP forwarding.
+NetworkInterfaces | dhcp\_refresh          | `false` skips dhcp refresh.
 NetworkInterfaces | dhclient\_script       | String path to a dhclient script used by dhclient.
 NetworkInterfaces | dhcp\_command          | String to execute to enable network interfaces.
-NetworkInterfaces | setup                  | `false` disables network interface setup.
 
 Setting `network_enabled` to `false` will skip setting up host keys and the
 `boto` config in the guest. The setting may also prevent startup and shutdown

@@ -13,30 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Enables the network interfaces provided in metadata."""
+"""Enables the network interfaces for multi-nic support."""
 
 import logging.handlers
-import optparse
 import subprocess
 
-from google_compute_engine import config_manager
-from google_compute_engine import constants
 from google_compute_engine import logger
-from google_compute_engine import metadata_watcher
 from google_compute_engine.compat import distro_utils
-from google_compute_engine.network import network_utils
 
 
 class NetworkSetup(object):
-  """Enable network interfaces specified by metadata."""
+  """Enable network interfaces."""
 
   network_interfaces = 'instance/network-interfaces'
-  network_path = constants.LOCALBASE + '/etc/sysconfig/network-scripts'
 
-  def __init__(self, dhclient_script=None, dhcp_command=None, debug=False):
+  def __init__(
+      self, interfaces, dhclient_script=None, dhcp_command=None, debug=False):
     """Constructor.
 
     Args:
+      interfaces: list of string, the output device names to enable.
       dhclient_script: string, the path to a dhclient script used by dhclient.
       dhcp_command: string, a command to enable Ethernet interfaces.
       debug: bool, True if debug output should write to the console.
@@ -46,10 +42,8 @@ class NetworkSetup(object):
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
         name='network-setup', debug=debug, facility=facility)
-    self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
-    self.network_utils = network_utils.NetworkUtils(logger=self.logger)
     self.distro_utils = distro_utils.Utils(debug=debug)
-    self._SetupNetworkInterfaces()
+    self._EnableNetworkInterfaces(interfaces)
 
   def _EnableNetworkInterfaces(self, interfaces):
     """Enable the list of network interfaces.
@@ -72,40 +66,3 @@ class NetworkSetup(object):
     # Distro-specific setup for network interfaces.
     self.distro_utils.EnableNetworkInterfaces(
         interfaces, self.logger, dhclient_script=self.dhclient_script)
-
-  def _SetupNetworkInterfaces(self):
-    """Get network interfaces metadata and enable each Ethernet interface."""
-    result = self.watcher.GetMetadata(
-        metadata_key=self.network_interfaces, recursive=True)
-    interfaces = []
-
-    for network_interface in result:
-      mac_address = network_interface.get('mac')
-      interface = self.network_utils.GetNetworkInterface(mac_address)
-      if interface:
-        interfaces.append(interface)
-      else:
-        message = 'Network interface not found for MAC address: %s.'
-        self.logger.warning(message, mac_address)
-
-    self._EnableNetworkInterfaces(interfaces)
-
-
-def main():
-  parser = optparse.OptionParser()
-  parser.add_option(
-      '-d', '--debug', action='store_true', dest='debug',
-      help='print debug output to the console.')
-  (options, _) = parser.parse_args()
-  instance_config = config_manager.ConfigManager()
-  if instance_config.GetOptionBool('NetworkInterfaces', 'setup'):
-    NetworkSetup(
-        dhclient_script=instance_config.GetOptionString(
-            'NetworkInterfaces', 'dhclient_script'),
-        dhcp_command=instance_config.GetOptionString(
-            'NetworkInterfaces', 'dhcp_command'),
-        debug=bool(options.debug))
-
-
-if __name__ == '__main__':
-  main()

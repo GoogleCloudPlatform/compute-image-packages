@@ -16,24 +16,20 @@
 # Stop existing daemons.
 systemctl stop --no-block google-accounts-daemon
 systemctl stop --no-block google-clock-skew-daemon
-systemctl stop --no-block google-ip-forwarding-daemon
+systemctl stop --no-block google-network-daemon
 
 # Enable systemd services.
 systemctl enable google-accounts-daemon.service
 systemctl enable google-clock-skew-daemon.service
 systemctl enable google-instance-setup.service
-systemctl enable google-ip-forwarding-daemon.service
-systemctl enable google-network-setup.service
+systemctl enable google-network-daemon.service
 systemctl enable google-shutdown-scripts.service
 systemctl enable google-startup-scripts.service
 
 # Run instance setup manually to prevent startup script execution.
 /usr/bin/google_instance_setup
 
-# Enable network interfaces.
-/usr/bin/google_network_setup
-
 # Start daemons.
+systemctl start --no-block google-network-daemon
 systemctl start --no-block google-accounts-daemon
 systemctl start --no-block google-clock-skew-daemon
-systemctl start --no-block google-ip-forwarding-daemon

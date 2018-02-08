@@ -37,3 +37,11 @@ class Utils(object):
       dhclient_script: string, the path to a dhclient script used by dhclient.
     """
     pass
+
+  def RefreshDhcpV6(self, interface):
+    """Refresh dhcp for the given interface.
+
+    Args:
+      interface: string, the output device to refresh.
+    """
+    pass

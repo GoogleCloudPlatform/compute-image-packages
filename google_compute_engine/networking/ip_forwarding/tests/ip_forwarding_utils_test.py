@@ -15,7 +15,7 @@
 
 """Unittest for ip_forwarding_utils.py module."""
 
-from google_compute_engine.network.ip_forwarding import ip_forwarding_utils
+from google_compute_engine.networking.ip_forwarding import ip_forwarding_utils
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -33,7 +33,7 @@ class IpForwardingUtilsTest(unittest.TestCase):
     self.mock_logger = mock.Mock()
     self.options = {'hello': 'world'}
     with mock.patch(
-        'google_compute_engine.network.ip_forwarding.ip_forwarding_utils'
+        'google_compute_engine.networking.ip_forwarding.ip_forwarding_utils'
         '.subprocess') as mock_subprocess:
       mock_subprocess.Popen.return_value = _CreateMockProcess(
           0, b'out', b'')
@@ -69,7 +69,7 @@ class IpForwardingUtilsTest(unittest.TestCase):
         self.mock_utils._CreateRouteOptions(proto='test 1', scope='test 2'),
         expected_options)
 
-  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_utils.subprocess')
+  @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding_utils.subprocess')
   def testRunIpRoute(self, mock_subprocess):
     mock_process = _CreateMockProcess(0, b'out', b'')
     mock_subprocess.Popen.return_value = mock_process
@@ -84,7 +84,7 @@ class IpForwardingUtilsTest(unittest.TestCase):
     mock_process.communicate.assert_called_once_with()
     self.mock_logger.warning.assert_not_called()
 
-  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_utils.subprocess')
+  @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding_utils.subprocess')
   def testRunIpRouteReturnCode(self, mock_subprocess):
     mock_process = _CreateMockProcess(1, b'out', b'error\n')
     mock_subprocess.Popen.return_value = mock_process
@@ -95,7 +95,7 @@ class IpForwardingUtilsTest(unittest.TestCase):
     command = ['ip', 'route', 'foo', 'bar', 'hello', 'world']
     self.mock_logger.warning.assert_called_once_with(mock.ANY, command, b'error')
 
-  @mock.patch('google_compute_engine.network.ip_forwarding.ip_forwarding_utils.subprocess')
+  @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding_utils.subprocess')
   def testRunIpRouteException(self, mock_subprocess):
     mock_subprocess.Popen.side_effect = OSError('Test Error')
 

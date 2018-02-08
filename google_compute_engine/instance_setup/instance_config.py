@@ -66,7 +66,8 @@ class InstanceConfig(config_manager.ConfigManager):
       'Daemons': {
           'accounts_daemon': 'true',
           'clock_skew_daemon': 'true',
-          'ip_forwarding_daemon': 'true',
+          'ip_forwarding_daemon': 'true',  # For back-compat.
+          'network_daemon': 'true',
       },
       'Instance': {
           'instance_id': '0',
@@ -91,8 +92,10 @@ class InstanceConfig(config_manager.ConfigManager):
       },
       'NetworkInterfaces': {
           'setup': 'true',
-          'dhclient_script': '/sbin/google-dhclient-script',
+          'dhcp_refresh': 'true',
+          'ip_forwarding': 'true',
           'dhcp_command': '',
+          'dhclient_script': '/sbin/google-dhclient-script',
       },
   }
 
