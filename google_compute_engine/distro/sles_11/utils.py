@@ -52,7 +52,7 @@ class Utils(utils.Utils):
         subprocess.check_call(dhcpcd + ['-x'] + [interface])
       except subprocess.CalledProcessError:
         # Dhcpcd not yet running for this device.
-        logger.info('Could not exit interface %s.', interface)
+        logger.info('Dhcpcd not yet running for interface %s.', interface)
       try:
         subprocess.check_call(dhcpcd + [interface])
       except subprocess.CalledProcessError:
