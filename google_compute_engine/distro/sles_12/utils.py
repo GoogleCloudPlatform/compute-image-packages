@@ -62,8 +62,6 @@ class Utils(utils.Utils):
           'BOOTPROTO=dhcp',
           'DHCLIENT_SET_DEFAULT_ROUTE=yes',
           'DHCLIENT_ROUTE_PRIORITY=10%s00' % interface,
-          'CLOUD_NETCONFIG_MANAGE=yes',
-          'POST_DOWN_SCRIPT=compat:suse:cloud-netconfig-cleanup',
           '',
       ]
       with open(interface_config, 'w') as interface_file:
