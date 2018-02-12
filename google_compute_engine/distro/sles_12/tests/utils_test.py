@@ -77,8 +77,7 @@ class UtilsTest(unittest.TestCase):
     mocks.attach_mock(mock_call, 'call')
     mocks.attach_mock(self.mock_logger, 'logger')
     mock_call.side_effect = [
-        None,
-        subprocess.CalledProcessError(1, 'Test'),
+        None, subprocess.CalledProcessError(1, 'Test'),
     ]
 
     utils.Utils._Ifup(self.mock_setup, ['eth1', 'eth2'], self.mock_logger)

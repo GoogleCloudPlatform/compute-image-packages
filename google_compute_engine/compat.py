@@ -19,9 +19,8 @@ import logging
 import subprocess
 import sys
 
-# Get the linux distribution.
-if sys.version_info >= (3.5, 0):
-  import distro as distro  # Must be installed on the image.
+if sys.version_info >= (3, 5):
+  import distro
 else:
   import platform as distro
 

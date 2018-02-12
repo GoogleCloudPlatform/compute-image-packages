@@ -49,7 +49,7 @@ class Utils(utils.Utils):
     for interface in interfaces:
       dhcpcd = ['/sbin/dhcpcd']
       try:
-        subprocess.check_call(dhcpcd + ['-x'] + [interface])
+        subprocess.check_call(dhcpcd + ['-x', interface])
       except subprocess.CalledProcessError:
         # Dhcpcd not yet running for this device.
         logger.info('Dhcpcd not yet running for interface %s.', interface)
