@@ -16,28 +16,35 @@
 """A module for resolving compatibility issues between Python 2 and Python 3."""
 
 import logging
-import platform
 import subprocess
 import sys
 
-# Set distro-specific utils.
-distribution = platform.linux_distribution()
+if sys.version_info >= (3, 5):
+  import distro
+else:
+  import platform as distro
+
+distribution = distro.linux_distribution()
 distro_name = distribution[0].lower()
 distro_version = distribution[1].split('.')[0]
 distro_utils = None
 
 if 'centos' in distro_name and distro_version == '6':
   import google_compute_engine.distro.el_6.utils as distro_utils
-elif 'centos' in distro_name and distro_version == '7':
+elif 'centos' in distro_name:
   import google_compute_engine.distro.el_7.utils as distro_utils
 elif 'red hat enterprise linux' in distro_name and distro_version == '6':
   import google_compute_engine.distro.el_6.utils as distro_utils
-elif 'red hat enterprise linux' in distro_name and distro_version == '7':
+elif 'red hat enterprise linux' in distro_name:
   import google_compute_engine.distro.el_7.utils as distro_utils
 elif 'debian' in distro_name and distro_version == '8':
   import google_compute_engine.distro.debian_8.utils as distro_utils
-elif 'debian' in distro_name and distro_version == '9':
+elif 'debian' in distro_name:
   import google_compute_engine.distro.debian_9.utils as distro_utils
+elif 'suse' in distro_name and distro_version == '11':
+  import google_compute_engine.distro.sles_11.utils as distro_utils
+elif 'suse' in distro_name:
+  import google_compute_engine.distro.sles_12.utils as distro_utils
 else:
   # Default to Debian 9.
   import google_compute_engine.distro.debian_9.utils as distro_utils

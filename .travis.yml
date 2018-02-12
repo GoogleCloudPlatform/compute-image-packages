@@ -13,6 +13,7 @@ install:
 # Tox needs an older version of virtualenv.
 - pip install "virtualenv<14.0.0"
 - pip install tox tox-travis codecov
+- pip install "setuptools>20.0.0"
 script:
 - tox
 after_success:
