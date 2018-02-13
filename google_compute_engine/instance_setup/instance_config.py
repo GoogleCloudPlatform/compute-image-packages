@@ -66,7 +66,7 @@ class InstanceConfig(config_manager.ConfigManager):
       'Daemons': {
           'accounts_daemon': 'true',
           'clock_skew_daemon': 'true',
-          'ip_forwarding_daemon': 'true',  # For back-compat.
+          'ip_forwarding_daemon': 'true',  # Deprecated.
           'network_daemon': 'true',
       },
       'Instance': {

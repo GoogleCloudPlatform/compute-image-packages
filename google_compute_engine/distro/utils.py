@@ -38,8 +38,8 @@ class Utils(object):
     """
     pass
 
-  def RefreshDhcpV6(self, interface):
-    """Refresh dhcp for the given interface.
+  def RefreshDhcpV6Lease(self, interface):
+    """Refresh DHCP V6 lease for the given interface.
 
     Args:
       interface: string, the output device to refresh.

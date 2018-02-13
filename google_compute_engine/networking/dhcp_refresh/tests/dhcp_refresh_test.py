@@ -46,24 +46,26 @@ class DhcpRefreshTest(unittest.TestCase):
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  def testRefreshDhcpWithTokenChange(self):
+  def testRefreshDhcpLeaseWithTokenChange(self):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_distro_utils, 'distro_utils')
     self.mock_setup.dhcpv6_tokens = {'eth1': 'a', 'eth2': 'b'}
     expected_calls = [
-        mock.call.distro_utils.RefreshDhcpV6('eth1'),
+        mock.call.distro_utils.RefreshDhcpV6Lease('eth1'),
     ]
 
-    dhcp_refresh.DhcpRefresh.RefreshDhcp(self.mock_setup, 'eth1', dhcpv6_refresh_token='x')
+    dhcp_refresh.DhcpRefresh.RefreshDhcpLease(
+        self.mock_setup, 'eth1', dhcpv6_refresh_token='x')
     self.assertEqual(self.mock_setup.dhcpv6_tokens.get('eth1'), 'x')
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  def testRefreshDhcpWithoutTokenChange(self):
+  def testRefreshDhcpLeaseWithoutTokenChange(self):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_distro_utils, 'distro_utils')
     self.mock_setup.dhcpv6_tokens = {'eth1': 'a', 'eth2': 'b'}
     expected_calls = []
 
-    dhcp_refresh.DhcpRefresh.RefreshDhcp(self.mock_setup, 'eth1', dhcpv6_refresh_token='a')
+    dhcp_refresh.DhcpRefresh.RefreshDhcpLease(
+        self.mock_setup, 'eth1', dhcpv6_refresh_token='a')
     self.assertEqual(self.mock_setup.dhcpv6_tokens.get('eth1'), 'a')
     self.assertEqual(mocks.mock_calls, expected_calls)

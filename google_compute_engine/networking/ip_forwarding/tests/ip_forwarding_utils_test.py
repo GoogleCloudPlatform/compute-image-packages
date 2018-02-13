@@ -93,7 +93,8 @@ class IpForwardingUtilsTest(unittest.TestCase):
         self.mock_utils._RunIpRoute(args=['foo', 'bar'], options=self.options),
         '')
     command = ['ip', 'route', 'foo', 'bar', 'hello', 'world']
-    self.mock_logger.warning.assert_called_once_with(mock.ANY, command, b'error')
+    self.mock_logger.warning.assert_called_once_with(
+        mock.ANY, command, b'error')
 
   @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding_utils.subprocess')
   def testRunIpRouteException(self, mock_subprocess):

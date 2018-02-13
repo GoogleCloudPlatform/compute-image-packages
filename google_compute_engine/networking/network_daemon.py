@@ -17,7 +17,7 @@
 
 Run network setup to enable multiple network interfaces on startup.
 Update IP forwarding when metadata changes.
-Refresh dhcp when metadata refresh token changes.
+Refresh DHCP leases when metadata refresh token changes.
 """
 
 import logging.handlers
@@ -40,7 +40,7 @@ LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_networking.lock'
 class NetworkDaemon(object):
   """Manage networking based on changes to network metadata."""
 
-  network_interfaces = 'instance/network-interfaces'
+  network_interface_metadata_key = 'instance/network-interfaces'
 
   def __init__(
       self, ip_forwarding_enabled, proto_id, ip_aliases, target_instance_ips,
@@ -55,7 +55,7 @@ class NetworkDaemon(object):
       target_instance_ips: bool, True supports internal IP load balancing.
       dhclient_script: string, the path to a dhclient script used by dhclient.
       dhcp_command: string, a command to enable Ethernet interfaces.
-      dhcp_refresh_enabled: bool, True if dhcp refresh is enabled.
+      dhcp_refresh_enabled: bool, True if DHCP refresh is enabled.
       network_setup_enabled: bool, True if network setup is enabled.
       debug: bool, True if debug output should write to the console.
     """
@@ -70,11 +70,11 @@ class NetworkDaemon(object):
 
     # Get initial metadata.
     result = self.watcher.GetMetadata(
-        metadata_key=self.network_interfaces, recursive=True)
-    interface_details = self._ExtractInterfaceMetadata(result)
+        metadata_key=self.network_interface_metadata_key, recursive=True)
+    network_interfaces = self._ExtractInterfaceMetadata(result)
 
     if network_setup_enabled:
-      interfaces = [interface for interface, _, _ in interface_details]
+      interfaces = [interface.name for interface in network_interfaces]
       network_setup.NetworkSetup(
           interfaces, dhclient_script=dhclient_script,
           dhcp_command=dhcp_command, debug=debug)
@@ -85,8 +85,8 @@ class NetworkDaemon(object):
 
     self.dhcp_refresh_enabled = dhcp_refresh_enabled
     if dhcp_refresh_enabled:
-      dhcpv6_tokens = {name: dhcpv6_token
-          for name, _, dhcpv6_token in interface_details}
+      dhcpv6_tokens = {interface.name: interface.dhcpv6_refresh_token
+          for interface in network_interfaces}
       self.dhcp_refresh = dhcp_refresh.DhcpRefresh(dhcpv6_tokens, debug)
 
     try:
@@ -94,8 +94,9 @@ class NetworkDaemon(object):
         self.logger.info('Starting Google Networking daemon.')
         timeout = 60 + random.randint(0, 30)
         self.watcher.WatchMetadata(
-            self.HandleNetworkInterfaces, metadata_key=self.network_interfaces,
-            recursive=True, timeout=timeout)
+            self.HandleNetworkInterfaces,
+            metadata_key=self.network_interface_metadata_key, recursive=True,
+            timeout=timeout)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
@@ -105,13 +106,15 @@ class NetworkDaemon(object):
     Args:
       result: dict, the metadata response with the network interfaces.
     """
-    interface_details = self._ExtractInterfaceMetadata(result)
+    network_interfaces = self._ExtractInterfaceMetadata(result)
 
-    for interface, forwarded_ips, dhcpv6_refresh_token in interface_details:
+    for interface in network_interfaces:
       if self.ip_forwarding_enabled:
-        self.ip_forwarding.HandleForwardedIps(interface, forwarded_ips)
+        self.ip_forwarding.HandleForwardedIps(
+            interface.name, interface.forwarded_ips)
       if self.dhcp_refresh_enabled:
-        self.dhcp_refresh.RefreshDhcp(interface, dhcpv6_refresh_token)
+        self.dhcp_refresh.RefreshDhcpLease(
+            interface.name, interface.dhcpv6_refresh_token)
 
   def _ExtractInterfaceMetadata(self, metadata):
     """Extracts network interface metadata.
@@ -120,7 +123,7 @@ class NetworkDaemon(object):
       metadata: dict, the metadata response with the new network interfaces.
 
     Returns:
-      list, the network output device information.
+      list, a list of NetworkInterface objects.
     """
     interfaces = []
     for network_interface in metadata:
@@ -134,11 +137,20 @@ class NetworkDaemon(object):
           ip_addresses.extend(network_interface.get('ipAliases', []))
         if self.target_instance_ips:
           ip_addresses.extend(network_interface.get('targetInstanceIps', []))
-        interfaces.append((interface, ip_addresses, dhcpv6_refresh_token))
+        interfaces.append(NetworkDaemon.NetworkInterface(
+            interface, ip_addresses, dhcpv6_refresh_token))
       else:
         message = 'Network interface not found for MAC address: %s.'
         self.logger.warning(message, mac_address)
     return interfaces
+
+  class NetworkInterface(object):
+    """Network interface information extracted from metadata."""
+
+    def __init__(self, name, forwarded_ips=None, dhcpv6_refresh_token=None):
+      self.name = name
+      self.forwarded_ips = forwarded_ips
+      self.dhcpv6_refresh_token = dhcpv6_refresh_token
 
 
 def main():

@@ -17,7 +17,6 @@
 
 import subprocess
 
-from google_compute_engine.networking import network_utils
 from google_compute_engine.networking.network_setup import network_setup
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
@@ -54,7 +53,8 @@ class NetworkSetupTest(unittest.TestCase):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')
     mocks.attach_mock(self.mock_logger, 'logger')
-    mocks.attach_mock(self.mock_setup.distro_utils.EnableNetworkInterfaces, 'enable')
+    mocks.attach_mock(
+        self.mock_setup.distro_utils.EnableNetworkInterfaces, 'enable')
     mock_call.side_effect = [None, subprocess.CalledProcessError(1, 'Test')]
 
     # Return immediately with fewer than two interfaces.

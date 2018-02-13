@@ -52,8 +52,8 @@ The guest environment is made up of the following components:
     CentOS 7, RHEL 6, and RHEL 7 images.
 *   **Instance setup** scripts to execute VM configuration scripts during boot.
 *   **Network** daemon that handles network setup for multiple network interfaces
-    on boot, dhcp refresh, and integrates network load balancing with forwarding
-    rule changes into the guest.
+    on boot, DHCP lease renewal, and integrates network load balancing with
+    forwarding rule changes into the guest.
 *   **Metadata scripts** to run user-provided scripts at VM startup and
     shutdown.
 
@@ -184,7 +184,7 @@ in the guest by performing the following tasks:
     *   Routes are set on the default Ethernet interface determined dynamically.
     *   Google routes are configured, by default, with the routing protocol ID
         `66`. This ID is a namespace for daemon configured IP addresses.
-*   Uses dhcp refresh metadata to trigger dhcp refreshes.
+*   Uses DHCP refresh metadata to trigger DHCP lease renewal.
 
 ## Instance Setup
 
@@ -259,7 +259,7 @@ MetadataScripts   | startup                | `false` disables startup script exe
 MetadataScripts   | shutdown               | `false` disables shutdown script execution.
 NetworkInterfaces | setup                  | `false` skips network interface setup.
 NetworkInterfaces | ip\_forwarding         | `false` skips IP forwarding.
-NetworkInterfaces | dhcp\_refresh          | `false` skips dhcp refresh.
+NetworkInterfaces | dhcp\_refresh          | `false` skips DHCP lease renewal.
 NetworkInterfaces | dhclient\_script       | String path to a dhclient script used by dhclient.
 NetworkInterfaces | dhcp\_command          | String to execute to enable network interfaces.
 
