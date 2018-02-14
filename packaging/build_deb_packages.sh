@@ -29,8 +29,7 @@ apt-get update
 apt-get -y install git debhelper devscripts dh-python dh-systemd \
   python-all python-boto python-setuptools python-pytest python-mock \
   python3-all python3-boto python3-setuptools python3-pytest python3-mock \
-  python3-distro \
-  libcurl4-openssl-dev libjson-c-dev libpam-dev build-essential
+  python3-distro libcurl4-openssl-dev libjson-c-dev libpam-dev build-essential
 if [ $? -ne 0 ]; then
   echo "BuildFailed: Unable to install build dependencies."
   exit 1

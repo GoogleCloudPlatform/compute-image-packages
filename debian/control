@@ -13,7 +13,8 @@ Build-Depends: debhelper (>= 9),
                python3-pytest,
                python-mock,
                python-boto,
-               python3-boto
+               python3-boto,
+               python3-distro
 Standards-Version: 3.9.8
 Homepage: https://github.com/GoogleCloudPlatform/compute-image-packages
 

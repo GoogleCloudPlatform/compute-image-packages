@@ -29,10 +29,10 @@ from google_compute_engine import constants
 from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
-from google_compute_engine.networking import dhcp_refresh
-from google_compute_engine.networking import ip_forwarding
-from google_compute_engine.networking import network_setup
 from google_compute_engine.networking import network_utils
+from google_compute_engine.networking.dhcp_refresh import dhcp_refresh
+from google_compute_engine.networking.ip_forwarding import ip_forwarding
+from google_compute_engine.networking.network_setup import network_setup
 
 LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_networking.lock'
 
