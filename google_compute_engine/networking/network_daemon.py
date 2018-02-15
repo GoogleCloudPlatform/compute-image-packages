@@ -30,7 +30,7 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine.networking import network_utils
-from google_compute_engine.networking.dhcp_refresh import dhcp_refresh
+from google_compute_engine.networking.dhcp_lease_refresh import dhcp_lease_refresh
 from google_compute_engine.networking.ip_forwarding import ip_forwarding
 from google_compute_engine.networking.network_setup import network_setup
 
@@ -55,7 +55,7 @@ class NetworkDaemon(object):
       target_instance_ips: bool, True supports internal IP load balancing.
       dhclient_script: string, the path to a dhclient script used by dhclient.
       dhcp_command: string, a command to enable Ethernet interfaces.
-      dhcp_refresh_enabled: bool, True if DHCP refresh is enabled.
+      dhcp_refresh_enabled: bool, True if DHCP lease refresh is enabled.
       network_setup_enabled: bool, True if network setup is enabled.
       debug: bool, True if debug output should write to the console.
     """
@@ -85,9 +85,11 @@ class NetworkDaemon(object):
 
     self.dhcp_refresh_enabled = dhcp_refresh_enabled
     if dhcp_refresh_enabled:
-      dhcpv6_tokens = {interface.name: interface.dhcpv6_refresh_token
-          for interface in network_interfaces}
-      self.dhcp_refresh = dhcp_refresh.DhcpRefresh(dhcpv6_tokens, debug)
+      dhcpv6_tokens = {}
+      for interface in network_interfaces:
+        dhcpv6_tokens[interface.name] = interface.dhcpv6_refresh_token
+      self.dhcp_lease_refresh = dhcp_lease_refresh.DhcpLeaseRefresh(
+          dhcpv6_tokens, debug)
 
     try:
       with file_utils.LockFile(LOCKFILE):
@@ -113,7 +115,7 @@ class NetworkDaemon(object):
         self.ip_forwarding.HandleForwardedIps(
             interface.name, interface.forwarded_ips)
       if self.dhcp_refresh_enabled:
-        self.dhcp_refresh.RefreshDhcpLease(
+        self.dhcp_lease_refresh.HandleDhcpLeaseRefresh(
             interface.name, interface.dhcpv6_refresh_token)
 
   def _ExtractInterfaceMetadata(self, metadata):

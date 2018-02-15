@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Refresh DHCP for interfaces as controlled my metadata."""
+"""Refresh DHCP lease for interfaces as controlled my metadata."""
 
 import logging.handlers
 
@@ -21,8 +21,8 @@ from google_compute_engine import logger
 from google_compute_engine.compat import distro_utils
 
 
-class DhcpRefresh(object):
-  """Refreshes DHCP."""
+class DhcpLeaseRefresh(object):
+  """Refreshes DHCP lease."""
 
   def __init__(self, dhcpv6_tokens, debug=False):
     """Constructor.
@@ -37,8 +37,8 @@ class DhcpRefresh(object):
     self.distro_utils = distro_utils.Utils(debug=debug)
     self.dhcpv6_tokens = dhcpv6_tokens
 
-  def RefreshDhcpLease(self, interface, dhcpv6_refresh_token):
-    """Refresh DHCP for the interface if the token has changed.
+  def HandleDhcpLeaseRefresh(self, interface, dhcpv6_refresh_token):
+    """Refresh DHCP lease for the interface if the token has changed.
 
     Args:
       interface: string, the output device to refresh.

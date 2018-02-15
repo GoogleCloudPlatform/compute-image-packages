@@ -113,6 +113,7 @@ cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google
 %if 0%{?el6}
 # On upgrade run instance setup again to handle any new configs and restart daemons.
 if [ $1 -eq 2 ]; then
+  stop -q -n ip-forwarding-daemon
   stop -q -n google-accounts-daemon
   stop -q -n google-clock-skew-daemon
   stop -q -n google-network-daemon
