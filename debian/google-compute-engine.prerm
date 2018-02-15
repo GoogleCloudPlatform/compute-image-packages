@@ -20,6 +20,7 @@ if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
     google-instance-setup.service \
     google-accounts-daemon.service \
     google-clock-skew-daemon.service \
+    google-ip-forwarding-daemon.service \
     google-network-daemon.service \
     google-shutdown-scripts.service \
     google-startup-scripts.service >/dev/null

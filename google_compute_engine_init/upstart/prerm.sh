@@ -17,4 +17,5 @@ if [ "$1" = purge ]; then
   stop --no-wait google-accounts-daemon
   stop --no-wait google-clock-skew-daemon
   stop --no-wait google-network-daemon
+  stop --no-wait google-ip-forwarding-daemon
 fi
