@@ -41,7 +41,7 @@ class BotoConfig(object):
   boto_config_header = (
       'This file is automatically created at boot time by the %s script. Do '
       'not edit this file directly. If you need to add items to this file, '
-      'create or edit %s instead and then re-run the script.')
+      'create or edit %s instead and then re-run google_instance_setup.')
 
   def __init__(self, project_id=None, debug=False):
     """Constructor.
