@@ -174,8 +174,8 @@ skew may result in `system time has changed` messages in VM logs.
 
 #### Network
 
-The Network daemon uses network interface metadata manage the network interfaces
-in the guest by performing the following tasks:
+The network daemon uses network interface metadata to manage the network
+interfaces in the guest by performing the following tasks:
 
 *   Enabled all associated network interfaces on boot. Network interfaces are
     specified by MAC address in instance metadata.
