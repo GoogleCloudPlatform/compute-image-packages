@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unittest for logger.py module."""
+"""Unittest for compat.py module."""
 
 import sys
 
+import google_compute_engine.compat
 from google_compute_engine.test_compat import mock
+from google_compute_engine.test_compat import reload_import
 from google_compute_engine.test_compat import unittest
 from google_compute_engine.test_compat import urlretrieve
 
@@ -65,6 +67,45 @@ class CompatTest(unittest.TestCase):
       mock_call.assert_not_called()
     else:
       pass
+
+  @mock.patch('google_compute_engine.compat.distro.linux_distribution')
+  def testDistroCompat(self, mock_call):
+    test_cases = {
+        ('debian', '8.10', ''):
+            google_compute_engine.distro.debian_8.utils,
+        ('debian', '9.3', ''):
+            google_compute_engine.distro.debian_9.utils,
+        ('debian', '10.3', ''):
+            google_compute_engine.distro.debian_9.utils,
+        ('SUSE Linux Enterprise Server', '11', 'x86_64'):
+            google_compute_engine.distro.sles_11.utils,
+        ('SUSE Linux Enterprise Server', '12', 'x86_64'):
+            google_compute_engine.distro.sles_12.utils,
+        ('SUSE Linux Enterprise Server', '13', 'x86_64'):
+            google_compute_engine.distro.sles_12.utils,
+        ('CentOS Linux', '6.4.3', 'Core'):
+            google_compute_engine.distro.el_6.utils,
+        ('CentOS Linux', '7.4.1708', 'Core'):
+            google_compute_engine.distro.el_7.utils,
+        ('CentOS Linux', '8.4.3', 'Core'):
+            google_compute_engine.distro.el_7.utils,
+        ('Red Hat Enterprise Linux Server', '6.3.2', ''):
+            google_compute_engine.distro.el_6.utils,
+        ('Red Hat Enterprise Linux Server', '7.4', ''):
+            google_compute_engine.distro.el_7.utils,
+        ('Red Hat Enterprise Linux Server', '8.5.1', ''):
+            google_compute_engine.distro.el_7.utils,
+        ('', '', ''):
+            google_compute_engine.distro.debian_9.utils,
+        ('xxxx', 'xxxx', 'xxxx'):
+            google_compute_engine.distro.debian_9.utils,
+    }
+
+    for distro in test_cases:
+      mock_call.return_value = distro
+      reload_import(google_compute_engine.compat)
+      self.assertEqual(
+          test_cases[distro], google_compute_engine.compat.distro_utils)
 
 
 if __name__ == '__main__':

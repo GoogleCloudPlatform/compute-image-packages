@@ -18,8 +18,8 @@
 %endif
 
 Name: google-compute-engine
-Version: 2.7.5
-Release: 2%{?dist}
+Version: 2.7.6
+Release: 1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
