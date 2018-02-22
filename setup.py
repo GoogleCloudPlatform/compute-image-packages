@@ -20,7 +20,6 @@ import sys
 
 import setuptools
 
-
 install_requires = ['boto', 'setuptools']
 if sys.version_info >= (3, 5):
   install_requires += ['distro']
