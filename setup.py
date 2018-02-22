@@ -17,16 +17,21 @@
 
 import glob
 
+import sys
 import setuptools
+
+
+install_requires = ['boto', 'setuptools']
+if sys.version_info >= (3,5):
+  install_requires = install_requires = ['distro']
 
 
 setuptools.setup(
     author='Google Compute Engine Team',
     author_email='gc-team@google.com',
     description='Google Compute Engine',
-    extra_require={":python_version>='3.5'": ["distro"]},
     include_package_data=True,
-    install_requires=['boto', 'setuptools'],
+    install_requires=install_requires,
     license='Apache Software License',
     long_description='Google Compute Engine guest environment.',
     name='google-compute-engine',
