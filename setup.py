@@ -25,7 +25,6 @@ install_requires = ['boto', 'setuptools']
 if sys.version_info >= (3, 5):
   install_requires += ['distro']
 
-
 setuptools.setup(
     author='Google Compute Engine Team',
     author_email='gc-team@google.com',
