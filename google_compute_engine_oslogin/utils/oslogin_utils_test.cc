@@ -71,8 +71,8 @@ TEST(NssCacheTest, TestLoadJsonArray) {
       "\"posixAccounts\":["
       "{\"primary\":true,\"username\":\"bar\",\"uid\":1338,\"gid\":1338,"
       "\"homeDirectory\":\"/home/bar\",\"shell\":\"/bin/bash\"}]}";
-  string response =
-      "{\"loginProfiles\": [" + test_user1 + ", " + test_user2 + "]}";
+  string response = "{\"loginProfiles\": [" + test_user1 + ", " + test_user2 +
+                    "], \"nextPageToken\": \"token\"}";
 
   ASSERT_TRUE(nss_cache.LoadJsonArrayToCache(response));
 
@@ -145,6 +145,29 @@ TEST(NssCacheTest, TestLoadJsonPartialArray) {
   ASSERT_FALSE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
   EXPECT_EQ(test_errno, ENOENT);
 }
+
+// Test successfully loading and retrieving the final response.
+TEST(NssCacheTest, TestLoadJsonFinalResponse) {
+  NssCache nss_cache(2);
+  string response =
+      "{\"nextPageToken\": \"0\"}";
+
+  ASSERT_TRUE(nss_cache.LoadJsonArrayToCache(response));
+  ASSERT_STREQ(nss_cache.GetPageToken().c_str(), "");
+
+  size_t buflen = 500;
+  char* buffer = (char*)malloc(buflen * sizeof(char));
+  ASSERT_STRNE(buffer, NULL);
+  BufferManager buf(buffer, buflen);
+  struct passwd result;
+  int test_errno = 0;
+
+  // Verify that there are no more users stored.
+  ASSERT_FALSE(nss_cache.HasNextPasswd());
+  ASSERT_FALSE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
+  EXPECT_EQ(test_errno, ENOENT);
+}
+
 
 // Tests that resetting, and checking HasNextPasswd does not crash.
 TEST(NssCacheTest, ResetNullPtrTest) {
