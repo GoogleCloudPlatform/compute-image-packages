@@ -24,7 +24,7 @@ setuptools.setup(
     author='Google Compute Engine Team',
     author_email='gc-team@google.com',
     description='Google Compute Engine',
-    extra_require={":python_version>='3.5'": ["distro"]}
+    extra_require={":python_version>='3.5'": ["distro"]},
     include_package_data=True,
     install_requires=['boto', 'setuptools'],
     license='Apache Software License',
