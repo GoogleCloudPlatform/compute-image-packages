@@ -16,8 +16,8 @@
 """Create a Python package of the Linux guest environment."""
 
 import glob
-
 import sys
+
 import setuptools
 
 
