@@ -149,7 +149,7 @@ bool HttpGet(const string& url, string* response, long* http_code) {
     return false;
   }
   CURLcode code(CURLE_FAILED_INIT);
-  curl_global_init(CURL_GLOBAL_ALL);
+  curl_global_init(CURL_GLOBAL_ALL & ~CURL_GLOBAL_SSL);
   CURL* curl = curl_easy_init();
   std::ostringstream response_stream;
   int retry_count = 0;
