@@ -57,10 +57,12 @@ This package contains scripts, configuration, and init files for features specif
 %install
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}/etc/dhcp
+mkdir -p %{buildroot}/etc/modprobe.d
 mkdir -p %{buildroot}/etc/rsyslog.d
 mkdir -p %{buildroot}/etc/sysctl.d
 mkdir -p %{buildroot}/etc/udev/rules.d
 
+cp google_config/modprobe/gce-blacklist.conf %{buildroot}/etc/modprobe.d/
 cp google_config/rsyslog/90-google.conf %{buildroot}/etc/rsyslog.d/
 cp google_config/sysctl/11-gce-network-security.conf  %{buildroot}/etc/sysctl.d/
 cp google_config/udev/*.rules %{buildroot}/etc/udev/rules.d/
@@ -100,6 +102,7 @@ cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google
 %{_unitdir}/*.service
 %{_presetdir}/90-google-compute-engine.preset
 %endif
+%config /etc/modprobe.d/gce-blacklist.conf
 %config /etc/rsyslog.d/90-google.conf
 %config /etc/sysctl.d/11-gce-network-security.conf
 /etc/udev/rules.d/*.rules
