@@ -40,6 +40,7 @@ Conflicts: google-compute-engine-jessie,
            google-compute-daemon,
            google-startup-scripts,
            irqbalance
+Breaks: irqbalance
 Replaces: google-compute-engine-jessie,
           google-compute-engine-init-jessie,
           google-config-jessie,
