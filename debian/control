@@ -1,6 +1,6 @@
 Source: google-compute-image-packages
 Section: admin
-Priority: optional
+Priority: required
 Maintainer: Google Cloud Team <gc-team@google.com>
 Build-Depends: debhelper (>= 9),
                dh-python,
@@ -39,6 +39,7 @@ Conflicts: google-compute-engine-jessie,
            google-config-stretch,
            google-compute-daemon,
            google-startup-scripts,
+           irqbalance
 Breaks: irqbalance
 Replaces: google-compute-engine-jessie,
           google-compute-engine-init-jessie,
