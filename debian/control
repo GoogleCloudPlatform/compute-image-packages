@@ -65,7 +65,11 @@ Description: Google Compute Engine python library for Python 2.x.
 Package: python3-google-compute-engine
 Section: python
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}
+Depends: ${misc:Depends},
+         python3-distro | python3-distro-info,
+         python3-boto,
+         python3-pkg-resources,
+         python3:any
 Conflicts: google-compute-engine-jessie,
            google-compute-engine-stretch,
            google-compute-daemon,
