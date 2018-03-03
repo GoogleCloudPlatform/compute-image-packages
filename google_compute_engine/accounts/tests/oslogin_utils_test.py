@@ -15,6 +15,8 @@
 
 """Unittest for oslogin_utils.py module."""
 
+import time
+
 from google_compute_engine.accounts import oslogin_utils
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
@@ -25,10 +27,12 @@ class OsLoginUtilsTest(unittest.TestCase):
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.oslogin_control_script = 'google_oslogin_control'
+    self.oslogin_nss_cache_script = 'google_oslogin_nss_cache'
 
     self.mock_oslogin = mock.create_autospec(oslogin_utils.OsLoginUtils)
     self.mock_oslogin.logger = self.mock_logger
     self.mock_oslogin.oslogin_installed = True
+    self.mock_oslogin.update_time = 0
 
   @mock.patch('google_compute_engine.accounts.oslogin_utils.subprocess.call')
   def testRunOsLoginControl(self, mock_call):
@@ -118,6 +122,47 @@ class OsLoginUtilsTest(unittest.TestCase):
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.subprocess.call')
+  def testRunOsLoginNssCache(self, mock_call):
+    expected_return_value = 0
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_call, 'call')
+    mock_call.return_value = expected_return_value
+
+    self.assertEqual(
+        oslogin_utils.OsLoginUtils._RunOsLoginNssCache(self.mock_oslogin),
+        expected_return_value)
+    expected_calls = [
+        mock.call.call([self.oslogin_nss_cache_script]),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.subprocess.call')
+  def testRunOsLoginNssCacheNotInstalled(self, mock_call):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_call, 'call')
+    mock_call.side_effect = OSError(2, 'Not Found')
+
+    self.assertIsNone(
+        oslogin_utils.OsLoginUtils._RunOsLoginNssCache(self.mock_oslogin))
+    expected_calls = [
+        mock.call.call([self.oslogin_nss_cache_script]),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.subprocess.call')
+  def testRunOsLoginNssCacheError(self, mock_call):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_call, 'call')
+    mock_call.side_effect = OSError
+
+    with self.assertRaises(OSError):
+      oslogin_utils.OsLoginUtils._RunOsLoginNssCache(self.mock_oslogin)
+    expected_calls = [
+        mock.call.call([self.oslogin_nss_cache_script]),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
   def testUpdateOsLoginActivate(self):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_logger, 'logger')
@@ -130,6 +175,7 @@ class OsLoginUtilsTest(unittest.TestCase):
         mock.call.oslogin._GetStatus(),
         mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl('activate'),
+        mock.call.oslogin._RunOsLoginNssCache(),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
@@ -145,14 +191,32 @@ class OsLoginUtilsTest(unittest.TestCase):
         mock.call.oslogin._GetStatus(),
         mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl('deactivate'),
+        mock.call.oslogin._RunOsLoginNssCache(),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  def testUpdateOsLoginRedundantActivate(self):
+  @mock.patch('time.time')
+  def testUpdateOsLoginUpdateCache(self, mock_time):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_oslogin, 'oslogin')
     self.mock_oslogin._RunOsLoginControl.return_value = 0
     self.mock_oslogin._GetStatus.return_value = True
+    mock_time.return_value = 6 * 60 * 60 + 1
+
+    oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True)
+    expected_calls = [
+        mock.call.oslogin._GetStatus(),
+        mock.call.oslogin._RunOsLoginNssCache(),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('time.time')
+  def testUpdateOsLoginRedundantActivate(self, mock_time):
+    mocks = mock.Mock()
+    mocks.attach_mock(self.mock_oslogin, 'oslogin')
+    self.mock_oslogin._RunOsLoginControl.return_value = 0
+    self.mock_oslogin._GetStatus.return_value = True
+    mock_time.return_value = 6 * 60 * 60
 
     oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True)
     expected_calls = [

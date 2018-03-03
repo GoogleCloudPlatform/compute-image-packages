@@ -17,8 +17,11 @@
 
 import os
 import subprocess
+import time
 
 from google_compute_engine import constants
+
+NSS_CACHE_DURATION_SEC = 21600  # 6 hours in seconds.
 
 
 class OsLoginUtils(object):
@@ -32,6 +35,7 @@ class OsLoginUtils(object):
     """
     self.logger = logger
     self.oslogin_installed = True
+    self.update_time = time.time()
 
   def _RunOsLoginControl(self, action):
     """Run the OS Login control script.
@@ -67,18 +71,41 @@ class OsLoginUtils(object):
     self.oslogin_installed = True
     return not retcode
 
-  def UpdateOsLogin(self, enable):
-    """Check to see if OS Login is enabled, and switch if necessary.
+  def _RunOsLoginNssCache(self):
+    """Run the OS Login NSS cache binary.
+
+    Returns:
+      int, the return code from the call, or None if the script is not found.
+    """
+    try:
+      return subprocess.call([constants.OSLOGIN_NSS_CACHE_SCRIPT])
+    except OSError as e:
+      if e.errno == os.errno.ENOENT:
+        return None
+      else:
+        raise
+
+  def UpdateOsLogin(self, enable, duration=NSS_CACHE_DURATION_SEC):
+    """Update whether OS Login is enabled and update NSS cache if necessary.
 
     Args:
       enable: bool, enable OS Login if True, disable if False.
+      duration: int, number of seconds before updating the NSS cache.
 
     Returns:
       int, the return code from updating OS Login, or None if not present.
     """
     status = self._GetStatus()
-    if status is None or status == enable:
+    if status is None:
       return None
+
+    current_time = time.time()
+    if status == enable:
+      if status and current_time - self.update_time > duration:
+        self.update_time = current_time
+        return self._RunOsLoginNssCache()
+      else:
+        return None
 
     if enable:
       action = 'activate'
@@ -87,4 +114,5 @@ class OsLoginUtils(object):
       action = 'deactivate'
       self.logger.info('Deactivating OS Login.')
 
-    return self._RunOsLoginControl(action)
+    self.update_time = current_time
+    return self._RunOsLoginControl(action) or self._RunOsLoginNssCache()
