@@ -85,6 +85,15 @@ class OsLoginUtils(object):
       else:
         raise
 
+  def _RemoveOsLoginNssCache(self):
+    """Remove the OS Login NSS cache file."""
+    if os.path.exists(constants.OSLOGIN_NSS_CACHE):
+      try:
+        os.remove(constants.OSLOGIN_NSS_CACHE)
+      except OSError as e:
+        if e.errno != os.errno.ENOENT:
+          raise
+
   def UpdateOsLogin(self, enable, duration=NSS_CACHE_DURATION_SEC):
     """Update whether OS Login is enabled and update NSS cache if necessary.
 
@@ -107,12 +116,11 @@ class OsLoginUtils(object):
       else:
         return None
 
-    if enable:
-      action = 'activate'
-      self.logger.info('Activating OS Login.')
-    else:
-      action = 'deactivate'
-      self.logger.info('Deactivating OS Login.')
-
     self.update_time = current_time
-    return self._RunOsLoginControl(action) or self._RunOsLoginNssCache()
+    if enable:
+      self.logger.info('Activating OS Login.')
+      return self._RunOsLoginControl('activate') or self._RunOsLoginNssCache()
+    else:
+      self.logger.info('Deactivating OS Login.')
+      return (self._RunOsLoginControl('deactivate') or
+              self._RemoveOsLoginNssCache())

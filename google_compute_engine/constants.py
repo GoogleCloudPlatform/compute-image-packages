@@ -18,6 +18,7 @@
 import platform
 
 OSLOGIN_CONTROL_SCRIPT = 'google_oslogin_control'
+OSLOGIN_NSS_CACHE = '/etc/passwd.cache'
 OSLOGIN_NSS_CACHE_SCRIPT = 'google_oslogin_nss_cache'
 
 if platform.system() == 'FreeBSD':

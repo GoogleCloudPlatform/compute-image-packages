@@ -27,6 +27,7 @@ class OsLoginUtilsTest(unittest.TestCase):
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.oslogin_control_script = 'google_oslogin_control'
+    self.oslogin_nss_cache = '/etc/passwd.cache'
     self.oslogin_nss_cache_script = 'google_oslogin_nss_cache'
 
     self.mock_oslogin = mock.create_autospec(oslogin_utils.OsLoginUtils)
@@ -163,6 +164,43 @@ class OsLoginUtilsTest(unittest.TestCase):
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.remove')
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.path.exists')
+  def testRemoveOsLoginNssCache(self, mock_exists, mock_remove):
+    mock_exists.return_value = True
+
+    oslogin_utils.OsLoginUtils._RemoveOsLoginNssCache(self.mock_oslogin)
+    mock_exists.assert_called_once_with(self.oslogin_nss_cache)
+    mock_remove.assert_called_once_with(self.oslogin_nss_cache)
+
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.remove')
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.path.exists')
+  def testRemoveOsLoginNssCacheNotFound(self, mock_exists, mock_remove):
+    mock_exists.return_value = False
+
+    oslogin_utils.OsLoginUtils._RemoveOsLoginNssCache(self.mock_oslogin)
+    mock_exists.assert_called_once_with(self.oslogin_nss_cache)
+    mock_remove.assert_not_called()
+
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.remove')
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.path.exists')
+  def testRemoveOsLoginNssCacheNotInstalled(self, mock_exists, mock_remove):
+    mock_exists.return_value = True
+    mock_remove.side_effect = OSError(2, 'Not Found')
+
+    oslogin_utils.OsLoginUtils._RemoveOsLoginNssCache(self.mock_oslogin)
+    mock_exists.assert_called_once_with(self.oslogin_nss_cache)
+    mock_remove.assert_called_once_with(self.oslogin_nss_cache)
+
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.remove')
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.path.exists')
+  def testRemoveOsLoginNssCacheError(self, mock_exists, mock_remove):
+    mock_exists.return_value = True
+    mock_remove.side_effect = OSError
+
+    with self.assertRaises(OSError):
+      oslogin_utils.OsLoginUtils._RemoveOsLoginNssCache(self.mock_oslogin)
+
   def testUpdateOsLoginActivate(self):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_logger, 'logger')
@@ -191,7 +229,7 @@ class OsLoginUtilsTest(unittest.TestCase):
         mock.call.oslogin._GetStatus(),
         mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl('deactivate'),
-        mock.call.oslogin._RunOsLoginNssCache(),
+        mock.call.oslogin._RemoveOsLoginNssCache(),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
