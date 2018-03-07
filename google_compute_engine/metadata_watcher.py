@@ -99,7 +99,7 @@ class MetadataWatcher(object):
     request = urlrequest.Request(url, headers=headers)
     request_opener = urlrequest.build_opener(urlrequest.ProxyHandler({}))
     timeout = timeout or self.timeout
-    return request_opener.open(request, timeout=timeout * 1.1)
+    return request_opener.open(request, timeout=timeout*1.1)
 
   def _UpdateEtag(self, response):
     """Update the etag from an API response.
