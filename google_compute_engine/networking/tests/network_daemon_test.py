@@ -15,8 +15,8 @@
 
 """Unittest for network_daemon.py module."""
 
+from google_compute_engine import network_utils
 from google_compute_engine.networking import network_daemon
-from google_compute_engine.networking import network_utils
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
