@@ -56,6 +56,7 @@ make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{p
 %{pam_install_path}/pam_oslogin_login.so
 /usr/bin/google_authorized_keys
 /usr/bin/google_oslogin_control
+/usr/bin/google_oslogin_nss_cache
 /usr/share/selinux/packages/oslogin.pp
 
 %post
