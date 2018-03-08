@@ -27,6 +27,7 @@ BuildRequires:  json-c
 BuildRequires:  pam-devel
 BuildRequires:  policycoreutils-python
 Requires:  policycoreutils-python
+Requires:  libnss-cache
 
 %define pam_install_path /%{_lib}/security
 
