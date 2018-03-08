@@ -32,7 +32,7 @@ using oslogin_utils::NssCache;
 
 // File paths for the nss cache file.
 static const char kDefaultFilePath[] = "/etc/passwd.cache";
-static const char kDefaultBackupFilePath[] = "/etc/passwd.bak";
+static const char kDefaultBackupFilePath[] = "/etc/passwd.cache.bak";
 
 // Local NSS Cache size. This affects the maximum number of passwd entries per
 // http request.
