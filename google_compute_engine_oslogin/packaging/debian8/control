@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 9), libcurl4-openssl-dev, libjson-c-dev | libjson0-
 
 Package: google-compute-engine-oslogin
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, libnss-cache
 Description: Google Compute Engine OS Login
  Contains libraries, applications and configurations for using OS Login
  on Google Compute Engine Virtual Machine Instances.
