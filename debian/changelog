@@ -1,3 +1,9 @@
+google-compute-image-packages (2.7.7-1) stable; urgency=low
+
+  * Add support for NSS cache in OS Login.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 08 Mar 2018 12:00:00 -0700
+
 google-compute-image-packages (2.7.6-1) stable; urgency=low
 
   * Add distro specific logic.
