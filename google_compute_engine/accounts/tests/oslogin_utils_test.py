@@ -92,20 +92,37 @@ class OsLoginUtilsTest(unittest.TestCase):
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  def testGetStatusActive(self):
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.path.exists')
+  def testGetStatusActive(self, mock_exists):
     mocks = mock.Mock()
+    mocks.attach_mock(mock_exists, 'exists')
     self.mock_oslogin._RunOsLoginControl.return_value = 0
+    mock_exists.return_value = True
 
     self.assertTrue(oslogin_utils.OsLoginUtils._GetStatus(self.mock_oslogin))
-    expected_calls = []
+    expected_calls = [mock.call.exists(self.oslogin_nss_cache)]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  def testGetStatusNotActive(self):
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.path.exists')
+  def testGetStatusNotActive(self, mock_exists):
     mocks = mock.Mock()
+    mocks.attach_mock(mock_exists, 'exists')
     self.mock_oslogin._RunOsLoginControl.return_value = 3
+    mock_exists.return_value = True
 
     self.assertFalse(oslogin_utils.OsLoginUtils._GetStatus(self.mock_oslogin))
-    expected_calls = []
+    expected_calls = [mock.call.exists(self.oslogin_nss_cache)]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.accounts.oslogin_utils.os.path.exists')
+  def testGetStatusNoCache(self, mock_exists):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_exists, 'exists')
+    self.mock_oslogin._RunOsLoginControl.return_value = 0
+    mock_exists.return_value = False
+
+    self.assertFalse(oslogin_utils.OsLoginUtils._GetStatus(self.mock_oslogin))
+    expected_calls = [mock.call.exists(self.oslogin_nss_cache)]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   def testGetStatusNotInstalled(self):
