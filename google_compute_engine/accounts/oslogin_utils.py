@@ -68,7 +68,10 @@ class OsLoginUtils(object):
         self.oslogin_installed = False
       return None
 
+    # Prevent log spam when OS Login is not installed.
     self.oslogin_installed = True
+    if not os.path.exists(constants.OSLOGIN_NSS_CACHE):
+      return False
     return not retcode
 
   def _RunOsLoginNssCache(self):
