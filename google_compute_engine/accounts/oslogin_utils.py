@@ -35,7 +35,7 @@ class OsLoginUtils(object):
     """
     self.logger = logger
     self.oslogin_installed = True
-    self.update_time = time.time()
+    self.update_time = 0
 
   def _RunOsLoginControl(self, action):
     """Run the OS Login control script.
