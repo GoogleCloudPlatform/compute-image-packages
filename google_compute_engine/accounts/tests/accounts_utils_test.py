@@ -335,7 +335,7 @@ class AccountsUtilsTest(unittest.TestCase):
         ('', '', pw_uid, pw_gid, '', pw_dir, ''))
     self.mock_utils._GetUser.return_value = pw_entry
     mock_islink.return_value = False
-    mock_exists.side_effect = [ True, False ]
+    mock_exists.side_effect = [True, False]
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
     self.mock_logger.name = 'test'
@@ -380,7 +380,7 @@ class AccountsUtilsTest(unittest.TestCase):
         ('', '', pw_uid, pw_gid, '', pw_dir, ''))
     self.mock_utils._GetUser.return_value = pw_entry
     mock_islink.return_value = False
-    mock_exists.side_effect = [ False, False ]
+    mock_exists.side_effect = [False, False]
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
     self.mock_logger.name = 'test'
