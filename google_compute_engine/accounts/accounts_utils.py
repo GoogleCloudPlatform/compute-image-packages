@@ -197,8 +197,16 @@ class AccountsUtils(object):
           'Not updating authorized keys for user %s. File is a symlink.', user)
       return
 
+    # Create home directory if it does not exist. This can happen if _GetUser
+    # (getpwnam) returns non-local user info (e.g., from LDAP).
+    if not os.path.exists(home_dir):
+        file_utils.SetPermissions(home_dir, mode=0o755, uid=uid, gid=gid,
+            mkdir=True)
+
+    # Create ssh directory if it does not exist.
     file_utils.SetPermissions(ssh_dir, mode=0o700, uid=uid, gid=gid, mkdir=True)
 
+    # Create entry in the authorized keys file.
     prefix = self.logger.name + '-'
     with tempfile.NamedTemporaryFile(
         mode='w', prefix=prefix, delete=True) as updated_keys:
