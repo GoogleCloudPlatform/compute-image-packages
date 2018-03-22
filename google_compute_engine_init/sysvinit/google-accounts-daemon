@@ -16,7 +16,6 @@
 ### BEGIN INIT INFO
 # Provides:          google_accounts_daemon
 # Required-Start:    $local_fs $network $named $syslog $google_instance_setup
-#                    $google_network_setup
 # Required-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:

@@ -15,7 +15,7 @@
 #
 ### BEGIN INIT INFO
 # Provides:          google_startup_scripts
-# Required-Start:    $all $google_instance_setup $google_network_setup
+# Required-Start:    $all $google_instance_setup
 # Required-Stop:
 # Default-Start:     2 3 4 5
 # Default-Stop:

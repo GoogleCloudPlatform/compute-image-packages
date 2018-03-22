@@ -20,8 +20,20 @@ if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
     google-instance-setup.service \
     google-accounts-daemon.service \
     google-clock-skew-daemon.service \
-    google-ip-forwarding-daemon.service \
     google-network-daemon.service \
     google-shutdown-scripts.service \
     google-startup-scripts.service >/dev/null
+
+    # Remove old service.
+    if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
+      deb-systemd-invoke stop google-ip-forwarding-daemon.service
+      systemctl --no-reload disable google-ip-forwarding-daemon.service
+      rm /lib/systemd/system/google-ip-forwarding-daemon.service
+    fi
+
+    if [ -f /lib/systemd/system/google-network-setup.service ]; then
+      deb-systemd-invoke stop google-network-setup.service
+      systemctl --no-reload disable google-network-setup.service
+      rm /lib/systemd/system/google-network-setup.service
+    fi
 fi

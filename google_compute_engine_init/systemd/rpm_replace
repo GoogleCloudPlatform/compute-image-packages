@@ -11,9 +11,6 @@ systemctl enable google-startup-scripts.service
 # Run instance setup manually.
 /usr/bin/google_instance_setup
 
-# Enable network interfaces.
-/usr/bin/google_network_setup
-
 # Start daemons.
 systemctl start --no-block google-accounts-daemon
 systemctl start --no-block google-clock-skew-daemon
