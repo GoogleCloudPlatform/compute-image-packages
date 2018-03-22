@@ -108,12 +108,10 @@ cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google
 /etc/udev/rules.d/*.rules
 %attr(0755,root,root) %{_bindir}/*
 
-
 %post
 %if 0%{?el6}
 # On upgrade run instance setup again to handle any new configs and restart daemons.
 if [ $1 -eq 2 ]; then
-  stop -q -n google-ip-forwarding-daemon
   stop -q -n google-accounts-daemon
   stop -q -n google-clock-skew-daemon
   stop -q -n google-network-daemon
@@ -132,6 +130,24 @@ if [ -d /opt/rh/python27/root/usr/lib/python2.7/site-packages/google_compute_eng
   scl enable python27 "pip2.7 install --upgrade google_compute_engine"
 fi
 %endif
+
+# Remove old service.
+if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
+  systemctl stop --no-block google-ip-forwarding-daemon
+  systemctl --no-reload disable google-ip-forwarding-daemon.service
+  rm /lib/systemd/system/google-ip-forwarding-daemon.service
+fi
+
+if [ -f /lib/systemd/system/google-network-setup.service ]; then
+  systemctl stop --no-block google-network-setup
+  systemctl --no-reload disable google-network-setup.service
+  rm /lib/systemd/system/google-network-setup.service
+fi
+
+if [ $1 -eq 2 ]; then
+  # New service might not be enabled during upgrade.
+  systemctl enable google-network-daemon.service
+fi
 
 %if 0%{?el7}
 %systemd_post google-accounts-daemon.service
