@@ -118,7 +118,7 @@ bool NssCache::LoadJsonArrayToCache(string response) {
   if (page_token_ == "0") {
     page_token_ = "";
     on_last_page_ = true;
-    return true;
+    return false;
   }
   // Now grab all of the loginProfiles.
   json_object* login_profiles = NULL;
