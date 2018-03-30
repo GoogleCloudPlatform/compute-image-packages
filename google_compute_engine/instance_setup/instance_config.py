@@ -92,7 +92,6 @@ class InstanceConfig(config_manager.ConfigManager):
       },
       'NetworkInterfaces': {
           'setup': 'true',
-          'dhcp_refresh': 'true',
           'ip_forwarding': 'true',
           'dhcp_command': '',
           'dhclient_script': '/sbin/google-dhclient-script',

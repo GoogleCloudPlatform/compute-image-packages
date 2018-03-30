@@ -17,7 +17,6 @@
 
 Run network setup to enable multiple network interfaces on startup.
 Update IP forwarding when metadata changes.
-Refresh DHCP leases when metadata refresh token changes.
 """
 
 import logging.handlers
@@ -30,7 +29,6 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine import network_utils
-from google_compute_engine.networking.dhcp_lease_refresh import dhcp_lease_refresh
 from google_compute_engine.networking.ip_forwarding import ip_forwarding
 from google_compute_engine.networking.network_setup import network_setup
 
@@ -44,8 +42,7 @@ class NetworkDaemon(object):
 
   def __init__(
       self, ip_forwarding_enabled, proto_id, ip_aliases, target_instance_ips,
-      dhclient_script, dhcp_command, dhcp_refresh_enabled,
-      network_setup_enabled, debug=False):
+      dhclient_script, dhcp_command, network_setup_enabled, debug=False):
     """Constructor.
 
     Args:
@@ -55,7 +52,6 @@ class NetworkDaemon(object):
       target_instance_ips: bool, True supports internal IP load balancing.
       dhclient_script: string, the path to a dhclient script used by dhclient.
       dhcp_command: string, a command to enable Ethernet interfaces.
-      dhcp_refresh_enabled: bool, True if DHCP lease refresh is enabled.
       network_setup_enabled: bool, True if network setup is enabled.
       debug: bool, True if debug output should write to the console.
     """
@@ -83,14 +79,6 @@ class NetworkDaemon(object):
     if ip_forwarding_enabled:
       self.ip_forwarding = ip_forwarding.IpForwarding(proto_id, debug)
 
-    self.dhcp_refresh_enabled = dhcp_refresh_enabled
-    if dhcp_refresh_enabled:
-      dhcpv6_tokens = {}
-      for interface in network_interfaces:
-        dhcpv6_tokens[interface.name] = interface.dhcpv6_refresh_token
-      self.dhcp_lease_refresh = dhcp_lease_refresh.DhcpLeaseRefresh(
-          dhcpv6_tokens, debug)
-
     try:
       with file_utils.LockFile(LOCKFILE):
         self.logger.info('Starting Google Networking daemon.')
@@ -114,9 +102,6 @@ class NetworkDaemon(object):
       if self.ip_forwarding_enabled:
         self.ip_forwarding.HandleForwardedIps(
             interface.name, interface.forwarded_ips)
-      if self.dhcp_refresh_enabled:
-        self.dhcp_lease_refresh.HandleDhcpLeaseRefresh(
-            interface.name, interface.dhcpv6_refresh_token)
 
   def _ExtractInterfaceMetadata(self, metadata):
     """Extracts network interface metadata.
@@ -133,14 +118,13 @@ class NetworkDaemon(object):
       interface = self.network_utils.GetNetworkInterface(mac_address)
       ip_addresses = []
       if interface:
-        dhcpv6_refresh_token = network_interface.get('dhcpv6-refresh')
         ip_addresses.extend(network_interface.get('forwardedIps', []))
         if self.ip_aliases:
           ip_addresses.extend(network_interface.get('ipAliases', []))
         if self.target_instance_ips:
           ip_addresses.extend(network_interface.get('targetInstanceIps', []))
         interfaces.append(NetworkDaemon.NetworkInterface(
-            interface, ip_addresses, dhcpv6_refresh_token))
+            interface, ip_addresses))
       else:
         message = 'Network interface not found for MAC address: %s.'
         self.logger.warning(message, mac_address)
@@ -149,10 +133,9 @@ class NetworkDaemon(object):
   class NetworkInterface(object):
     """Network interface information extracted from metadata."""
 
-    def __init__(self, name, forwarded_ips=None, dhcpv6_refresh_token=None):
+    def __init__(self, name, forwarded_ips=None):
       self.name = name
       self.forwarded_ips = forwarded_ips
-      self.dhcpv6_refresh_token = dhcpv6_refresh_token
 
 
 def main():
@@ -169,8 +152,6 @@ def main():
       'NetworkInterfaces', 'ip_forwarding') or ip_forwarding_daemon_enabled
   network_setup_enabled = instance_config.GetOptionBool(
       'NetworkInterfaces', 'setup')
-  dhcp_refresh_enabled = instance_config.GetOptionBool(
-      'NetworkInterfaces', 'dhcp_refresh')
   network_daemon_enabled = instance_config.GetOptionBool(
       'Daemons', 'network_daemon')
   proto_id = instance_config.GetOptionString(
@@ -192,7 +173,6 @@ def main():
         target_instance_ips=target_instance_ips,
         dhclient_script=dhclient_script,
         dhcp_command=dhcp_command,
-        dhcp_refresh_enabled=dhcp_refresh_enabled,
         network_setup_enabled=network_setup_enabled,
         debug=debug)
 

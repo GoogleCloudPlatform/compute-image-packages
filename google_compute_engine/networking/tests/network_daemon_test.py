@@ -31,21 +31,18 @@ class NetworkDaemonTest(unittest.TestCase):
     self.mock_setup.watcher = self.mock_watcher
     self.mock_ip_forwarding = mock.Mock()
     self.mock_network_utils = mock.Mock()
-    self.mock_dhcp_lease_refresh = mock.Mock()
     self.mock_setup.ip_forwarding = self.mock_ip_forwarding
     self.mock_setup.network_utils = self.mock_network_utils
-    self.mock_setup.dhcp_lease_refresh = self.mock_dhcp_lease_refresh
 
   @mock.patch('google_compute_engine.networking.network_daemon.ip_forwarding')
   @mock.patch('google_compute_engine.networking.network_daemon.network_setup')
-  @mock.patch('google_compute_engine.networking.network_daemon.dhcp_lease_refresh')
   @mock.patch('google_compute_engine.networking.network_daemon.network_utils')
   @mock.patch('google_compute_engine.networking.network_daemon.metadata_watcher')
   @mock.patch('google_compute_engine.networking.network_daemon.logger')
   @mock.patch('google_compute_engine.networking.network_daemon.file_utils')
   def testNetworkDaemon(
       self, mock_lock, mock_logger, mock_watcher, mock_network_utils,
-      mock_dhcp_lease_refresh, mock_network_setup, mock_ip_forwarding):
+      mock_network_setup, mock_ip_forwarding):
     mock_logger_instance = mock.Mock()
     mock_logger.Logger.return_value = mock_logger_instance
     mocks = mock.Mock()
@@ -54,7 +51,6 @@ class NetworkDaemonTest(unittest.TestCase):
     mocks.attach_mock(mock_network_utils, 'network')
     mocks.attach_mock(mock_ip_forwarding, 'forwarding')
     mocks.attach_mock(mock_network_setup, 'network_setup')
-    mocks.attach_mock(mock_dhcp_lease_refresh, 'dhcp_lease_refresh')
     mocks.attach_mock(mock_watcher, 'watcher')
     metadata_key = network_daemon.NetworkDaemon.network_interface_metadata_key
     with mock.patch.object(
@@ -64,8 +60,8 @@ class NetworkDaemonTest(unittest.TestCase):
     ) as mock_extract:
       mocks.attach_mock(mock_extract, 'extract')
       mock_extract.return_value = [
-          network_daemon.NetworkDaemon.NetworkInterface('a', [], 'x'),
-          network_daemon.NetworkDaemon.NetworkInterface('b', [], 'y'),
+          network_daemon.NetworkDaemon.NetworkInterface('a', []),
+          network_daemon.NetworkDaemon.NetworkInterface('b', []),
       ]
 
       network_daemon.NetworkDaemon(
@@ -75,7 +71,6 @@ class NetworkDaemonTest(unittest.TestCase):
           target_instance_ips=None,
           dhclient_script='x',
           dhcp_command='y',
-          dhcp_refresh_enabled=True,
           network_setup_enabled=True,
           debug=True)
       expected_calls = [
@@ -88,7 +83,6 @@ class NetworkDaemonTest(unittest.TestCase):
           mock.call.network_setup.NetworkSetup(
               mock.ANY, debug=True, dhclient_script='x', dhcp_command='y'),
           mock.call.forwarding.IpForwarding('66', True),
-          mock.call.dhcp_lease_refresh.DhcpLeaseRefresh(mock.ANY, True),
           mock.call.lock.LockFile(network_daemon.LOCKFILE),
           mock.call.lock.LockFile().__enter__(),
           mock.call.logger.Logger().info(mock.ANY),
@@ -101,14 +95,13 @@ class NetworkDaemonTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.networking.network_daemon.ip_forwarding')
   @mock.patch('google_compute_engine.networking.network_daemon.network_setup')
-  @mock.patch('google_compute_engine.networking.network_daemon.dhcp_lease_refresh')
   @mock.patch('google_compute_engine.networking.network_daemon.network_utils')
   @mock.patch('google_compute_engine.networking.network_daemon.metadata_watcher')
   @mock.patch('google_compute_engine.networking.network_daemon.logger')
   @mock.patch('google_compute_engine.networking.network_daemon.file_utils')
   def testNetworkDaemonError(
       self, mock_lock, mock_logger, mock_watcher, mock_network_utils,
-      mock_dhcp_lease_refresh, mock_network_setup, mock_ip_forwarding):
+      mock_network_setup, mock_ip_forwarding):
     mock_logger_instance = mock.Mock()
     mock_logger.Logger.return_value = mock_logger_instance
     mocks = mock.Mock()
@@ -117,7 +110,6 @@ class NetworkDaemonTest(unittest.TestCase):
     mocks.attach_mock(mock_network_utils, 'network')
     mocks.attach_mock(mock_ip_forwarding, 'forwarding')
     mocks.attach_mock(mock_network_setup, 'network_setup')
-    mocks.attach_mock(mock_dhcp_lease_refresh, 'dhcp_lease_refresh')
     mocks.attach_mock(mock_watcher, 'watcher')
     metadata_key = network_daemon.NetworkDaemon.network_interface_metadata_key
     self.mock_setup._ExtractInterfaceMetadata.return_value = []
@@ -129,8 +121,8 @@ class NetworkDaemonTest(unittest.TestCase):
     ) as mock_extract:
       mocks.attach_mock(mock_extract, 'extract')
       mock_extract.return_value = [
-          network_daemon.NetworkDaemon.NetworkInterface('a', [], 'x'),
-          network_daemon.NetworkDaemon.NetworkInterface('b', [], 'y'),
+          network_daemon.NetworkDaemon.NetworkInterface('a', []),
+          network_daemon.NetworkDaemon.NetworkInterface('b', []),
       ]
 
       network_daemon.NetworkDaemon(
@@ -140,7 +132,6 @@ class NetworkDaemonTest(unittest.TestCase):
           target_instance_ips=None,
           dhclient_script='x',
           dhcp_command='y',
-          dhcp_refresh_enabled=False,
           network_setup_enabled=False,
           debug=True)
       expected_calls = [
@@ -159,11 +150,9 @@ class NetworkDaemonTest(unittest.TestCase):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_ip_forwarding, 'forwarding')
     mocks.attach_mock(self.mock_setup, 'setup')
-    mocks.attach_mock(self.mock_dhcp_lease_refresh, 'dhcp')
     self.mock_setup.ip_aliases = None
     self.mock_setup.target_instance_ips = None
     self.mock_setup.ip_forwarding_enabled = True
-    self.mock_setup.dhcp_refresh_enabled = True
     self.mock_setup._ExtractInterfaceMetadata.return_value = [
         network_daemon.NetworkDaemon.NetworkInterface('a'),
         network_daemon.NetworkDaemon.NetworkInterface('b'),
@@ -175,9 +164,7 @@ class NetworkDaemonTest(unittest.TestCase):
     expected_calls = [
         mock.call.setup._ExtractInterfaceMetadata(result),
         mock.call.forwarding.HandleForwardedIps('a', None),
-        mock.call.dhcp.HandleDhcpLeaseRefresh('a', None),
         mock.call.forwarding.HandleForwardedIps('b', None),
-        mock.call.dhcp.HandleDhcpLeaseRefresh('b', None),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
@@ -185,11 +172,9 @@ class NetworkDaemonTest(unittest.TestCase):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_ip_forwarding, 'forwarding')
     mocks.attach_mock(self.mock_setup, 'setup')
-    mocks.attach_mock(self.mock_dhcp_lease_refresh, 'dhcp')
     self.mock_setup.ip_aliases = None
     self.mock_setup.target_instance_ips = None
     self.mock_setup.ip_forwarding_enabled = False
-    self.mock_setup.dhcp_refresh_enabled = False
     self.mock_setup._ExtractInterfaceMetadata.return_value = [
         network_daemon.NetworkDaemon.NetworkInterface('a'),
         network_daemon.NetworkDaemon.NetworkInterface('b'),
@@ -214,14 +199,12 @@ class NetworkDaemonTest(unittest.TestCase):
         {
             'mac': '1',
             'forwardedIps': ['a'],
-            'dhcpv6-refresh': 'x',
         },
         {
             'mac': '2',
             'forwardedIps': ['b'],
             'ipAliases': ['banana'],
             'targetInstanceIps': ['baklava'],
-            'dhcpv6-refresh': 'y',
         },
         {
             'mac': '3',
@@ -235,13 +218,12 @@ class NetworkDaemonTest(unittest.TestCase):
             'forwardedIps': ['d'],
             'ipAliases': ['date'],
             'targetInstanceIps': ['doughnuts'],
-            'dhcpv6-refresh': 'z',
         },
     ]
     expected_interfaces = [
-        network_daemon.NetworkDaemon.NetworkInterface('eth0', ['a'], 'x'),
+        network_daemon.NetworkDaemon.NetworkInterface('eth0', ['a']),
         network_daemon.NetworkDaemon.NetworkInterface(
-            'eth1', ['b', 'banana', 'baklava'], 'y'),
+            'eth1', ['b', 'banana', 'baklava']),
         network_daemon.NetworkDaemon.NetworkInterface(
             'eth2', ['cherry', 'cake']),
     ]
@@ -251,8 +233,6 @@ class NetworkDaemonTest(unittest.TestCase):
     for actual, expected in zip(actual_interfaces, expected_interfaces):
       self.assertEqual(actual.name, expected.name)
       self.assertEqual(actual.forwarded_ips, expected.forwarded_ips)
-      self.assertEqual(
-          actual.dhcpv6_refresh_token, expected.dhcpv6_refresh_token)
 
   def testExtractInterfaceMetadataWithoutOptions(self):
     self.mock_setup.ip_aliases = None
@@ -265,14 +245,12 @@ class NetworkDaemonTest(unittest.TestCase):
         {
             'mac': '1',
             'forwardedIps': ['a'],
-            'dhcpv6-refresh': 'x',
         },
         {
             'mac': '2',
             'forwardedIps': ['b'],
             'ipAliases': ['banana'],
             'targetInstanceIps': ['baklava'],
-            'dhcpv6-refresh': 'y',
         },
         {
             'mac': '3',
@@ -281,8 +259,8 @@ class NetworkDaemonTest(unittest.TestCase):
         },
     ]
     expected_interfaces = [
-        network_daemon.NetworkDaemon.NetworkInterface('eth0', ['a'], 'x'),
-        network_daemon.NetworkDaemon.NetworkInterface('eth1', ['b'], 'y'),
+        network_daemon.NetworkDaemon.NetworkInterface('eth0', ['a']),
+        network_daemon.NetworkDaemon.NetworkInterface('eth1', ['b']),
         network_daemon.NetworkDaemon.NetworkInterface('eth2', []),
     ]
 
@@ -291,5 +269,3 @@ class NetworkDaemonTest(unittest.TestCase):
     for actual, expected in zip(actual_interfaces, expected_interfaces):
       self.assertEqual(actual.name, expected.name)
       self.assertEqual(actual.forwarded_ips, expected.forwarded_ips)
-      self.assertEqual(
-          actual.dhcpv6_refresh_token, expected.dhcpv6_refresh_token)
