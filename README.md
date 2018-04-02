@@ -243,7 +243,7 @@ Accounts          | groupadd\_cmd          | Command string to create a new grou
 Daemons           | accounts\_daemon       | `false` disables the accounts daemon.
 Daemons           | clock\_skew\_daemon    | `false` disables the clock skew daemon.
 Daemons           | ip\_forwarding\_daemon | `false` (deprecated) skips IP forwarding.
-Daemons           | network\_daemon        | `false` disables the Network daemon.
+Daemons           | network\_daemon        | `false` disables the network daemon.
 InstanceSetup     | host\_key\_types       | Comma separated list of host key types to generate.
 InstanceSetup     | optimize\_local\_ssd   | `false` prevents optimizing for local SSD.
 InstanceSetup     | network\_enabled       | `false` skips instance setup functions that require metadata.
