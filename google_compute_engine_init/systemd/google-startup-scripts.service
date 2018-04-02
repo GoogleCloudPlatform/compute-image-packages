@@ -1,7 +1,7 @@
 [Unit]
 Description=Google Compute Engine Startup Scripts
 After=local-fs.target network-online.target network.target rsyslog.service
-After=google-instance-setup.service google-network-setup.service
+After=google-instance-setup.service google-network-daemon.service
 Wants=local-fs.target network-online.target network.target
 
 [Service]

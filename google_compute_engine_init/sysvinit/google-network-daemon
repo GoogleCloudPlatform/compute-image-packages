@@ -14,20 +14,19 @@
 #     limitations under the License.
 #
 ### BEGIN INIT INFO
-# Provides:          google_ip_forwarding_daemon
+# Provides:          google_network_daemon
 # Required-Start:    $network $syslog $google_instance_setup
-#                    $google_network_setup
 # Required-Stop:     $network
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Google Compute Engine IP Forwarding Daemon
-# Description:       Manages IP forwarding.
+# Short-Description: Google Compute Engine Network Setup and Daemon
+# Description:       Enables Networks on boot and manages Networking.
 ### END INIT INFO
 
 # Do NOT "set -e".
 
-NAME=google-ip-forwarding-daemon
-DAEMON=/usr/bin/google_ip_forwarding_daemon
+NAME=google-network-daemon
+DAEMON=/usr/bin/google_network_daemon
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 

@@ -3,10 +3,7 @@
 # Run instance setup.
 /usr/bin/google_instance_setup
 
-# Enable network interfaces.
-/usr/bin/google_network_setup
-
 # Manually start daemons.
 start --no-wait google-accounts-daemon
 start --no-wait google-clock-skew-daemon
-start --no-wait google-ip-forwarding-daemon
+start --no-wait google-network-daemon

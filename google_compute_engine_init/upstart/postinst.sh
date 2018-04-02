@@ -16,15 +16,12 @@
 # Stop existing daemons
 stop --no-wait google-accounts-daemon
 stop --no-wait google-clock-skew-daemon
-stop --no-wait google-ip-forwarding-daemon
+stop --no-wait google-network-daemon
 
 # Run instance setup manually to prevent startup script execution.
 /usr/bin/google_instance_setup
 
-# Enable network interfaces.
-/usr/bin/google_network_setup
-
 # Start daemons
 start --no-wait google-accounts-daemon
 start --no-wait google-clock-skew-daemon
-start --no-wait google-ip-forwarding-daemon
+start --no-wait google-network-daemon
