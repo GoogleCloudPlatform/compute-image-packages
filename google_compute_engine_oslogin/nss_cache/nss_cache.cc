@@ -71,6 +71,12 @@ int main(int argc, char* argv[]) {
   }
 
   std::ofstream cache_file(kDefaultFilePath);
+  if (cache_file.fail()) {
+    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    syslog(LOG_ERR, "Failed to open file %s.", kDefaultFilePath);
+    closelog();
+    return -1;
+  }
   chown(kDefaultFilePath, 0, 0);
   chmod(kDefaultFilePath, S_IRUSR | S_IWUSR | S_IROTH);
 
