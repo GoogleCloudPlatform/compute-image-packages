@@ -21,26 +21,22 @@
 // Locking implementation: use pthreads.
 #include <pthread.h>
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-#define NSS_OSLOGIN_CACHE_LOCK()                                               \
-  do {                                                                         \
-    pthread_mutex_lock(&mutex);                                                \
+#define NSS_OSLOGIN_CACHE_LOCK() \
+  do {                           \
+    pthread_mutex_lock(&mutex);  \
   } while (0)
-#define NSS_OSLOGIN_CACHE_UNLOCK()                                             \
-  do {                                                                         \
-    pthread_mutex_unlock(&mutex);                                              \
+#define NSS_OSLOGIN_CACHE_UNLOCK() \
+  do {                             \
+    pthread_mutex_unlock(&mutex);  \
   } while (0)
 
 static FILE *p_file = NULL;
 static char p_filename[NSS_OSLOGIN_CACHE_PATH_LENGTH] =
     "/etc/oslogin_passwd.cache";
 #ifdef BSD
-extern int fgetpwent_r(FILE *,
-                       struct passwd *,
-                       char *,
-                       size_t,
+extern int fgetpwent_r(FILE *, struct passwd *, char *, size_t,
                        struct passwd **);
-#endif // ifdef BSD
-
+#endif  // ifdef BSD
 
 /* Common return code routine for all *ent_r_locked functions.
  * We need to return TRYAGAIN if the underlying files guy raises ERANGE,
@@ -79,9 +75,8 @@ int _nss_oslogin_cache_bsearch2_compare(const void *key, const void *value) {
 
 enum nss_status _nss_oslogin_cache_bsearch2(struct nss_oslogin_cache_args *args,
                                             int *errnop) {
-  enum nss_oslogin_cache_match (*lookup)(FILE *,
-                                         struct nss_oslogin_cache_args *) =
-  args->lookup_function;
+  enum nss_oslogin_cache_match (*lookup)(
+      FILE *, struct nss_oslogin_cache_args *) = args->lookup_function;
   FILE *file = NULL;
   FILE *system_file_stream = NULL;
   struct stat system_file;
@@ -185,7 +180,6 @@ enum nss_status _nss_oslogin_cache_bsearch2(struct nss_oslogin_cache_args *args,
 // Helper function for testing
 
 extern char *_nss_oslogin_cache_setpwent_path(const char *path) {
-
   DEBUG("%s %s\n", "Setting p_filename to", path);
   return strncpy(p_filename, path, NSS_OSLOGIN_CACHE_PATH_LENGTH - 1);
 }
@@ -194,8 +188,7 @@ extern char *_nss_oslogin_cache_setpwent_path(const char *path) {
 // Internal wrapper for binary searches, using uid-specific calls.
 
 static enum nss_oslogin_cache_match _nss_oslogin_cache_pwuid_wrap(
-    FILE *file,
-    struct nss_oslogin_cache_args *args) {
+    FILE *file, struct nss_oslogin_cache_args *args) {
   struct passwd *result = args->lookup_result;
   uid_t *uid = args->lookup_value;
 
@@ -219,8 +212,7 @@ static enum nss_oslogin_cache_match _nss_oslogin_cache_pwuid_wrap(
 // Internal wrapper for binary searches, using username-specific calls.
 
 static enum nss_oslogin_cache_match _nss_oslogin_cache_pwnam_wrap(
-    FILE *file,
-    struct nss_oslogin_cache_args *args) {
+    FILE *file, struct nss_oslogin_cache_args *args) {
   struct passwd *result = args->lookup_result;
   char *name = args->lookup_value;
   int ret;
@@ -246,7 +238,6 @@ static enum nss_oslogin_cache_match _nss_oslogin_cache_pwnam_wrap(
 // Internal setup routine
 
 static enum nss_status _nss_oslogin_cache_setpwent_locked(void) {
-
   DEBUG("%s %s\n", "Opening", p_filename);
   p_file = fopen(p_filename, "r");
 
@@ -273,7 +264,6 @@ enum nss_status _nss_oslogin_cache_setpwent(int stayopen) {
 // Internal close routine
 
 static enum nss_status _nss_oslogin_cache_endpwent_locked(void) {
-
   DEBUG("Closing passwd.cache\n");
   if (p_file) {
     fclose(p_file);
@@ -297,10 +287,7 @@ enum nss_status _nss_oslogin_cache_endpwent(void) {
 // Called internally to return the next entry from the passwd file
 
 static enum nss_status _nss_oslogin_cache_getpwent_r_locked(
-    struct passwd *result,
-    char *buffer,
-    size_t buflen,
-    int *errnop) {
+    struct passwd *result, char *buffer, size_t buflen, int *errnop) {
   enum nss_status ret = NSS_STATUS_SUCCESS;
 
   if (p_file == NULL) {
@@ -327,8 +314,7 @@ static enum nss_status _nss_oslogin_cache_getpwent_r_locked(
 // Called by NSS to look up next entry in passwd file
 
 enum nss_status _nss_oslogin_cache_getpwent_r(struct passwd *result,
-                                              char *buffer,
-                                              size_t buflen,
+                                              char *buffer, size_t buflen,
                                               int *errnop) {
   enum nss_status ret;
   NSS_OSLOGIN_CACHE_LOCK();
@@ -340,8 +326,7 @@ enum nss_status _nss_oslogin_cache_getpwent_r(struct passwd *result,
 // _nss_oslogin_cache_getpwuid_r()
 // Find a user account by uid
 
-enum nss_status _nss_oslogin_cache_getpwuid_r(uid_t uid,
-                                              struct passwd *result,
+enum nss_status _nss_oslogin_cache_getpwuid_r(uid_t uid, struct passwd *result,
                                               char *buffer, size_t buflen,
                                               int *errnop) {
   char filename[NSS_OSLOGIN_CACHE_PATH_LENGTH];
@@ -378,8 +363,7 @@ enum nss_status _nss_oslogin_cache_getpwuid_r(uid_t uid,
     if (ret == NSS_STATUS_SUCCESS) {
       while ((ret = _nss_oslogin_cache_getpwent_r_locked(
           result, buffer, buflen, errnop)) == NSS_STATUS_SUCCESS) {
-        if (result->pw_uid == uid)
-          break;
+        if (result->pw_uid == uid) break;
       }
     }
   }
@@ -440,8 +424,7 @@ enum nss_status _nss_oslogin_cache_getpwnam_r(const char *name,
     if (ret == NSS_STATUS_SUCCESS) {
       while ((ret = _nss_oslogin_cache_getpwent_r_locked(
           result, buffer, buflen, errnop)) == NSS_STATUS_SUCCESS) {
-        if (!strcmp(result->pw_name, name))
-          break;
+        if (!strcmp(result->pw_name, name)) break;
       }
     }
   }
