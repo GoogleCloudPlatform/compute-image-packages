@@ -1,24 +1,18 @@
-/* Copyright 2009 Google Inc.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
- * USA
- */
+// Copyright 2018 Google Inc. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-/* An NSS module which adds supports for file maps with a trailing .cache
- * suffix (/etc/passwd.cache, /etc/group.cache, and /etc/shadow.cache)
- */
+// An NSS module which adds supports for file /etc/oslogin_passwd.cache
 
 #include "nss_oslogin_cache.h"
 
@@ -58,14 +52,14 @@ static inline enum nss_status _nss_oslogin_cache_ent_bad_return_code(
   enum nss_status ret;
 
   switch (errnoval) {
-  case ERANGE:
-    DEBUG("ERANGE: Try again with a bigger buffer\n");
-    ret = NSS_STATUS_TRYAGAIN;
-    break;
-  case ENOENT:
-  default:
-    DEBUG("ENOENT or default case: Not found\n");
-    ret = NSS_STATUS_NOTFOUND;
+    case ERANGE:
+      DEBUG("ERANGE: Try again with a bigger buffer\n");
+      ret = NSS_STATUS_TRYAGAIN;
+      break;
+    case ENOENT:
+    default:
+      DEBUG("ENOENT or default case: Not found\n");
+      ret = NSS_STATUS_NOTFOUND;
   };
   return ret;
 }
@@ -87,7 +81,7 @@ enum nss_status _nss_oslogin_cache_bsearch2(struct nss_oslogin_cache_args *args,
                                             int *errnop) {
   enum nss_oslogin_cache_match (*lookup)(FILE *,
                                          struct nss_oslogin_cache_args *) =
-      args->lookup_function;
+  args->lookup_function;
   FILE *file = NULL;
   FILE *system_file_stream = NULL;
   struct stat system_file;
@@ -164,19 +158,19 @@ enum nss_status _nss_oslogin_cache_bsearch2(struct nss_oslogin_cache_args *args,
   }
 
   switch (lookup(system_file_stream, args)) {
-  case NSS_OSLOGIN_CACHE_EXACT:
-    ret = NSS_STATUS_SUCCESS;
-    break;
-  case NSS_OSLOGIN_CACHE_ERROR:
-    if (errno == ERANGE) {
-      // let the caller retry
-      *errnop = errno;
-      ret = _nss_oslogin_cache_ent_bad_return_code(*errnop);
-    }
-    break;
-  default:
-    ret = NSS_STATUS_UNAVAIL;
-    break;
+    case NSS_OSLOGIN_CACHE_EXACT:
+      ret = NSS_STATUS_SUCCESS;
+      break;
+    case NSS_OSLOGIN_CACHE_ERROR:
+      if (errno == ERANGE) {
+        // let the caller retry
+        *errnop = errno;
+        ret = _nss_oslogin_cache_ent_bad_return_code(*errnop);
+      }
+      break;
+    default:
+      ret = NSS_STATUS_UNAVAIL;
+      break;
   }
 
   fclose(system_file_stream);
@@ -383,7 +377,7 @@ enum nss_status _nss_oslogin_cache_getpwuid_r(uid_t uid,
 
     if (ret == NSS_STATUS_SUCCESS) {
       while ((ret = _nss_oslogin_cache_getpwent_r_locked(
-                  result, buffer, buflen, errnop)) == NSS_STATUS_SUCCESS) {
+          result, buffer, buflen, errnop)) == NSS_STATUS_SUCCESS) {
         if (result->pw_uid == uid)
           break;
       }
@@ -445,7 +439,7 @@ enum nss_status _nss_oslogin_cache_getpwnam_r(const char *name,
 
     if (ret == NSS_STATUS_SUCCESS) {
       while ((ret = _nss_oslogin_cache_getpwent_r_locked(
-                  result, buffer, buflen, errnop)) == NSS_STATUS_SUCCESS) {
+          result, buffer, buflen, errnop)) == NSS_STATUS_SUCCESS) {
         if (!strcmp(result->pw_name, name))
           break;
       }
