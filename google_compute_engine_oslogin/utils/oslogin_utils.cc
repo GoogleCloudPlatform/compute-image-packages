@@ -154,7 +154,8 @@ bool NssCache::NssGetpwentHelper(BufferManager* buf, struct passwd* result,
     string response;
     long http_code = 0;
     if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
-        response.empty() || !LoadJsonArrayToCache(response)) {
+        response.empty() ||
+        (!LoadJsonArrayToCache(response) && !on_last_page_)) {
       *errnop = ENOENT;
       return false;
     }
