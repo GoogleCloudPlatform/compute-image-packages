@@ -16,6 +16,7 @@
 
 import subprocess
 
+from google_compute_engine.distro import helpers
 from google_compute_engine.distro.sles_12 import utils
 from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
@@ -90,4 +91,13 @@ class UtilsTest(unittest.TestCase):
         mock.call.call(expectedIfupCall),
         mock.call.logger.warning(mock.ANY, ['eth1', 'eth2']),
     ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro.helpers.CallHwclock')
+  def testHandleClockSync(self, mock_call):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_call, 'call')
+
+    utils.Utils.HandleClockSync(self.mock_setup, self.mock_logger)
+    expected_calls = [mock.call.call(mock.ANY)]
     self.assertEqual(mocks.mock_calls, expected_calls)

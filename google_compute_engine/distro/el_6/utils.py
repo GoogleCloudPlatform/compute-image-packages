@@ -32,3 +32,13 @@ class Utils(utils.Utils):
       dhclient_script: string, the path to a dhclient script used by dhclient.
     """
     helpers.CallDhclient(interfaces, logger, dhclient_script=dhclient_script)
+
+  def HandleClockSync(self, logger):
+    """Sync clock using ntpd.
+
+    Called when clock drift token changes.
+
+    Args:
+      logger: logger object, used to write to SysLog and serial port.
+    """
+    helpers.CallHwclock(logger)

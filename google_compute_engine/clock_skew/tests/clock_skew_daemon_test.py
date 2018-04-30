@@ -71,36 +71,22 @@ class ClockSkewDaemonTest(unittest.TestCase):
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.subprocess.check_call')
-  def testHandleClockSync(self, mock_call):
-    command = ['/sbin/hwclock', '--hctosys']
+  @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.distro_utils')
+  def testHandleClockSync(self, mock_distro_utils):
     mock_sync = mock.create_autospec(clock_skew_daemon.ClockSkewDaemon)
     mock_logger = mock.Mock()
     mock_sync.logger = mock_logger
+    mock_sync.distro_utils = mock_distro_utils
 
     clock_skew_daemon.ClockSkewDaemon.HandleClockSync(mock_sync, 'Response')
-    mock_call.assert_called_once_with(command)
     expected_calls = [
         mock.call.info(mock.ANY, 'Response'),
-        mock.call.info(mock.ANY),
     ]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
-
-  @mock.patch('google_compute_engine.clock_skew.clock_skew_daemon.subprocess.check_call')
-  def testHandleClockSyncError(self, mock_call):
-    command = ['/sbin/hwclock', '--hctosys']
-    mock_sync = mock.create_autospec(clock_skew_daemon.ClockSkewDaemon)
-    mock_logger = mock.Mock()
-    mock_sync.logger = mock_logger
-    mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
-
-    clock_skew_daemon.ClockSkewDaemon.HandleClockSync(mock_sync, 'Response')
-    mock_call.assert_called_once_with(command)
     expected_calls = [
-        mock.call.info(mock.ANY, 'Response'),
-        mock.call.warning(mock.ANY),
+        mock.call.HandleClockSync(mock_logger),
     ]
-    self.assertEqual(mock_logger.mock_calls, expected_calls)
+    self.assertEqual(mock_distro_utils.mock_calls, expected_calls)
 
 
 if __name__ == '__main__':

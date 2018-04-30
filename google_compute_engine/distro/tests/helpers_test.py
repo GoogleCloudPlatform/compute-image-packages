@@ -64,3 +64,84 @@ class HelpersTest(unittest.TestCase):
     ]
 
     self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
+  def testCallHwclock(self, mock_call):
+    command = ['/sbin/hwclock', '--hctosys']
+    mock_logger = mock.Mock()
+
+    helpers.CallHwclock(mock_logger)
+    mock_call.assert_called_once_with(command)
+    expected_calls = [
+        mock.call.info(mock.ANY),
+    ]
+    self.assertEqual(mock_logger.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
+  def testCallHwclockError(self, mock_call):
+    command = ['/sbin/hwclock', '--hctosys']
+    mock_logger = mock.Mock()
+    mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
+
+    helpers.CallHwclock(mock_logger)
+    mock_call.assert_called_once_with(command)
+    expected_calls = [
+        mock.call.warning(mock.ANY),
+    ]
+    self.assertEqual(mock_logger.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
+  @mock.patch('google_compute_engine.distro.helpers.subprocess.call')
+  def testCallNtpdateActive(self, mock_call, mock_check_call):
+    command_status = ['service', 'ntpd', 'status']
+    command_stop = ['service', 'ntpd', 'stop']
+    command_start = ['service', 'ntpd', 'start']
+    command_ntpdate = 'ntpdate `awk \'$1=="server" {print $2}\' /etc/ntp.conf`'
+    mock_logger = mock.Mock()
+    mock_call.return_value = 0
+    mock_check_call.return_value = True
+
+    helpers.CallNtpdate(mock_logger)
+    mock_call.assert_called_once_with(command_status)
+    expected_calls = [
+        mock.call(command_stop),
+        mock.call(command_ntpdate, shell=True),
+        mock.call(command_start),
+    ]
+    self.assertEqual(mock_check_call.mock_calls, expected_calls)
+    expected_calls = [
+        mock.call.info(mock.ANY),
+    ]
+    self.assertEqual(mock_logger.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
+  @mock.patch('google_compute_engine.distro.helpers.subprocess.call')
+  def testCallNtpdateInactive(self, mock_call, mock_check_call):
+    command_status = ['service', 'ntpd', 'status']
+    command_ntpdate = 'ntpdate `awk \'$1=="server" {print $2}\' /etc/ntp.conf`'
+    mock_logger = mock.Mock()
+    mock_call.return_value = 1
+
+    helpers.CallNtpdate(mock_logger)
+    mock_call.assert_called_once_with(command_status)
+    mock_check_call.assert_called_once_with(command_ntpdate, shell=True)
+    expected_calls = [
+        mock.call.info(mock.ANY),
+    ]
+    self.assertEqual(mock_logger.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
+  @mock.patch('google_compute_engine.distro.helpers.subprocess.call')
+  def testCallNtpdateError(self, mock_call, mock_check_call):
+    command_status = ['service', 'ntpd', 'status']
+    command_ntpdate = 'ntpdate `awk \'$1=="server" {print $2}\' /etc/ntp.conf`'
+    mock_logger = mock.Mock()
+    mock_check_call.side_effect = subprocess.CalledProcessError(1, 'Test')
+
+    helpers.CallNtpdate(mock_logger)
+    mock_call.assert_called_once_with(command_status)
+    mock_check_call.assert_called_once_with(command_ntpdate, shell=True)
+    expected_calls = [
+        mock.call.warning(mock.ANY),
+    ]
+    self.assertEqual(mock_logger.mock_calls, expected_calls)

@@ -13,19 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utilities that are distro specific."""
+"""Utilities that are distro specific for use on FreeBSD 11."""
+
+from google_compute_engine.distro import helpers
+from google_compute_engine.distro import utils
 
 
-class Utils(object):
-  """Utilities used by Linux guest services."""
-
-  def __init__(self, debug=False):
-    """Constructor.
-
-    Args:
-      debug: bool, True if debug output should write to the console.
-    """
-    self.debug = debug
+class Utils(utils.Utils):
+  """Utilities used by Linux guest services on FreeBSD 11."""
 
   def EnableNetworkInterfaces(
       self, interfaces, logger, dhclient_script=None):
@@ -36,14 +31,14 @@ class Utils(object):
       logger: logger object, used to write to SysLog and serial port.
       dhclient_script: string, the path to a dhclient script used by dhclient.
     """
-    pass
+    helpers.CallDhclient(interfaces, logger)
 
   def HandleClockSync(self, logger):
-    """Sync clock.
+    """Sync clock using ntpd.
 
     Called when clock drift token changes.
 
     Args:
       logger: logger object, used to write to SysLog and serial port.
     """
-    pass
+    helpers.CallNtpdate(logger)

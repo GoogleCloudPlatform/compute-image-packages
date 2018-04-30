@@ -40,3 +40,37 @@ def CallDhclient(
     subprocess.check_call(dhclient_command + interfaces)
   except subprocess.CalledProcessError:
     logger.warning('Could not enable interfaces %s.', interfaces)
+
+
+def CallHwclock(logger):
+  """Sync clock using hwclock.
+
+  Args:
+    logger: logger object, used to write to SysLog and serial port.
+  """
+  command = ['/sbin/hwclock', '--hctosys']
+  try:
+    subprocess.check_call(command)
+  except subprocess.CalledProcessError:
+    logger.warning('Failed to sync system time with hardware clock.')
+  else:
+    logger.info('Synced system time with hardware clock.')
+
+
+def CallNtpdate(logger):
+  """Sync clock using ntpdate.
+
+  Args:
+    logger: logger object, used to write to SysLog and serial port.
+  """
+  ntpd_inactive = subprocess.call(['service', 'ntpd', 'status'])
+  try:
+    if not ntpd_inactive:
+      subprocess.check_call(['service', 'ntpd', 'stop'])
+    subprocess.check_call('ntpdate `awk \'$1=="server" {print $2}\' /etc/ntp.conf`', shell=True)
+    if not ntpd_inactive:
+      subprocess.check_call(['service', 'ntpd', 'start'])
+  except subprocess.CalledProcessError:
+    logger.warning('Failed to sync system time with ntp server.')
+  else:
+    logger.info('Synced system time with ntp server.')
