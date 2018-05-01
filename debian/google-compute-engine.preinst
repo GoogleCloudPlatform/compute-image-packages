@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,14 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Stop all services on remove.
 set -e
-if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
-  deb-systemd-invoke stop \
-    google-instance-setup.service \
-    google-accounts-daemon.service \
-    google-clock-skew-daemon.service \
-    google-network-daemon.service \
-    google-shutdown-scripts.service \
-    google-startup-scripts.service >/dev/null
+if [ -d /run/systemd/system ] ; then
+  if [ "$1" = upgrade ]; then
+    # Remove old services if they exist on upgrade.
+    if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
+      systemctl stop google-ip-forwarding-daemon.service
+      systemctl disable google-ip-forwarding-daemon.service
+    fi
+
+    if [ -f /lib/systemd/system/google-network-setup.service ]; then
+      systemctl stop google-network-setup.service
+      systemctl disable google-network-setup.service
+    fi
+  fi
 fi
