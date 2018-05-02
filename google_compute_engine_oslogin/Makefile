@@ -3,7 +3,7 @@ SHELL = /bin/sh
 BASENAME = oslogin
 NAME = google-compute-engine-$(BASENAME)
 MAJOR = 1
-MINOR = 2
+MINOR = 3
 REVISION = 0
 
 LIBNSS_OSLOGIN_CACHE = libnss_$(BASENAME)_cache
