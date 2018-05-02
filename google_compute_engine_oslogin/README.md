@@ -193,7 +193,7 @@ production quality._
     the code directory.)
 1.  To build the package, run the command
     ```
-    debbuild -us -uc
+    debuild -us -uc
     ```
 
 #### RPM
