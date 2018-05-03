@@ -26,6 +26,7 @@ deploy:
     secure: hh1iPe4033hHRhhjSWyogjqECgPLcTLjlgtfI6qZdhyE9K2xIdL4HUYoVJdEXIp3hXvafJ/egcJvmaxpyNDhRcNfZjv4aRy3daBWFDEqaJFqbmF3F2eCu8Fn28xs4ZFqzi0O7hhgtweJZg66ux6fKtoBbVeVR9+hy6iUH08AoOg=
   on:
     branch: master
+    python: 3.6
     distributions: sdist bdist_wheel
     repo: GoogleCloudPlatform/compute-image-packages
     tags: true
