@@ -299,6 +299,27 @@ class InstanceSetupTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess.call')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.os.path.exists')
+  def testStartSshdRcFreebsd(self, mock_exists, mock_call):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_exists, 'exists')
+    mocks.attach_mock(mock_call, 'call')
+    mock_exists.side_effect = [False, False, False, False, False, True]
+
+    instance_setup.InstanceSetup._StartSshd(self.mock_setup)
+    expected_calls = [
+        mock.call.exists('/bin/systemctl'),
+        mock.call.exists('/etc/init.d/ssh'),
+        mock.call.exists('/etc/init/ssh.conf'),
+        mock.call.exists('/etc/init.d/sshd'),
+        mock.call.exists('/etc/init/sshd.conf'),
+        mock.call.exists('/etc/rc.d/sshd'),
+        mock.call.call(['service', 'sshd', 'start']),
+        mock.call.call(['service', 'sshd', 'reload']),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess.call')
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.os.path.exists')
   def testStartSshdSystemd(self, mock_exists, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_exists, 'exists')
