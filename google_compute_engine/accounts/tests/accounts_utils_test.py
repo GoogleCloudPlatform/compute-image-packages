@@ -335,7 +335,7 @@ class AccountsUtilsTest(unittest.TestCase):
         ('', '', pw_uid, pw_gid, '', pw_dir, ''))
     self.mock_utils._GetUser.return_value = pw_entry
     mock_islink.return_value = False
-    mock_exists.return_value = False
+    mock_exists.side_effect = [True, False]
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
     self.mock_logger.name = 'test'
@@ -359,6 +359,39 @@ class AccountsUtilsTest(unittest.TestCase):
     ]
     self.assertEqual(mock_permissions.mock_calls, expected_calls)
     self.mock_logger.warning.assert_not_called()
+
+  @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.shutil.copy')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.tempfile.NamedTemporaryFile')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
+  @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.islink')
+  def testUpdateAuthorizedKeysNoHomeDir(
+      self, mock_islink, mock_exists, mock_tempfile, mock_copy,
+      mock_permissions):
+    user = 'user'
+    ssh_keys = ['Google key 1']
+    temp_dest = '/tmp/dest'
+    pw_uid = 1
+    pw_gid = 2
+    pw_dir = '/home/user'
+    ssh_dir = '/home/user/.ssh'
+    authorized_keys_file = '/home/user/.ssh/authorized_keys'
+    pw_entry = accounts_utils.pwd.struct_passwd(
+        ('', '', pw_uid, pw_gid, '', pw_dir, ''))
+    self.mock_utils._GetUser.return_value = pw_entry
+    mock_islink.return_value = False
+    mock_exists.side_effect = [False, False]
+    mock_tempfile.return_value = mock_tempfile
+    mock_tempfile.__enter__.return_value.name = temp_dest
+    self.mock_logger.name = 'test'
+    accounts_utils.AccountsUtils._UpdateAuthorizedKeys(
+        self.mock_utils, user, ssh_keys)
+    expected_calls = [
+        mock.call(pw_dir, mode=0o755, uid=pw_uid, gid=pw_gid, mkdir=True),
+        mock.call(ssh_dir, mode=0o700, uid=pw_uid, gid=pw_gid, mkdir=True),
+        mock.call(authorized_keys_file, mode=0o600, uid=pw_uid, gid=pw_gid),
+    ]
+    self.assertEqual(mock_permissions.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.file_utils.SetPermissions')
   def testUpdateAuthorizedKeysNoUser(self, mock_permissions):

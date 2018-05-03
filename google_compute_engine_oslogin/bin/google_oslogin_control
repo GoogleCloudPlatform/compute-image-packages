@@ -69,6 +69,8 @@ remove_from_config() {
 }
 
 remove_from_nss_config() {
+  sed -i '/^passwd:/ s/ oslogin_cache oslogin//' ${nss_config}.new
+  sed -i '/^passwd:/ s/ cache oslogin//' ${nss_config}.new
   sed -i '/^passwd:/ s/ oslogin//' ${nss_config}.new
 }
 
@@ -80,7 +82,7 @@ add_to_sshd_config() {
 
 add_to_nss_config() {
   remove_from_nss_config
-  sed -i '/^passwd:/ s/$/ oslogin/' ${nss_config}.new
+  sed -i '/^passwd:/ s/$/ oslogin_cache oslogin/' ${nss_config}.new
 }
 
 add_to_pam_config() {

@@ -13,15 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Manually stop all services.
+# Stop all services on remove.
 set -e
 if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
   deb-systemd-invoke stop \
     google-instance-setup.service \
-    google-network-setup.service \
     google-accounts-daemon.service \
     google-clock-skew-daemon.service \
-    google-ip-forwarding-daemon.service \
+    google-network-daemon.service \
     google-shutdown-scripts.service \
     google-startup-scripts.service >/dev/null
 fi

@@ -21,7 +21,7 @@ import sys
 import setuptools
 
 install_requires = ['boto', 'setuptools']
-if sys.version_info >= (3, 5):
+if sys.version_info >= (3, 6):
   install_requires += ['distro']
 
 setuptools.setup(
@@ -36,15 +36,14 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     scripts=glob.glob('scripts/*'),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages',
-    version='2.7.6',
+    version='2.8.0',
     # Entry points create scripts in /usr/bin that call a function.
     entry_points={
         'console_scripts': [
             'google_accounts_daemon=google_compute_engine.accounts.accounts_daemon:main',
             'google_clock_skew_daemon=google_compute_engine.clock_skew.clock_skew_daemon:main',
-            'google_ip_forwarding_daemon=google_compute_engine.ip_forwarding.ip_forwarding_daemon:main',
             'google_instance_setup=google_compute_engine.instance_setup.instance_setup:main',
-            'google_network_setup=google_compute_engine.network_setup.network_setup:main',
+            'google_network_daemon=google_compute_engine.networking.network_daemon:main',
             'google_metadata_script_runner=google_compute_engine.metadata_scripts.script_manager:main',
         ],
     },

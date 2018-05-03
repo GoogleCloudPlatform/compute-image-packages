@@ -1,3 +1,15 @@
+google-compute-engine-oslogin (1.3.0-1+deb8) unstable; urgency=low
+
+  * Include libnss cache as part of the OS Login package.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 01 May 2018 12:00:00 -0700
+
+google-compute-engine-oslogin (1.2.0-1+deb8) unstable; urgency=low
+
+  * Add support for NSS cache.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 08 Mar 2018 12:00:00 -0700
+
 google-compute-engine-oslogin (1.1.5-1+deb8) unstable; urgency=low
 
   * Clear the CURL_GLOBAL_SSL bit on curl initialization.

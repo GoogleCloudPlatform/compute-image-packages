@@ -16,13 +16,12 @@
 if [ "$1" = purge ]; then
   systemctl stop --no-block google-accounts-daemon
   systemctl stop --no-block google-clock-skew-daemon
-  systemctl stop --no-block google-ip-forwarding-daemon
+  systemctl stop --no-block google-network-daemon
 
   systemctl --no-reload disable google-accounts-daemon.service
   systemctl --no-reload disable google-clock-skew-daemon.service
   systemctl --no-reload disable google-instance-setup.service
-  systemctl --no-reload disable google-ip-forwarding-daemon.service
-  systemctl --no-reload disable google-network-setup.service
+  systemctl --no-reload disable google-network-daemon.service
   systemctl --no-reload disable google-shutdown-scripts.service
   systemctl --no-reload disable google-startup-scripts.service
 fi

@@ -17,8 +17,22 @@
 ACTION!="add|change", GOTO="gce_disk_naming_end"
 SUBSYSTEM!="block", GOTO="gce_disk_naming_end"
 
+# SCSI naming
 KERNEL=="sd*|vd*", IMPORT{program}="scsi_id --export --whitelisted -d $tempnode"
-KERNEL=="sd*|vd*", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="disk", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}"
-KERNEL=="sd*|vd*", ENV{ID_SERIAL_SHORT}=="?*", ENV{DEVTYPE}=="partition", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}-part%n"
+
+# NVME naming
+KERNEL=="nvme0n1*", ENV{ID_SERIAL_SHORT}="local-nvme-ssd-0"
+KERNEL=="nvme0n2*", ENV{ID_SERIAL_SHORT}="local-nvme-ssd-1"
+KERNEL=="nvme0n3*", ENV{ID_SERIAL_SHORT}="local-nvme-ssd-2"
+KERNEL=="nvme0n4*", ENV{ID_SERIAL_SHORT}="local-nvme-ssd-3"
+KERNEL=="nvme0n5*", ENV{ID_SERIAL_SHORT}="local-nvme-ssd-4"
+KERNEL=="nvme0n6*", ENV{ID_SERIAL_SHORT}="local-nvme-ssd-5"
+KERNEL=="nvme0n7*", ENV{ID_SERIAL_SHORT}="local-nvme-ssd-6"
+KERNEL=="nvme0n8*", ENV{ID_SERIAL_SHORT}="local-nvme-ssd-7"
+KERNEL=="nvme*", ENV{ID_SERIAL}="Google_EphemeralDisk_$env{ID_SERIAL_SHORT}"
+
+# Symlinks
+KERNEL=="sd*|vd*|nvme*", ENV{DEVTYPE}=="disk", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}"
+KERNEL=="sd*|vd*|nvme*", ENV{DEVTYPE}=="partition", SYMLINK+="disk/by-id/google-$env{ID_SERIAL_SHORT}-part%n"
 
 LABEL="gce_disk_naming_end"

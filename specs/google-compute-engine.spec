@@ -18,7 +18,7 @@
 %endif
 
 Name: google-compute-engine
-Version: 2.7.6
+Version: 2.8.0
 Release: 1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
@@ -108,18 +108,17 @@ cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google
 /etc/udev/rules.d/*.rules
 %attr(0755,root,root) %{_bindir}/*
 
-
 %post
 %if 0%{?el6}
 # On upgrade run instance setup again to handle any new configs and restart daemons.
 if [ $1 -eq 2 ]; then
   stop -q -n google-accounts-daemon
   stop -q -n google-clock-skew-daemon
-  stop -q -n google-ip-forwarding-daemon
+  stop -q -n google-network-daemon
   /usr/bin/google_instance_setup
   start -q -n google-accounts-daemon
   start -q -n google-clock-skew-daemon
-  start -q -n google-ip-forwarding-daemon
+  start -q -n google-network-daemon
 fi
 
 # Install google-compute-engine from pypi into the SCL environment if it exists.
@@ -132,12 +131,27 @@ if [ -d /opt/rh/python27/root/usr/lib/python2.7/site-packages/google_compute_eng
 fi
 %endif
 
+# Remove old services.
+if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
+  systemctl stop --no-block google-ip-forwarding-daemon
+  systemctl disable google-ip-forwarding-daemon.service
+fi
+
+if [ -f /lib/systemd/system/google-network-setup.service ]; then
+  systemctl stop --no-block google-network-setup
+  systemctl disable google-network-setup.service
+fi
+
+if [ $1 -eq 2 ]; then
+  # New service might not be enabled during upgrade.
+  systemctl enable google-network-daemon.service
+fi
+
 %if 0%{?el7}
 %systemd_post google-accounts-daemon.service
 %systemd_post google-clock-skew-daemon.service
 %systemd_post google-instance-setup.service
-%systemd_post google-ip-forwarding-daemon.service
-%systemd_post google-network-setup.service
+%systemd_post google-network-daemon.service
 %systemd_post google-shutdown-scripts.service
 %systemd_post google-startup-scripts.service
 # On upgrade run instance setup again to handle any new configs and restart daemons.
@@ -145,7 +159,7 @@ if [ $1 -eq 2 ]; then
   /usr/bin/google_instance_setup
   systemctl reload-or-restart google-accounts-daemon.service
   systemctl reload-or-restart google-clock-skew-daemon.service
-  systemctl reload-or-restart google-ip-forwarding-daemon.service
+  systemctl reload-or-restart google-network-daemon.service
 fi
 %endif
 
@@ -156,14 +170,13 @@ if [ $1 -eq 0 ]; then
 %if 0%{?el6}
   stop -q -n google-accounts-daemon
   stop -q -n google-clock-skew-daemon
-  stop -q -n google-ip-forwarding-daemon
+  stop -q -n google-network-daemon
 %endif
 %if 0%{?el7}
   %systemd_preun google-accounts-daemon.service
   %systemd_preun google-clock-skew-daemon.service
   %systemd_preun google-instance-setup.service
-  %systemd_preun google-ip-forwarding-daemon.service
-  %systemd_preun google-network-setup.service
+  %systemd_preun google-network-daemon.service
   %systemd_preun google-shutdown-scripts.service
   %systemd_preun google-startup-scripts.service
 %endif

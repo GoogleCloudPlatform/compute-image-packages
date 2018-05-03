@@ -1,6 +1,6 @@
 [Unit]
 Description=Google Compute Engine Clock Skew Daemon
-After=network.target google-instance-setup.service google-network-setup.service
+After=network.target google-instance-setup.service google-network-daemon.service
 Requires=network.target
 
 [Service]

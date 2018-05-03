@@ -17,8 +17,11 @@
 
 import os
 import subprocess
+import time
 
 from google_compute_engine import constants
+
+NSS_CACHE_DURATION_SEC = 21600  # 6 hours in seconds.
 
 
 class OsLoginUtils(object):
@@ -32,6 +35,7 @@ class OsLoginUtils(object):
     """
     self.logger = logger
     self.oslogin_installed = True
+    self.update_time = 0
 
   def _RunOsLoginControl(self, action):
     """Run the OS Login control script.
@@ -64,27 +68,62 @@ class OsLoginUtils(object):
         self.oslogin_installed = False
       return None
 
+    # Prevent log spam when OS Login is not installed.
     self.oslogin_installed = True
+    if not os.path.exists(constants.OSLOGIN_NSS_CACHE):
+      return False
     return not retcode
 
-  def UpdateOsLogin(self, enable):
-    """Check to see if OS Login is enabled, and switch if necessary.
+  def _RunOsLoginNssCache(self):
+    """Run the OS Login NSS cache binary.
+
+    Returns:
+      int, the return code from the call, or None if the script is not found.
+    """
+    try:
+      return subprocess.call([constants.OSLOGIN_NSS_CACHE_SCRIPT])
+    except OSError as e:
+      if e.errno == os.errno.ENOENT:
+        return None
+      else:
+        raise
+
+  def _RemoveOsLoginNssCache(self):
+    """Remove the OS Login NSS cache file."""
+    if os.path.exists(constants.OSLOGIN_NSS_CACHE):
+      try:
+        os.remove(constants.OSLOGIN_NSS_CACHE)
+      except OSError as e:
+        if e.errno != os.errno.ENOENT:
+          raise
+
+  def UpdateOsLogin(self, enable, duration=NSS_CACHE_DURATION_SEC):
+    """Update whether OS Login is enabled and update NSS cache if necessary.
 
     Args:
       enable: bool, enable OS Login if True, disable if False.
+      duration: int, number of seconds before updating the NSS cache.
 
     Returns:
       int, the return code from updating OS Login, or None if not present.
     """
     status = self._GetStatus()
-    if status is None or status == enable:
+    if status is None:
       return None
 
-    if enable:
-      action = 'activate'
-      self.logger.info('Activating OS Login.')
-    else:
-      action = 'deactivate'
-      self.logger.info('Deactivating OS Login.')
+    current_time = time.time()
+    if status == enable:
+      if status and current_time - self.update_time > duration:
+        self.update_time = current_time
+        return self._RunOsLoginNssCache()
+      else:
+        return None
 
-    return self._RunOsLoginControl(action)
+    self.update_time = current_time
+    if enable:
+      self.logger.info('Activating OS Login.')
+      return self._RunOsLoginControl('activate') or self._RunOsLoginNssCache()
+    else:
+      self.logger.info('Deactivating OS Login.')
+      return (self._RunOsLoginControl('deactivate') or
+              self._RemoveOsLoginNssCache())

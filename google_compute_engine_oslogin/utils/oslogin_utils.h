@@ -79,6 +79,14 @@ class NssCache {
   // true on success.
   bool LoadJsonArrayToCache(string response);
 
+  // Helper method that effectively implements the getpwent_r nss method. Each
+  // call will iterate through the OsLogin database and return the next entry.
+  // Internally, the cache will keep track of pages of passwd entries, and will
+  // make an http call to the server if necessary to retrieve additional
+  // entries. Returns whether passwd retrieval was successful. If true, the
+  // passwd result will contain valid data.
+  bool NssGetpwentHelper(BufferManager* buf, struct passwd* result, int* errnop);
+
   // Returns the page token for requesting the next page of passwd entries.
   string GetPageToken() { return page_token_; }
 

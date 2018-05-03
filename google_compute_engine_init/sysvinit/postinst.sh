@@ -16,13 +16,9 @@
 update-rc.d google-accounts-daemon defaults
 update-rc.d google-clock-skew-daemon defaults
 update-rc.d google-instance-setup defaults
-update-rc.d google-ip-forwarding-daemon defaults
-update-rc.d google-network-setup defaults
+update-rc.d google-network-daemon defaults
 update-rc.d google-shutdown-scripts defaults
 update-rc.d google-startup-scripts defaults
 
 # Run instance setup.
 /etc/init.d/google-instance-setup start
-
-# Enable network interfaces.
-/etc/init.d/google-network-setup start

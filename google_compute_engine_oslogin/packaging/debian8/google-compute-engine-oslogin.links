@@ -1,1 +1,2 @@
-/lib/libnss_google-compute-engine-oslogin-1.1.5.so /lib/libnss_oslogin.so.2
+/lib/libnss_google-compute-engine-oslogin-1.3.0.so /lib/libnss_oslogin.so.2
+/lib/libnss_cache_google-compute-engine-oslogin-1.3.0.so /lib/libnss_cache_oslogin.so.2

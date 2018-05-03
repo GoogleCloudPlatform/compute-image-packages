@@ -16,6 +16,7 @@
 #include <curl/curl.h>
 #include <errno.h>
 #include <json.h>
+#include <nss.h>
 #include <stdio.h>
 #include <time.h>
 #include <cstring>
@@ -107,9 +108,17 @@ bool NssCache::LoadJsonArrayToCache(string response) {
   if (json_object_object_get_ex(root, "nextPageToken", &page_token_object)) {
     page_token_ = json_object_get_string(page_token_object);
   } else {
-    // If the page token is not found, we've reached the end of the database.
+    // If the page token is not found, assume something went wrong.
     page_token_ = "";
     on_last_page_ = true;
+    return false;
+  }
+  // A page_token of 0 means we are done. This response will not contain any
+  // login profiles.
+  if (page_token_ == "0") {
+    page_token_ = "";
+    on_last_page_ = true;
+    return false;
   }
   // Now grab all of the loginProfiles.
   json_object* login_profiles = NULL;
@@ -129,6 +138,30 @@ bool NssCache::LoadJsonArrayToCache(string response) {
     json_object* profile = json_object_array_get_idx(login_profiles, i);
     passwd_cache_.push_back(
         json_object_to_json_string_ext(profile, JSON_C_TO_STRING_PLAIN));
+  }
+  return true;
+}
+
+bool NssCache::NssGetpwentHelper(BufferManager* buf, struct passwd* result,
+                                 int* errnop) {
+  if (!HasNextPasswd() && !OnLastPage()) {
+    std::stringstream url;
+    url << kMetadataServerUrl << "users?pagesize=" << cache_size_;
+    string page_token = GetPageToken();
+    if (!page_token.empty()) {
+      url << "&pagetoken=" << page_token;
+    }
+    string response;
+    long http_code = 0;
+    if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+        response.empty() ||
+        (!LoadJsonArrayToCache(response) && !on_last_page_)) {
+      *errnop = ENOENT;
+      return false;
+    }
+  }
+  if (HasNextPasswd() && !GetNextPasswd(buf, result, errnop)) {
+    return false;
   }
   return true;
 }
