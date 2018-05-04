@@ -27,7 +27,7 @@ class OsLoginUtilsTest(unittest.TestCase):
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.oslogin_control_script = 'google_oslogin_control'
-    self.oslogin_nss_cache = '/etc/passwd.cache'
+    self.oslogin_nss_cache = '/etc/oslogin_passwd.cache'
     self.oslogin_nss_cache_script = 'google_oslogin_nss_cache'
 
     self.mock_oslogin = mock.create_autospec(oslogin_utils.OsLoginUtils)
