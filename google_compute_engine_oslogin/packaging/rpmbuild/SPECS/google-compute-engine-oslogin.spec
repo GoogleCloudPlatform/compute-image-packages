@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Force the dist to be el7 to avoid el7.centos.
+%if 0%{?rhel} == 7
+  %define dist .el7
+%endif
+
 Name:           google-compute-engine-oslogin
 Version:        1.3.0
 Release:        1%{?dist}
