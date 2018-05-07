@@ -18,7 +18,7 @@
 %endif
 
 Name: google-compute-engine
-Version: 2.7.7
+Version: 2.8.1
 Release: 1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
@@ -131,17 +131,15 @@ if [ -d /opt/rh/python27/root/usr/lib/python2.7/site-packages/google_compute_eng
 fi
 %endif
 
-# Remove old service.
+# Remove old services.
 if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
   systemctl stop --no-block google-ip-forwarding-daemon
-  systemctl --no-reload disable google-ip-forwarding-daemon.service
-  rm /lib/systemd/system/google-ip-forwarding-daemon.service
+  systemctl disable google-ip-forwarding-daemon.service
 fi
 
 if [ -f /lib/systemd/system/google-network-setup.service ]; then
   systemctl stop --no-block google-network-setup
-  systemctl --no-reload disable google-network-setup.service
-  rm /lib/systemd/system/google-network-setup.service
+  systemctl disable google-network-setup.service
 fi
 
 if [ $1 -eq 2 ]; then

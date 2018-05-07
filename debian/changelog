@@ -1,3 +1,17 @@
+google-compute-image-packages (2.8.1-1) stable; urgency=low
+
+  * Improve OS Login disablement.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 04 May 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.0-1) stable; urgency=low
+
+  * Create a new network daemon.
+  * Refactor the IP forwarding daemon and network setup.
+  * Improvements for using NSS cache in the accounts daemon.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 01 May 2018 12:00:00 -0700
+
 google-compute-image-packages (2.7.7-1) stable; urgency=low
 
   * Add support for NSS cache in OS Login.

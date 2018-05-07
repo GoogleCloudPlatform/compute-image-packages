@@ -25,8 +25,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifndef NSS_OSLOGIN_CACHE_H
-#define NSS_OSLOGIN_CACHE_H
+#ifndef NSS_CACHE_OSLOGIN_H
+#define NSS_CACHE_OSLOGIN_H
 
 #ifdef DEBUG
 #undef DEBUG
@@ -40,17 +40,17 @@
   } while (0)
 #endif /* DEBUG */
 
-#define NSS_OSLOGIN_CACHE_PATH_LENGTH 255
-extern char *_nss_oslogin_cache_setpwent_path(const char *path);
+#define NSS_CACHE_OSLOGIN_PATH_LENGTH 255
+extern char *_nss_cache_oslogin_setpwent_path(const char *path);
 
-enum nss_oslogin_cache_match {
-  NSS_OSLOGIN_CACHE_EXACT = 0,
-  NSS_OSLOGIN_CACHE_HIGH = 1,
-  NSS_OSLOGIN_CACHE_LOW = 2,
-  NSS_OSLOGIN_CACHE_ERROR = 3,
+enum nss_cache_oslogin_match {
+  NSS_CACHE_OSLOGIN_EXACT = 0,
+  NSS_CACHE_OSLOGIN_HIGH = 1,
+  NSS_CACHE_OSLOGIN_LOW = 2,
+  NSS_CACHE_OSLOGIN_ERROR = 3,
 };
 
-struct nss_oslogin_cache_args {
+struct nss_cache_oslogin_args {
   char *system_filename;
   char *sorted_filename;
   void *lookup_function;
@@ -62,4 +62,4 @@ struct nss_oslogin_cache_args {
   size_t lookup_key_length;
 };
 
-#endif /* NSS_OSLOGIN_CACHE_H */
+#endif /* NSS_CACHE_OSLOGIN_H */

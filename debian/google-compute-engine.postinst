@@ -15,13 +15,13 @@
 
 #DEBHELPER#
 
-# Manually added service start or restart. We do not start or restart
+# Service reload or restart. We do not start or restart
 # google-shutdown-scripts.service google-startup-scripts.service.
 set -e
 if [ -d /run/systemd/system ]; then
   systemctl --system daemon-reload >/dev/null || true
   if [ -n "$2" ]; then
-    _dh_action=try-restart
+    _dh_action=reload-or-restart
   else
     _dh_action=start
   fi

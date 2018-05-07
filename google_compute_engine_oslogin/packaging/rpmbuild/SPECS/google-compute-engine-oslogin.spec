@@ -12,8 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Force the dist to be el7 to avoid el7.centos.
+%if 0%{?rhel} == 7
+  %define dist .el7
+%endif
+
 Name:           google-compute-engine-oslogin
-Version:        1.2.0
+Version:        1.3.0
 Release:        1%{?dist}
 Summary:        OS Login Functionality for Google Compute Engine
 
@@ -27,7 +32,6 @@ BuildRequires:  json-c
 BuildRequires:  pam-devel
 BuildRequires:  policycoreutils-python
 Requires:  policycoreutils-python
-Requires:  libnss-cache
 
 %define pam_install_path /%{_lib}/security
 
@@ -52,6 +56,7 @@ make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{p
 %files
 %doc
 /%{_lib}/libnss_%{name}-%{version}.so
+/%{_lib}/libnss_cache_%{name}-%{version}.so
 %{pam_install_path}/pam_oslogin_admin.so
 %{pam_install_path}/pam_oslogin_login.so
 /usr/bin/google_authorized_keys
