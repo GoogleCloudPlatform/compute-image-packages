@@ -142,6 +142,13 @@ if [ -f /lib/systemd/system/google-network-setup.service ]; then
   systemctl disable google-network-setup.service
 fi
 
+# Stop old services in EL6.
+%if 0%{?el6}
+  if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
+    stop -q -n google-ip-forwarding-daemon
+  fi
+%endif
+
 if [ $1 -eq 2 ]; then
   # New service might not be enabled during upgrade.
   systemctl enable google-network-daemon.service
