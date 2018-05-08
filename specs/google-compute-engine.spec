@@ -19,7 +19,7 @@
 
 Name: google-compute-engine
 Version: 2.8.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
@@ -141,6 +141,13 @@ if [ -f /lib/systemd/system/google-network-setup.service ]; then
   systemctl stop --no-block google-network-setup
   systemctl disable google-network-setup.service
 fi
+
+# Stop old services in EL6.
+%if 0%{?el6}
+  if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
+    stop -q -n google-ip-forwarding-daemon
+  fi
+%endif
 
 if [ $1 -eq 2 ]; then
   # New service might not be enabled during upgrade.
