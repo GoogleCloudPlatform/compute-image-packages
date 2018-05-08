@@ -171,6 +171,9 @@ if [ $1 -eq 0 ]; then
   stop -q -n google-accounts-daemon
   stop -q -n google-clock-skew-daemon
   stop -q -n google-network-daemon
+  if [ -f /etc/init/google-ip-forwarding-daemon.conf ]; then
+    stop -q -n google-ip-forwarding-daemon
+  fi
 %endif
 %if 0%{?el7}
   %systemd_preun google-accounts-daemon.service
