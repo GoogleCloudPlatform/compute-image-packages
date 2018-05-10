@@ -67,7 +67,8 @@ def CallNtpdate(logger):
   try:
     if not ntpd_inactive:
       subprocess.check_call(['service', 'ntpd', 'stop'])
-    subprocess.check_call('ntpdate `awk \'$1=="server" {print $2}\' /etc/ntp.conf`', shell=True)
+    subprocess.check_call(
+        'ntpdate `awk \'$1=="server" {print $2}\' /etc/ntp.conf`', shell=True)
     if not ntpd_inactive:
       subprocess.check_call(['service', 'ntpd', 'start'])
   except subprocess.CalledProcessError:
