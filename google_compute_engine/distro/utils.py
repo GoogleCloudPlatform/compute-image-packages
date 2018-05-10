@@ -39,7 +39,7 @@ class Utils(object):
     pass
 
   def HandleClockSync(self, logger):
-    """Sync clock.
+    """Sync the software clock with the hypervisor clock.
 
     Called when clock drift token changes.
 
