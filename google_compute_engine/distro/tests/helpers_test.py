@@ -72,9 +72,7 @@ class HelpersTest(unittest.TestCase):
 
     helpers.CallHwclock(mock_logger)
     mock_call.assert_called_once_with(command)
-    expected_calls = [
-        mock.call.info(mock.ANY),
-    ]
+    expected_calls = [mock.call.info(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
@@ -85,9 +83,7 @@ class HelpersTest(unittest.TestCase):
 
     helpers.CallHwclock(mock_logger)
     mock_call.assert_called_once_with(command)
-    expected_calls = [
-        mock.call.warning(mock.ANY),
-    ]
+    expected_calls = [mock.call.warning(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
@@ -109,9 +105,7 @@ class HelpersTest(unittest.TestCase):
         mock.call(command_start),
     ]
     self.assertEqual(mock_check_call.mock_calls, expected_calls)
-    expected_calls = [
-        mock.call.info(mock.ANY),
-    ]
+    expected_calls = [mock.call.info(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
@@ -125,9 +119,7 @@ class HelpersTest(unittest.TestCase):
     helpers.CallNtpdate(mock_logger)
     mock_call.assert_called_once_with(command_status)
     mock_check_call.assert_called_once_with(command_ntpdate, shell=True)
-    expected_calls = [
-        mock.call.info(mock.ANY),
-    ]
+    expected_calls = [mock.call.info(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
@@ -141,7 +133,5 @@ class HelpersTest(unittest.TestCase):
     helpers.CallNtpdate(mock_logger)
     mock_call.assert_called_once_with(command_status)
     mock_check_call.assert_called_once_with(command_ntpdate, shell=True)
-    expected_calls = [
-        mock.call.warning(mock.ANY),
-    ]
+    expected_calls = [mock.call.warning(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)

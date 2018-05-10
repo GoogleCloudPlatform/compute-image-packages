@@ -79,13 +79,9 @@ class ClockSkewDaemonTest(unittest.TestCase):
     mock_sync.distro_utils = mock_distro_utils
 
     clock_skew_daemon.ClockSkewDaemon.HandleClockSync(mock_sync, 'Response')
-    expected_calls = [
-        mock.call.info(mock.ANY, 'Response'),
-    ]
+    expected_calls = [mock.call.info(mock.ANY, 'Response')]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
-    expected_calls = [
-        mock.call.HandleClockSync(mock_logger),
-    ]
+    expected_calls = [mock.call.HandleClockSync(mock_logger)]
     self.assertEqual(mock_distro_utils.mock_calls, expected_calls)
 
 
