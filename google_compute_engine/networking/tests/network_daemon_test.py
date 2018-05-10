@@ -30,8 +30,10 @@ class NetworkDaemonTest(unittest.TestCase):
     self.mock_setup.logger = self.mock_logger
     self.mock_setup.watcher = self.mock_watcher
     self.mock_ip_forwarding = mock.Mock()
+    self.mock_network_setup = mock.Mock()
     self.mock_network_utils = mock.Mock()
     self.mock_setup.ip_forwarding = self.mock_ip_forwarding
+    self.mock_setup.network_setup = self.mock_network_setup
     self.mock_setup.network_utils = self.mock_network_utils
 
   @mock.patch('google_compute_engine.networking.network_daemon.ip_forwarding')
@@ -53,17 +55,10 @@ class NetworkDaemonTest(unittest.TestCase):
     mocks.attach_mock(mock_network_setup, 'network_setup')
     mocks.attach_mock(mock_watcher, 'watcher')
     metadata_key = network_daemon.NetworkDaemon.network_interface_metadata_key
+
     with mock.patch.object(
         network_daemon.NetworkDaemon, 'HandleNetworkInterfaces'
-    ) as mock_handle, mock.patch.object(
-        network_daemon.NetworkDaemon, '_ExtractInterfaceMetadata'
-    ) as mock_extract:
-      mocks.attach_mock(mock_extract, 'extract')
-      mock_extract.return_value = [
-          network_daemon.NetworkDaemon.NetworkInterface('a', []),
-          network_daemon.NetworkDaemon.NetworkInterface('b', []),
-      ]
-
+    ) as mock_handle:
       network_daemon.NetworkDaemon(
           ip_forwarding_enabled=True,
           proto_id='66',
@@ -75,14 +70,11 @@ class NetworkDaemonTest(unittest.TestCase):
           debug=True)
       expected_calls = [
           mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
+          mock.call.forwarding.IpForwarding(proto_id='66', debug=True),
+          mock.call.network_setup.NetworkSetup(
+              debug=True, dhclient_script='x', dhcp_command='y'),
           mock.call.network.NetworkUtils(logger=mock_logger_instance),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
-          mock.call.watcher.MetadataWatcher().GetMetadata(
-              metadata_key=metadata_key, recursive=True),
-          mock.call.extract(mock.ANY),
-          mock.call.network_setup.NetworkSetup(
-              mock.ANY, debug=True, dhclient_script='x', dhcp_command='y'),
-          mock.call.forwarding.IpForwarding('66', True),
           mock.call.lock.LockFile(network_daemon.LOCKFILE),
           mock.call.lock.LockFile().__enter__(),
           mock.call.logger.Logger().info(mock.ANY),
@@ -107,24 +99,15 @@ class NetworkDaemonTest(unittest.TestCase):
     mocks = mock.Mock()
     mocks.attach_mock(mock_lock, 'lock')
     mocks.attach_mock(mock_logger, 'logger')
-    mocks.attach_mock(mock_network_utils, 'network')
     mocks.attach_mock(mock_ip_forwarding, 'forwarding')
     mocks.attach_mock(mock_network_setup, 'network_setup')
+    mocks.attach_mock(mock_network_utils, 'network')
     mocks.attach_mock(mock_watcher, 'watcher')
-    metadata_key = network_daemon.NetworkDaemon.network_interface_metadata_key
     self.mock_setup._ExtractInterfaceMetadata.return_value = []
     mock_lock.LockFile.side_effect = IOError('Test Error')
-    with mock.patch.object(
-        network_daemon.NetworkDaemon, 'HandleNetworkInterfaces'
-    ), mock.patch.object(
-        network_daemon.NetworkDaemon, '_ExtractInterfaceMetadata'
-    ) as mock_extract:
-      mocks.attach_mock(mock_extract, 'extract')
-      mock_extract.return_value = [
-          network_daemon.NetworkDaemon.NetworkInterface('a', []),
-          network_daemon.NetworkDaemon.NetworkInterface('b', []),
-      ]
 
+    with mock.patch.object(
+        network_daemon.NetworkDaemon, 'HandleNetworkInterfaces'):
       network_daemon.NetworkDaemon(
           ip_forwarding_enabled=False,
           proto_id='66',
@@ -136,11 +119,11 @@ class NetworkDaemonTest(unittest.TestCase):
           debug=True)
       expected_calls = [
           mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
+          mock.call.forwarding.IpForwarding(proto_id='66', debug=True),
+          mock.call.network_setup.NetworkSetup(
+              debug=True, dhclient_script='x', dhcp_command='y'),
           mock.call.network.NetworkUtils(logger=mock_logger_instance),
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
-          mock.call.watcher.MetadataWatcher().GetMetadata(
-              metadata_key=metadata_key, recursive=True),
-          mock.call.extract(mock.ANY),
           mock.call.lock.LockFile(network_daemon.LOCKFILE),
           mock.call.logger.Logger().warning('Test Error'),
       ]
@@ -149,10 +132,12 @@ class NetworkDaemonTest(unittest.TestCase):
   def testHandleNetworkInterfaces(self):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_ip_forwarding, 'forwarding')
+    mocks.attach_mock(self.mock_network_setup, 'network_setup')
     mocks.attach_mock(self.mock_setup, 'setup')
     self.mock_setup.ip_aliases = None
     self.mock_setup.target_instance_ips = None
     self.mock_setup.ip_forwarding_enabled = True
+    self.mock_setup.network_setup_enabled = True
     self.mock_setup._ExtractInterfaceMetadata.return_value = [
         network_daemon.NetworkDaemon.NetworkInterface('a'),
         network_daemon.NetworkDaemon.NetworkInterface('b'),
@@ -163,6 +148,7 @@ class NetworkDaemonTest(unittest.TestCase):
         self.mock_setup, result)
     expected_calls = [
         mock.call.setup._ExtractInterfaceMetadata(result),
+        mock.call.network_setup.EnableNetworkInterfaces(['a', 'b']),
         mock.call.forwarding.HandleForwardedIps('a', None),
         mock.call.forwarding.HandleForwardedIps('b', None),
     ]
@@ -171,10 +157,12 @@ class NetworkDaemonTest(unittest.TestCase):
   def testHandleNetworkInterfacesDisabled(self):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_ip_forwarding, 'forwarding')
+    mocks.attach_mock(self.mock_network_setup, 'network_setup')
     mocks.attach_mock(self.mock_setup, 'setup')
     self.mock_setup.ip_aliases = None
     self.mock_setup.target_instance_ips = None
     self.mock_setup.ip_forwarding_enabled = False
+    self.mock_setup.network_setup_enabled = False
     self.mock_setup._ExtractInterfaceMetadata.return_value = [
         network_daemon.NetworkDaemon.NetworkInterface('a'),
         network_daemon.NetworkDaemon.NetworkInterface('b'),
