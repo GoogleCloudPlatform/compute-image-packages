@@ -1,3 +1,10 @@
+google-compute-image-packages (2.8.2-1) stable; urgency=low
+
+  * Prevent delay in configuring IP forwarding routes.
+  * Improve instance setup support for FreeBSD.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 10 May 2018 12:00:00 -0700
+
 google-compute-image-packages (2.8.1-1) stable; urgency=low
 
   * Improve OS Login disablement.
