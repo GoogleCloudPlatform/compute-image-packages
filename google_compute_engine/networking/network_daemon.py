@@ -58,26 +58,17 @@ class NetworkDaemon(object):
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
         name='google-networking', debug=debug, facility=facility)
-    self.network_utils = network_utils.NetworkUtils(logger=self.logger)
-    self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
-
     self.ip_aliases = ip_aliases
+    self.ip_forwarding_enabled = ip_forwarding_enabled
+    self.network_setup_enabled = network_setup_enabled
     self.target_instance_ips = target_instance_ips
 
-    # Get initial metadata.
-    result = self.watcher.GetMetadata(
-        metadata_key=self.network_interface_metadata_key, recursive=True)
-    network_interfaces = self._ExtractInterfaceMetadata(result)
-
-    if network_setup_enabled:
-      interfaces = [interface.name for interface in network_interfaces]
-      network_setup.NetworkSetup(
-          interfaces, dhclient_script=dhclient_script,
-          dhcp_command=dhcp_command, debug=debug)
-
-    self.ip_forwarding_enabled = ip_forwarding_enabled
-    if ip_forwarding_enabled:
-      self.ip_forwarding = ip_forwarding.IpForwarding(proto_id, debug)
+    self.ip_forwarding = ip_forwarding.IpForwarding(
+        proto_id=proto_id, debug=debug)
+    self.network_setup = network_setup.NetworkSetup(
+        dhclient_script=dhclient_script, dhcp_command=dhcp_command, debug=debug)
+    self.network_utils = network_utils.NetworkUtils(logger=self.logger)
+    self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
 
     try:
       with file_utils.LockFile(LOCKFILE):
@@ -97,6 +88,10 @@ class NetworkDaemon(object):
       result: dict, the metadata response with the network interfaces.
     """
     network_interfaces = self._ExtractInterfaceMetadata(result)
+
+    if self.network_setup_enabled:
+      self.network_setup.EnableNetworkInterfaces(
+          [interface.name for interface in network_interfaces])
 
     for interface in network_interfaces:
       if self.ip_forwarding_enabled:

@@ -25,14 +25,13 @@ from google_compute_engine.compat import distro_utils
 class NetworkSetup(object):
   """Enable network interfaces."""
 
+  interfaces = set()
   network_interfaces = 'instance/network-interfaces'
 
-  def __init__(
-      self, interfaces, dhclient_script=None, dhcp_command=None, debug=False):
+  def __init__(self, dhclient_script=None, dhcp_command=None, debug=False):
     """Constructor.
 
     Args:
-      interfaces: list of string, the output device names to enable.
       dhclient_script: string, the path to a dhclient script used by dhclient.
       dhcp_command: string, a command to enable Ethernet interfaces.
       debug: bool, True if debug output should write to the console.
@@ -43,9 +42,8 @@ class NetworkSetup(object):
     self.logger = logger.Logger(
         name='network-setup', debug=debug, facility=facility)
     self.distro_utils = distro_utils.Utils(debug=debug)
-    self._EnableNetworkInterfaces(interfaces)
 
-  def _EnableNetworkInterfaces(self, interfaces):
+  def EnableNetworkInterfaces(self, interfaces):
     """Enable the list of network interfaces.
 
     Args:
@@ -53,7 +51,12 @@ class NetworkSetup(object):
     """
     # The default Ethernet interface is enabled by default. Do not attempt to
     # enable interfaces if only one interface is specified in metadata.
-    if not interfaces or len(interfaces) <= 1:
+    if not interfaces or set(interfaces) == self.interfaces:
+      return
+
+    self.logger.info('Ethernet interfaces: %s.', interfaces)
+    self.interfaces = set(interfaces)
+    if len(interfaces) <= 1:
       return
 
     if self.dhcp_command:

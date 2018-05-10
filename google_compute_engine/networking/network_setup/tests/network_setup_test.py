@@ -40,7 +40,7 @@ class NetworkSetupTest(unittest.TestCase):
     mocks = mock.Mock()
     mocks.attach_mock(mock_logger, 'logger')
     with mock.patch.object(
-        network_setup.NetworkSetup, '_EnableNetworkInterfaces'):
+        network_setup.NetworkSetup, 'EnableNetworkInterfaces'):
 
       network_setup.NetworkSetup(['A', 'B'], debug=True)
       expected_calls = [
@@ -58,23 +58,43 @@ class NetworkSetupTest(unittest.TestCase):
     mock_call.side_effect = [None, subprocess.CalledProcessError(1, 'Test')]
 
     # Return immediately with fewer than two interfaces.
-    network_setup.NetworkSetup._EnableNetworkInterfaces(self.mock_setup, None)
-    network_setup.NetworkSetup._EnableNetworkInterfaces(self.mock_setup, [])
+    network_setup.NetworkSetup.EnableNetworkInterfaces(self.mock_setup, None)
+    network_setup.NetworkSetup.EnableNetworkInterfaces(self.mock_setup, [])
     # Enable interfaces.
-    network_setup.NetworkSetup._EnableNetworkInterfaces(
+    network_setup.NetworkSetup.EnableNetworkInterfaces(
         self.mock_setup, ['A', 'B'])
+    self.assertEqual(self.mock_setup.interfaces, set(['A', 'B']))
+    # Add a new interface.
+    network_setup.NetworkSetup.EnableNetworkInterfaces(
+        self.mock_setup, ['A', 'B', 'C'])
+    self.assertEqual(self.mock_setup.interfaces, set(['A', 'B', 'C']))
+    # Interfaces are already enabled.
+    network_setup.NetworkSetup.EnableNetworkInterfaces(
+        self.mock_setup, ['A', 'B', 'C'])
+    self.assertEqual(self.mock_setup.interfaces, set(['A', 'B', 'C']))
+    # A single interface is enabled by default.
+    network_setup.NetworkSetup.EnableNetworkInterfaces(self.mock_setup, ['D'])
+    self.assertEqual(self.mock_setup.interfaces, set(['D']))
     # Run a user supplied command successfully.
     self.mock_setup.dhcp_command = 'success'
-    network_setup.NetworkSetup._EnableNetworkInterfaces(
+    network_setup.NetworkSetup.EnableNetworkInterfaces(
         self.mock_setup, ['E', 'F'])
+    self.assertEqual(self.mock_setup.interfaces, set(['E', 'F']))
     # Run a user supplied command and logger error messages.
     self.mock_setup.dhcp_command = 'failure'
-    network_setup.NetworkSetup._EnableNetworkInterfaces(
+    network_setup.NetworkSetup.EnableNetworkInterfaces(
         self.mock_setup, ['G', 'H'])
+    self.assertEqual(self.mock_setup.interfaces, set(['G', 'H']))
     expected_calls = [
-        # First calls with empty `interfaces` were no-ops.
+        mock.call.logger.info(mock.ANY, ['A', 'B']),
         mock.call.enable(['A', 'B'], mock.ANY, dhclient_script='/bin/script'),
+        mock.call.logger.info(mock.ANY, ['A', 'B', 'C']),
+        mock.call.enable(
+            ['A', 'B', 'C'], mock.ANY, dhclient_script='/bin/script'),
+        mock.call.logger.info(mock.ANY, ['D']),
+        mock.call.logger.info(mock.ANY, ['E', 'F']),
         mock.call.call(['success']),
+        mock.call.logger.info(mock.ANY, ['G', 'H']),
         mock.call.call(['failure']),
         mock.call.logger.warning(mock.ANY),
     ]
