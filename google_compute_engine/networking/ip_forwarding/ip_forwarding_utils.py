@@ -111,6 +111,7 @@ class IpForwardingUtils(object):
     args = ['ls', 'table', 'local', 'type', 'local']
     options = self._CreateRouteOptions(dev=interface)
     result = self._RunIpRoute(args=args, options=options)
+    result = re.sub(r'local\s', r'', result)
     return self.ParseForwardedIps(result.split())
 
   def AddForwardedIp(self, address, interface):
