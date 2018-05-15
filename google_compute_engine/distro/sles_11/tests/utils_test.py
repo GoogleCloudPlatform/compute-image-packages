@@ -16,7 +16,6 @@
 
 import subprocess
 
-from google_compute_engine.distro import helpers
 from google_compute_engine.distro.sles_11 import utils
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
