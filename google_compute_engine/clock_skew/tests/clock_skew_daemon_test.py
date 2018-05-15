@@ -15,8 +15,6 @@
 
 """Unittest for clock_skew_daemon.py module."""
 
-import subprocess
-
 from google_compute_engine.clock_skew import clock_skew_daemon
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
