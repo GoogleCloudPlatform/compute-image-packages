@@ -25,7 +25,7 @@ from google_compute_engine import constants
 class ScriptExecutor(object):
   """A class for executing user provided metadata scripts."""
 
-  def __init__(self, logger, script_type, default_shell='/bin/bash'):
+  def __init__(self, logger, script_type, default_shell=None):
     """Constructor.
 
     Args:
@@ -35,7 +35,7 @@ class ScriptExecutor(object):
     """
     self.logger = logger
     self.script_type = script_type
-    self.default_shell = default_shell
+    self.default_shell = default_shell or '/bin/bash'
 
   def _MakeExecutable(self, metadata_script):
     """Add executable permissions to a file.

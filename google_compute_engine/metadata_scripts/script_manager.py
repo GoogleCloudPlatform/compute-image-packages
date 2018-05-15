@@ -65,7 +65,7 @@ class ScriptManager(object):
     self.logger = logger.Logger(name=name, debug=debug, facility=facility)
     self.retriever = script_retriever.ScriptRetriever(self.logger, script_type)
     self.executor = script_executor.ScriptExecutor(
-        self.logger, script_type, default_shell)
+        self.logger, script_type, default_shell=self.default_shell)
     self._RunScripts(run_dir=run_dir)
 
   def _RunScripts(self, run_dir=None):
