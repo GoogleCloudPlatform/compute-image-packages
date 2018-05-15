@@ -34,9 +34,7 @@ class Utils(utils.Utils):
     helpers.CallDhclient(interfaces, logger, dhclient_script=dhclient_script)
 
   def HandleClockSync(self, logger):
-    """Sync clock using ntpd.
-
-    Called when clock drift token changes.
+    """Sync the software clock with the hypervisor clock.
 
     Args:
       logger: logger object, used to write to SysLog and serial port.

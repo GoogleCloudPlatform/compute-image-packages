@@ -83,9 +83,7 @@ class Utils(utils.Utils):
       logger.warning('Could not activate interfaces %s.', interfaces)
 
   def HandleClockSync(self, logger):
-    """Sync clock using ntpd.
-
-    Called when clock drift token changes.
+    """Sync the software clock with the hypervisor clock.
 
     Args:
       logger: logger object, used to write to SysLog and serial port.

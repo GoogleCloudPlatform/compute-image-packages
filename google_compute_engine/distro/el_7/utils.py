@@ -91,9 +91,7 @@ class Utils(utils.Utils):
         print(re.sub(r'%s=.*' % config_key, config_entry, line.rstrip()))
 
   def HandleClockSync(self, logger):
-    """Sync clock using ntpd.
-
-    Called when clock drift token changes.
+    """Sync the software clock with the hypervisor clock.
 
     Args:
       logger: logger object, used to write to SysLog and serial port.

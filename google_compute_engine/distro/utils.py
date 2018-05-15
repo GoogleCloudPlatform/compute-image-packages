@@ -41,8 +41,6 @@ class Utils(object):
   def HandleClockSync(self, logger):
     """Sync the software clock with the hypervisor clock.
 
-    Called when clock drift token changes.
-
     Args:
       logger: logger object, used to write to SysLog and serial port.
     """
