@@ -253,10 +253,10 @@ InstanceSetup     | set\_multiqueue        | `false` skips multiqueue driver sup
 IpForwarding      | ethernet\_proto\_id    | Protocol ID string for daemon added routes.
 IpForwarding      | ip\_aliases            | `false` disables setting up alias IP routes.
 IpForwarding      | target\_instance\_ips  | `false` disables internal IP address load balancing.
+MetadataScripts   | default\_shell         | String with the default shell to execute scripts.
 MetadataScripts   | run\_dir               | String base directory where metadata scripts are executed.
 MetadataScripts   | startup                | `false` disables startup script execution.
 MetadataScripts   | shutdown               | `false` disables shutdown script execution.
-MetadataScripts   | default\_shell         | String with the default shell to execute the scripts.
 NetworkInterfaces | setup                  | `false` skips network interface setup.
 NetworkInterfaces | ip\_forwarding         | `false` skips IP forwarding.
 NetworkInterfaces | dhclient\_script       | String path to a dhclient script used by dhclient.
