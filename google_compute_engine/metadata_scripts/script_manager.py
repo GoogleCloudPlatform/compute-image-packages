@@ -48,20 +48,24 @@ def _CreateTempDir(prefix, run_dir=None):
 class ScriptManager(object):
   """A class for retrieving and executing metadata scripts."""
 
-  def __init__(self, script_type, run_dir=None, debug=False):
+  def __init__(
+      self, script_type, default_shell=None, run_dir=None, debug=False):
     """Constructor.
 
     Args:
       script_type: string, the metadata script type to run.
+      default_shell: string, the default shell to execute the script.
       run_dir: string, the base directory location of the temporary directory.
       debug: bool, True if debug output should write to the console.
     """
     self.script_type = script_type
+    self.default_shell = default_shell
     name = '%s-script' % self.script_type
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(name=name, debug=debug, facility=facility)
     self.retriever = script_retriever.ScriptRetriever(self.logger, script_type)
-    self.executor = script_executor.ScriptExecutor(self.logger, script_type)
+    self.executor = script_executor.ScriptExecutor(
+        self.logger, script_type, default_shell=default_shell)
     self._RunScripts(run_dir=run_dir)
 
   def _RunScripts(self, run_dir=None):
@@ -99,6 +103,8 @@ def main():
   if instance_config.GetOptionBool('MetadataScripts', script_type):
     ScriptManager(
         script_type,
+        default_shell=instance_config.GetOptionString(
+            'MetadataScripts', 'default_shell'),
         run_dir=instance_config.GetOptionString('MetadataScripts', 'run_dir'),
         debug=bool(options.debug))
 
