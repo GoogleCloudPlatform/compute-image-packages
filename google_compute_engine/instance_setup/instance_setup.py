@@ -152,8 +152,7 @@ class InstanceSetup(object):
       subprocess.call(['service', 'ssh', 'start'])
       subprocess.call(['service', 'ssh', 'reload'])
     elif (os.path.exists('/etc/init.d/sshd') or
-          os.path.exists('/etc/init/sshd.conf') or
-          os.path.exists('/etc/rc.d/sshd')):
+          os.path.exists('/etc/init/sshd.conf')):
       subprocess.call(['service', 'sshd', 'start'])
       subprocess.call(['service', 'sshd', 'reload'])
 
