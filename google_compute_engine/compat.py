@@ -20,7 +20,7 @@ import subprocess
 import sys
 
 if sys.version_info >= (3, 6):
-  import distro
+  import google_compute_engine.distro as distro
 else:
   import platform as distro
 
