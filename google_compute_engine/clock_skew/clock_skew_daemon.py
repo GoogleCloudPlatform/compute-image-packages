@@ -17,13 +17,13 @@
 
 import logging.handlers
 import optparse
-import subprocess
 
 from google_compute_engine import config_manager
 from google_compute_engine import constants
 from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
+from google_compute_engine.compat import distro_utils
 
 LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_clock_skew.lock'
 
@@ -42,6 +42,7 @@ class ClockSkewDaemon(object):
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
         name='google-clock-skew', debug=debug, facility=facility)
+    self.distro_utils = distro_utils.Utils(debug=debug)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     try:
       with file_utils.LockFile(LOCKFILE):
@@ -59,13 +60,7 @@ class ClockSkewDaemon(object):
       response: string, the metadata response with the new drift token value.
     """
     self.logger.info('Clock drift token has changed: %s.', response)
-    command = ['/sbin/hwclock', '--hctosys']
-    try:
-      subprocess.check_call(command)
-    except subprocess.CalledProcessError:
-      self.logger.warning('Failed to sync system time with hardware clock.')
-    else:
-      self.logger.info('Synced system time with hardware clock.')
+    self.distro_utils.HandleClockSync(self.logger)
 
 
 def main():

@@ -19,6 +19,7 @@ import os
 import subprocess
 
 from google_compute_engine import constants
+from google_compute_engine.distro import helpers
 from google_compute_engine.distro import utils
 
 
@@ -80,3 +81,11 @@ class Utils(utils.Utils):
       subprocess.check_call(ifup + interfaces)
     except subprocess.CalledProcessError:
       logger.warning('Could not activate interfaces %s.', interfaces)
+
+  def HandleClockSync(self, logger):
+    """Sync the software clock with the hypervisor clock.
+
+    Args:
+      logger: logger object, used to write to SysLog and serial port.
+    """
+    helpers.CallHwclock(logger)

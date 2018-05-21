@@ -69,7 +69,7 @@ class CompatTest(unittest.TestCase):
       pass
 
   @mock.patch('google_compute_engine.compat.distro.linux_distribution')
-  def testDistroCompat(self, mock_call):
+  def testDistroCompatLinux(self, mock_call):
     test_cases = {
         ('debian', '8.10', ''):
             google_compute_engine.distro.debian_8.utils,
@@ -106,6 +106,15 @@ class CompatTest(unittest.TestCase):
       reload_import(google_compute_engine.compat)
       self.assertEqual(
           test_cases[distro], google_compute_engine.compat.distro_utils)
+
+  @mock.patch('google_compute_engine.compat.sys.platform', 'freebsd')
+  @mock.patch('google_compute_engine.compat.distro.version')
+  def testDistroCompatFreeBSD(self, mock_call):
+    mock_call.return_value = 'FreeBSD 11.1-RELEASE-p4 #0: Tue Nov 14 06:12:40'
+    reload_import(google_compute_engine.compat)
+    self.assertEqual(
+        google_compute_engine.distro.freebsd_11.utils,
+        google_compute_engine.compat.distro_utils)
 
 
 if __name__ == '__main__':

@@ -89,3 +89,11 @@ class Utils(utils.Utils):
     elif replace:
       for line in fileinput.input(interface_config, inplace=True):
         print(re.sub(r'%s=.*' % config_key, config_entry, line.rstrip()))
+
+  def HandleClockSync(self, logger):
+    """Sync the software clock with the hypervisor clock.
+
+    Args:
+      logger: logger object, used to write to SysLog and serial port.
+    """
+    helpers.CallHwclock(logger)
