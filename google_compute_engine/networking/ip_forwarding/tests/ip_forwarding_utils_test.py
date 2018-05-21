@@ -167,7 +167,7 @@ class IpForwardingUtilsTest(unittest.TestCase):
     mock_options = mock.Mock()
     mock_options.return_value = self.options
     mock_run = mock.Mock()
-    mock_run.return_value = 'a\nb\n'
+    mock_run.return_value = 'a\n b \nlocal c'
     mock_parse = mock.Mock()
     mock_parse.return_value = ['Test']
     self.mock_utils._CreateRouteOptions = mock_options
@@ -178,7 +178,7 @@ class IpForwardingUtilsTest(unittest.TestCase):
     mock_options.assert_called_once_with(dev='interface')
     mock_run.assert_called_once_with(
         args=['ls', 'table', 'local', 'type', 'local'], options=self.options)
-    mock_parse.assert_called_once_with(['a', 'b'])
+    mock_parse.assert_called_once_with(['a', 'b', 'c'])
 
   def testAddForwardedIp(self):
     mock_options = mock.Mock()

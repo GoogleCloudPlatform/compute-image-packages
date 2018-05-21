@@ -54,7 +54,8 @@ class ScriptManagerTest(unittest.TestCase):
         mock.call.logger.Logger(
             name=script_name, debug=False, facility=mock.ANY),
         mock.call.retriever.ScriptRetriever(mock_logger_instance, script_type),
-        mock.call.executor.ScriptExecutor(mock_logger_instance, script_type),
+        mock.call.executor.ScriptExecutor(
+            mock_logger_instance, script_type, default_shell=None),
         mock.call.mkdir(prefix=script_prefix, dir=run_dir),
         mock.call.logger.Logger().info(mock.ANY, script_type),
         mock.call.retriever.ScriptRetriever().GetScripts(test_dir),

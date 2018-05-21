@@ -20,11 +20,14 @@ import subprocess
 import sys
 
 if sys.version_info >= (3, 6):
-  import distro
+  import google_compute_engine.distro as distro
 else:
   import platform as distro
 
-distribution = distro.linux_distribution()
+if 'freebsd' in sys.platform:
+  distribution = distro.version().split()
+else:
+  distribution = distro.linux_distribution()
 distro_name = distribution[0].lower()
 distro_version = distribution[1].split('.')[0]
 distro_utils = None
@@ -45,6 +48,8 @@ elif 'suse' in distro_name and distro_version == '11':
   import google_compute_engine.distro.sles_11.utils as distro_utils
 elif 'suse' in distro_name:
   import google_compute_engine.distro.sles_12.utils as distro_utils
+elif 'freebsd' in distro_name:
+  import google_compute_engine.distro.freebsd_11.utils as distro_utils
 else:
   # Default to Debian 9.
   import google_compute_engine.distro.debian_9.utils as distro_utils

@@ -32,3 +32,11 @@ class Utils(utils.Utils):
       dhclient_script: string, the path to a dhclient script used by dhclient.
     """
     helpers.CallDhclient(interfaces, logger)
+
+  def HandleClockSync(self, logger):
+    """Sync the software clock with the hypervisor clock.
+
+    Args:
+      logger: logger object, used to write to SysLog and serial port.
+    """
+    helpers.CallHwclock(logger)

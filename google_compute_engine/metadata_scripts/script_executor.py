@@ -25,15 +25,17 @@ from google_compute_engine import constants
 class ScriptExecutor(object):
   """A class for executing user provided metadata scripts."""
 
-  def __init__(self, logger, script_type):
+  def __init__(self, logger, script_type, default_shell=None):
     """Constructor.
 
     Args:
       logger: logger object, used to write to SysLog and serial port.
       script_type: string, the type of the script we are running.
+      default_shell: string, the default shell to execute the script.
     """
     self.logger = logger
     self.script_type = script_type
+    self.default_shell = default_shell or '/bin/bash'
 
   def _MakeExecutable(self, metadata_script):
     """Add executable permissions to a file.
@@ -53,7 +55,7 @@ class ScriptExecutor(object):
     """
     process = subprocess.Popen(
         metadata_script, shell=True,
-        executable=constants.LOCALBASE + '/bin/bash',
+        executable=self.default_shell,
         stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     while True:
       for line in iter(process.stdout.readline, b''):
