@@ -20,8 +20,8 @@ import os
 import re
 
 from google_compute_engine import constants
-from google_compute_engine.distro import helpers
-from google_compute_engine.distro import utils
+from google_compute_engine.distro_lib import helpers
+from google_compute_engine.distro_lib import utils
 
 
 class Utils(utils.Utils):

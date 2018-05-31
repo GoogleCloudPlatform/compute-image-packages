@@ -19,7 +19,7 @@ import os
 import shutil
 import tempfile
 
-from google_compute_engine.distro.el_7 import utils
+from google_compute_engine.distro_lib.el_7 import utils
 from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
@@ -70,7 +70,7 @@ class UtilsTest(unittest.TestCase):
     config_content[2] = config_content[3] = 'B="banana"\n'
     self.assertEquals(open(config_file).readlines(), config_content)
 
-  @mock.patch('google_compute_engine.distro.el_7.utils.os.path.exists')
+  @mock.patch('google_compute_engine.distro_lib.el_7.utils.os.path.exists')
   def testDisableNetworkManager(self, mock_exists):
     mock_open = mock.mock_open()
     mocks = mock.Mock()
@@ -96,8 +96,8 @@ class UtilsTest(unittest.TestCase):
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.distro.el_7.utils.os.path.exists')
-  @mock.patch('google_compute_engine.distro.helpers.CallDhclient')
+  @mock.patch('google_compute_engine.distro_lib.el_7.utils.os.path.exists')
+  @mock.patch('google_compute_engine.distro_lib.helpers.CallDhclient')
   def testEnableNetworkInterfaces(self, mock_call, mock_exists):
     mocks = mock.Mock()
     mocks.attach_mock(mock_exists, 'exists')
@@ -121,7 +121,7 @@ class UtilsTest(unittest.TestCase):
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.distro.helpers.CallHwclock')
+  @mock.patch('google_compute_engine.distro_lib.helpers.CallHwclock')
   def testHandleClockSync(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')

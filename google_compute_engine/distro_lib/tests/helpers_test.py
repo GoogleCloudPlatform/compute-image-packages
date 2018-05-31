@@ -17,7 +17,7 @@
 
 import subprocess
 
-from google_compute_engine.distro import helpers
+from google_compute_engine.distro_lib import helpers
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -27,8 +27,8 @@ class HelpersTest(unittest.TestCase):
   def setUp(self):
     self.mock_logger = mock.Mock()
 
-  @mock.patch('google_compute_engine.distro.helpers.os.path.exists')
-  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
+  @mock.patch('google_compute_engine.distro_lib.helpers.os.path.exists')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallDhclient(self, mock_call, mock_exists):
     mocks = mock.Mock()
     mocks.attach_mock(mock_exists, 'exists')
@@ -65,7 +65,7 @@ class HelpersTest(unittest.TestCase):
 
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallHwclock(self, mock_call):
     command = ['/sbin/hwclock', '--hctosys']
     mock_logger = mock.Mock()
@@ -75,7 +75,7 @@ class HelpersTest(unittest.TestCase):
     expected_calls = [mock.call.info(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallHwclockError(self, mock_call):
     command = ['/sbin/hwclock', '--hctosys']
     mock_logger = mock.Mock()
@@ -86,8 +86,8 @@ class HelpersTest(unittest.TestCase):
     expected_calls = [mock.call.warning(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
-  @mock.patch('google_compute_engine.distro.helpers.subprocess.call')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.call')
   def testCallNtpdateActive(self, mock_call, mock_check_call):
     command_status = ['service', 'ntpd', 'status']
     command_stop = ['service', 'ntpd', 'stop']
@@ -108,8 +108,8 @@ class HelpersTest(unittest.TestCase):
     expected_calls = [mock.call.info(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
-  @mock.patch('google_compute_engine.distro.helpers.subprocess.call')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.call')
   def testCallNtpdateInactive(self, mock_call, mock_check_call):
     command_status = ['service', 'ntpd', 'status']
     command_ntpdate = 'ntpdate `awk \'$1=="server" {print $2}\' /etc/ntp.conf`'
@@ -122,8 +122,8 @@ class HelpersTest(unittest.TestCase):
     expected_calls = [mock.call.info(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.distro.helpers.subprocess.check_call')
-  @mock.patch('google_compute_engine.distro.helpers.subprocess.call')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.call')
   def testCallNtpdateError(self, mock_call, mock_check_call):
     command_status = ['service', 'ntpd', 'status']
     command_ntpdate = 'ntpdate `awk \'$1=="server" {print $2}\' /etc/ntp.conf`'
