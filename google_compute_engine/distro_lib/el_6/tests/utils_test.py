@@ -15,7 +15,7 @@
 
 """Unittest for utils.py module."""
 
-from google_compute_engine.distro.freebsd_11 import utils
+from google_compute_engine.distro_lib.el_6 import utils
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -26,17 +26,23 @@ class UtilsTest(unittest.TestCase):
     self.mock_logger = mock.Mock()
     self.mock_setup = mock.create_autospec(utils.Utils)
 
-  @mock.patch('google_compute_engine.distro.helpers.CallDhclient')
+  def tearDown(self):
+    pass
+
+  @mock.patch('google_compute_engine.distro_lib.helpers.CallDhclient')
   def testEnableNetworkInterfaces(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')
 
     utils.Utils.EnableNetworkInterfaces(
-        self.mock_setup, ['A', 'B'], self.mock_logger)
-    expected_calls = [mock.call.call(['A', 'B'], mock.ANY)]
+        self.mock_setup, ['A', 'B'], self.mock_logger,
+        dhclient_script='test_script')
+    expected_calls = [
+        mock.call.call(['A', 'B'], mock.ANY, dhclient_script='test_script'),
+    ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.distro.helpers.CallNtpdate')
+  @mock.patch('google_compute_engine.distro_lib.helpers.CallHwclock')
   def testHandleClockSync(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')

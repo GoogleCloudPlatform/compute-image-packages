@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utilities that are distro specific for use on Debian 8."""
+"""Utilities that are distro specific for use on EL 6."""
 
-from google_compute_engine.distro import helpers
-from google_compute_engine.distro import utils
+from google_compute_engine.distro_lib import helpers
+from google_compute_engine.distro_lib import utils
 
 
 class Utils(utils.Utils):
@@ -31,7 +31,7 @@ class Utils(utils.Utils):
       logger: logger object, used to write to SysLog and serial port.
       dhclient_script: string, the path to a dhclient script used by dhclient.
     """
-    helpers.CallDhclient(interfaces, logger)
+    helpers.CallDhclient(interfaces, logger, dhclient_script=dhclient_script)
 
   def HandleClockSync(self, logger):
     """Sync the software clock with the hypervisor clock.

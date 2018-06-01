@@ -72,33 +72,33 @@ class CompatTest(unittest.TestCase):
   def testDistroCompatLinux(self, mock_call):
     test_cases = {
         ('debian', '8.10', ''):
-            google_compute_engine.distro.debian_8.utils,
+            google_compute_engine.distro_lib.debian_8.utils,
         ('debian', '9.3', ''):
-            google_compute_engine.distro.debian_9.utils,
+            google_compute_engine.distro_lib.debian_9.utils,
         ('debian', '10.3', ''):
-            google_compute_engine.distro.debian_9.utils,
+            google_compute_engine.distro_lib.debian_9.utils,
         ('SUSE Linux Enterprise Server', '11', 'x86_64'):
-            google_compute_engine.distro.sles_11.utils,
+            google_compute_engine.distro_lib.sles_11.utils,
         ('SUSE Linux Enterprise Server', '12', 'x86_64'):
-            google_compute_engine.distro.sles_12.utils,
+            google_compute_engine.distro_lib.sles_12.utils,
         ('SUSE Linux Enterprise Server', '13', 'x86_64'):
-            google_compute_engine.distro.sles_12.utils,
+            google_compute_engine.distro_lib.sles_12.utils,
         ('CentOS Linux', '6.4.3', 'Core'):
-            google_compute_engine.distro.el_6.utils,
+            google_compute_engine.distro_lib.el_6.utils,
         ('CentOS Linux', '7.4.1708', 'Core'):
-            google_compute_engine.distro.el_7.utils,
+            google_compute_engine.distro_lib.el_7.utils,
         ('CentOS Linux', '8.4.3', 'Core'):
-            google_compute_engine.distro.el_7.utils,
+            google_compute_engine.distro_lib.el_7.utils,
         ('Red Hat Enterprise Linux Server', '6.3.2', ''):
-            google_compute_engine.distro.el_6.utils,
+            google_compute_engine.distro_lib.el_6.utils,
         ('Red Hat Enterprise Linux Server', '7.4', ''):
-            google_compute_engine.distro.el_7.utils,
+            google_compute_engine.distro_lib.el_7.utils,
         ('Red Hat Enterprise Linux Server', '8.5.1', ''):
-            google_compute_engine.distro.el_7.utils,
+            google_compute_engine.distro_lib.el_7.utils,
         ('', '', ''):
-            google_compute_engine.distro.debian_9.utils,
+            google_compute_engine.distro_lib.debian_9.utils,
         ('xxxx', 'xxxx', 'xxxx'):
-            google_compute_engine.distro.debian_9.utils,
+            google_compute_engine.distro_lib.debian_9.utils,
     }
 
     for distro in test_cases:
@@ -113,7 +113,7 @@ class CompatTest(unittest.TestCase):
     mock_call.return_value = 'FreeBSD 11.1-RELEASE-p4 #0: Tue Nov 14 06:12:40'
     reload_import(google_compute_engine.compat)
     self.assertEqual(
-        google_compute_engine.distro.freebsd_11.utils,
+        google_compute_engine.distro_lib.freebsd_11.utils,
         google_compute_engine.compat.distro_utils)
 
 

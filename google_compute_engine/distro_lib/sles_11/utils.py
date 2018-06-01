@@ -13,20 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utilities that are distro specific for use on SUSE 12."""
+"""Utilities that are distro specific for use on SUSE 11."""
 
 import os
 import subprocess
 
 from google_compute_engine import constants
-from google_compute_engine.distro import helpers
-from google_compute_engine.distro import utils
+from google_compute_engine.distro_lib import helpers
+from google_compute_engine.distro_lib import utils
 
 
 class Utils(utils.Utils):
-  """Utilities used by Linux guest services on SUSE 12."""
-
-  network_path = constants.LOCALBASE + '/etc/sysconfig/network'
+  """Utilities used by Linux guest services on SUSE 11."""
 
   def EnableNetworkInterfaces(
       self, interfaces, logger, dhclient_script=None):
@@ -40,47 +38,27 @@ class Utils(utils.Utils):
     interfaces_to_up = [i for i in interfaces if i != 'eth0']
     if interfaces_to_up:
       logger.info('Enabling the Ethernet interfaces %s.', interfaces_to_up)
-      self._WriteIfcfg(interfaces_to_up, logger)
-      self._Ifup(interfaces_to_up, logger)
+      self._Dhcpcd(interfaces_to_up, logger)
 
-  def _WriteIfcfg(self, interfaces, logger):
-    """Write ifcfg files for multi-NIC support.
-
-    Overwrites the files. This allows us to update ifcfg-* in the future.
-    Disable the network setup to override this behavior and customize the
-    configurations.
+  def _Dhcpcd(self, interfaces, logger):
+    """Use dhcpcd to activate the interfaces.
 
     Args:
       interfaces: list of string, the output device names to enable.
       logger: logger object, used to write to SysLog and serial port.
     """
     for interface in interfaces:
-      interface_config = os.path.join(
-          self.network_path, 'ifcfg-%s' % interface)
-      interface_content = [
-          '# Added by Google.',
-          'STARTMODE=hotplug',
-          'BOOTPROTO=dhcp',
-          'DHCLIENT_SET_DEFAULT_ROUTE=yes',
-          'DHCLIENT_ROUTE_PRIORITY=10%s00' % interface,
-          '',
-      ]
-      with open(interface_config, 'w') as interface_file:
-        interface_file.write('\n'.join(interface_content))
-      logger.info('Created ifcfg file for interface %s.', interface)
-
-  def _Ifup(self, interfaces, logger):
-    """Activate network interfaces.
-
-    Args:
-      interfaces: list of string, the output device names to enable.
-      logger: logger object, used to write to SysLog and serial port.
-    """
-    ifup = ['/usr/sbin/wicked', 'ifup', '--timeout', '1']
-    try:
-      subprocess.check_call(ifup + interfaces)
-    except subprocess.CalledProcessError:
-      logger.warning('Could not activate interfaces %s.', interfaces)
+      dhcpcd = ['/sbin/dhcpcd']
+      try:
+        subprocess.check_call(dhcpcd + ['-x', interface])
+      except subprocess.CalledProcessError:
+        # Dhcpcd not yet running for this device.
+        logger.info('Dhcpcd not yet running for interface %s.', interface)
+      try:
+        subprocess.check_call(dhcpcd + [interface])
+      except subprocess.CalledProcessError:
+        # The interface is already active.
+        logger.warning('Could not activate interface %s.', interface)
 
   def HandleClockSync(self, logger):
     """Sync the software clock with the hypervisor clock.

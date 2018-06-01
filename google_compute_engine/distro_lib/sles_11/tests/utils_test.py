@@ -16,7 +16,7 @@
 
 import subprocess
 
-from google_compute_engine.distro.sles_11 import utils
+from google_compute_engine.distro_lib.sles_11 import utils
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -47,7 +47,7 @@ class UtilsTest(unittest.TestCase):
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch(
-      'google_compute_engine.distro.sles_11.utils.subprocess.check_call')
+      'google_compute_engine.distro_lib.sles_11.utils.subprocess.check_call')
   def testDhcpcd(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')
@@ -72,7 +72,7 @@ class UtilsTest(unittest.TestCase):
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.distro.helpers.CallHwclock')
+  @mock.patch('google_compute_engine.distro_lib.helpers.CallHwclock')
   def testHandleClockSync(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')

@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utilities that are distro specific for use on Debian 9."""
+"""Utilities that are distro specific for use on FreeBSD 11."""
 
-from google_compute_engine.distro import helpers
-from google_compute_engine.distro import utils
+from google_compute_engine.distro_lib import helpers
+from google_compute_engine.distro_lib import utils
 
 
 class Utils(utils.Utils):
-  """Utilities used by Linux guest services on Debian 9."""
+  """Utilities used by Linux guest services on FreeBSD 11."""
 
   def EnableNetworkInterfaces(
       self, interfaces, logger, dhclient_script=None):
@@ -39,4 +39,4 @@ class Utils(utils.Utils):
     Args:
       logger: logger object, used to write to SysLog and serial port.
     """
-    helpers.CallHwclock(logger)
+    helpers.CallNtpdate(logger)
