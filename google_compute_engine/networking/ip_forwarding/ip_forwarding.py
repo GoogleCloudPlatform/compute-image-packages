@@ -17,18 +17,13 @@
 
 When given a list of public endpoint IPs, compare it with the IPs configured
 for the associated interfaces, and add or remove addresses from the interfaces
-to make them match. Only remove those which match our proto code.
-
-Command used to add IPs:
-  ip route add to local $IP/32 dev eth0 proto 66
-Command used to fetch list of configured IPs:
-  ip route ls table local type local dev eth0 scope host proto 66
+to make them match.
 """
 
 import logging.handlers
 
 from google_compute_engine import logger
-from google_compute_engine.networking.ip_forwarding import ip_forwarding_utils
+from google_compute_engine.compat import distro_utils
 
 
 class IpForwarding(object):
@@ -44,7 +39,8 @@ class IpForwarding(object):
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
     self.logger = logger.Logger(
         name='google-ip-forwarding', debug=debug, facility=facility)
-    self.ip_forwarding_utils = ip_forwarding_utils.IpForwardingUtils(
+    self.distro_utils = distro_utils.Utils(debug=debug)
+    self.ip_forwarding_utils = self.distro_utils.IpForwardingUtils(
         logger=self.logger, proto_id=proto_id)
 
   def _LogForwardedIpChanges(
@@ -85,15 +81,17 @@ class IpForwarding(object):
     for address in forwarded_ips:
       self.ip_forwarding_utils.RemoveForwardedIp(address, interface)
 
-  def HandleForwardedIps(self, interface, forwarded_ips):
+  def HandleForwardedIps(self, interface, forwarded_ips, interface_ip):
     """Handle changes to the forwarded IPs on a network interface.
 
     Args:
       interface: string, the output device to configure.
       forwarded_ips: list, the forwarded IP address strings desired.
+      interface_ip: string, current interface ip address.
     """
     desired = self.ip_forwarding_utils.ParseForwardedIps(forwarded_ips)
-    configured = self.ip_forwarding_utils.GetForwardedIps(interface)
+    configured = self.ip_forwarding_utils.GetForwardedIps(
+        interface, interface_ip)
     to_add = sorted(set(desired) - set(configured))
     to_remove = sorted(set(configured) - set(desired))
     self._LogForwardedIpChanges(

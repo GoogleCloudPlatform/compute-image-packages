@@ -25,25 +25,28 @@ class IpForwardingTest(unittest.TestCase):
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.mock_watcher = mock.Mock()
+    self.mock_distro_utils = mock.Mock()
     self.mock_ip_forwarding_utils = mock.Mock()
     self.mock_setup = mock.create_autospec(ip_forwarding.IpForwarding)
     self.mock_setup.logger = self.mock_logger
+    self.mock_setup.distro_utils = self.mock_distro_utils
     self.mock_setup.ip_forwarding_utils = self.mock_ip_forwarding_utils
 
-  @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding.ip_forwarding_utils')
+  @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding.distro_utils')
   @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding.logger')
-  def testIpForwarding(self, mock_logger, mock_ip_forwarding_utils):
+  def testIpForwarding(self, mock_logger, mock_distro_utils):
     mock_logger_instance = mock.Mock()
     mock_logger.Logger.return_value = mock_logger_instance
     mocks = mock.Mock()
     mocks.attach_mock(mock_logger, 'logger')
-    mocks.attach_mock(mock_ip_forwarding_utils, 'forwarding')
+    mocks.attach_mock(mock_distro_utils, 'distro_utils')
     with mock.patch.object(ip_forwarding.IpForwarding, 'HandleForwardedIps'):
 
       ip_forwarding.IpForwarding(proto_id='66', debug=True)
       expected_calls = [
           mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
-          mock.call.forwarding.IpForwardingUtils(
+          mock.call.distro_utils.Utils(debug=True),
+          mock.call.distro_utils.Utils().IpForwardingUtils(
               logger=mock_logger_instance, proto_id='66'),
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)
@@ -103,15 +106,16 @@ class IpForwardingTest(unittest.TestCase):
     self.mock_ip_forwarding_utils.ParseForwardedIps.return_value = desired
     self.mock_ip_forwarding_utils.GetForwardedIps.return_value = configured
     forwarded_ips = 'forwarded ips'
+    interface_ip = 'interface ip'
     interface = 'interface'
     expected_add = ['d']
     expected_remove = ['a', 'b']
 
     ip_forwarding.IpForwarding.HandleForwardedIps(
-        self.mock_setup, interface, forwarded_ips)
+        self.mock_setup, interface, forwarded_ips, interface_ip)
     expected_calls = [
         mock.call.forwarding.ParseForwardedIps(forwarded_ips),
-        mock.call.forwarding.GetForwardedIps(interface),
+        mock.call.forwarding.GetForwardedIps(interface, interface_ip),
         mock.call.setup._LogForwardedIpChanges(
             configured, desired, expected_add, expected_remove, interface),
         mock.call.setup._AddForwardedIps(expected_add, interface),
