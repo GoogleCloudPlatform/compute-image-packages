@@ -89,6 +89,7 @@ class InstanceConfig(config_manager.ConfigManager):
           'run_dir': '',
           'startup': 'true',
           'shutdown': 'true',
+          'default_shell': '/bin/bash',
       },
       'NetworkInterfaces': {
           'setup': 'true',

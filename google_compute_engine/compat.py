@@ -24,30 +24,35 @@ if sys.version_info >= (3, 6):
 else:
   import platform as distro
 
-distribution = distro.linux_distribution()
+if 'freebsd' in sys.platform:
+  distribution = distro.version().split()
+else:
+  distribution = distro.linux_distribution()
 distro_name = distribution[0].lower()
 distro_version = distribution[1].split('.')[0]
 distro_utils = None
 
 if 'centos' in distro_name and distro_version == '6':
-  import google_compute_engine.distro.el_6.utils as distro_utils
+  import google_compute_engine.distro_lib.el_6.utils as distro_utils
 elif 'centos' in distro_name:
-  import google_compute_engine.distro.el_7.utils as distro_utils
+  import google_compute_engine.distro_lib.el_7.utils as distro_utils
 elif 'red hat enterprise linux' in distro_name and distro_version == '6':
-  import google_compute_engine.distro.el_6.utils as distro_utils
+  import google_compute_engine.distro_lib.el_6.utils as distro_utils
 elif 'red hat enterprise linux' in distro_name:
-  import google_compute_engine.distro.el_7.utils as distro_utils
+  import google_compute_engine.distro_lib.el_7.utils as distro_utils
 elif 'debian' in distro_name and distro_version == '8':
-  import google_compute_engine.distro.debian_8.utils as distro_utils
+  import google_compute_engine.distro_lib.debian_8.utils as distro_utils
 elif 'debian' in distro_name:
-  import google_compute_engine.distro.debian_9.utils as distro_utils
+  import google_compute_engine.distro_lib.debian_9.utils as distro_utils
 elif 'suse' in distro_name and distro_version == '11':
-  import google_compute_engine.distro.sles_11.utils as distro_utils
+  import google_compute_engine.distro_lib.sles_11.utils as distro_utils
 elif 'suse' in distro_name:
-  import google_compute_engine.distro.sles_12.utils as distro_utils
+  import google_compute_engine.distro_lib.sles_12.utils as distro_utils
+elif 'freebsd' in distro_name:
+  import google_compute_engine.distro_lib.freebsd_11.utils as distro_utils
 else:
   # Default to Debian 9.
-  import google_compute_engine.distro.debian_9.utils as distro_utils
+  import google_compute_engine.distro_lib.debian_9.utils as distro_utils
 
 RETRY_LIMIT = 3
 TIMEOUT = 10
