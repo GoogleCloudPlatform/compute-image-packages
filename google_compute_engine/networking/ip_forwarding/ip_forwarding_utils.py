@@ -15,9 +15,21 @@
 
 """Utilities for configuring IP address forwarding."""
 
+from google_compute_engine.compat import distro_utils
+
 
 class IpForwardingUtils(object):
   """System IP address configuration utilities."""
+
+  def __init__(self, logger, proto_id=None):
+    """Constructor.
+
+    Args:
+      logger: logger object, used to write to SysLog and serial port.
+      proto_id: string, the routing protocol identifier for Google IP changes.
+    """
+    self.ip_forwarding_utils = self.distro_utils.IpForwardingUtils(
+        logger=logger, proto_id=proto_id)
 
   def ParseForwardedIps(self, forwarded_ips):
     """Parse and validate forwarded IP addresses.
@@ -28,7 +40,7 @@ class IpForwardingUtils(object):
     Returns:
       list, the valid IP address strings.
     """
-    pass
+    return self.ip_forwarding_utils.ParseForwardedIps(forwarded_ips)
 
   def GetForwardedIps(self, interface, interface_ip):
     """Retrieve the list of configured forwarded IP addresses.
@@ -40,7 +52,7 @@ class IpForwardingUtils(object):
     Returns:
       list, the IP address strings.
     """
-    pass
+    return self.ip_forwarding_utils.GetForwardedIps(interface, interface_ip)
 
   def AddForwardedIp(self, address, interface):
     """Configure a new IP address on the network interface.
@@ -49,7 +61,7 @@ class IpForwardingUtils(object):
       address: string, the IP address to configure.
       interface: string, the output device to use.
     """
-    pass
+    return self.ip_forwarding_utils.AddForwardedIp(address, interface)
 
   def RemoveForwardedIp(self, address, interface):
     """Delete an IP address on the network interface.
@@ -58,4 +70,4 @@ class IpForwardingUtils(object):
       address: string, the IP address to configure.
       interface: string, the output device to use.
     """
-    pass
+    return self.ip_forwarding_utils.RemoveForwardedIp(address, interface)

@@ -25,11 +25,54 @@ except ImportError:
   netifaces = None
   netaddr = None
 
-from google_compute_engine.networking.ip_forwarding.ip_forwarding_utils import IpForwardingUtils
-
 
 IP_REGEX = re.compile(r'\A(\d{1,3}\.){3}\d{1,3}\Z')
 IP_ALIAS_REGEX = re.compile(r'\A(\d{1,3}\.){3}\d{1,3}/\d{1,2}\Z')
+
+
+class IpForwardingUtils(object):
+  """System IP address configuration utilities."""
+
+  def ParseForwardedIps(self, forwarded_ips):
+    """Parse and validate forwarded IP addresses.
+
+    Args:
+      forwarded_ips: list, the IP address strings to parse.
+
+    Returns:
+      list, the valid IP address strings.
+    """
+    pass
+
+  def GetForwardedIps(self, interface, interface_ip):
+    """Retrieve the list of configured forwarded IP addresses.
+
+    Args:
+      interface: string, the output device to query.
+      interface_ip: string, current interface ip address.
+
+    Returns:
+      list, the IP address strings.
+    """
+    pass
+
+  def AddForwardedIp(self, address, interface):
+    """Configure a new IP address on the network interface.
+
+    Args:
+      address: string, the IP address to configure.
+      interface: string, the output device to use.
+    """
+    pass
+
+  def RemoveForwardedIp(self, address, interface):
+    """Delete an IP address on the network interface.
+
+    Args:
+      address: string, the IP address to configure.
+      interface: string, the output device to use.
+    """
+    pass
 
 
 class IpForwardingUtilsIproute(IpForwardingUtils):
