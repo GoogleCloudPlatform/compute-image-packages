@@ -1,3 +1,11 @@
+google-compute-image-packages (2.8.3-1) stable; urgency=low
+
+  * Prevent IP forwarding daemon log spam.
+  * Make default shell configurable when executing metadata scripts.
+  * Rename distro directory to distro_lib.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 11 June 2018 12:00:00 -0700
+
 google-compute-image-packages (2.8.2-1) stable; urgency=low
 
   * Prevent delay in configuring IP forwarding routes.
