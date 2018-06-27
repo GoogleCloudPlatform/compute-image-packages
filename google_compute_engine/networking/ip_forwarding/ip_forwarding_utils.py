@@ -42,7 +42,7 @@ class IpForwardingUtils(object):
     """
     return self.ip_forwarding_utils.ParseForwardedIps(forwarded_ips)
 
-  def GetForwardedIps(self, interface, interface_ip):
+  def GetForwardedIps(self, interface, interface_ip=None):
     """Retrieve the list of configured forwarded IP addresses.
 
     Args:

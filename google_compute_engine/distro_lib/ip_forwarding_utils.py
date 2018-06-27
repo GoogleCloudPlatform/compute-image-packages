@@ -44,7 +44,7 @@ class IpForwardingUtils(object):
     """
     pass
 
-  def GetForwardedIps(self, interface, interface_ip):
+  def GetForwardedIps(self, interface, interface_ip=None):
     """Retrieve the list of configured forwarded IP addresses.
 
     Args:
@@ -158,7 +158,7 @@ class IpForwardingUtilsIproute(IpForwardingUtils):
         self.logger.warning('Could not parse IP address: "%s".', ip)
     return addresses
 
-  def GetForwardedIps(self, interface, interface_ip):
+  def GetForwardedIps(self, interface, interface_ip=None):
     """Retrieve the list of configured forwarded IP addresses.
 
     Args:
@@ -259,7 +259,7 @@ class IpForwardingUtilsIfconfig(IpForwardingUtils):
         self.logger.warning('Could not parse IP address: "%s".', ip)
     return addresses
 
-  def GetForwardedIps(self, interface, interface_ip):
+  def GetForwardedIps(self, interface, interface_ip=None):
     """Retrieve the list of configured forwarded IP addresses.
 
     Args:

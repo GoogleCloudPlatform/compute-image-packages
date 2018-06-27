@@ -80,7 +80,7 @@ class IpForwarding(object):
     for address in forwarded_ips:
       self.ip_forwarding_utils.RemoveForwardedIp(address, interface)
 
-  def HandleForwardedIps(self, interface, forwarded_ips, interface_ip):
+  def HandleForwardedIps(self, interface, forwarded_ips, interface_ip=None):
     """Handle changes to the forwarded IPs on a network interface.
 
     Args:
