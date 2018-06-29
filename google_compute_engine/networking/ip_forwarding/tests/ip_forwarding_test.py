@@ -25,28 +25,25 @@ class IpForwardingTest(unittest.TestCase):
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.mock_watcher = mock.Mock()
-    self.mock_distro_utils = mock.Mock()
     self.mock_ip_forwarding_utils = mock.Mock()
     self.mock_setup = mock.create_autospec(ip_forwarding.IpForwarding)
     self.mock_setup.logger = self.mock_logger
-    self.mock_setup.distro_utils = self.mock_distro_utils
     self.mock_setup.ip_forwarding_utils = self.mock_ip_forwarding_utils
 
-  @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding.distro_utils')
+  @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding.ip_forwarding_utils')
   @mock.patch('google_compute_engine.networking.ip_forwarding.ip_forwarding.logger')
-  def testIpForwarding(self, mock_logger, mock_distro_utils):
+  def testIpForwarding(self, mock_logger, mock_ip_forwarding_utils):
     mock_logger_instance = mock.Mock()
     mock_logger.Logger.return_value = mock_logger_instance
     mocks = mock.Mock()
     mocks.attach_mock(mock_logger, 'logger')
-    mocks.attach_mock(mock_distro_utils, 'distro_utils')
+    mocks.attach_mock(mock_ip_forwarding_utils, 'forwarding')
     with mock.patch.object(ip_forwarding.IpForwarding, 'HandleForwardedIps'):
 
       ip_forwarding.IpForwarding(proto_id='66', debug=True)
       expected_calls = [
           mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
-          mock.call.distro_utils.Utils(debug=True),
-          mock.call.distro_utils.Utils().IpForwardingUtils(
+          mock.call.forwarding.IpForwardingUtils(
               logger=mock_logger_instance, proto_id='66'),
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)

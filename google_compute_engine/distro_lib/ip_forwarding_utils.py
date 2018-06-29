@@ -18,7 +18,7 @@
 import re
 import subprocess
 try:
-  # The following libs are required only for class IpForwardingUtilsIfconfig
+  # The following modules are required by IpForwardingUtilsIfconfig.
   import netifaces
   import netaddr
 except ImportError:

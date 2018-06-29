@@ -16,8 +16,9 @@
 """Utilities that are distro specific for use on FreeBSD 11."""
 
 from google_compute_engine.distro_lib import helpers
-from google_compute_engine.distro_lib import ip_forwarding_utils
 from google_compute_engine.distro_lib import utils
+from google_compute_engine.distro_lib.ip_forwarding_utils import \
+    IpForwardingUtilsIfconfig as IpForwardingUtils
 
 
 class Utils(utils.Utils):
@@ -41,12 +42,3 @@ class Utils(utils.Utils):
       logger: logger object, used to write to SysLog and serial port.
     """
     helpers.CallNtpdate(logger)
-
-  def IpForwardingUtils(self, logger, proto_id=None):
-    """Get system IP address configuration utilities.
-
-    Args:
-      logger: logger object, used to write to SysLog and serial port.
-      proto_id: string, the routing protocol identifier for Google IP changes.
-    """
-    return ip_forwarding_utils.IpForwardingUtilsIfconfig(logger)
