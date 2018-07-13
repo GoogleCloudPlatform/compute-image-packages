@@ -18,6 +18,8 @@
 from google_compute_engine.compat import distro_utils
 
 
-class IpForwardingUtils(distro_utils.IpForwardingUtils):
+class IpForwardingUtils(object):
   """Deprecated. Overridden for backwards compatibility."""
-  pass
+
+  def __new__(self, logger, proto_id=None):
+    return distro_utils.Utils().IpForwardingUtils(logger, proto_id)
