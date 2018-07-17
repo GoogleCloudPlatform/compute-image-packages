@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ IP_REGEX = re.compile(r'\A(\d{1,3}\.){3}\d{1,3}\Z')
 IP_ALIAS_REGEX = re.compile(r'\A(\d{1,3}\.){3}\d{1,3}/\d{1,2}\Z')
 
 
-class IpForwardingUtils(object):
+class IpForwardingUtilsBase(object):
   """System IP address configuration utilities."""
 
   def ParseForwardedIps(self, forwarded_ips):
@@ -75,7 +75,7 @@ class IpForwardingUtils(object):
     pass
 
 
-class IpForwardingUtilsIproute(IpForwardingUtils):
+class IpForwardingUtilsIproute(IpForwardingUtilsBase):
   """System IP address configuration utilities.
 
   Command used to add IPs:
@@ -199,7 +199,7 @@ class IpForwardingUtilsIproute(IpForwardingUtils):
     self._RunIpRoute(args=args, options=options)
 
 
-class IpForwardingUtilsIfconfig(IpForwardingUtils):
+class IpForwardingUtilsIfconfig(IpForwardingUtilsBase):
   """System IP address configuration utilities."""
 
   def __init__(self, logger):
@@ -277,9 +277,8 @@ class IpForwardingUtilsIfconfig(IpForwardingUtils):
     forwarded_ips = []
     for ip in ips:
       if ip['addr'] != interface_ip:
-        forwarded_ips.append(
-            '%s/%d' % (ip['addr'],
-            netaddr.IPAddress(ip['netmask']).netmask_bits()))
+        full_addr = '%s/%d' % (ip['addr'], netaddr.IPAddress(ip['netmask']).netmask_bits())
+        forwarded_ips.append(full_addr)
     return self.ParseForwardedIps(forwarded_ips)
 
   def AddForwardedIp(self, address, interface):
