@@ -72,29 +72,25 @@ class NetworkSetupTest(unittest.TestCase):
     network_setup.NetworkSetup.EnableNetworkInterfaces(
         self.mock_setup, ['A', 'B', 'C'])
     self.assertEqual(self.mock_setup.interfaces, set(['A', 'B', 'C']))
-    # A single interface is enabled by default.
-    network_setup.NetworkSetup.EnableNetworkInterfaces(self.mock_setup, ['D'])
-    self.assertEqual(self.mock_setup.interfaces, set(['D']))
     # Run a user supplied command successfully.
     self.mock_setup.dhcp_command = 'success'
     network_setup.NetworkSetup.EnableNetworkInterfaces(
-        self.mock_setup, ['E', 'F'])
-    self.assertEqual(self.mock_setup.interfaces, set(['E', 'F']))
+        self.mock_setup, ['D', 'E'])
+    self.assertEqual(self.mock_setup.interfaces, set(['D', 'E']))
     # Run a user supplied command and logger error messages.
     self.mock_setup.dhcp_command = 'failure'
     network_setup.NetworkSetup.EnableNetworkInterfaces(
-        self.mock_setup, ['G', 'H'])
-    self.assertEqual(self.mock_setup.interfaces, set(['G', 'H']))
+        self.mock_setup, ['F', 'G'])
+    self.assertEqual(self.mock_setup.interfaces, set(['F', 'G']))
     expected_calls = [
         mock.call.logger.info(mock.ANY, ['A', 'B']),
         mock.call.enable(['A', 'B'], mock.ANY, dhclient_script='/bin/script'),
         mock.call.logger.info(mock.ANY, ['A', 'B', 'C']),
         mock.call.enable(
             ['A', 'B', 'C'], mock.ANY, dhclient_script='/bin/script'),
-        mock.call.logger.info(mock.ANY, ['D']),
-        mock.call.logger.info(mock.ANY, ['E', 'F']),
+        mock.call.logger.info(mock.ANY, ['D', 'E']),
         mock.call.call(['success']),
-        mock.call.logger.info(mock.ANY, ['G', 'H']),
+        mock.call.logger.info(mock.ANY, ['F', 'G']),
         mock.call.call(['failure']),
         mock.call.logger.warning(mock.ANY),
     ]
