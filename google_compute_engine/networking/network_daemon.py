@@ -91,7 +91,7 @@ class NetworkDaemon(object):
 
     if self.network_setup_enabled:
       self.network_setup.EnableNetworkInterfaces(
-          [interface.name for interface in network_interfaces])
+          [interface.name for interface in network_interfaces[1:]])
 
     for interface in network_interfaces:
       if self.ip_forwarding_enabled:

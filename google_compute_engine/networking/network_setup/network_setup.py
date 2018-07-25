@@ -56,8 +56,6 @@ class NetworkSetup(object):
 
     self.logger.info('Ethernet interfaces: %s.', interfaces)
     self.interfaces = set(interfaces)
-    if len(interfaces) <= 1:
-      return
 
     if self.dhcp_command:
       try:
