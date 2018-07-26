@@ -14,6 +14,6 @@
 # limitations under the License.
 
 # Unit tests require gtest to be installed.
-g++ -o test_runner oslogin_utils_test.cc oslogin_utils.cc -I/usr/include/json-c -lcurl -ljson -lgtest -lpthread
+g++ -o test_runner oslogin_utils_test.cc oslogin_utils.cc -I/usr/include/json-c -lcurl -ljson-c -lgtest -lpthread
 ./test_runner
 rm ./test_runner

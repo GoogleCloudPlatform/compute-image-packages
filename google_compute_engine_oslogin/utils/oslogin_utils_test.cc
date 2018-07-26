@@ -164,6 +164,7 @@ TEST(NssCacheTest, TestLoadJsonFinalResponse) {
 
   // Verify that there are no more users stored.
   ASSERT_FALSE(nss_cache.HasNextPasswd());
+  ASSERT_TRUE(nss_cache.OnLastPage());
   ASSERT_FALSE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
   EXPECT_EQ(test_errno, ENOENT);
 }
@@ -426,6 +427,41 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersMalformedExpiration) {
 TEST(ParseJsonAuthorizeSuccess, SuccessfullyAuthorized) {
   string response = "{\"success\": true}";
   ASSERT_TRUE(ParseJsonToAuthorizeResponse(response));
+}
+
+TEST(ValidateUserNameTest, ValidateValidUserNames) {
+  string cases[] = {
+      "user",
+      "_",
+      ".",
+      ".abc_",
+      "_abc-",
+      "ABC",
+      "A_.-",
+      "ausernamethirtytwocharacterslong"
+  };
+  for (auto test_user : cases) {
+    ASSERT_TRUE(ValidateUserName(test_user));
+  }
+}
+
+TEST(ValidateUserNameTest, ValidateInvalidUserNames) {
+  string cases[] = {
+      "",
+      "!#$%^",
+      "-abc",
+      "#abc",
+      "^abc",
+      "abc*xyz",
+      "abc xyz",
+      "xyz*",
+      "xyz$",
+      "usernamethirtythreecharacterslong",
+      "../../etc/shadow",
+  };
+  for (auto test_user : cases) {
+    ASSERT_FALSE(ValidateUserName(test_user));
+  }
 }
 
 }  // namespace oslogin_utils
