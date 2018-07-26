@@ -29,6 +29,19 @@ class UtilsTest(unittest.TestCase):
   def tearDown(self):
     pass
 
+  @mock.patch('google_compute_engine.distro_lib.helpers.CallDhclientIpv6')
+  def testEnableIpv6(self, mock_call):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_call, 'call')
+
+    utils.Utils.EnableIpv6(
+        self.mock_setup, ['A', 'B'], self.mock_logger,
+        dhclient_script='test_script')
+    expected_calls = [
+        mock.call.call(['A', 'B'], mock.ANY, dhclient_script='test_script'),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
   @mock.patch('google_compute_engine.distro_lib.helpers.CallDhclient')
   def testEnableNetworkInterfaces(self, mock_call):
     mocks = mock.Mock()

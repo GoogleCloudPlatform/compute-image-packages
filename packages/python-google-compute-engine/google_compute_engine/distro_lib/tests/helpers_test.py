@@ -65,6 +65,41 @@ class HelpersTest(unittest.TestCase):
 
     self.assertEqual(mocks.mock_calls, expected_calls)
 
+  @mock.patch('google_compute_engine.distro_lib.helpers.os.path.exists')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  def testCallDhclientIpv6(self, mock_call, mock_exists):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_exists, 'exists')
+    mocks.attach_mock(mock_call, 'call')
+    mocks.attach_mock(self.mock_logger, 'logger')
+
+    mock_exists.side_effect = [False, True]
+    mock_call.side_effect = [
+        None, None, None, subprocess.CalledProcessError(1, 'Test'),
+    ]
+
+    helpers.CallDhclientIpv6(['a', 'b'], self.mock_logger, 'test_script')
+    helpers.CallDhclientIpv6(['c', 'd'], self.mock_logger, 'test_script')
+    helpers.CallDhclientIpv6(['e', 'f'], self.mock_logger, None)
+    helpers.CallDhclientIpv6(['g', 'h'], self.mock_logger, None)
+
+    expected_calls = [
+        mock.call.logger.info(mock.ANY, ['a', 'b']),
+        mock.call.exists('test_script'),
+        mock.call.call(['dhclient', '-1', '-6', '-v', 'a', 'b']),
+        mock.call.logger.info(mock.ANY, ['c', 'd']),
+        mock.call.exists('test_script'),
+        mock.call.call(
+            ['dhclient', '-sf', 'test_script', '-1', '-6', '-v', 'c', 'd']),
+        mock.call.logger.info(mock.ANY, ['e', 'f']),
+        mock.call.call(['dhclient', '-1', '-6', '-v', 'e', 'f']),
+        mock.call.logger.info(mock.ANY, ['g', 'h']),
+        mock.call.call(['dhclient', '-1', '-6', '-v', 'g', 'h']),
+        mock.call.logger.warning(mock.ANY, ['g', 'h']),
+    ]
+
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallHwclock(self, mock_call):
     command = ['/sbin/hwclock', '--hctosys']

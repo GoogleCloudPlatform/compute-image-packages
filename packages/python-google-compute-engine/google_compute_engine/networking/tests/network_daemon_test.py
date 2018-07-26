@@ -139,8 +139,9 @@ class NetworkDaemonTest(unittest.TestCase):
     self.mock_setup.ip_forwarding_enabled = True
     self.mock_setup.network_setup_enabled = True
     self.mock_setup._ExtractInterfaceMetadata.return_value = [
-        network_daemon.NetworkDaemon.NetworkInterface('a'),
-        network_daemon.NetworkDaemon.NetworkInterface('b'),
+        network_daemon.NetworkDaemon.NetworkInterface(
+            'eth0', forwarded_ips=['a'], ip='1.1.1.1', ipv6=False),
+        network_daemon.NetworkDaemon.NetworkInterface('eth1'),
     ]
     result = mock.Mock()
 
@@ -148,9 +149,36 @@ class NetworkDaemonTest(unittest.TestCase):
         self.mock_setup, result)
     expected_calls = [
         mock.call.setup._ExtractInterfaceMetadata(result),
-        mock.call.network_setup.EnableNetworkInterfaces(['b']),
-        mock.call.forwarding.HandleForwardedIps('a', None, None),
-        mock.call.forwarding.HandleForwardedIps('b', None, None),
+        mock.call.network_setup.EnableNetworkInterfaces(['eth1']),
+        mock.call.forwarding.HandleForwardedIps(
+            'eth0', ['a'], '1.1.1.1'),
+        mock.call.forwarding.HandleForwardedIps('eth1', None, None),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  def testHandleNetworkInterfacesIpv6(self):
+    mocks = mock.Mock()
+    mocks.attach_mock(self.mock_ip_forwarding, 'forwarding')
+    mocks.attach_mock(self.mock_network_setup, 'network_setup')
+    mocks.attach_mock(self.mock_setup, 'setup')
+    self.mock_setup.ip_aliases = None
+    self.mock_setup.target_instance_ips = None
+    self.mock_setup.ip_forwarding_enabled = True
+    self.mock_setup.network_setup_enabled = True
+    self.mock_setup._ExtractInterfaceMetadata.return_value = [
+        network_daemon.NetworkDaemon.NetworkInterface(
+            'eth0', forwarded_ips=['a'], ip='1.1.1.1', ipv6=True),
+    ]
+    result = mock.Mock()
+
+    network_daemon.NetworkDaemon.HandleNetworkInterfaces(
+        self.mock_setup, result)
+    expected_calls = [
+        mock.call.setup._ExtractInterfaceMetadata(result),
+        mock.call.network_setup.EnableIpv6(['eth0']),
+        mock.call.network_setup.EnableNetworkInterfaces([]),
+        mock.call.forwarding.HandleForwardedIps(
+            'eth0', ['a'], '1.1.1.1'),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
@@ -187,12 +215,15 @@ class NetworkDaemonTest(unittest.TestCase):
         {
             'mac': '1',
             'forwardedIps': ['a'],
+            'dhcpv6Refresh': 1,
         },
         {
             'mac': '2',
             'forwardedIps': ['b'],
             'ipAliases': ['banana'],
             'targetInstanceIps': ['baklava'],
+            'ip': '2.2.2.2',
+            'dhcpv6Refresh': 2,
         },
         {
             'mac': '3',
@@ -209,11 +240,13 @@ class NetworkDaemonTest(unittest.TestCase):
         },
     ]
     expected_interfaces = [
-        network_daemon.NetworkDaemon.NetworkInterface('eth0', ['a']),
         network_daemon.NetworkDaemon.NetworkInterface(
-            'eth1', ['b', 'banana', 'baklava']),
+            'eth0', forwarded_ips=['a'], ip=None, ipv6=True),
         network_daemon.NetworkDaemon.NetworkInterface(
-            'eth2', ['cherry', 'cake']),
+            'eth1', forwarded_ips=['b', 'banana', 'baklava'], ip='2.2.2.2',
+            ipv6=True),
+        network_daemon.NetworkDaemon.NetworkInterface(
+            'eth2', forwarded_ips=['cherry', 'cake'], ip=None),
     ]
 
     actual_interfaces = network_daemon.NetworkDaemon._ExtractInterfaceMetadata(
@@ -221,6 +254,8 @@ class NetworkDaemonTest(unittest.TestCase):
     for actual, expected in zip(actual_interfaces, expected_interfaces):
       self.assertEqual(actual.name, expected.name)
       self.assertEqual(actual.forwarded_ips, expected.forwarded_ips)
+      self.assertEqual(actual.ip, expected.ip)
+      self.assertEqual(actual.ipv6, expected.ipv6)
 
   def testExtractInterfaceMetadataWithoutOptions(self):
     self.mock_setup.ip_aliases = None
@@ -233,12 +268,15 @@ class NetworkDaemonTest(unittest.TestCase):
         {
             'mac': '1',
             'forwardedIps': ['a'],
+            'dhcpv6Refresh': 1,
         },
         {
             'mac': '2',
             'forwardedIps': ['b'],
             'ipAliases': ['banana'],
             'targetInstanceIps': ['baklava'],
+            'ip': '2.2.2.2',
+            'dhcpv6Refresh': 2,
         },
         {
             'mac': '3',
@@ -247,9 +285,12 @@ class NetworkDaemonTest(unittest.TestCase):
         },
     ]
     expected_interfaces = [
-        network_daemon.NetworkDaemon.NetworkInterface('eth0', ['a']),
-        network_daemon.NetworkDaemon.NetworkInterface('eth1', ['b']),
-        network_daemon.NetworkDaemon.NetworkInterface('eth2', []),
+        network_daemon.NetworkDaemon.NetworkInterface(
+            'eth0', forwarded_ips=['a'], ip=None, ipv6=True),
+        network_daemon.NetworkDaemon.NetworkInterface(
+            'eth1', forwarded_ips=['b'], ip='2.2.2.2', ipv6=True),
+        network_daemon.NetworkDaemon.NetworkInterface(
+            'eth2', forwarded_ips=[], ip=None, ipv6=False),
     ]
 
     actual_interfaces = network_daemon.NetworkDaemon._ExtractInterfaceMetadata(
@@ -257,3 +298,5 @@ class NetworkDaemonTest(unittest.TestCase):
     for actual, expected in zip(actual_interfaces, expected_interfaces):
       self.assertEqual(actual.name, expected.name)
       self.assertEqual(actual.forwarded_ips, expected.forwarded_ips)
+      self.assertEqual(actual.ip, expected.ip)
+      self.assertEqual(actual.ipv6, expected.ipv6)

@@ -27,61 +27,79 @@ class NetworkSetupTest(unittest.TestCase):
   def setUp(self):
     self.mock_logger = mock.Mock()
     self.mock_distro_utils = mock.Mock()
-    self.mock_setup = mock.create_autospec(network_setup.NetworkSetup)
-    self.mock_setup.logger = self.mock_logger
-    self.mock_setup.distro_utils = self.mock_distro_utils
-    self.mock_setup.dhclient_script = '/bin/script'
-    self.mock_setup.dhcp_command = ''
+    self.dhclient_script = '/bin/script'
+    self.dhcp_command = ''
+    self.setup = network_setup.NetworkSetup(
+        dhclient_script=self.dhclient_script, dhcp_command=self.dhcp_command,
+        debug=False)
+    self.setup.distro_utils = self.mock_distro_utils
+    self.setup.logger = self.mock_logger
 
-  @mock.patch('google_compute_engine.networking.network_setup.network_setup.logger')
-  def testNetworkSetup(self, mock_logger):
-    mock_logger_instance = mock.Mock()
-    mock_logger.Logger.return_value = mock_logger_instance
+  @mock.patch('google_compute_engine.networking.network_setup.network_setup.subprocess.check_call')
+  def testEnableIpv6(self, mock_call):
     mocks = mock.Mock()
-    mocks.attach_mock(mock_logger, 'logger')
-    with mock.patch.object(
-        network_setup.NetworkSetup, 'EnableNetworkInterfaces'):
+    mocks.attach_mock(mock_call, 'call')
+    mocks.attach_mock(self.mock_logger, 'logger')
+    mocks.attach_mock(self.mock_distro_utils.EnableIpv6, 'enable')
+    mock_call.side_effect = [None, subprocess.CalledProcessError(1, 'Test')]
 
-      network_setup.NetworkSetup(['A', 'B'], debug=True)
-      expected_calls = [
-          mock.call.logger.Logger(name=mock.ANY, debug=True, facility=mock.ANY),
-      ]
-      self.assertEqual(mocks.mock_calls, expected_calls)
+    # Return immediately with no interfaces.
+    network_setup.NetworkSetup.EnableIpv6(self.setup, None)
+    network_setup.NetworkSetup.EnableIpv6(self.setup, [])
+    # Enable interfaces.
+    network_setup.NetworkSetup.EnableIpv6(
+        self.setup, ['A', 'B'])
+    self.assertEqual(self.setup.ipv6_interfaces, set(['A', 'B']))
+    # Add a new interface.
+    network_setup.NetworkSetup.EnableIpv6(
+        self.setup, ['A', 'B', 'C'])
+    self.assertEqual(self.setup.ipv6_interfaces, set(['A', 'B', 'C']))
+    # Interfaces are already enabled.
+    network_setup.NetworkSetup.EnableIpv6(
+        self.setup, ['A', 'B', 'C'])
+    self.assertEqual(self.setup.ipv6_interfaces, set(['A', 'B', 'C']))
+    expected_calls = [
+        mock.call.logger.info(mock.ANY, ['A', 'B']),
+        mock.call.enable(['A', 'B'], mock.ANY, dhclient_script='/bin/script'),
+        mock.call.logger.info(mock.ANY, ['A', 'B', 'C']),
+        mock.call.enable(
+            ['A', 'B', 'C'], mock.ANY, dhclient_script='/bin/script'),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.networking.network_setup.network_setup.subprocess.check_call')
   def testEnableNetworkInterfaces(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')
     mocks.attach_mock(self.mock_logger, 'logger')
-    mocks.attach_mock(
-        self.mock_setup.distro_utils.EnableNetworkInterfaces, 'enable')
+    mocks.attach_mock(self.mock_distro_utils.EnableNetworkInterfaces, 'enable')
     mock_call.side_effect = [None, subprocess.CalledProcessError(1, 'Test')]
 
-    # Return immediately with fewer than two interfaces.
-    network_setup.NetworkSetup.EnableNetworkInterfaces(self.mock_setup, None)
-    network_setup.NetworkSetup.EnableNetworkInterfaces(self.mock_setup, [])
+    # Return immediately with no interfaces.
+    network_setup.NetworkSetup.EnableNetworkInterfaces(self.setup, None)
+    network_setup.NetworkSetup.EnableNetworkInterfaces(self.setup, [])
     # Enable interfaces.
     network_setup.NetworkSetup.EnableNetworkInterfaces(
-        self.mock_setup, ['A', 'B'])
-    self.assertEqual(self.mock_setup.interfaces, set(['A', 'B']))
+        self.setup, ['A', 'B'])
+    self.assertEqual(self.setup.interfaces, set(['A', 'B']))
     # Add a new interface.
     network_setup.NetworkSetup.EnableNetworkInterfaces(
-        self.mock_setup, ['A', 'B', 'C'])
-    self.assertEqual(self.mock_setup.interfaces, set(['A', 'B', 'C']))
+        self.setup, ['A', 'B', 'C'])
+    self.assertEqual(self.setup.interfaces, set(['A', 'B', 'C']))
     # Interfaces are already enabled.
     network_setup.NetworkSetup.EnableNetworkInterfaces(
-        self.mock_setup, ['A', 'B', 'C'])
-    self.assertEqual(self.mock_setup.interfaces, set(['A', 'B', 'C']))
+        self.setup, ['A', 'B', 'C'])
+    self.assertEqual(self.setup.interfaces, set(['A', 'B', 'C']))
     # Run a user supplied command successfully.
-    self.mock_setup.dhcp_command = 'success'
+    self.setup.dhcp_command = 'success'
     network_setup.NetworkSetup.EnableNetworkInterfaces(
-        self.mock_setup, ['D', 'E'])
-    self.assertEqual(self.mock_setup.interfaces, set(['D', 'E']))
+        self.setup, ['D', 'E'])
+    self.assertEqual(self.setup.interfaces, set(['D', 'E']))
     # Run a user supplied command and logger error messages.
-    self.mock_setup.dhcp_command = 'failure'
+    self.setup.dhcp_command = 'failure'
     network_setup.NetworkSetup.EnableNetworkInterfaces(
-        self.mock_setup, ['F', 'G'])
-    self.assertEqual(self.mock_setup.interfaces, set(['F', 'G']))
+        self.setup, ['F', 'G'])
+    self.assertEqual(self.setup.interfaces, set(['F', 'G']))
     expected_calls = [
         mock.call.logger.info(mock.ANY, ['A', 'B']),
         mock.call.enable(['A', 'B'], mock.ANY, dhclient_script='/bin/script'),
