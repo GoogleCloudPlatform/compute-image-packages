@@ -22,6 +22,7 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include <regex>
 
 #include "oslogin_utils.h"
 
@@ -29,6 +30,9 @@ using std::string;
 
 // Maximum number of retries for HTTP requests.
 const int kMaxRetries = 1;
+
+// Regex for validating user names.
+const char kUserNameRegex[] = "^[a-zA-Z0-9._][a-zA-Z0-9._-]{0,31}$";
 
 namespace oslogin_utils {
 
@@ -220,6 +224,11 @@ bool HttpGet(const string& url, string* response, long* http_code) {
   curl_easy_cleanup(curl);
   curl_global_cleanup();
   return true;
+}
+
+bool ValidateUserName(const string& user_name) {
+  std::regex r(kUserNameRegex);
+  return std::regex_match(user_name, r);
 }
 
 string UrlEncode(const string& param) {
