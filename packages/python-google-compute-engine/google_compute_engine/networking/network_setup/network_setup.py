@@ -26,6 +26,7 @@ class NetworkSetup(object):
   """Enable network interfaces."""
 
   interfaces = set()
+  ipv6_interfaces = set()
   network_interfaces = 'instance/network-interfaces'
 
   def __init__(self, dhclient_script=None, dhcp_command=None, debug=False):
@@ -42,6 +43,22 @@ class NetworkSetup(object):
     self.logger = logger.Logger(
         name='network-setup', debug=debug, facility=facility)
     self.distro_utils = distro_utils.Utils(debug=debug)
+
+  def EnableIpv6(self, interfaces):
+    """Enable IPv6 on the list of network interfaces.
+
+    Args:
+      interfaces: list of string, the output device names for enabling IPv6.
+    """
+    if not interfaces or set(interfaces) == self.ipv6_interfaces:
+      return
+
+    self.logger.info('Enabling IPv6 on Ethernet interface: %s.', interfaces)
+    self.ipv6_interfaces = set(interfaces)
+
+    # Distro-specific setup for enabling IPv6 on network interfaces.
+    self.distro_utils.EnableIpv6(
+        interfaces, self.logger, dhclient_script=self.dhclient_script)
 
   def EnableNetworkInterfaces(self, interfaces):
     """Enable the list of network interfaces.

@@ -90,6 +90,9 @@ class NetworkDaemon(object):
     network_interfaces = self._ExtractInterfaceMetadata(result)
 
     if self.network_setup_enabled:
+      default_interface = network_interfaces[0]
+      if default_interface.ipv6:
+        self.network_setup.EnableIpv6([default_interface.name])
       self.network_setup.EnableNetworkInterfaces(
           [interface.name for interface in network_interfaces[1:]])
 
@@ -119,7 +122,9 @@ class NetworkDaemon(object):
         if self.target_instance_ips:
           ip_addresses.extend(network_interface.get('targetInstanceIps', []))
         interfaces.append(NetworkDaemon.NetworkInterface(
-            interface, ip_addresses, network_interface.get('ip', [])))
+            interface, forwarded_ips=ip_addresses,
+            ip=network_interface.get('ip', None),
+            ipv6='dhcpv6Refresh' in network_interface.keys()))
       else:
         message = 'Network interface not found for MAC address: %s.'
         self.logger.warning(message, mac_address)
@@ -128,10 +133,11 @@ class NetworkDaemon(object):
   class NetworkInterface(object):
     """Network interface information extracted from metadata."""
 
-    def __init__(self, name, forwarded_ips=None, ip=None):
+    def __init__(self, name, forwarded_ips=None, ip=None, ipv6=False):
       self.name = name
       self.forwarded_ips = forwarded_ips
       self.ip = ip
+      self.ipv6 = ipv6
 
 
 def main():
