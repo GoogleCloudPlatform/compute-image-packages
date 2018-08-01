@@ -269,7 +269,7 @@ script execution.
 ## Packaging
 
 The guest Python code is packaged as a
-[compliant PyPI Python package](http://python-packaging-user-guide.readthedocs.io/en/latest/)
+[compliant PyPI Python package](https://packaging.python.org/)
 that can be used as a library or run independently. In addition to the Python
 package, deb and rpm packages are created with appropriate init configuration
 for supported GCE distros. The packages are targeted towards distribution
