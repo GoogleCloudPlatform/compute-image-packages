@@ -15,6 +15,7 @@
 
 """Retrieve and store user provided metadata scripts."""
 
+import ast
 import re
 import socket
 import subprocess
@@ -23,6 +24,7 @@ import tempfile
 from google_compute_engine import metadata_watcher
 from google_compute_engine.compat import httpclient
 from google_compute_engine.compat import urlerror
+from google_compute_engine.compat import urlrequest
 from google_compute_engine.compat import urlretrieve
 
 
@@ -40,8 +42,11 @@ class ScriptRetriever(object):
     self.script_type = script_type
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
 
-  def _DownloadGsUrl(self, url, dest_dir):
-    """Download a Google Storage URL using gsutil.
+    # Cached authentication token to be used when downloading from bucket
+    self._token = None
+
+  def _DownloadAuthUrl(self, url, dest_dir):
+    """Download a Google Storage URL using an authentication token.
 
     Args:
       url: string, the URL to download.
@@ -50,29 +55,40 @@ class ScriptRetriever(object):
     Returns:
       string, the path to the file storing the metadata script.
     """
-    try:
-      subprocess.check_call(
-          ['which', 'gsutil'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except subprocess.CalledProcessError:
-      self.logger.warning(
-          'gsutil is not installed, cannot download items from Google Storage.')
-      return None
-
     dest_file = tempfile.NamedTemporaryFile(dir=dest_dir, delete=False)
     dest_file.close()
     dest = dest_file.name
 
-    self.logger.info('Downloading url from %s to %s using gsutil.', url, dest)
+    self.logger.info(
+        'Downloading url from %s to %s using authentication token.',
+        url, dest)
     try:
-      subprocess.check_call(['gsutil', 'cp', url, dest])
+      if not self._token:
+        tok_url = '%(metadata)s/instance/service-accounts/default/token' % {
+            'metadata': 'http://metadata.google.internal/computeMetadata/v1',
+        }
+        request = urlrequest.Request(tok_url)
+        request.add_unredirected_header('Metadata-Flavor', 'Google')
+        # converts the stringified dictionary of the response to a dictionary
+        response = ast.literal_eval(urlrequest.urlopen(request).read())
+        self._token = '%s %s' % (
+            response[u'token_type'], response[u'access_token']
+        )
+
+      request = urlrequest.Request(url)
+      request.add_unredirected_header('Metadata-Flavor', 'Google')
+      request.add_unredirected_header('Authorization', self._token)
+      content = urlrequest.urlopen(request).read()
+
+      with open(dest, 'w') as f:
+        f.write(content)
+
       return dest
-    except subprocess.CalledProcessError as e:
-      self.logger.warning(
-          'Could not download %s using gsutil. %s.', url, str(e))
     except Exception as e:
       self.logger.warning(
-          'Exception downloading %s using gsutil. %s.', url, str(e))
-    return None
+          'Exception downloading %s using authentication token. %s.',
+          url, str(e))
+      return None
 
   def _DownloadUrl(self, url, dest_dir):
     """Download a script from a given URL.
@@ -111,7 +127,10 @@ class ScriptRetriever(object):
     # Check for the preferred Google Storage URL format:
     # gs://<bucket>/<object>
     if url.startswith(r'gs://'):
-      return self._DownloadGsUrl(url, dest_dir)
+      # convert it to a regular URL
+      bucket_and_object = url[len(r'gs://'):]
+      url = 'https://storage.googleapis.com/%s' % (bucket_and_object)
+      return self._DownloadAuthUrl(url, dest_dir)
 
     header = r'http[s]?://'
     domain = r'storage\.googleapis\.com'
@@ -122,10 +141,6 @@ class ScriptRetriever(object):
     bucket = r'(?P<bucket>[a-z0-9][-_.a-z0-9]*[a-z0-9])'
 
     # Accept any non-empty string that doesn't contain a wildcard character
-    # gsutil interprets some characters as wildcards.
-    # These characters in object names make it difficult or impossible
-    # to perform various wildcard operations using gsutil
-    # For a complete list use "gsutil help naming".
     obj = r'(?P<obj>[^\*\?]+)'
 
     # Check for the Google Storage URLs:
@@ -134,10 +149,7 @@ class ScriptRetriever(object):
     gs_regex = re.compile(r'\A%s%s\.%s/%s\Z' % (header, bucket, domain, obj))
     match = gs_regex.match(url)
     if match:
-      gs_url = r'gs://%s/%s' % (match.group('bucket'), match.group('obj'))
-      # In case gsutil is not installed, continue as a normal URL.
-      return (self._DownloadGsUrl(gs_url, dest_dir) or
-              self._DownloadUrl(url, dest_dir))
+      return self._DownloadAuthUrl(url, dest_dir)
 
     # Check for the other possible Google Storage URLs:
     # http://storage.googleapis.com/<bucket>/<object>
@@ -150,10 +162,7 @@ class ScriptRetriever(object):
         r'\A%s(commondata)?%s/%s/%s\Z' % (header, domain, bucket, obj))
     match = gs_regex.match(url)
     if match:
-      gs_url = r'gs://%s/%s' % (match.group('bucket'), match.group('obj'))
-      # In case gsutil is not installed, continue as a normal URL.
-      return (self._DownloadGsUrl(gs_url, dest_dir) or
-              self._DownloadUrl(url, dest_dir))
+      return self._DownloadAuthUrl(url, dest_dir)
 
     # Unauthenticated download of the object.
     return self._DownloadUrl(url, dest_dir)
