@@ -18,7 +18,6 @@
 import platform
 
 OSLOGIN_CONTROL_SCRIPT = 'google_oslogin_control'
-OSLOGIN_NSS_CACHE = '/etc/oslogin_passwd.cache'
 OSLOGIN_NSS_CACHE_SCRIPT = 'google_oslogin_nss_cache'
 
 if platform.system() == 'FreeBSD':
@@ -26,13 +25,16 @@ if platform.system() == 'FreeBSD':
     BOTOCONFDIR = '/usr/local'
     SYSCONFDIR = '/usr/local/etc'
     LOCALSTATEDIR = '/var/spool'
+    OSLOGIN_NSS_CACHE = '/usr/local/etc/oslogin_passwd.cache'
 elif platform.system() == 'OpenBSD':
     LOCALBASE = '/usr/local'
     BOTOCONFDIR = ''
     SYSCONFDIR = '/usr/local/etc'
     LOCALSTATEDIR = '/var/spool'
+    OSLOGIN_NSS_CACHE = '/usr/local/etc/oslogin_passwd.cache'
 else:
     LOCALBASE = ''
     BOTOCONFDIR = ''
     SYSCONFDIR = '/etc/default'
     LOCALSTATEDIR = '/var'
+    OSLOGIN_NSS_CACHE = '/etc/oslogin_passwd.cache'
