@@ -26,7 +26,7 @@ import tempfile
 from google_compute_engine import constants
 from google_compute_engine import file_utils
 
-USER_REGEX = re.compile(r'\A[A-Za-z0-9._][A-Za-z0-9._-]*\Z')
+USER_REGEX = re.compile(r'\A[A-Za-z0-9._][A-Za-z0-9._-]{0,31}\Z')
 DEFAULT_GROUPADD_CMD = 'groupadd {group}'
 DEFAULT_USERADD_CMD = 'useradd -m -s /bin/bash -p * {user}'
 DEFAULT_USERDEL_CMD = 'userdel -r {user}'

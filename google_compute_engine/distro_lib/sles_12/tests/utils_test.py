@@ -100,3 +100,12 @@ class UtilsTest(unittest.TestCase):
     utils.Utils.HandleClockSync(self.mock_setup, self.mock_logger)
     expected_calls = [mock.call.call(mock.ANY)]
     self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro_lib.ip_forwarding_utils.IpForwardingUtilsIproute')
+  def testIpForwardingUtils(self, mock_call):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_call, 'call')
+
+    utils.Utils.IpForwardingUtils(self.mock_setup, self.mock_logger, '66')
+    expected_calls = [mock.call.call(mock.ANY, '66')]
+    self.assertEqual(mocks.mock_calls, expected_calls)

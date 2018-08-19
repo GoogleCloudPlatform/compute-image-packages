@@ -34,6 +34,7 @@ using oslogin_utils::HttpGet;
 using oslogin_utils::ParseJsonToAuthorizeResponse;
 using oslogin_utils::ParseJsonToEmail;
 using oslogin_utils::UrlEncode;
+using oslogin_utils::ValidateUserName;
 using oslogin_utils::kMetadataServerUrl;
 
 static const char kUsersDir[] = "/var/google-users.d/";
@@ -49,6 +50,10 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
     return pam_result;
   }
   string str_user_name(user_name);
+  if (!ValidateUserName(user_name)) {
+    // If the user name is not a valid oslogin user, don't bother continuing.
+    return PAM_SUCCESS;
+  }
   string users_filename = kUsersDir;
   users_filename.append(user_name);
   struct stat buffer;
