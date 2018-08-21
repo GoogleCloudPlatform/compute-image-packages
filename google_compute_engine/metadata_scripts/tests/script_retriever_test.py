@@ -51,11 +51,12 @@ class ScriptRetrieverTest(unittest.TestCase):
     mock_tempfile.assert_called_once_with(dir=self.dest_dir, delete=False)
     mock_tempfile.close.assert_called_once_with()
 
-    self.mock_logger.info.assert_called_once_with(mock.ANY, auth_url, self.dest)
+    self.mock_logger.info.assert_called_once_with(
+      mock.ANY, auth_url, self.dest)
     mock_request.assert_called_with(auth_url)
     mocked_request = mock_request()
-    mocked_request.add_unredirected_header.assert_called_with('Authorization', 'bar')
-    # mocked_request.add_unredirected_header.assert_called_with('Metadata-Flavor', 'Google')
+    mocked_request.add_unredirected_header.assert_called_with(
+        'Authorization', 'bar')
     mock_urlopen.assert_called_with(mocked_request)
     urlopen_read = mock_urlopen().read(return_value='foo')
     self.mock_logger.warning.assert_not_called()
@@ -84,16 +85,19 @@ class ScriptRetrieverTest(unittest.TestCase):
 
     self.assertIsNone(self.retriever._DownloadAuthUrl(auth_url, self.dest_dir))
 
-    self.assertEqual(mock_request.mock_calls,
-                     [mock.call(token_url),
-                      mock.call.add_unredirected_header('Metadata-Flavor', 'Google'),
-                      mock.call(auth_url)])
-    mock_request.add_unredirected_header.assert_called_with('Metadata-Flavor', 'Google')
+    self.assertEqual(
+        mock_request.mock_calls, [
+            mock.call(token_url),
+            mock.call.add_unredirected_header('Metadata-Flavor', 'Google'),
+            mock.call(auth_url)])
+    mock_request.add_unredirected_header.assert_called_with(
+        'Metadata-Flavor', 'Google')
     mock_urlopen.assert_called_with(mock_request)
 
     self.assertEqual(self.retriever._token, 'foo bar')
 
-    self.mock_logger.info.assert_called_once_with(mock.ANY, auth_url, self.dest)
+    self.mock_logger.info.assert_called_once_with(
+        mock.ANY, auth_url, self.dest)
     self.assertEqual(self.mock_logger.warning.call_count, 1)
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
@@ -102,7 +106,8 @@ class ScriptRetrieverTest(unittest.TestCase):
     url = 'http://www.google.com/fake/url'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    self.assertEqual(self.retriever._DownloadUrl(url, self.dest_dir), self.dest)
+    self.assertEqual(
+        self.retriever._DownloadUrl(url, self.dest_dir), self.dest)
     mock_tempfile.assert_called_once_with(dir=self.dest_dir, delete=False)
     mock_tempfile.close.assert_called_once_with()
     self.mock_logger.info.assert_called_once_with(mock.ANY, url, self.dest)
