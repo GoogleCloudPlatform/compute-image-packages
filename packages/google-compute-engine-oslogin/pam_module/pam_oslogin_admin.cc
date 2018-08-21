@@ -14,7 +14,6 @@
 
 #define PAM_SM_ACCOUNT
 #include <security/pam_appl.h>
-#include <security/pam_ext.h>
 #include <security/pam_modules.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -26,6 +25,7 @@
 #include <sstream>
 #include <string>
 
+#include "../compat.h"
 #include "../utils/oslogin_utils.h"
 
 using std::string;
@@ -50,7 +50,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   int pam_result = PAM_SUCCESS;
   const char *user_name;
   if ((pam_result = pam_get_user(pamh, &user_name, NULL)) != PAM_SUCCESS) {
-    pam_syslog(pamh, LOG_INFO, "Could not get pam user.");
+    PAM_SYSLOG(pamh, LOG_INFO, "Could not get pam user.");
     return pam_result;
   }
 
@@ -81,7 +81,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   if (HttpGet(url.str(), &response, &http_code) && http_code == 200 &&
       ParseJsonToSuccess(response)) {
     if (!file_exists) {
-      pam_syslog(pamh, LOG_INFO,
+      PAM_SYSLOG(pamh, LOG_INFO,
                  "Granting sudo permissions to organization user %s.",
                  user_name);
       std::ofstream sudoers_file;
