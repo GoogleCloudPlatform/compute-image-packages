@@ -64,13 +64,8 @@ class ScriptRetriever(object):
         url, dest)
     try:
       if not self._token:
-        tok_url = '%(metadata)s/instance/service-accounts/default/token' % {
-            'metadata': 'http://metadata.google.internal/computeMetadata/v1',
-        }
-        request = urlrequest.Request(tok_url)
-        request.add_unredirected_header('Metadata-Flavor', 'Google')
-        # converts the stringified dictionary of the response to a dictionary
-        response = ast.literal_eval(urlrequest.urlopen(request).read())
+        tok_metadata = 'instance/service-accounts/default/token'
+        response = self.watcher.GetMetadata(tok_metadata, recursive=False)
         self._token = '%s %s' % (
             response[u'token_type'], response[u'access_token']
         )
@@ -127,9 +122,8 @@ class ScriptRetriever(object):
     # Check for the preferred Google Storage URL format:
     # gs://<bucket>/<object>
     if url.startswith(r'gs://'):
-      # convert it to a regular URL
-      bucket_and_object = url[len(r'gs://'):]
-      url = 'https://storage.googleapis.com/%s' % (bucket_and_object)
+      # Convert the string into a standard URL.
+      url = re.sub('^gs://', 'https://storage.googleapis.com/', url)
       return self._DownloadAuthUrl(url, dest_dir)
 
     header = r'http[s]?://'

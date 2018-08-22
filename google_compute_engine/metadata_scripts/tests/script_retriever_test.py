@@ -18,6 +18,7 @@
 import subprocess
 
 from google_compute_engine.metadata_scripts import script_retriever
+from google_compute_engine.metadata_watcher import MetadataWatcher
 from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
@@ -67,32 +68,26 @@ class ScriptRetrieverTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.Request')
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.urlopen')
-  def testDownloadAuthUrlExceptionAndToken(self, mock_urlopen, mock_request,
-                                   mock_tempfile):
+  @mock.patch('google_compute_engine.metadata_watcher.MetadataWatcher.GetMetadata')
+  def testDownloadAuthUrlExceptionAndToken(self, mock_GetMetadata,
+                                           mock_request, mock_tempfile):
     auth_url = 'https://storage.googleapis.com/fake/url'
     token_url = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
     self.retriever._token = None
 
+    mock_GetMetadata.return_value = {'token_type':'foo', 'access_token':'bar'}
     mock_request.return_value = mock_request
-    mock_urlopen.return_value = mock_urlopen
-    mock_urlopen.read.return_value = "{'token_type':'foo', 'access_token':'bar'}"
-
-    # Throw exception only on 2nd call.
-    mock_request.side_effect = [mock_request, Exception('Error.')]
+    mock_request.side_effect = Exception('Error.')
 
     self.assertIsNone(self.retriever._DownloadAuthUrl(auth_url, self.dest_dir))
 
-    self.assertEqual(
-        mock_request.mock_calls, [
-            mock.call(token_url),
-            mock.call.add_unredirected_header('Metadata-Flavor', 'Google'),
-            mock.call(auth_url)])
-    mock_request.add_unredirected_header.assert_called_with(
-        'Metadata-Flavor', 'Google')
-    mock_urlopen.assert_called_with(mock_request)
+    mock_GetMetadata.return_value = mock_GetMetadata
+    # GetMetadata includes a prefix, so remove it
+    prefix = 'http://metadata.google.internal/computeMetadata/v1/'
+    stripped_url = token_url.replace(prefix, '')
+    mock_GetMetadata.assert_called_once_with(stripped_url, recursive=False)
 
     self.assertEqual(self.retriever._token, 'foo bar')
 
