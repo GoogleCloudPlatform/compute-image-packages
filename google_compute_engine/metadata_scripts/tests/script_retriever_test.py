@@ -17,6 +17,7 @@
 
 import subprocess
 
+from google_compute_engine.compat import urlerror
 from google_compute_engine.metadata_scripts import script_retriever
 from google_compute_engine.metadata_watcher import MetadataWatcher
 from google_compute_engine.test_compat import builtin
@@ -42,7 +43,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     auth_url = 'https://storage.googleapis.com/fake/url'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    self.retriever._token = 'bar'
+    self.retriever.token = 'bar'
 
     mock_open = mock.mock_open()
     with mock.patch('%s.open' % builtin, mock_open):
@@ -69,27 +70,27 @@ class ScriptRetrieverTest(unittest.TestCase):
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.Request')
   @mock.patch('google_compute_engine.metadata_watcher.MetadataWatcher.GetMetadata')
-  def testDownloadAuthUrlExceptionAndToken(self, mock_GetMetadata,
-                                           mock_request, mock_tempfile):
+  def testDownloadAuthUrlExceptionAndToken(
+      self, mock_GetMetadata, mock_request, mock_tempfile):
     auth_url = 'https://storage.googleapis.com/fake/url'
     token_url = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    self.retriever._token = None
+    self.retriever.token = None
 
     mock_GetMetadata.return_value = {'token_type':'foo', 'access_token':'bar'}
     mock_request.return_value = mock_request
-    mock_request.side_effect = Exception('Error.')
+    mock_request.side_effect = urlerror.URLError('Error.')
 
     self.assertIsNone(self.retriever._DownloadAuthUrl(auth_url, self.dest_dir))
 
     mock_GetMetadata.return_value = mock_GetMetadata
-    # GetMetadata includes a prefix, so remove it
+    # GetMetadata includes a prefix, so remove it.
     prefix = 'http://metadata.google.internal/computeMetadata/v1/'
     stripped_url = token_url.replace(prefix, '')
     mock_GetMetadata.assert_called_once_with(stripped_url, recursive=False)
 
-    self.assertEqual(self.retriever._token, 'foo bar')
+    self.assertEqual(self.retriever.token, 'foo bar')
 
     self.mock_logger.info.assert_called_once_with(
         mock.ANY, auth_url, self.dest)
@@ -191,7 +192,7 @@ class ScriptRetrieverTest(unittest.TestCase):
       download_urls.extend(urls)
       download_gs_urls.update(gs_urls)
 
-    # all gs:// urls uses authentication to be downloaded
+    # All Google Storage URLs are downloaded with an authentication token.
     for url, gs_url in download_gs_urls.items():
       mock_download.reset_mock()
       mock_auth_download.reset_mock()

@@ -30,6 +30,9 @@ from google_compute_engine.compat import urlretrieve
 
 class ScriptRetriever(object):
   """A class for retrieving and storing user provided metadata scripts."""
+  token_metadata_key = 'instance/service-accounts/default/token'
+  # Cached authentication token to be used when downloading from bucket.
+  token = None
 
   def __init__(self, logger, script_type):
     """Constructor.
@@ -41,9 +44,6 @@ class ScriptRetriever(object):
     self.logger = logger
     self.script_type = script_type
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
-
-    # Cached authentication token to be used when downloading from bucket
-    self._token = None
 
   def _DownloadAuthUrl(self, url, dest_dir):
     """Download a Google Storage URL using an authentication token.
@@ -60,30 +60,28 @@ class ScriptRetriever(object):
     dest = dest_file.name
 
     self.logger.info(
-        'Downloading url from %s to %s using authentication token.',
-        url, dest)
-    try:
-      if not self._token:
-        tok_metadata = 'instance/service-accounts/default/token'
-        response = self.watcher.GetMetadata(tok_metadata, recursive=False)
-        self._token = '%s %s' % (
-            response[u'token_type'], response[u'access_token']
-        )
+        'Downloading url from %s to %s using authentication token.', url, dest)
 
+    if not self.token:
+      response = self.watcher.GetMetadata(
+          self.token_metadata_key, recursive=False)
+      self.token = '%s %s' % (
+          response.get('token_type', ''), response.get('access_token', '')
+      )
+
+    try:
       request = urlrequest.Request(url)
       request.add_unredirected_header('Metadata-Flavor', 'Google')
-      request.add_unredirected_header('Authorization', self._token)
+      request.add_unredirected_header('Authorization', self.token)
       content = urlrequest.urlopen(request).read()
-
-      with open(dest, 'w') as f:
-        f.write(content)
-
-      return dest
-    except Exception as e:
-      self.logger.warning(
-          'Exception downloading %s using authentication token. %s.',
-          url, str(e))
+    except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
+      self.logger.warning('Could not download %s. %s.', url, str(e))
       return None
+
+    with open(dest, 'w') as f:
+      f.write(content)
+
+    return dest
 
   def _DownloadUrl(self, url, dest_dir):
     """Download a script from a given URL.
