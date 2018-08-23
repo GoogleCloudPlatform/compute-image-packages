@@ -232,9 +232,12 @@ places:
 *   `Makefile` Update the MAJOR, MINOR, and REVISION variables.
 *   `packaging/debian8/changelog` Add a new entry with the new version.
 *   `packaging/debian9/changelog` Add a new entry with the new version.
+*   `packaging/debian10/changelog` Add a new entry with the new version.
 *   `packaging/debian8/google-compute-engine-oslogin.links` Update the libnss
     version string.
 *   `packaging/debian9/google-compute-engine-oslogin.links` Update the libnss
+    version string.
+*   `packaging/debian10/google-compute-engine-oslogin.links` Update the libnss
     version string.
 *   `packaging/rpmbuild/SPECS/google-compute-engine-oslogin.spec` Update the
     Version field.
