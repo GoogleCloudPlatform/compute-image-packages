@@ -66,8 +66,7 @@ class ScriptRetriever(object):
       response = self.watcher.GetMetadata(
           self.token_metadata_key, recursive=False)
       self.token = '%s %s' % (
-          response.get('token_type', ''), response.get('access_token', '')
-      )
+          response.get('token_type', ''), response.get('access_token', ''))
 
     try:
       request = urlrequest.Request(url)
