@@ -4,7 +4,7 @@ google-compute-image-packages (2.8.3-1) stable; urgency=low
   * Make default shell configurable when executing metadata scripts.
   * Rename distro directory to distro_lib.
 
- -- Google Cloud Team <gc-team@google.com>  Mon, 11 June 2018 12:00:00 -0700
+ -- Google Cloud Team <gc-team@google.com>  Mon, 11 Jun 2018 12:00:00 -0700
 
 google-compute-image-packages (2.8.2-1) stable; urgency=low
 
