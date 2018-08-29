@@ -2,7 +2,7 @@ language: python
 sudo: true
 python:
 - 2.7
-- 3.3
+# - 3.3  # Tox no longer supports the EOLed Python 3.3
 - 3.4
 - 3.5
 - 3.6
