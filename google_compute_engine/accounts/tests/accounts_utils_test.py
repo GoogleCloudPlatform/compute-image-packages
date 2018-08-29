@@ -572,6 +572,7 @@ class AccountsUtilsTest(unittest.TestCase):
         'abc xyz',
         'xyz*',
         'xyz$',
+        'areallylongusernamethatexceedsthethirtytwocharacterlimit'
     ]
     for user in invalid_users:
       self.assertFalse(

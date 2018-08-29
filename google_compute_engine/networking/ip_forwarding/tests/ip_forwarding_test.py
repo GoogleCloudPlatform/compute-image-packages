@@ -103,15 +103,16 @@ class IpForwardingTest(unittest.TestCase):
     self.mock_ip_forwarding_utils.ParseForwardedIps.return_value = desired
     self.mock_ip_forwarding_utils.GetForwardedIps.return_value = configured
     forwarded_ips = 'forwarded ips'
+    interface_ip = 'interface ip'
     interface = 'interface'
     expected_add = ['d']
     expected_remove = ['a', 'b']
 
     ip_forwarding.IpForwarding.HandleForwardedIps(
-        self.mock_setup, interface, forwarded_ips)
+        self.mock_setup, interface, forwarded_ips, interface_ip)
     expected_calls = [
         mock.call.forwarding.ParseForwardedIps(forwarded_ips),
-        mock.call.forwarding.GetForwardedIps(interface),
+        mock.call.forwarding.GetForwardedIps(interface, interface_ip),
         mock.call.setup._LogForwardedIpChanges(
             configured, desired, expected_add, expected_remove, interface),
         mock.call.setup._AddForwardedIps(expected_add, interface),

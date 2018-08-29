@@ -139,6 +139,9 @@ OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp);
 // stored in response, and the HTTP response code will be stored in http_code.
 bool HttpGet(const string& url, string* response, long* http_code);
 
+// Returns whether user_name is a valid OsLogin user name.
+bool ValidateUserName(const string& user_name);
+
 // URL encodes the given parameter. Returns the encoded parameter.
 std::string UrlEncode(const string& param);
 
