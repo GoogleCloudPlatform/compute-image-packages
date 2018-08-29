@@ -277,7 +277,6 @@ provided Python versions.
 
 Distro       | Package Type | Python Version | Init System
 ------------ | ------------ | -------------- | -----------
-Debian 8     | deb          | 2.7            | systemd
 Debian 9     | deb          | 3.5 or 2.7     | systemd
 CentOS 6     | rpm          | 2.6            | upstart
 CentOS 7     | rpm          | 2.7            | systemd
@@ -326,36 +325,11 @@ match to successfully release an update.
 #### Package Distribution
 
 The deb and rpm packages used in some GCE images are published to Google Cloud
-repositories. Debian 8 and 9, CentOS 6 and 7, and RHEL 6 and 7 use these
+repositories. Debian 9, CentOS 6 and 7, and RHEL 6 and 7 use these
 repositories to install and update the `google-compute-engine`, and
 `python-google-compute-engine` (and `python3-google-compute-engine` for Python 3)
 packages. If you are creating a custom image, you can also use these repositories
 in your image.
-
-**For Debian 8, run the following commands as root:**
-
-Add the public repo key to your system:
-```
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-```
-
-Add a source list file `/etc/apt/sources.list.d/google-cloud.list`:
-```
-tee /etc/apt/sources.list.d/google-cloud.list << EOM
-deb http://packages.cloud.google.com/apt google-compute-engine-jessie-stable main
-deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-jessie main
-EOM
-```
-
-Install the packages to maintain the public key over time:
-```
-apt-get update; apt-get install google-cloud-packages-archive-keyring
-```
-
-Install the `google-compute-engine` and `python-google-compute-engine` packages:
-```
-apt-get update; apt-get install -y google-compute-engine python-google-compute-engine
-```
 
 **For Debian 9, run the following commands as root:**
 
@@ -411,13 +385,10 @@ yum install -y google-compute-engine python-google-compute-engine
 
 Deprecated Package                   | Replacement
 ------------------------------------ | ---------------------------------------------------------
-`google-compute-engine-jessie`       | `google-compute-engine` and `python-google-compute-engine`
 `google-compute-engine-stretch`      | `google-compute-engine` and `python-google-compute-engine`
 `google-compute-engine-init`         | `google-compute-engine`
-`google-compute-engine-init-jessie`  | `google-compute-engine`
 `google-compute-engine-init-stretch` | `google-compute-engine`
 `google-config`                      | `google-compute-engine`
-`google-config-jessie`               | `google-compute-engine`
 `google-config-stretch`              | `google-compute-engine`
 `google-compute-daemon`              | `python-google-compute-engine`
 `google-startup-scripts`             | `google-compute-engine`

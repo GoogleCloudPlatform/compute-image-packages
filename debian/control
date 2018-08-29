@@ -32,19 +32,13 @@ Depends: google-compute-engine-oslogin,
          systemd
 Recommends: google-cloud-sdk, rsyslog
 Provides: irqbalance
-Conflicts: google-compute-engine-jessie,
-           google-compute-engine-init-jessie,
-           google-config-jessie,
-           google-compute-engine-stretch,
+Conflicts: google-compute-engine-stretch,
            google-compute-engine-init-stretch,
            google-config-stretch,
            google-compute-daemon,
            google-startup-scripts,
            irqbalance
-Replaces: google-compute-engine-jessie,
-          google-compute-engine-init-jessie,
-          google-config-jessie,
-          google-compute-engine-stretch,
+Replaces: google-compute-engine-stretch,
           google-compute-engine-init-stretch,
           google-config-stretch,
           google-compute-daemon,
@@ -56,8 +50,7 @@ Package: python-google-compute-engine
 Section: python
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends}
-Conflicts: google-compute-engine-jessie,
-           google-compute-engine-stretch,
+Conflicts: google-compute-engine-stretch,
            google-compute-daemon,
            google-startup-scripts
 Description: Google Compute Engine python library for Python 2.x.
@@ -70,8 +63,7 @@ Depends: ${misc:Depends},
          python3-boto,
          python3-pkg-resources,
          python3:any
-Conflicts: google-compute-engine-jessie,
-           google-compute-engine-stretch,
+Conflicts: google-compute-engine-stretch,
            google-compute-daemon,
            google-startup-scripts
 Description: Google Compute Engine python library for Python 3.x.

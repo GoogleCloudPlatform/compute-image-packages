@@ -165,7 +165,6 @@ that is intstalled in the appropriate SELinux directory.
 ## Source Packages
 
 There is currently support for creating packages for the following distros:
-*   Debian 8
 *   Debian 9
 *   CentOS/RHEL 6
 *   CentOS/RHEL 7
@@ -189,7 +188,7 @@ production quality._
     number).
 1.  In a separate directory, extract the `.orig.tar.gz` file and copy the
     appropriate `debian` directory into the top level. (e.g. When working on
-    Debian 8, copy the `debian8` directory to a directory named `debian` within
+    Debian 9, copy the `debian9` directory to a directory named `debian` within
     the code directory.)
 1.  To build the package, run the command
     ```
@@ -230,10 +229,8 @@ When updating version numbers, changes need to be made in a few different
 places:
 
 *   `Makefile` Update the MAJOR, MINOR, and REVISION variables.
-*   `packaging/debian8/changelog` Add a new entry with the new version.
 *   `packaging/debian9/changelog` Add a new entry with the new version.
 *   `packaging/debian10/changelog` Add a new entry with the new version.
-*   `packaging/debian8/google-compute-engine-oslogin.links` Update the libnss
     version string.
 *   `packaging/debian9/google-compute-engine-oslogin.links` Update the libnss
     version string.
