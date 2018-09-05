@@ -22,7 +22,19 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+
+#ifdef __GNUC__
+#if __GNUC__ > 4 || \
+  (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
+                     (__GNUC_MINOR__ == 9 && \
+                      __GNUC_PATCHLEVEL__ > 0)))
 #include <regex>
+#define Regex std
+#else
+#include <boost/regex.hpp>
+#define Regex boost
+#endif
+#endif
 
 #include "oslogin_utils.h"
 
@@ -227,8 +239,8 @@ bool HttpGet(const string& url, string* response, long* http_code) {
 }
 
 bool ValidateUserName(const string& user_name) {
-  std::regex r(kUserNameRegex);
-  return std::regex_match(user_name, r);
+  Regex::regex r(kUserNameRegex);
+  return Regex::regex_match(user_name, r);
 }
 
 string UrlEncode(const string& param) {
