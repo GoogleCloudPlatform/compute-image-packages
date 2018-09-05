@@ -21,6 +21,7 @@ import re
 
 from google_compute_engine import constants
 from google_compute_engine.distro_lib import helpers
+from google_compute_engine.distro_lib import ip_forwarding_utils
 from google_compute_engine.distro_lib import utils
 
 
@@ -51,7 +52,8 @@ class Utils(utils.Utils):
       logger: logger object, used to write to SysLog and serial port.
     """
     for interface in interfaces:
-      interface_config = os.path.join(self.network_path, 'ifcfg-%s' % interface)
+      interface_config = os.path.join(
+          self.network_path, 'ifcfg-%s' % interface)
       if os.path.exists(interface_config):
         self._ModifyInterface(
             interface_config, 'DEVICE', interface, replace=False)
@@ -97,3 +99,12 @@ class Utils(utils.Utils):
       logger: logger object, used to write to SysLog and serial port.
     """
     helpers.CallHwclock(logger)
+
+  def IpForwardingUtils(self, logger, proto_id=None):
+    """Get system IP address configuration utilities.
+
+    Args:
+      logger: logger object, used to write to SysLog and serial port.
+      proto_id: string, the routing protocol identifier for Google IP changes.
+    """
+    return ip_forwarding_utils.IpForwardingUtilsIproute(logger, proto_id)

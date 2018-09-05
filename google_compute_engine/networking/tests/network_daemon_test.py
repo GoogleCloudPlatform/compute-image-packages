@@ -148,9 +148,9 @@ class NetworkDaemonTest(unittest.TestCase):
         self.mock_setup, result)
     expected_calls = [
         mock.call.setup._ExtractInterfaceMetadata(result),
-        mock.call.network_setup.EnableNetworkInterfaces(['a', 'b']),
-        mock.call.forwarding.HandleForwardedIps('a', None),
-        mock.call.forwarding.HandleForwardedIps('b', None),
+        mock.call.network_setup.EnableNetworkInterfaces(['b']),
+        mock.call.forwarding.HandleForwardedIps('a', None, None),
+        mock.call.forwarding.HandleForwardedIps('b', None, None),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 

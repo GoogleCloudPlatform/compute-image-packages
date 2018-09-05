@@ -23,12 +23,28 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef __GNUC__
+#if __GNUC__ > 4 || \
+  (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
+                     (__GNUC_MINOR__ == 9 && \
+                      __GNUC_PATCHLEVEL__ > 0)))
+#include <regex>
+#define Regex std
+#else
+#include <boost/regex.hpp>
+#define Regex boost
+#endif
+#endif
+
 #include "oslogin_utils.h"
 
 using std::string;
 
 // Maximum number of retries for HTTP requests.
 const int kMaxRetries = 1;
+
+// Regex for validating user names.
+const char kUserNameRegex[] = "^[a-zA-Z0-9._][a-zA-Z0-9._-]{0,31}$";
 
 namespace oslogin_utils {
 
@@ -154,9 +170,12 @@ bool NssCache::NssGetpwentHelper(BufferManager* buf, struct passwd* result,
     string response;
     long http_code = 0;
     if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
-        response.empty() ||
-        (!LoadJsonArrayToCache(response) && !on_last_page_)) {
-      *errnop = ENOENT;
+        response.empty() || !LoadJsonArrayToCache(response)) {
+      // It is possible this to be true after LoadJsonArrayToCache(), so we
+      // must check it again.
+      if(!OnLastPage()) {
+        *errnop = ENOENT;
+      }
       return false;
     }
   }
@@ -217,6 +236,11 @@ bool HttpGet(const string& url, string* response, long* http_code) {
   curl_easy_cleanup(curl);
   curl_global_cleanup();
   return true;
+}
+
+bool ValidateUserName(const string& user_name) {
+  Regex::regex r(kUserNameRegex);
+  return Regex::regex_match(user_name, r);
 }
 
 string UrlEncode(const string& param) {
