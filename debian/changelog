@@ -3,7 +3,6 @@ google-compute-image-packages (2.8.4-1) stable; urgency=low
   * Remove ntp dependency.
   * Support Debian 10 Buster.
   * Restart the network daemon if networking is restarted.
-  * Add user name validation to pam modules.
   * Prevent setup of the default ethernet interface.
   * Accounts daemon can now verify username is 32 characters or less.
 
