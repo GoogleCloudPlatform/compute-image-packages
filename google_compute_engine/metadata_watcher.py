@@ -209,7 +209,7 @@ class MetadataWatcher(object):
       metadata_key: string, the metadata key to watch for changes.
       recursive: bool, True if we should recursively watch for metadata changes.
       timeout: int, timeout in seconds for returning metadata output.
-      retry: bool, True if it should keep retrying after failing.
+      retry: bool, True if we should retry on failure.
 
     Returns:
       json, the deserialized contents of the metadata server or None if error.

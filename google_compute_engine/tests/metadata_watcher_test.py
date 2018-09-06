@@ -290,11 +290,11 @@ class MetadataWatcherTest(unittest.TestCase):
             timeout=None, retry=retry))
     expected_calls = [
         mock.call(
-          metadata_key=metadata_key, recursive=recursive, wait=wait,
-          timeout=None),
+            metadata_key=metadata_key, recursive=recursive, wait=wait,
+            timeout=None),
     ]
     self.assertEqual(mock_response.mock_calls, expected_calls)
-    expected_calls = [mock.call.error(mock.ANY, mock.ANY),]
+    expected_calls = [mock.call.error(mock.ANY, mock.ANY)]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
   def testWatchMetadata(self):

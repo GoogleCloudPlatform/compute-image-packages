@@ -54,7 +54,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     mock_tempfile.close.assert_called_once_with()
 
     self.mock_logger.info.assert_called_once_with(
-      mock.ANY, auth_url, self.dest)
+        mock.ANY, auth_url, self.dest)
     mock_request.assert_called_with(auth_url)
     mocked_request = mock_request()
     mocked_request.add_unredirected_header.assert_called_with(
@@ -71,7 +71,7 @@ class ScriptRetrieverTest(unittest.TestCase):
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.Request')
   @mock.patch('google_compute_engine.metadata_watcher.MetadataWatcher.GetMetadata')
   def testDownloadAuthUrlExceptionAndToken(
-      self, mock_GetMetadata, mock_request, mock_tempfile):
+      self, mock_get_metadata, mock_request, mock_tempfile):
     auth_url = 'https://storage.googleapis.com/fake/url'
     metadata_prefix = 'http://metadata.google.internal/computeMetadata/v1/'
     token_url = metadata_prefix + 'instance/service-accounts/default/token'
@@ -79,17 +79,17 @@ class ScriptRetrieverTest(unittest.TestCase):
     mock_tempfile.name = self.dest
     self.retriever.token = None
 
-    mock_GetMetadata.return_value = {
+    mock_get_metadata.return_value = {
         'token_type': 'foo', 'access_token': 'bar'}
     mock_request.return_value = mock_request
     mock_request.side_effect = urlerror.URLError('Error.')
 
     self.assertIsNone(self.retriever._DownloadAuthUrl(auth_url, self.dest_dir))
 
-    mock_GetMetadata.return_value = mock_GetMetadata
+    mock_get_metadata.return_value = mock_get_metadata
     # GetMetadata includes a prefix, so remove it.
     stripped_url = token_url.replace(metadata_prefix, '')
-    mock_GetMetadata.assert_called_once_with(
+    mock_get_metadata.assert_called_once_with(
         stripped_url, recursive=False, retry=False)
 
     self.assertEqual(self.retriever.token, 'foo bar')
@@ -102,7 +102,7 @@ class ScriptRetrieverTest(unittest.TestCase):
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.ScriptRetriever._DownloadUrl')
   @mock.patch('google_compute_engine.metadata_watcher.MetadataWatcher.GetMetadata')
   def testDownloadAuthUrlFallback(
-      self, mock_GetMetadata, mock_DownloadUrl, mock_tempfile):
+      self, mock_get_metadata, mock_download_url, mock_tempfile):
     auth_url = 'https://storage.googleapis.com/fake/url'
     metadata_prefix = 'http://metadata.google.internal/computeMetadata/v1/'
     token_url = metadata_prefix + 'instance/service-accounts/default/token'
@@ -110,25 +110,24 @@ class ScriptRetrieverTest(unittest.TestCase):
     mock_tempfile.name = self.dest
     self.retriever.token = None
 
-    mock_GetMetadata.return_value = None
-    mock_DownloadUrl.return_value = None
+    mock_get_metadata.return_value = None
+    mock_download_url.return_value = None
 
     self.assertIsNone(self.retriever._DownloadAuthUrl(auth_url, self.dest_dir))
 
-    mock_GetMetadata.return_value = mock_GetMetadata
+    mock_get_metadata.return_value = mock_get_metadata
     # GetMetadata includes a prefix, so remove it.
     prefix = 'http://metadata.google.internal/computeMetadata/v1/'
     stripped_url = token_url.replace(prefix, '')
-    mock_GetMetadata.assert_called_once_with(
+    mock_get_metadata.assert_called_once_with(
         stripped_url, recursive=False, retry=False)
-    mock_DownloadUrl.assert_called_once_with(auth_url, self.dest_dir)
+    mock_download_url.assert_called_once_with(auth_url, self.dest_dir)
 
     self.assertIsNone(self.retriever.token)
 
     expected_calls = [
         mock.call(mock.ANY, auth_url, self.dest),
-        mock.call('%s %s', 'Authentication token not found.',
-            'Attempting unauthenticated download.')
+        mock.call(mock.ANY),
     ]
     self.assertEqual(self.mock_logger.info.mock_calls, expected_calls)
 

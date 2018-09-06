@@ -69,8 +69,9 @@ class ScriptRetriever(object):
           self.token_metadata_key, recursive=False, retry=False)
 
       if not response:
-        self.logger.info('%s %s', 'Authentication token not found.',
-            'Attempting unauthenticated download.')
+        self.logger.info(
+            'Authentication token not found. Attempting unauthenticated '
+            'download.')
         return self._DownloadUrl(url, dest_dir)
 
       self.token = '%s %s' % (
