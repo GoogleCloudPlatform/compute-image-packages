@@ -18,19 +18,21 @@
 %endif
 
 Name:           google-compute-engine-oslogin
-Version:        1.3.0
+Version:        1.3.1
 Release:        1%{?dist}
 Summary:        OS Login Functionality for Google Compute Engine
 
 License:        ASL 2.0
 Source0:        %{name}_%{version}.orig.tar.gz
 
+BuildRequires:  boost-devel
 BuildRequires:  gcc-c++
 BuildRequires:  make
 BuildRequires:  libcurl
 BuildRequires:  json-c
 BuildRequires:  pam-devel
 BuildRequires:  policycoreutils-python
+Requires:  boost-regex
 Requires:  policycoreutils-python
 
 %define pam_install_path /%{_lib}/security
@@ -43,7 +45,7 @@ for Google Compute Engine.
 %setup
 
 %build
-make %{?_smp_mflags} LIBS="-lcurl -ljson-c"
+make %{?_smp_mflags} LIBS="-lcurl -ljson-c -lboost_regex"
 
 %install
 rm -rf %{buildroot}

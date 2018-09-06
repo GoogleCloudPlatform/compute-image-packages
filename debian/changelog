@@ -1,3 +1,13 @@
+google-compute-image-packages (2.8.4-1) stable; urgency=low
+
+  * Remove ntp dependency.
+  * Support Debian 10 Buster.
+  * Restart the network daemon if networking is restarted.
+  * Prevent setup of the default ethernet interface.
+  * Accounts daemon can now verify username is 32 characters or less.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 05 Sep 2018 12:00:00 -0700
+
 google-compute-image-packages (2.8.3-1) stable; urgency=low
 
   * Prevent IP forwarding daemon log spam.
