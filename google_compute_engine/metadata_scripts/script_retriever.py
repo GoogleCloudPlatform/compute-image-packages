@@ -46,7 +46,8 @@ class ScriptRetriever(object):
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
 
   def _DownloadAuthUrl(self, url, dest_dir):
-    """Download a Google Storage URL using an authentication token.
+    """Download a Google Storage URL using an authentication token. If token
+    cannot be fetched, it'll fallback to unauthenticated download.
 
     Args:
       url: string, the URL to download.
@@ -64,7 +65,13 @@ class ScriptRetriever(object):
 
     if not self.token:
       response = self.watcher.GetMetadata(
-          self.token_metadata_key, recursive=False)
+          self.token_metadata_key, recursive=False, retry=False)
+
+      if not response:
+        self.logger.warning(
+            'Token fetch failed! Fallback to unauthenticated download.')
+        return self._DownloadUrl(url, dest_dir)
+
       self.token = '%s %s' % (
           response.get('token_type', ''), response.get('access_token', ''))
 
