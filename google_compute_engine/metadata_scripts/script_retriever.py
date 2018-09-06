@@ -181,7 +181,7 @@ class ScriptRetriever(object):
     metadata_key = '%s-script' % self.script_type
     metadata_value = attribute_data.get(metadata_key)
     if metadata_value:
-      self.logger.info('Found %s in metadata.' % metadata_key)
+      self.logger.info('Found %s in metadata.', metadata_key)
       with tempfile.NamedTemporaryFile(
           mode='w', dir=dest_dir, delete=False) as dest:
         dest.write(metadata_value.lstrip())
@@ -190,8 +190,9 @@ class ScriptRetriever(object):
     metadata_key = '%s-script-url' % self.script_type
     metadata_value = attribute_data.get(metadata_key)
     if metadata_value:
-      self.logger.info('Found %s in metadata.' % metadata_key)
-      script_dict[metadata_key] = self._DownloadScript(metadata_value, dest_dir)
+      self.logger.info('Found %s in metadata.', metadata_key)
+      script_dict[metadata_key] = self._DownloadScript(
+          metadata_value, dest_dir)
 
     return script_dict
 
