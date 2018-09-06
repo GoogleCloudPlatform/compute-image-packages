@@ -259,11 +259,12 @@ class MetadataWatcherTest(unittest.TestCase):
     metadata_key = 'instance/id'
     recursive = False
     wait = False
+    retry = True
 
     self.assertEqual(
         self.mock_watcher._HandleMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
-            timeout=None),
+            timeout=None, retry=retry),
         {})
     expected_calls = [
         mock.call(
@@ -272,6 +273,28 @@ class MetadataWatcherTest(unittest.TestCase):
     ] * 4
     self.assertEqual(mock_response.mock_calls, expected_calls)
     expected_calls = [mock.call.error(mock.ANY, mock.ANY)] * 2
+    self.assertEqual(self.mock_logger.mock_calls, expected_calls)
+
+  def testHandleMetadataUpdateExceptionNoRetry(self):
+    mock_response = mock.Mock()
+    mock_response.side_effect = metadata_watcher.socket.timeout()
+    self.mock_watcher._GetMetadataUpdate = mock_response
+    metadata_key = 'instance/id'
+    recursive = False
+    wait = False
+    retry = False
+
+    self.assertIsNone(
+        self.mock_watcher._HandleMetadataUpdate(
+            metadata_key=metadata_key, recursive=recursive, wait=wait,
+            timeout=None, retry=retry))
+    expected_calls = [
+        mock.call(
+          metadata_key=metadata_key, recursive=recursive, wait=wait,
+          timeout=None),
+    ]
+    self.assertEqual(mock_response.mock_calls, expected_calls)
+    expected_calls = [mock.call.error(mock.ANY, mock.ANY),]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
 
   def testWatchMetadata(self):
@@ -310,7 +333,7 @@ class MetadataWatcherTest(unittest.TestCase):
 
     self.assertEqual(self.mock_watcher.GetMetadata(), {})
     mock_response.assert_called_once_with(
-        metadata_key='', recursive=True, wait=False, timeout=None)
+        metadata_key='', recursive=True, wait=False, timeout=None, retry=True)
     self.mock_watcher.logger.exception.assert_not_called()
 
   def testGetMetadataArgs(self):
@@ -319,12 +342,15 @@ class MetadataWatcherTest(unittest.TestCase):
     self.mock_watcher._HandleMetadataUpdate = mock_response
     metadata_key = 'instance/id'
     recursive = False
+    retry = False
 
     response = self.mock_watcher.GetMetadata(
-        metadata_key=metadata_key, recursive=recursive, timeout=60)
+        metadata_key=metadata_key, recursive=recursive, timeout=60,
+        retry=retry)
     self.assertEqual(response, {})
     mock_response.assert_called_once_with(
-        metadata_key=metadata_key, recursive=False, wait=False, timeout=60)
+        metadata_key=metadata_key, recursive=False, wait=False, timeout=60,
+        retry=False)
     self.mock_watcher.logger.exception.assert_not_called()
 
 
