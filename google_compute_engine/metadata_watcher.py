@@ -162,7 +162,7 @@ class MetadataWatcher(object):
       recursive: bool, True if we should recursively watch for metadata changes.
       wait: bool, True if we should wait for a metadata change.
       timeout: int, timeout in seconds for returning metadata output.
-      retry: bool, True if it should keep retrying after failing.
+      retry: bool, True if we should retry on failure.
 
     Returns:
       json, the deserialized contents of the metadata server.
@@ -174,15 +174,13 @@ class MetadataWatcher(object):
             metadata_key=metadata_key, recursive=recursive, wait=wait,
             timeout=timeout)
       except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
-        if isinstance(e, type(exception)):
-          continue
-        else:
+        if not isinstance(e, type(exception)):
           exception = e
           self.logger.error('GET request error retrieving metadata. %s.', e)
-
-      if not retry:
-        # If it didn't returned up to this point, and exception occured.
-        break
+        if retry:
+          continue
+        else:
+          break
 
   def WatchMetadata(
       self, handler, metadata_key='', recursive=True, timeout=None):
