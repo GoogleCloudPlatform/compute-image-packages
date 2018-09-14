@@ -23,10 +23,7 @@
 #include <iostream>
 #include <sstream>
 
-#if defined(__clang__) || __GNUC__ > 4 || \
-  (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
-                     (__GNUC_MINOR__ == 9 && \
-                      __GNUC_PATCHLEVEL__ > 0)))
+#if __cplusplus >= 201103L
 #include <regex>
 #define Regex std
 #else
