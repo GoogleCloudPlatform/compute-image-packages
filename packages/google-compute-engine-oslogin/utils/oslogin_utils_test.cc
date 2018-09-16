@@ -443,8 +443,8 @@ TEST(ValidateUserNameTest, ValidateValidUserNames) {
       "A_.-",
       "ausernamethirtytwocharacterslong"
   };
-  for (auto test_user : cases) {
-    ASSERT_TRUE(ValidateUserName(test_user));
+  for (int i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
+    ASSERT_TRUE(ValidateUserName(cases[i]));
   }
 }
 
@@ -462,8 +462,8 @@ TEST(ValidateUserNameTest, ValidateInvalidUserNames) {
       "usernamethirtythreecharacterslong",
       "../../etc/shadow",
   };
-  for (auto test_user : cases) {
-    ASSERT_FALSE(ValidateUserName(test_user));
+  for (int i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
+    ASSERT_FALSE(ValidateUserName(cases[i]));
   }
 }
 
