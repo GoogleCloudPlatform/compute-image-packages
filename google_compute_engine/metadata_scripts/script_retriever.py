@@ -15,6 +15,7 @@
 
 """Retrieve and store user provided metadata scripts."""
 
+import ast
 import re
 import socket
 import subprocess
@@ -23,11 +24,15 @@ import tempfile
 from google_compute_engine import metadata_watcher
 from google_compute_engine.compat import httpclient
 from google_compute_engine.compat import urlerror
+from google_compute_engine.compat import urlrequest
 from google_compute_engine.compat import urlretrieve
 
 
 class ScriptRetriever(object):
   """A class for retrieving and storing user provided metadata scripts."""
+  token_metadata_key = 'instance/service-accounts/default/token'
+  # Cached authentication token to be used when downloading from bucket.
+  token = None
 
   def __init__(self, logger, script_type):
     """Constructor.
@@ -40,8 +45,10 @@ class ScriptRetriever(object):
     self.script_type = script_type
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
 
-  def _DownloadGsUrl(self, url, dest_dir):
-    """Download a Google Storage URL using gsutil.
+  def _DownloadAuthUrl(self, url, dest_dir):
+    """Download a Google Storage URL using an authentication token.
+
+    If the token cannot be fetched, fallback to unauthenticated download.
 
     Args:
       url: string, the URL to download.
@@ -50,29 +57,39 @@ class ScriptRetriever(object):
     Returns:
       string, the path to the file storing the metadata script.
     """
-    try:
-      subprocess.check_call(
-          ['which', 'gsutil'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except subprocess.CalledProcessError:
-      self.logger.warning(
-          'gsutil is not installed, cannot download items from Google Storage.')
-      return None
-
     dest_file = tempfile.NamedTemporaryFile(dir=dest_dir, delete=False)
     dest_file.close()
     dest = dest_file.name
 
-    self.logger.info('Downloading url from %s to %s using gsutil.', url, dest)
+    self.logger.info(
+        'Downloading url from %s to %s using authentication token.', url, dest)
+
+    if not self.token:
+      response = self.watcher.GetMetadata(
+          self.token_metadata_key, recursive=False, retry=False)
+
+      if not response:
+        self.logger.info(
+            'Authentication token not found. Attempting unauthenticated '
+            'download.')
+        return self._DownloadUrl(url, dest_dir)
+
+      self.token = '%s %s' % (
+          response.get('token_type', ''), response.get('access_token', ''))
+
     try:
-      subprocess.check_call(['gsutil', 'cp', url, dest])
-      return dest
-    except subprocess.CalledProcessError as e:
-      self.logger.warning(
-          'Could not download %s using gsutil. %s.', url, str(e))
-    except Exception as e:
-      self.logger.warning(
-          'Exception downloading %s using gsutil. %s.', url, str(e))
-    return None
+      request = urlrequest.Request(url)
+      request.add_unredirected_header('Metadata-Flavor', 'Google')
+      request.add_unredirected_header('Authorization', self.token)
+      content = urlrequest.urlopen(request).read()
+    except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
+      self.logger.warning('Could not download %s. %s.', url, str(e))
+      return None
+
+    with open(dest, 'w') as f:
+      f.write(content)
+
+    return dest
 
   def _DownloadUrl(self, url, dest_dir):
     """Download a script from a given URL.
@@ -111,7 +128,9 @@ class ScriptRetriever(object):
     # Check for the preferred Google Storage URL format:
     # gs://<bucket>/<object>
     if url.startswith(r'gs://'):
-      return self._DownloadGsUrl(url, dest_dir)
+      # Convert the string into a standard URL.
+      url = re.sub('^gs://', 'https://storage.googleapis.com/', url)
+      return self._DownloadAuthUrl(url, dest_dir)
 
     header = r'http[s]?://'
     domain = r'storage\.googleapis\.com'
@@ -122,10 +141,6 @@ class ScriptRetriever(object):
     bucket = r'(?P<bucket>[a-z0-9][-_.a-z0-9]*[a-z0-9])'
 
     # Accept any non-empty string that doesn't contain a wildcard character
-    # gsutil interprets some characters as wildcards.
-    # These characters in object names make it difficult or impossible
-    # to perform various wildcard operations using gsutil
-    # For a complete list use "gsutil help naming".
     obj = r'(?P<obj>[^\*\?]+)'
 
     # Check for the Google Storage URLs:
@@ -134,10 +149,7 @@ class ScriptRetriever(object):
     gs_regex = re.compile(r'\A%s%s\.%s/%s\Z' % (header, bucket, domain, obj))
     match = gs_regex.match(url)
     if match:
-      gs_url = r'gs://%s/%s' % (match.group('bucket'), match.group('obj'))
-      # In case gsutil is not installed, continue as a normal URL.
-      return (self._DownloadGsUrl(gs_url, dest_dir) or
-              self._DownloadUrl(url, dest_dir))
+      return self._DownloadAuthUrl(url, dest_dir)
 
     # Check for the other possible Google Storage URLs:
     # http://storage.googleapis.com/<bucket>/<object>
@@ -150,10 +162,7 @@ class ScriptRetriever(object):
         r'\A%s(commondata)?%s/%s/%s\Z' % (header, domain, bucket, obj))
     match = gs_regex.match(url)
     if match:
-      gs_url = r'gs://%s/%s' % (match.group('bucket'), match.group('obj'))
-      # In case gsutil is not installed, continue as a normal URL.
-      return (self._DownloadGsUrl(gs_url, dest_dir) or
-              self._DownloadUrl(url, dest_dir))
+      return self._DownloadAuthUrl(url, dest_dir)
 
     # Unauthenticated download of the object.
     return self._DownloadUrl(url, dest_dir)
@@ -173,7 +182,7 @@ class ScriptRetriever(object):
     metadata_key = '%s-script' % self.script_type
     metadata_value = attribute_data.get(metadata_key)
     if metadata_value:
-      self.logger.info('Found %s in metadata.' % metadata_key)
+      self.logger.info('Found %s in metadata.', metadata_key)
       with tempfile.NamedTemporaryFile(
           mode='w', dir=dest_dir, delete=False) as dest:
         dest.write(metadata_value.lstrip())
@@ -182,8 +191,9 @@ class ScriptRetriever(object):
     metadata_key = '%s-script-url' % self.script_type
     metadata_value = attribute_data.get(metadata_key)
     if metadata_value:
-      self.logger.info('Found %s in metadata.' % metadata_key)
-      script_dict[metadata_key] = self._DownloadScript(metadata_value, dest_dir)
+      self.logger.info('Found %s in metadata.', metadata_key)
+      script_dict[metadata_key] = self._DownloadScript(
+          metadata_value, dest_dir)
 
     return script_dict
 
