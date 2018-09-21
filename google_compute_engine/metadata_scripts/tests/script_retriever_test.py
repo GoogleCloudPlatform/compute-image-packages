@@ -17,7 +17,10 @@
 
 import subprocess
 
+from google_compute_engine.compat import urlerror
 from google_compute_engine.metadata_scripts import script_retriever
+from google_compute_engine.metadata_watcher import MetadataWatcher
+from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -33,48 +36,100 @@ class ScriptRetrieverTest(unittest.TestCase):
     self.retriever = script_retriever.ScriptRetriever(
         self.mock_logger, self.script_type)
 
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.subprocess.check_call')
-  def testDownloadGsNoExec(self, mock_call):
-    mock_call.side_effect = subprocess.CalledProcessError('foo', 'bar')
-    gs_url = 'gs://fake/url'
-    self.assertIsNone(self.retriever._DownloadGsUrl(gs_url, self.dest_dir))
-    mock_call.assert_called_once_with(
-        ['which', 'gsutil'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    self.mock_logger.warning.assert_called_once_with(mock.ANY)
-
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.subprocess.check_call')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
-  def testDownloadGsUrl(self, mock_tempfile, mock_call):
-    gs_url = 'gs://fake/url'
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.Request')
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.urlopen')
+  def testDownloadAuthUrl(self, mock_urlopen, mock_request, mock_tempfile):
+    auth_url = 'https://storage.googleapis.com/fake/url'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    self.assertEqual(
-        self.retriever._DownloadGsUrl(gs_url, self.dest_dir), self.dest)
+    self.retriever.token = 'bar'
+
+    mock_open = mock.mock_open()
+    with mock.patch('%s.open' % builtin, mock_open):
+      self.assertEqual(
+          self.retriever._DownloadAuthUrl(auth_url, self.dest_dir), self.dest)
+
     mock_tempfile.assert_called_once_with(dir=self.dest_dir, delete=False)
     mock_tempfile.close.assert_called_once_with()
-    self.mock_logger.info.assert_called_once_with(mock.ANY, gs_url, self.dest)
-    mock_call.assert_called_with(['gsutil', 'cp', gs_url, self.dest])
+
+    self.mock_logger.info.assert_called_once_with(
+        mock.ANY, auth_url, self.dest)
+    mock_request.assert_called_with(auth_url)
+    mocked_request = mock_request()
+    mocked_request.add_unredirected_header.assert_called_with(
+        'Authorization', 'bar')
+    mock_urlopen.assert_called_with(mocked_request)
+    urlopen_read = mock_urlopen().read(return_value='foo')
     self.mock_logger.warning.assert_not_called()
 
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.subprocess.check_call')
+    mock_open.assert_called_once_with(self.dest, 'w')
+    handle = mock_open()
+    handle.write.assert_called_once_with(urlopen_read)
+
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
-  def testDownloadGsUrlProcessError(self, mock_tempfile, mock_call):
-    gs_url = 'gs://fake/url'
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlrequest.Request')
+  @mock.patch('google_compute_engine.metadata_watcher.MetadataWatcher.GetMetadata')
+  def testDownloadAuthUrlExceptionAndToken(
+      self, mock_get_metadata, mock_request, mock_tempfile):
+    auth_url = 'https://storage.googleapis.com/fake/url'
+    metadata_prefix = 'http://metadata.google.internal/computeMetadata/v1/'
+    token_url = metadata_prefix + 'instance/service-accounts/default/token'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    mock_call.side_effect = [0, subprocess.CalledProcessError(1, 'Test')]
-    self.assertIsNone(self.retriever._DownloadGsUrl(gs_url, self.dest_dir))
+    self.retriever.token = None
+
+    mock_get_metadata.return_value = {
+        'token_type': 'foo', 'access_token': 'bar'}
+    mock_request.return_value = mock_request
+    mock_request.side_effect = urlerror.URLError('Error.')
+
+    self.assertIsNone(self.retriever._DownloadAuthUrl(auth_url, self.dest_dir))
+
+    mock_get_metadata.return_value = mock_get_metadata
+    # GetMetadata includes a prefix, so remove it.
+    stripped_url = token_url.replace(metadata_prefix, '')
+    mock_get_metadata.assert_called_once_with(
+        stripped_url, recursive=False, retry=False)
+
+    self.assertEqual(self.retriever.token, 'foo bar')
+
+    self.mock_logger.info.assert_called_once_with(
+        mock.ANY, auth_url, self.dest)
     self.assertEqual(self.mock_logger.warning.call_count, 1)
 
-  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.subprocess.check_call')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
-  def testDownloadGsUrlException(self, mock_tempfile, mock_call):
-    gs_url = 'gs://fake/url'
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.ScriptRetriever._DownloadUrl')
+  @mock.patch('google_compute_engine.metadata_watcher.MetadataWatcher.GetMetadata')
+  def testDownloadAuthUrlFallback(
+      self, mock_get_metadata, mock_download_url, mock_tempfile):
+    auth_url = 'https://storage.googleapis.com/fake/url'
+    metadata_prefix = 'http://metadata.google.internal/computeMetadata/v1/'
+    token_url = metadata_prefix + 'instance/service-accounts/default/token'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    mock_call.side_effect = [0, Exception('Error.')]
-    self.assertIsNone(self.retriever._DownloadGsUrl(gs_url, self.dest_dir))
-    self.assertEqual(self.mock_logger.warning.call_count, 1)
+    self.retriever.token = None
+
+    mock_get_metadata.return_value = None
+    mock_download_url.return_value = None
+
+    self.assertIsNone(self.retriever._DownloadAuthUrl(auth_url, self.dest_dir))
+
+    mock_get_metadata.return_value = mock_get_metadata
+    # GetMetadata includes a prefix, so remove it.
+    prefix = 'http://metadata.google.internal/computeMetadata/v1/'
+    stripped_url = token_url.replace(prefix, '')
+    mock_get_metadata.assert_called_once_with(
+        stripped_url, recursive=False, retry=False)
+    mock_download_url.assert_called_once_with(auth_url, self.dest_dir)
+
+    self.assertIsNone(self.retriever.token)
+
+    expected_calls = [
+        mock.call(mock.ANY, auth_url, self.dest),
+        mock.call(mock.ANY),
+    ]
+    self.assertEqual(self.mock_logger.info.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
@@ -82,7 +137,8 @@ class ScriptRetrieverTest(unittest.TestCase):
     url = 'http://www.google.com/fake/url'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    self.assertEqual(self.retriever._DownloadUrl(url, self.dest_dir), self.dest)
+    self.assertEqual(
+        self.retriever._DownloadUrl(url, self.dest_dir), self.dest)
     mock_tempfile.assert_called_once_with(dir=self.dest_dir, delete=False)
     mock_tempfile.close.assert_called_once_with()
     self.mock_logger.info.assert_called_once_with(mock.ANY, url, self.dest)
@@ -140,8 +196,8 @@ class ScriptRetrieverTest(unittest.TestCase):
       return (url_formats, gs_urls)
 
   def testDownloadScript(self):
-    mock_download_gs = mock.Mock()
-    self.retriever._DownloadGsUrl = mock_download_gs
+    mock_auth_download = mock.Mock()
+    self.retriever._DownloadAuthUrl = mock_auth_download
     mock_download = mock.Mock()
     self.retriever._DownloadUrl = mock_download
     download_urls = []
@@ -171,25 +227,28 @@ class ScriptRetrieverTest(unittest.TestCase):
       download_urls.extend(urls)
       download_gs_urls.update(gs_urls)
 
+    # All Google Storage URLs are downloaded with an authentication token.
+    for url, gs_url in download_gs_urls.items():
+      mock_download.reset_mock()
+      mock_auth_download.reset_mock()
+      self.retriever._DownloadScript(gs_url, self.dest_dir)
+      new_gs_url = gs_url.replace('gs://', 'https://storage.googleapis.com/')
+      mock_auth_download.assert_called_once_with(new_gs_url, self.dest_dir)
+      mock_download.assert_not_called()
+
     for url in download_urls:
       mock_download.reset_mock()
       self.retriever._DownloadScript(url, self.dest_dir)
       mock_download.assert_called_once_with(url, self.dest_dir)
 
     for url, gs_url in download_gs_urls.items():
-      mock_download_gs.reset_mock()
-      self.retriever._DownloadScript(url, self.dest_dir)
-      mock_download_gs.assert_called_once_with(gs_url, self.dest_dir)
-
-    for url, gs_url in download_gs_urls.items():
       if url.startswith('gs://'):
         continue
-      mock_download_gs.reset_mock()
-      mock_download_gs.return_value = None
+      mock_auth_download.reset_mock()
+      mock_auth_download.return_value = None
       mock_download.reset_mock()
       self.retriever._DownloadScript(url, self.dest_dir)
-      mock_download_gs.assert_called_once_with(gs_url, self.dest_dir)
-      mock_download.assert_called_once_with(url, self.dest_dir)
+      mock_auth_download.assert_called_once_with(url, self.dest_dir)
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   def testGetAttributeScripts(self, mock_tempfile):

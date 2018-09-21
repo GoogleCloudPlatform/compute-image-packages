@@ -30,7 +30,7 @@ Depends: google-compute-engine-oslogin,
          python3-google-compute-engine (= ${source:Version}),
          system-log-daemon,
          systemd
-Recommends: google-cloud-sdk, rsyslog
+Recommends: rsyslog
 Provides: irqbalance
 Conflicts: google-compute-engine-stretch,
            google-compute-engine-init-stretch,
