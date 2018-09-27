@@ -104,9 +104,9 @@ int _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
 // nss_getpwent_r() is intentionally left unimplemented. This functionality is
 // now covered by the nss_cache binary and nss_cache module.
 
-void _nss_oslogin_getpwent_r() {}
-void _nss_oslogin_endpwent() {}
-void _nss_oslogin_setpwent() {}
+nss_status _nss_oslogin_getpwent_r() { return NSS_STATUS_NOTFOUND; }
+nss_status _nss_oslogin_endpwent() { return NSS_STATUS_SUCCESS; }
+nss_status _nss_oslogin_setpwent() { return NSS_STATUS_SUCCESS; }
 
 NSS_METHOD_PROTOTYPE(__nss_compat_getpwnam_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_getpwuid_r);
