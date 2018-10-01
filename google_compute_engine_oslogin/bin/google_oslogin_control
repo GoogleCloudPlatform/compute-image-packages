@@ -53,6 +53,29 @@ if [ $# -lt 1 ]; then
   usage
 fi
 
+is_freebsd() {
+  if [ $(uname) = 'FreeBSD' ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# The "service" parameters to check status are different in Linux and FreeBSD.
+services_status() {
+  if is_freebsd; then
+    service -e
+  else
+    service --status-all
+  fi
+}
+
+# Use "sed" for Linux based systems and "gsed" for FreeBSD.
+sed_bin="sed"
+if is_freebsd; then
+  sed_bin="gsed"
+fi
+
 copy_file() {
   config=$1
   cp ${config} ${config}.new
@@ -65,24 +88,29 @@ overwrite_file() {
 
 remove_from_config() {
   config=$1
-  sed -i "/${added_comment}/,+1d" ${config}.new
+  $sed_bin -i "/${added_comment}/,+1d" ${config}.new
 }
 
 remove_from_nss_config() {
-  sed -i '/^passwd:/ s/ cache_oslogin oslogin//' ${nss_config}.new
-  sed -i '/^passwd:/ s/ cache oslogin//' ${nss_config}.new
-  sed -i '/^passwd:/ s/ oslogin//' ${nss_config}.new
+  $sed_bin -i '/^passwd:/ s/ cache_oslogin oslogin//' ${nss_config}.new
+  $sed_bin -i '/^passwd:/ s/ cache oslogin//' ${nss_config}.new
+  $sed_bin -i '/^passwd:/ s/ oslogin//' ${nss_config}.new
 }
 
 add_to_sshd_config() {
   remove_from_config ${sshd_config}
-  sed -i "\$a${added_comment}\n${sshd_command}" ${sshd_config}.new
-  sed -i "\$a${added_comment}\n${sshd_user}" ${sshd_config}.new
+  $sed_bin -i "\$a${added_comment}\n${sshd_command}" ${sshd_config}.new
+  $sed_bin -i "\$a${added_comment}\n${sshd_user}" ${sshd_config}.new
 }
 
 add_to_nss_config() {
   remove_from_nss_config
-  sed -i '/^passwd:/ s/$/ cache_oslogin oslogin/' ${nss_config}.new
+  $sed_bin -i '/^passwd:/ s/$/ cache_oslogin oslogin/' ${nss_config}.new
+
+  if is_freebsd; then
+    # Replace compat by files (as compat cannot be used with other sources).
+    $sed_bin -i '/^passwd:/ s/compat/files/' ${nss_config}.new
+  fi
 }
 
 add_to_pam_config() {
@@ -99,9 +127,14 @@ ${pam_homedir}
 "
     echo "${added_config}$(cat ${pam_config}.new)" > ${pam_config}.new
   else
-    sed -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_admin}" ${pam_config}.new
-    sed -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_login}" ${pam_config}.new
-    sed -i "/pam_loginuid.so/ a${added_comment}\n${pam_homedir}" ${pam_config}.new
+    $sed_bin -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_admin}" ${pam_config}.new
+    $sed_bin -i "/account.*pam_nologin.so/ a${added_comment}\n${pam_login}" ${pam_config}.new
+
+    if is_freebsd; then
+      $sed_bin -i "/session.*pam_permit.so/ a${added_comment}\n${pam_homedir}" ${pam_config}.new
+    else
+      $sed_bin -i "/pam_loginuid.so/ a${added_comment}\n${pam_homedir}" ${pam_config}.new
+    fi
   fi
 }
 
@@ -115,7 +148,7 @@ restart_service() {
     fi
   fi
   if which service > /dev/null 2>&1; then
-    if service --status-all | grep -Fq ${service}; then
+    if services_status | grep -Fq ${service}; then
       echo "Restarting ${service}."
       service ${service} restart
       return $?
