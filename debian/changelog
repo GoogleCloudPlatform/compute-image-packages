@@ -1,3 +1,10 @@
+google-compute-image-packages (2.8.5-1) stable; urgency=low
+
+  * Remove users from sudoers group on removal.
+  * Remove gsutil dependency for metadata scripts.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 05 Oct 2018 12:00:00 -0700
+
 google-compute-image-packages (2.8.4-1) stable; urgency=low
 
   * Remove ntp dependency.
