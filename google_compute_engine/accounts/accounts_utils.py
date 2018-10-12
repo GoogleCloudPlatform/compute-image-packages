@@ -27,7 +27,6 @@ from google_compute_engine import constants
 from google_compute_engine import file_utils
 
 USER_REGEX = re.compile(r'\A[A-Za-z0-9._][A-Za-z0-9._-]{0,31}\Z')
-DEFAULT_GPASSWD_CMD = 'gpasswd -d {user} {group}'
 DEFAULT_GROUPADD_CMD = 'groupadd {group}'
 DEFAULT_USERADD_CMD = 'useradd -m -s /bin/bash -p * {user}'
 DEFAULT_USERDEL_CMD = 'userdel -r {user}'
@@ -40,21 +39,19 @@ class AccountsUtils(object):
   google_comment = '# Added by Google'
 
   def __init__(
-      self, logger, groups=None, remove=False, gpasswd_cmd=None,
-      groupadd_cmd=None, useradd_cmd=None, userdel_cmd=None, usermod_cmd=None):
+      self, logger, groups=None, remove=False, groupadd_cmd=None,
+      useradd_cmd=None, userdel_cmd=None, usermod_cmd=None):
     """Constructor.
 
     Args:
       logger: logger object, used to write to SysLog and serial port.
       groups: string, a comma separated list of groups.
       remove: bool, True if deprovisioning a user should be destructive.
-      gpasswd_cmd: string, command to remove a user from a group.
       groupadd_cmd: string, command to add a new group.
       useradd_cmd: string, command to create a new user.
       userdel_cmd: string, command to delete a user.
       usermod_cmd: string, command to modify user's groups.
     """
-    self.gpasswd_cmd = gpasswd_cmd or DEFAULT_GPASSWD_CMD
     self.groupadd_cmd = groupadd_cmd or DEFAULT_GROUPADD_CMD
     self.useradd_cmd = useradd_cmd or DEFAULT_USERADD_CMD
     self.userdel_cmd = userdel_cmd or DEFAULT_USERDEL_CMD
@@ -245,27 +242,6 @@ class AccountsUtils(object):
     file_utils.SetPermissions(
         authorized_keys_file, mode=0o600, uid=uid, gid=gid)
 
-  def _RemoveSudoer(self, user):
-    """Remove a Linux user account from the sudoers group.
-
-    Args:
-      user: string, the name of the Linux user account.
-
-    Returns:
-      bool, True if user update succeeded.
-    """
-    self.logger.debug('Removing user %s from the Google sudoers group.', user)
-    command = self.gpasswd_cmd.format(
-        user=user, group=self.google_sudoers_group)
-    try:
-      subprocess.check_call(command.split(' '))
-    except subprocess.CalledProcessError as e:
-      self.logger.warning('Could not update user %s. %s.', user, str(e))
-      return False
-    else:
-      self.logger.debug('Removed user %s from the Google sudoers group.', user)
-      return True
-
   def _RemoveAuthorizedKeys(self, user):
     """Remove a Linux user account's authorized keys file to prevent login.
 
@@ -361,7 +337,6 @@ class AccountsUtils(object):
       user: string, the Linux user account to remove.
     """
     self.logger.info('Removing user %s.', user)
-    self._RemoveSudoer(user)
     if self.remove:
       command = self.userdel_cmd.format(user=user)
       try:
