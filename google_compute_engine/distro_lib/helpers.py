@@ -41,6 +41,24 @@ def CallDhclient(
   except subprocess.CalledProcessError:
     logger.warning('Could not enable interfaces %s.', interfaces)
 
+def SetRouteInformationSysctlIPv6(interfaces, logger):
+  """Sets accept_ra_rt_info_max_plen on a per interface basis.
+
+  Args:
+    interfaces: string, the output device names for enabling Route Advertisements.
+    logger: logger object, used to write to SysLog and serial port.
+  """
+  logger.info('Enabling Route Advertisements on the Ethernet interfaces %s.', interfaces)
+
+  sysctl_command = ['sysctl', '-w']
+  for interface in interfaces:
+    sysctl_var = ('net.ipv6.conf.{ethinterface}.accept_ra_rt_info_max_plen={value}'.format(
+        ethinterface=interface, value=128))
+    try:
+      subprocess.check_call(sysctl_command + [sysctl_var])
+    except subprocess.CalledProcessError:
+      logger.warning('Could not enable Route Advertisements on interfaces %s.',
+                     interfaces)
 
 def CallHwclock(logger):
   """Sync clock using hwclock.
