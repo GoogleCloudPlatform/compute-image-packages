@@ -65,6 +65,25 @@ class HelpersTest(unittest.TestCase):
 
     self.assertEqual(mocks.mock_calls, expected_calls)
 
+  @mock.patch('google_compute_engine.distro_lib.helpers.os.path.exists')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  def testSetRouteInformationSysctlIPv6(self, mock_call, mock_exists):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_exists, 'exists')
+    mocks.attach_mock(mock_call, 'call')
+    mocks.attach_mock(self.mock_logger, 'logger')
+
+    mock_exists.side_effect = [True]
+    mock_call.side_effect = [None, None, subprocess.CalledProcessError(1, 'Test')]
+
+    helpers.SetRouteInformationSysctlIPv6(['a', 'b'], self.mock_logger)
+    expected_calls = [
+        mock.call.logger.info(mock.ANY, ['a', 'b']),
+        mock.call.call(['sysctl', '-w', 'net.ipv6.conf.a.accept_ra_rt_info_max_plen=128']),
+        mock.call.call(['sysctl', '-w', 'net.ipv6.conf.b.accept_ra_rt_info_max_plen=128']),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallHwclock(self, mock_call):
     command = ['/sbin/hwclock', '--hctosys']
