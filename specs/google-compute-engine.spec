@@ -63,6 +63,7 @@ mkdir -p %{buildroot}/etc/udev/rules.d
 
 cp google_config/modprobe/gce-blacklist.conf %{buildroot}/etc/modprobe.d/
 cp google_config/rsyslog/90-google.conf %{buildroot}/etc/rsyslog.d/
+cp google_config/sysctl/11-gce-ipv6.conf %{buildroot}/etc/sysctl.d/
 cp google_config/sysctl/11-gce-network-security.conf  %{buildroot}/etc/sysctl.d/
 cp google_config/udev/*.rules %{buildroot}/etc/udev/rules.d/
 
@@ -103,6 +104,7 @@ cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google
 %endif
 %config /etc/modprobe.d/gce-blacklist.conf
 %config /etc/rsyslog.d/90-google.conf
+%config /etc/sysctl.d/11-gce-ipv6.conf
 %config /etc/sysctl.d/11-gce-network-security.conf
 /etc/udev/rules.d/*.rules
 %attr(0755,root,root) %{_bindir}/*
