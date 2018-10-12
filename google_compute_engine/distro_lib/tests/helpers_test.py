@@ -74,7 +74,7 @@ class HelpersTest(unittest.TestCase):
     mocks.attach_mock(self.mock_logger, 'logger')
 
     mock_exists.side_effect = [True]
-    mock_call.side_effect = [None, None, subprocess.CalledProcessError(1, 'Test') ]
+    mock_call.side_effect = [None, None, subprocess.CalledProcessError(1, 'Test')]
 
     helpers.SetRouteInformationSysctlIPv6(['a', 'b'], self.mock_logger)
     expected_calls = [
