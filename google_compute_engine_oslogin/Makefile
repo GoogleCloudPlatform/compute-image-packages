@@ -23,7 +23,7 @@ CXXFLAGS += -fPIC# -Wall
 CC ?= gcc
 PAMFLAGS = $(LDFLAGS) $(INCLUDE_FLAGS) -shared
 NSSFLAGS = $(LDFLAGS) $(INCLUDE_FLAGS) -shared -Wl,-soname,$(NSS_LIBRARY_SONAME)
-LIBNSSFLAGS = $(LDFLAGS) -Wall -Wstrict-prototypes -fPIC
+LIBNSSFLAGS = $(LDFLAGS) -Wall -Wstrict-prototypes -fPIC -g
 LIBNSS_SO_FLAGS = $(LIBNSSFLAGS) -shared -Wl,-soname,$(LIBNSS_CACHE_OSLOGIN_SONAME)
 
 # UTILS
