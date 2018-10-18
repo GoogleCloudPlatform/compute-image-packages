@@ -31,10 +31,11 @@ class AccountsUtilsTest(unittest.TestCase):
     self.sudoers_file = '/sudoers/file'
     self.users_dir = '/users'
     self.users_file = '/users/file'
+    self.gpasswd_cmd = 'useradd -m -s /bin/bash -p * {user}'
+    self.groupadd_cmd = 'groupadd {group}'
     self.useradd_cmd = 'useradd -m -s /bin/bash -p * {user}'
     self.userdel_cmd = 'userdel -r {user}'
     self.usermod_cmd = 'usermod -G {groups} {user}'
-    self.groupadd_cmd = 'groupadd {group}'
 
     self.mock_utils = mock.create_autospec(accounts_utils.AccountsUtils)
     self.mock_utils.google_comment = accounts_utils.AccountsUtils.google_comment
@@ -43,10 +44,11 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils.google_users_dir = self.users_dir
     self.mock_utils.google_users_file = self.users_file
     self.mock_utils.logger = self.mock_logger
+    self.mock_utils.gpasswd_cmd = self.gpasswd_cmd
+    self.mock_utils.groupadd_cmd = self.groupadd_cmd
     self.mock_utils.useradd_cmd = self.useradd_cmd
     self.mock_utils.userdel_cmd = self.userdel_cmd
     self.mock_utils.usermod_cmd = self.usermod_cmd
-    self.mock_utils.groupadd_cmd = self.groupadd_cmd
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.AccountsUtils._GetGroup')
   @mock.patch('google_compute_engine.accounts.accounts_utils.AccountsUtils._CreateSudoersGroup')
@@ -428,6 +430,35 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_logger.warning.assert_called_once_with(mock.ANY, user)
     mock_permissions.assert_not_called()
 
+  @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
+  def testRemoveSudoer(self, mock_call):
+    user = 'user'
+    command = self.usermod_cmd.format(user=user, groups=self.sudoers_group)
+
+    self.assertTrue(
+        accounts_utils.AccountsUtils._RemoveSudoer(self.mock_utils, user))
+    mock.call.assert_called_once_with(command.split(' ')),
+    expected_calls = [
+        mock.call.debug(mock.ANY, user),
+        mock.call.debug(mock.ANY, user),
+    ]
+    self.assertEqual(self.mock_logger.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
+  def testRemoveSudoerError(self, mock_call):
+    user = 'user'
+    command = self.usermod_cmd.format(user=user, groups=self.sudoers_group)
+    mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
+
+    self.assertFalse(
+        accounts_utils.AccountsUtils._RemoveSudoer(self.mock_utils, user))
+    mock.call.assert_called_once_with(command.split(' ')),
+    expected_calls = [
+        mock.call.debug(mock.ANY, user),
+        mock.call.warning(mock.ANY, user, mock.ANY),
+    ]
+    self.assertEqual(self.mock_logger.mock_calls, expected_calls)
+
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.remove')
   @mock.patch('google_compute_engine.accounts.accounts_utils.os.path.exists')
   def testRemoveAuthorizedKeys(self, mock_exists, mock_remove):
@@ -556,6 +587,8 @@ class AccountsUtilsTest(unittest.TestCase):
     for user in valid_users:
       self.assertTrue(
           accounts_utils.AccountsUtils.UpdateUser(self.mock_utils, user, keys))
+      self.mock_utils._UpdateUserGroups.assert_called_once_with(user, groups)
+      self.mock_utils._UpdateUserGroups.reset_mock()
       self.mock_utils._UpdateAuthorizedKeys.assert_called_once_with(user, keys)
       self.mock_utils._UpdateAuthorizedKeys.reset_mock()
     self.mock_logger.warning.assert_not_called()
@@ -643,6 +676,7 @@ class AccountsUtilsTest(unittest.TestCase):
 
     accounts_utils.AccountsUtils.RemoveUser(self.mock_utils, user)
     self.mock_utils._RemoveAuthorizedKeys.assert_called_once_with(user)
+    self.mock_utils._RemoveSudoer.assert_called_once_with(user)
     mock_call.assert_not_called()
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
@@ -656,6 +690,7 @@ class AccountsUtilsTest(unittest.TestCase):
     expected_calls = [mock.call.info(mock.ANY, user)] * 2
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
     self.mock_utils._RemoveAuthorizedKeys.assert_called_once_with(user)
+    self.mock_utils._RemoveSudoer.assert_called_once_with(user)
 
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   def testRemoveUserError(self, mock_call):
@@ -672,6 +707,7 @@ class AccountsUtilsTest(unittest.TestCase):
     ]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
     self.mock_utils._RemoveAuthorizedKeys.assert_called_once_with(user)
+    self.mock_utils._RemoveSudoer.assert_called_once_with(user)
 
 
 if __name__ == '__main__':
