@@ -23,8 +23,7 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef __GNUC__
-#if __GNUC__ > 4 || \
+#if defined(__clang__) || __GNUC__ > 4 || \
   (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
                      (__GNUC_MINOR__ == 9 && \
                       __GNUC_PATCHLEVEL__ > 0)))
@@ -33,7 +32,6 @@
 #else
 #include <boost/regex.hpp>
 #define Regex boost
-#endif
 #endif
 
 #include "oslogin_utils.h"
