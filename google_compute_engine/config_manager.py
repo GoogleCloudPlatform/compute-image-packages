@@ -37,7 +37,7 @@ class ConfigManager(object):
     """
     self.config_file = config_file or CONFIG
     self.config_header = config_header
-    self.config = parser.SafeConfigParser()
+    self.config = parser.Parser()
     self.config.read(self.config_file)
 
   def _AddHeader(self, fp):
@@ -76,8 +76,8 @@ class ConfigManager(object):
     Returns:
       bool, True if the option is enabled or not set.
     """
-    return (not self.config.has_option(section, option) or
-            self.config.getboolean(section, option))
+    return (not self.config.has_option(section, option)
+            or self.config.getboolean(section, option))
 
   def SetOption(self, section, option, value, overwrite=True):
     """Set the value of an option in the config file.

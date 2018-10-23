@@ -72,9 +72,9 @@ class InstanceConfigTest(unittest.TestCase):
   @mock.patch('google_compute_engine.instance_setup.instance_config.config_manager.ConfigManager.SetOption')
   @mock.patch('google_compute_engine.instance_setup.instance_config.config_manager.ConfigManager.__init__')
   def testInstanceConfigExists(self, mock_init, mock_set, mock_exists):
-    config_parser = instance_config.parser.SafeConfigParser()
+    config_parser = instance_config.parser.Parser()
     config_metadata = '[first]\na = true'
-    mock_config = mock.create_autospec(instance_config.parser.SafeConfigParser)
+    mock_config = mock.create_autospec(instance_config.parser.Parser)
     with mock.patch(
         'google_compute_engine.instance_setup.instance_config'
         '.parser') as mock_parser:
@@ -82,7 +82,7 @@ class InstanceConfigTest(unittest.TestCase):
       mock_config.sections = mock.Mock()
       mock_config.sections.return_value = ['a', 'b']
       mock_config.items = lambda key: {'key: %s' % key: 'value: %s' % key}
-      mock_parser.SafeConfigParser.side_effect = [
+      mock_parser.Parser.side_effect = [
           config_parser, mock_config, mock_config]
       mocks = mock.Mock()
       mocks.attach_mock(mock_init, 'init')
@@ -98,13 +98,13 @@ class InstanceConfigTest(unittest.TestCase):
       expected_calls = [
           mock.call.init(
               config_file='template', config_header='/tmp/test.py template'),
-          mock.call.parser.SafeConfigParser(),
+          mock.call.parser.Parser(),
           mock.call.exists('config'),
-          mock.call.parser.SafeConfigParser(),
+          mock.call.parser.Parser(),
           mock.call.config.read('config'),
           mock.call.config.sections(),
           mock.call.exists('distro'),
-          mock.call.parser.SafeConfigParser(),
+          mock.call.parser.Parser(),
           mock.call.config.read('distro'),
           mock.call.config.sections(),
           mock.call.set('first', 'a', 'true', overwrite=False),
@@ -120,7 +120,7 @@ class InstanceConfigTest(unittest.TestCase):
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.instance_setup.instance_config.parser.SafeConfigParser.read')
+  @mock.patch('google_compute_engine.instance_setup.instance_config.parser.Parser.read')
   @mock.patch('google_compute_engine.instance_setup.instance_config.os.path.exists')
   @mock.patch('google_compute_engine.instance_setup.instance_config.config_manager.ConfigManager.SetOption')
   @mock.patch('google_compute_engine.instance_setup.instance_config.config_manager.ConfigManager.__init__')

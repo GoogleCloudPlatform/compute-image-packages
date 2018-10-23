@@ -338,8 +338,8 @@ class AccountsUtils(object):
     if not self._GetUser(user):
       # User does not exist. Attempt to create the user and add them to the
       # appropriate user groups.
-      if not (self._AddUser(user) and
-              self._UpdateUserGroups(user, self.groups)):
+      if not (self._AddUser(user)
+              and self._UpdateUserGroups(user, self.groups)):
         return False
     # Add the user to the google sudoers group.
     if not self._UpdateSudoer(user, sudoer=True):
