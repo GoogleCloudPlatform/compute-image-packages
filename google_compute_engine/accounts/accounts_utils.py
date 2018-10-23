@@ -27,7 +27,7 @@ from google_compute_engine import constants
 from google_compute_engine import file_utils
 
 USER_REGEX = re.compile(r'\A[A-Za-z0-9._][A-Za-z0-9._-]{0,31}\Z')
-DEFAULT_GPASSWD_CMD = 'gpasswd -d {user} {group}'
+DEFAULT_GPASSWD_CMD = 'gpasswd {option} {user} {group}'
 DEFAULT_GROUPADD_CMD = 'groupadd {group}'
 DEFAULT_USERADD_CMD = 'useradd -m -s /bin/bash -p * {user}'
 DEFAULT_USERDEL_CMD = 'userdel -r {user}'
@@ -48,7 +48,7 @@ class AccountsUtils(object):
       logger: logger object, used to write to SysLog and serial port.
       groups: string, a comma separated list of groups.
       remove: bool, True if deprovisioning a user should be destructive.
-      gpasswd_cmd: string, command to remove a user from a group.
+      gpasswd_cmd: string, command to add or remove a user from a group.
       groupadd_cmd: string, command to add a new group.
       useradd_cmd: string, command to create a new user.
       userdel_cmd: string, command to delete a user.
@@ -68,7 +68,6 @@ class AccountsUtils(object):
 
     self._CreateSudoersGroup()
     self.groups = groups.split(',') if groups else []
-    self.groups.append(self.google_sudoers_group)
     self.groups = list(filter(self._GetGroup, self.groups))
     self.remove = remove
 
@@ -245,18 +244,25 @@ class AccountsUtils(object):
     file_utils.SetPermissions(
         authorized_keys_file, mode=0o600, uid=uid, gid=gid)
 
-  def _RemoveSudoer(self, user):
-    """Remove a Linux user account from the sudoers group.
+  def _UpdateSudoer(self, user, sudoer=False):
+    """Update sudoer group membership for a Linux user account.
 
     Args:
       user: string, the name of the Linux user account.
+      sudoer: bool, True if the user should be a sudoer.
 
     Returns:
       bool, True if user update succeeded.
     """
-    self.logger.debug('Removing user %s from the Google sudoers group.', user)
-    command = self.gpasswd_cmd.format(
-        user=user, group=self.google_sudoers_group)
+    if sudoer:
+      self.logger.info('Adding user %s to the Google sudoers group.', user)
+      command = self.gpasswd_cmd.format(
+          option='-a', user=user, group=self.google_sudoers_group)
+    else:
+      self.logger.info('Removing user %s from the Google sudoers group.', user)
+      command = self.gpasswd_cmd.format(
+          option='-d', user=user, group=self.google_sudoers_group)
+
     try:
       subprocess.check_call(command.split(' '))
     except subprocess.CalledProcessError as e:
@@ -330,11 +336,13 @@ class AccountsUtils(object):
       self.logger.warning('Invalid user account name %s.', user)
       return False
     if not self._GetUser(user):
-      # User does not exist. Attempt to create the user.
-      if not self._AddUser(user):
+      # User does not exist. Attempt to create the user and add them to the
+      # appropriate user groups.
+      if not (self._AddUser(user) and
+              self._UpdateUserGroups(user, self.groups)):
         return False
-    # Add the user to the appropriate user groups.
-    if not self._UpdateUserGroups(user, self.groups):
+    # Add the user to the google sudoers group.
+    if not self._UpdateSudoer(user, sudoer=True):
       return False
 
     # Don't try to manage account SSH keys with a shell set to disable
@@ -371,4 +379,4 @@ class AccountsUtils(object):
       else:
         self.logger.info('Removed user account %s.', user)
     self._RemoveAuthorizedKeys(user)
-    self._RemoveSudoer(user)
+    self._UpdateSudoer(user, sudoer=False)
