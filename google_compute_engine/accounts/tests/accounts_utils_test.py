@@ -433,13 +433,30 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   def testUpdateSudoer(self, mock_call):
     user = 'user'
-    command = self.usermod_cmd.format(user=user, groups=self.sudoers_group)
+    command = self.gpasswd_cmd.format(
+        option='-d', user=user, group=self.sudoers_group)
 
     self.assertTrue(
         accounts_utils.AccountsUtils._UpdateSudoer(self.mock_utils, user))
-    mock.call.assert_called_once_with(command.split(' ')),
+    mock.call.assert_called_once_with(command.split(' '))
     expected_calls = [
+        mock.call.info(mock.ANY, user),
         mock.call.debug(mock.ANY, user),
+    ]
+    self.assertEqual(self.mock_logger.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
+  def testUpdateSudoerAddSudoer(self, mock_call):
+    user = 'user'
+    command = self.gpasswd_cmd.format(
+        option='-a', user=user, group=self.sudoers_group)
+
+    self.assertTrue(
+        accounts_utils.AccountsUtils._UpdateSudoer(
+            self.mock_utils, user, sudoer=True))
+    mock.call.assert_called_once_with(command.split(' '))
+    expected_calls = [
+        mock.call.info(mock.ANY, user),
         mock.call.debug(mock.ANY, user),
     ]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
@@ -452,9 +469,9 @@ class AccountsUtilsTest(unittest.TestCase):
 
     self.assertFalse(
         accounts_utils.AccountsUtils._UpdateSudoer(self.mock_utils, user))
-    mock.call.assert_called_once_with(command.split(' ')),
+    mock.call.assert_called_once_with(command.split(' '))
     expected_calls = [
-        mock.call.debug(mock.ANY, user),
+        mock.call.info(mock.ANY, user),
         mock.call.warning(mock.ANY, user, mock.ANY),
     ]
     self.assertEqual(self.mock_logger.mock_calls, expected_calls)
@@ -624,8 +641,6 @@ class AccountsUtilsTest(unittest.TestCase):
         accounts_utils.AccountsUtils.UpdateUser(self.mock_utils, user, []))
     self.mock_utils._GetUser.assert_called_once_with(user)
     self.mock_utils._AddUser.assert_called_once_with(user)
-    self.mock_utils._UpdateUserGroups.assert_not_called()
-    self.mock_utils._UpdateSudoer.assert_not_called()
 
   def testUpdateUserFailedUpdateGroups(self):
     user = 'user'
@@ -640,7 +655,6 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils._GetUser.assert_called_once_with(user)
     self.mock_utils._AddUser.assert_called_once_with(user)
     self.mock_utils._UpdateUserGroups.assert_called_once_with(user, groups)
-    self.mock_utils._UpdateSudoer.assert_not_called()
 
   def testUpdateUserNoLogin(self):
     self.mock_utils._UpdateAuthorizedKeys = mock.Mock()
@@ -671,7 +685,6 @@ class AccountsUtilsTest(unittest.TestCase):
         accounts_utils.AccountsUtils.UpdateUser(self.mock_utils, user, keys))
     self.mock_utils._GetUser.assert_called_once_with(user)
     self.mock_utils._UpdateSudoer.assert_called_once_with(user, sudoer=True)
-    self.mock_utils._UpdateAuthorizedKeys.assert_not_called()
 
   def testUpdateUserError(self):
     user = 'user'
