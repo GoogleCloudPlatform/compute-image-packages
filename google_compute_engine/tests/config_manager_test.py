@@ -55,8 +55,8 @@ class ConfigManagerTest(unittest.TestCase):
     self.mock_config = mock.Mock()
     self.mock_config.has_option.side_effect = _HasOption
     self.mock_config.has_section.side_effect = _HasSection
-    config_manager.parser.SafeConfigParser = mock.Mock()
-    config_manager.parser.SafeConfigParser.return_value = self.mock_config
+    config_manager.parser.Parser = mock.Mock()
+    config_manager.parser.Parser.return_value = self.mock_config
 
     self.config_file = 'test.cfg'
     self.config_header = 'Config file header.'

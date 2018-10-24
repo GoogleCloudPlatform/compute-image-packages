@@ -220,5 +220,5 @@ class ScriptRetriever(object):
       project_data = None
       self.logger.warning('Project attributes were not found.')
 
-    return (self._GetAttributeScripts(instance_data, dest_dir) or
-            self._GetAttributeScripts(project_data, dest_dir))
+    return (self._GetAttributeScripts(instance_data, dest_dir)
+            or self._GetAttributeScripts(project_data, dest_dir))

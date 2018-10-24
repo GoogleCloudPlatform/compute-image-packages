@@ -53,22 +53,22 @@ class UtilsTest(unittest.TestCase):
     # Write a value for an existing config without overriding it.
     utils.Utils._ModifyInterface(
         self.mock_setup, config_file, 'A', 'aardvark', replace=False)
-    self.assertEquals(open(config_file).readlines(), config_content)
+    self.assertEqual(open(config_file).readlines(), config_content)
     # Write a value for a config that is not already set.
     utils.Utils._ModifyInterface(
         self.mock_setup, config_file, 'C', 'none', replace=False)
     config_content.append('C=none\n')
-    self.assertEquals(open(config_file).readlines(), config_content)
+    self.assertEqual(open(config_file).readlines(), config_content)
     # Write a value for an existing config with replacement.
     utils.Utils._ModifyInterface(
         self.mock_setup, config_file, 'A', 'aardvark', replace=True)
     config_content[1] = 'A=aardvark\n'
-    self.assertEquals(open(config_file).readlines(), config_content)
+    self.assertEqual(open(config_file).readlines(), config_content)
     # Write a value for an existing config with multiple occurrences.
     utils.Utils._ModifyInterface(
         self.mock_setup, config_file, 'B', '"banana"', replace=True)
     config_content[2] = config_content[3] = 'B="banana"\n'
-    self.assertEquals(open(config_file).readlines(), config_content)
+    self.assertEqual(open(config_file).readlines(), config_content)
 
   @mock.patch('google_compute_engine.distro_lib.el_7.utils.os.path.exists')
   def testDisableNetworkManager(self, mock_exists):

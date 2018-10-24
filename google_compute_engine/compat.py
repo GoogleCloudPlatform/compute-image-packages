@@ -102,3 +102,9 @@ if sys.version_info < (2, 7, 9):
     subprocess.check_call(command)
 
   urlretrieve.urlretrieve = curlretrieve
+
+if sys.version_info < (3, 2):
+  parser.SafeConfigParser.read_file = parser.SafeConfigParser.readfp
+  parser.Parser = parser.SafeConfigParser
+else:
+  parser.Parser = parser.ConfigParser

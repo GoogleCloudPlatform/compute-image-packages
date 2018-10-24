@@ -126,5 +126,5 @@ class OsLoginUtils(object):
       return self._RunOsLoginControl('activate') or self._RunOsLoginNssCache()
     else:
       self.logger.info('Deactivating OS Login.')
-      return (self._RunOsLoginControl('deactivate') or
-              self._RemoveOsLoginNssCache())
+      return (self._RunOsLoginControl('deactivate')
+              or self._RemoveOsLoginNssCache())
