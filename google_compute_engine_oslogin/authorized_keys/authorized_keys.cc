@@ -23,7 +23,8 @@ using std::endl;
 using std::string;
 
 using oslogin_utils::HttpGet;
-using oslogin_utils::ParseJsonToAuthorizeResponse;
+using oslogin_utils::ParseJsonToSuccess;
+using oslogin_utils::ParseJsonToKey;
 using oslogin_utils::ParseJsonToEmail;
 using oslogin_utils::ParseJsonToSshKeys;
 using oslogin_utils::UrlEncode;
@@ -47,8 +48,8 @@ int main(int argc, char* argv[]) {
     }
     return 1;
   }
-  string email = ParseJsonToEmail(user_response);
-  if (email.empty()) {
+  string email;
+  if (!ParseJsonToEmail(user_response, &email) || email.empty()) {
     return 1;
   }
   // Redundantly verify that this user has permission to log in to this VM.
@@ -64,7 +65,7 @@ int main(int argc, char* argv[]) {
       auth_response.empty()) {
     return 1;
   }
-  if (!ParseJsonToAuthorizeResponse(auth_response)) {
+  if (!ParseJsonToSuccess(auth_response)) {
     return 1;
   }
   // At this point, we've verified the user can log in. Grab the ssh keys from
