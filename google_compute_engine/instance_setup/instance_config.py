@@ -126,9 +126,9 @@ class InstanceConfig(config_manager.ConfigManager):
     config_files = [self.instance_config, self.instance_config_distro]
     config_defaults = []
     if self.instance_config_metadata:
-      config = parser.SafeConfigParser()
+      config = parser.Parser()
       try:
-        config.readfp(stringio.StringIO(self.instance_config_metadata))
+        config.read_file(stringio.StringIO(self.instance_config_metadata))
       except parser.Error as e:
         self.logger.error('Error parsing metadata configs: %s', str(e))
       else:
@@ -136,7 +136,7 @@ class InstanceConfig(config_manager.ConfigManager):
             dict((s, dict(config.items(s))) for s in config.sections()))
     for config_file in config_files:
       if os.path.exists(config_file):
-        config = parser.SafeConfigParser()
+        config = parser.Parser()
         try:
           config.read(config_file)
         except parser.Error as e:
