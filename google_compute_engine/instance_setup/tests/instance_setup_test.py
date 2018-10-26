@@ -81,11 +81,11 @@ class InstanceSetupTest(unittest.TestCase):
         # Setup for local SSD.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'optimize_local_ssd'),
-        mock.call.setup._RunScript('optimize_local_ssd'),
+        mock.call.setup._RunScript('google_optimize_local_ssd'),
         # Setup for multiqueue virtio driver.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'set_multiqueue'),
-        mock.call.setup._RunScript('set_multiqueue'),
+        mock.call.setup._RunScript('google_set_multiqueue'),
         # Write the updated config file.
         mock.call.config.InstanceConfig().WriteConfig(),
     ]

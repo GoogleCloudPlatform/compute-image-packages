@@ -61,9 +61,9 @@ class InstanceSetup(object):
         self._SetupBotoConfig()
     if self.instance_config.GetOptionBool(
         'InstanceSetup', 'optimize_local_ssd'):
-      self._RunScript('optimize_local_ssd')
+      self._RunScript('google_optimize_local_ssd')
     if self.instance_config.GetOptionBool('InstanceSetup', 'set_multiqueue'):
-      self._RunScript('set_multiqueue')
+      self._RunScript('google_set_multiqueue')
     try:
       self.instance_config.WriteConfig()
     except (IOError, OSError) as e:
