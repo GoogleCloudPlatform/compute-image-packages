@@ -71,6 +71,8 @@ class CompatTest(unittest.TestCase):
   @mock.patch('google_compute_engine.compat.distro.linux_distribution')
   def testDistroCompatLinux(self, mock_call):
     test_cases = {
+        ('Fedora', '28', ''):
+            google_compute_engine.distro_lib.el_7.utils,
         ('debian', '8.10', ''):
             google_compute_engine.distro_lib.debian_8.utils,
         ('debian', '9.3', ''):
