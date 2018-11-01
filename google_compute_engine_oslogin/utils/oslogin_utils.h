@@ -17,6 +17,11 @@
 #include <string>
 #include <vector>
 
+#define TOTP "TOTP"
+#define AUTHZEN "AUTHZEN"
+#define INTERNAL_TWO_FACTOR "INTERNAL_TWO_FACTOR"
+#define IDV_PREREGISTERED_PHONE "IDV_PREREGISTERED_PHONE"
+
 using std::string;
 using std::vector;
 
@@ -51,6 +56,14 @@ class BufferManager {
   // Not copyable or assignable.
   BufferManager& operator=(const BufferManager&);
   BufferManager(const BufferManager&);
+};
+
+// Challenge represents a security challenge available to the user.
+class Challenge {
+ public:
+  int id;
+  string type;
+  string status;
 };
 
 // NssCache caches passwd entries for getpwent_r. This is used to prevent making
@@ -138,6 +151,8 @@ OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp);
 // request was successful. If successful, the result from the server will be
 // stored in response, and the HTTP response code will be stored in http_code.
 bool HttpGet(const string& url, string* response, long* http_code);
+bool HttpPost(const string& url, const string& data, string* response,
+              long* http_code);
 
 // Returns whether user_name is a valid OsLogin user name.
 bool ValidateUserName(const string& user_name);
@@ -154,19 +169,34 @@ bool ValidatePasswd(struct passwd* result, BufferManager* buf,
 // Parses a JSON LoginProfiles response for SSH keys. Returns a vector of valid
 // ssh_keys. A key is considered valid if it's expiration date is greater than
 // current unix time.
-std::vector<string> ParseJsonToSshKeys(string response);
+std::vector<string> ParseJsonToSshKeys(const string& json);
 
 // Parses a JSON LoginProfiles response and returns the email under the "name"
 // field.
-string ParseJsonToEmail(string response);
+bool ParseJsonToKey(const string& json, const string& key, string* email);
+bool ParseJsonToEmail(const string& json, string* email);
 
 // Parses a JSON LoginProfiles response and populates the passwd struct with the
 // corresponding values set in the JSON object. Returns whether the parse was
 // successful or not. If unsuccessful, errnop will also be set.
-bool ParseJsonToPasswd(string response, struct passwd* result,
+bool ParseJsonToPasswd(const string& response, struct passwd* result,
                        BufferManager* buf, int* errnop);
 
 // Parses a JSON adminLogin or login response and returns whether the user has
 // the requested privilege.
-bool ParseJsonToAuthorizeResponse(string response);
+bool ParseJsonToSuccess(const string& json);
+
+// Parses a JSON startSession response into a vector of Challenge objects.
+bool ParseJsonToChallenges(const string& json, vector<Challenge> *challenges);
+
+// Calls the startSession API.
+bool StartSession(const string& email, string* response);
+
+// Calls the continueSession API.
+bool ContinueSession(const string& email, const string& user_token,
+                     const string& session_id, const Challenge& challenge,
+                     string* response);
+
+// Returns user information from the metadata server.
+bool GetUser(const string& username, string* response);
 }  // namespace oslogin_utils

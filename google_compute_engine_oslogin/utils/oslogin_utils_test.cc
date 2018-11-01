@@ -25,6 +25,7 @@ using std::vector;
 
 namespace oslogin_utils {
 
+
 // Test that the buffer can successfully append multiple strings.
 TEST(BufferManagerTest, TestAppendString) {
   size_t buflen = 20;
@@ -138,7 +139,7 @@ TEST(NssCacheTest, TestLoadJsonPartialArray) {
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
   ASSERT_STREQ(result.pw_dir, "/home/foo");
 
-  ASSERT_STREQ(nss_cache.GetPageToken().c_str(), "token");
+  ASSERT_EQ(nss_cache.GetPageToken(), "token");
 
   // Verify that there are no more users stored.
   ASSERT_FALSE(nss_cache.HasNextPasswd());
@@ -153,7 +154,7 @@ TEST(NssCacheTest, TestLoadJsonFinalResponse) {
       "{\"nextPageToken\": \"0\"}";
 
   ASSERT_FALSE(nss_cache.LoadJsonArrayToCache(response));
-  ASSERT_STREQ(nss_cache.GetPageToken().c_str(), "");
+  ASSERT_EQ(nss_cache.GetPageToken(), "");
 
   size_t buflen = 500;
   char* buffer = (char*)malloc(buflen * sizeof(char));
@@ -351,13 +352,15 @@ TEST(ParseJsonEmailTest, SuccessfullyParsesEmail) {
       "{\"primary\":true,\"username\":\"foo\",\"gid\":1337}]"
       "}]}";
 
-  string email = ParseJsonToEmail(test_user);
-  ASSERT_STREQ(email.c_str(), "foo@example.com");
+  string email;
+  ASSERT_TRUE(ParseJsonToEmail(test_user, &email));
+  ASSERT_EQ(email, "foo@example.com");
 }
 
 TEST(ParseJsonEmailTest, FailsParseEmail) {
-  string email = ParseJsonToEmail("random_junk");
-  ASSERT_STREQ(email.c_str(), "");
+  string email;
+  ASSERT_FALSE(ParseJsonToEmail("random_junk", &email));
+  ASSERT_EQ(email, "");
 }
 
 TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysSucceeds) {
@@ -426,7 +429,7 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersMalformedExpiration) {
 
 TEST(ParseJsonAuthorizeSuccess, SuccessfullyAuthorized) {
   string response = "{\"success\": true}";
-  ASSERT_TRUE(ParseJsonToAuthorizeResponse(response));
+  ASSERT_TRUE(ParseJsonToSuccess(response));
 }
 
 TEST(ValidateUserNameTest, ValidateValidUserNames) {
@@ -464,6 +467,41 @@ TEST(ValidateUserNameTest, ValidateInvalidUserNames) {
   }
 }
 
+TEST(ParseJsonKeyTest, TestKey) {
+  string test_json = "{\"some_key\":\"some_value\"}";
+  string value;
+  ASSERT_TRUE(ParseJsonToKey(test_json, "some_key", &value));
+  ASSERT_EQ(value, "some_value");
+}
+
+TEST(ParseJsonKeyTest, TestMissingKey) {
+  string test_json = "{\"some_key\":\"some_value\"}";
+  string value;
+  ASSERT_FALSE(ParseJsonToKey(test_json, "some_other_key", &value));
+  ASSERT_EQ(value, "");
+}
+
+TEST(ParseJsonChallengesTest, TestChallenges) {
+  string challenges_json = "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
+      "\"testSessionId\",\"challenges\":[{\"challengeId\":1,\"challengeType\":"
+      "\"TOTP\",\"status\":\"READY\"}, {\"challengeId\":2,\"challengeType\":"
+      "\"AUTHZEN\",\"status\":\"PROPOSED\"}]}";
+  vector<Challenge> challenges;
+  ASSERT_TRUE(ParseJsonToChallenges(challenges_json, &challenges));
+  EXPECT_EQ(challenges.size(), 2);
+  EXPECT_EQ(challenges[0].id, 1);
+  EXPECT_EQ(challenges[0].type, "TOTP");
+}
+
+TEST(ParseJsonChallengesTest, TestMalformedChallenges) {
+  string challenges_json = "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
+      "\"testSessionId\",\"challenges\":[{\"challengeId\":1,\"challengeType\":"
+      "\"TOTP\",\"status\":\"READY\"}, {\"challengeId\":2,\"challengeType\":"
+      "\"AUTHZEN\"}]}";
+  vector<Challenge> challenges;
+  ASSERT_FALSE(ParseJsonToChallenges(challenges_json, &challenges));
+  EXPECT_EQ(challenges.size(), 1);
+}
 }  // namespace oslogin_utils
 
 int main(int argc, char **argv) {

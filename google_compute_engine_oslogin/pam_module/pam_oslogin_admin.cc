@@ -31,11 +31,13 @@
 using std::string;
 
 using oslogin_utils::HttpGet;
-using oslogin_utils::ParseJsonToAuthorizeResponse;
+using oslogin_utils::GetUser;
+using oslogin_utils::kMetadataServerUrl;
+using oslogin_utils::ParseJsonToKey;
 using oslogin_utils::ParseJsonToEmail;
+using oslogin_utils::ParseJsonToSuccess;
 using oslogin_utils::UrlEncode;
 using oslogin_utils::ValidateUserName;
-using oslogin_utils::kMetadataServerUrl;
 
 static const char kSudoersDir[] = "/var/google-sudoers.d/";
 
@@ -51,27 +53,23 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
     pam_syslog(pamh, LOG_INFO, "Could not get pam user.");
     return pam_result;
   }
-  string str_user_name(user_name);
+
   if (!ValidateUserName(user_name)) {
     // If the user name is not a valid oslogin user, don't bother continuing.
     return PAM_SUCCESS;
   }
 
-  std::stringstream url;
-  url << kMetadataServerUrl
-      << "users?username=" << UrlEncode(str_user_name);
   string response;
-  long http_code = 0;
-  if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
-      response.empty()) {
-    return PAM_SUCCESS;
-  }
-  string email = ParseJsonToEmail(response);
-  if (email.empty()) {
+  if (!GetUser(user_name, &response)) {
     return PAM_SUCCESS;
   }
 
-  url.str("");
+  string email;
+  if (!ParseJsonToEmail(response, &email) || email.empty()) {
+    return PAM_SUCCESS;
+  }
+
+  std::stringstream url;
   url << kMetadataServerUrl << "authorize?email=" << UrlEncode(email)
       << "&policy=adminLogin";
 
@@ -79,8 +77,9 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
   filename.append(user_name);
   struct stat buffer;
   bool file_exists = !stat(filename.c_str(), &buffer);
+  long http_code;
   if (HttpGet(url.str(), &response, &http_code) && http_code == 200 &&
-      ParseJsonToAuthorizeResponse(response)) {
+      ParseJsonToSuccess(response)) {
     if (!file_exists) {
       pam_syslog(pamh, LOG_INFO,
                  "Granting sudo permissions to organization user %s.",
