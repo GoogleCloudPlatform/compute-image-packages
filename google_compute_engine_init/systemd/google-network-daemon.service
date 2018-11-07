@@ -1,5 +1,6 @@
 [Unit]
 Description=Google Compute Engine Network Daemon
+Before=cloud-init.service
 After=local-fs.target network-online.target network.target rsyslog.service
 After=google-instance-setup.service
 Wants=local-fs.target network-online.target network.target
