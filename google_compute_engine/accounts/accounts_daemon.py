@@ -244,6 +244,23 @@ class AccountsDaemon(object):
 
     return value.lower() == 'true'
 
+  def _GetEnableTwoFactorValue(self, metadata_dict):
+    """Get the value of the enable-oslogin-2fa metadata key.
+
+    Args:
+      metadata_dict: json, the deserialized contents of the metadata server.
+
+    Returns:
+      bool, True if two factor authentication is enabled for VM access.
+    """
+    instance_data, project_data = self._GetInstanceAndProjectAttributes(
+        metadata_dict)
+    instance_value = instance_data.get('enable-oslogin-2fa')
+    project_value = project_data.get('enable-oslogin-2fa')
+    value = instance_value or project_value or ''
+
+    return value.lower() == 'true'
+
   def HandleAccounts(self, result):
     """Called when there are changes to the contents of the metadata server.
 
@@ -253,9 +270,10 @@ class AccountsDaemon(object):
     self.logger.debug('Checking for changes to user accounts.')
     configured_users = self.utils.GetConfiguredUsers()
     enable_oslogin = self._GetEnableOsLoginValue(result)
+    enable_two_factor = self._GetEnableTwoFactorValue(result)
     if enable_oslogin:
       desired_users = {}
-      self.oslogin.UpdateOsLogin(enable=True)
+      self.oslogin.UpdateOsLogin(enable=True, two_factor=enable_two_factor)
     else:
       desired_users = self._GetAccountsData(result)
       self.oslogin.UpdateOsLogin(enable=False)

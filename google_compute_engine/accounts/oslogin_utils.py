@@ -38,18 +38,17 @@ class OsLoginUtils(object):
     self.oslogin_installed = True
     self.update_time = 0
 
-  def _RunOsLoginControl(self, action):
+  def _RunOsLoginControl(self, params):
     """Run the OS Login control script.
 
     Args:
-      action: str, the action to pass to the script
-          (activate, deactivate, or status).
+      params: list, the params to pass to the script
 
     Returns:
       int, the return code from the call, or None if the script is not found.
     """
     try:
-      return subprocess.call([constants.OSLOGIN_CONTROL_SCRIPT, action])
+      return subprocess.call([constants.OSLOGIN_CONTROL_SCRIPT] + params)
     except OSError as e:
       if e.errno == errno.ENOENT:
         return None
@@ -62,7 +61,7 @@ class OsLoginUtils(object):
     Returns:
       bool, True if OS Login is installed.
     """
-    retcode = self._RunOsLoginControl('status')
+    retcode = self._RunOsLoginControl(['status'])
     if retcode is None:
       if self.oslogin_installed:
         self.logger.warning('OS Login not installed.')
@@ -98,7 +97,7 @@ class OsLoginUtils(object):
         if e.errno != errno.ENOENT:
           raise
 
-  def UpdateOsLogin(self, enable, duration=NSS_CACHE_DURATION_SEC):
+  def UpdateOsLogin(self, enable, two_factor=False):
     """Update whether OS Login is enabled and update NSS cache if necessary.
 
     Args:
@@ -114,7 +113,7 @@ class OsLoginUtils(object):
 
     current_time = time.time()
     if status == enable:
-      if status and current_time - self.update_time > duration:
+      if status and current_time - self.update_time > NSS_CACHE_DURATION_SEC:
         self.update_time = current_time
         return self._RunOsLoginNssCache()
       else:
@@ -123,8 +122,11 @@ class OsLoginUtils(object):
     self.update_time = current_time
     if enable:
       self.logger.info('Activating OS Login.')
-      return self._RunOsLoginControl('activate') or self._RunOsLoginNssCache()
+      params = ['activate']
+      if two_factor:
+        params += ['--twofactor']
+      return self._RunOsLoginControl(params) or self._RunOsLoginNssCache()
     else:
       self.logger.info('Deactivating OS Login.')
-      return (self._RunOsLoginControl('deactivate')
+      return (self._RunOsLoginControl(['deactivate'])
               or self._RemoveOsLoginNssCache())
