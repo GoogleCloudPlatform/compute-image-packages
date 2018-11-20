@@ -33,7 +33,7 @@ setuptools.setup(
     license='Apache Software License',
     long_description='Google Compute Engine guest environment.',
     name='google-compute-engine',
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(where="python"),
     scripts=glob.glob('scripts/*'),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages',
     version='2.8.8',
