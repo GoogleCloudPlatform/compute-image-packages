@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 Name: gce-disk-expand
-Summary: Google Compute Engine root disk expansion utilities for EL6
-Version: 1.0.0
+Summary: Google Compute Engine root disk expansion module
+Version: 2.0.0
 Release: %(date +%s).el6
 License: GPLv3, Apache Software License
 Group: System Environment/Base
@@ -47,6 +47,8 @@ cp -R $RPM_SOURCE_DIR/usr $RPM_BUILD_ROOT
 dracut --force
 chkconfig --level 2345 expand-root on
 
-%postun
-dracut --force
+%preun
 chkconfig expand-root off
+
+%postun
+%dracut --force
