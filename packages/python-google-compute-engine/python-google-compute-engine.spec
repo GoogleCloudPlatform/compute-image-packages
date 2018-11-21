@@ -52,4 +52,4 @@ python setup.py install --prefix=%{_prefix} --root %{buildroot}
 
 %files
 %{python_sitelib}/google_compute_engine
-# binaries?
+# TODO: binaries?
