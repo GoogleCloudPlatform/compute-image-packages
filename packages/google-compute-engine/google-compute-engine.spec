@@ -12,103 +12,103 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Force the dist to be el7 to avoid el7.centos.
-%if 0%{?rhel} == 7
-  %define dist .el7
-%endif
-
 Name: google-compute-engine
 Version: 2.8.8
-Release: 1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
 Source0: %{name}_%{version}.orig.tar.gz
+Requires: curl
+Requires: google-compute-engine-oslogin
+Requires: python-google-compute-engine = %{version}
+Requires: python-setuptools
+Requires: rsyslog
 
 BuildArch: noarch
-BuildRequires: python2-devel python-setuptools python-boto
-%if 0%{?el7}
-BuildRequires: systemd
-%endif
+BuildRequires: python2-devel python-setuptools python-boto systemd
+
+%description
+This package contains scripts, configuration, and init files for features
+specific to the Google Compute Engine cloud environment.
+
+%description el6
+This package contains scripts, configuration, and init files for features
+specific to the Google Compute Engine cloud environment.
+
+%description el7
+This package contains scripts, configuration, and init files for features
+specific to the Google Compute Engine cloud environment.
+
+%package el6
+Release 1.el6
 
 Requires: curl
 Requires: google-compute-engine-oslogin
 Requires: python-google-compute-engine = %{version}
 Requires: python-setuptools
 Requires: rsyslog
-%if 0%{?el7}
-Requires: systemd
-%endif
-
+# Old packages
 Obsoletes: google-compute-engine-init
 Obsoletes: google-config
 Obsoletes: google-startup-scripts
-Conflicts: google-compute-engine-init
-Conflicts: google-config
-Conflicts: google-startup-scripts
+# non-distro version of this package
+Obsoletes: google-compute-engine
 
-%description
-This package contains scripts, configuration, and init files for features specific to the Google Compute Engine cloud environment.
+%package el7
+Release 1.el7
 
-%prep
-%autosetup -n compute-image-packages
+Requires: systemd
+Requires: curl
+Requires: google-compute-engine-oslogin
+Requires: python-google-compute-engine = %{version}
+Requires: python-setuptools
+Requires: rsyslog
+# Old packages
+Obsoletes: google-compute-engine-init
+Obsoletes: google-config
+Obsoletes: google-startup-scripts
+# non-distro version of this package
+Obsoletes: google-compute-engine
 
 %install
-mkdir -p %{buildroot}%{_bindir}
-mkdir -p %{buildroot}/etc/dhcp
-mkdir -p %{buildroot}/etc/modprobe.d
-mkdir -p %{buildroot}/etc/rsyslog.d
-mkdir -p %{buildroot}/etc/sysctl.d
-mkdir -p %{buildroot}/etc/udev/rules.d
-
-cp google_config/modprobe/gce-blacklist.conf %{buildroot}/etc/modprobe.d/
-cp google_config/rsyslog/90-google.conf %{buildroot}/etc/rsyslog.d/
-cp google_config/sysctl/11-gce-network-security.conf  %{buildroot}/etc/sysctl.d/
-cp google_config/udev/*.rules %{buildroot}/etc/udev/rules.d/
+rsync -Pravz src/ %{buildroot}
+install -d %{buildroot}%{_unitdir}
+rsync -Pravz systemd/*.conf %{buildroot}%{_unitdir}
+install -D systemd/*.preset %{buildroot}%{_presetdir}/90-google-compute-engine.preset
 
 # Install the python package to get the entry scripts.
 python setup.py install --prefix=%{_prefix} --root %{buildroot}
 rm -Rf %{buildroot}/usr/lib/python*
 
-%if 0%{?el6}
-mkdir %{buildroot}/sbin
-mkdir -p %{buildroot}/etc/init
-cp google_compute_engine_init/upstart/*.conf %{buildroot}/etc/init/
-cp google_config/bin/google_set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
-cp google_config/sbin/google-dhclient-script %{buildroot}/sbin/
-%endif
-
-%if 0%{?el7}
-mkdir -p %{buildroot}/etc/dhcp/dhclient.d
-mkdir -p %{buildroot}%{_unitdir}
-mkdir -p %{buildroot}%{_presetdir}
-cp google_compute_engine_init/systemd/*.service %{buildroot}%{_unitdir}
-cp google_compute_engine_init/systemd/90-google-compute-engine.preset %{buildroot}%{_presetdir}/90-google-compute-engine.preset
-cp google_config/bin/google_set_hostname %{buildroot}%{_bindir}
-cp google_config/dhcp/google_hostname.sh %{buildroot}/etc/dhcp/dhclient.d/google_hostname.sh
-%endif
-
-
-%files
+%files el6
 %defattr(0644,root,root,0755)
-%if 0%{?el6}
-%attr(0755,root,root) /sbin/google-dhclient-script
-%attr(0755,root,root) /etc/dhcp/dhclient-exit-hooks
 /etc/init/*.conf
-%endif
-%if 0%{?el7}
-%attr(0755,root,root) /etc/dhcp/dhclient.d/google_hostname.sh
-%{_unitdir}/*.service
-%{_presetdir}/90-google-compute-engine.preset
-%endif
+/etc/udev/rules.d/*.rules
+%attr(0755,root,root) %{_bindir}/*
+%attr(0755,-,-) /sbin/google-dhclient-script
+%attr(0755,-,-) /etc/dhcp/dhclient-exit-hooks/google_set_hostname
 %config /etc/modprobe.d/gce-blacklist.conf
 %config /etc/rsyslog.d/90-google.conf
 %config /etc/sysctl.d/11-gce-network-security.conf
-/etc/udev/rules.d/*.rules
-%attr(0755,root,root) %{_bindir}/*
 
-%post
-%if 0%{?el6}
+%files el7
+%defattr(0644,root,root,0755)
+/etc/udev/rules.d/*.rules
+%attr(0755,-,-) %{_bindir}/*
+%attr(0755,-,-) /etc/dhcp/dhclient.d/google_hostname.sh
+%{_unitdir}/*.service
+%{_presetdir}/90-google-compute-engine.preset
+%config /etc/modprobe.d/gce-blacklist.conf
+%config /etc/rsyslog.d/90-google.conf
+%config /etc/sysctl.d/11-gce-network-security.conf
+
+%post el6
+if [ $1 -eq 2 ]; then
+  # New service might not be enabled during upgrade.
+  # TODO: this is specifically forbidden-what if the user disabled it?
+  systemctl enable google-network-daemon.service
+fi
+
 # On upgrade run instance setup again to handle any new configs and restart daemons.
 if [ $1 -eq 2 ]; then
   stop -q -n google-accounts-daemon
@@ -128,7 +128,26 @@ fi
 if [ -d /opt/rh/python27/root/usr/lib/python2.7/site-packages/google_compute_engine ]; then
   scl enable python27 "pip2.7 install --upgrade google_compute_engine"
 fi
-%endif
+
+if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
+  stop -q -n google-ip-forwarding-daemon
+fi
+
+%post el7
+# On upgrade run instance setup again to handle any new configs and restart daemons.
+if [ $1 -eq 2 ]; then
+  /usr/bin/google_instance_setup
+  systemctl reload-or-restart google-accounts-daemon.service
+  systemctl reload-or-restart google-clock-skew-daemon.service
+  systemctl reload-or-restart google-network-daemon.service
+fi
+
+%systemd_post google-accounts-daemon.service
+%systemd_post google-clock-skew-daemon.service
+%systemd_post google-instance-setup.service
+%systemd_post google-network-daemon.service
+%systemd_post google-shutdown-scripts.service
+%systemd_post google-startup-scripts.service
 
 # Remove old services.
 if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
@@ -141,52 +160,24 @@ if [ -f /lib/systemd/system/google-network-setup.service ]; then
   systemctl disable google-network-setup.service
 fi
 
-# Stop old services in EL6.
-%if 0%{?el6}
-  if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
-    stop -q -n google-ip-forwarding-daemon
-  fi
-%endif
-
-if [ $1 -eq 2 ]; then
-  # New service might not be enabled during upgrade.
-  systemctl enable google-network-daemon.service
-fi
-
-%if 0%{?el7}
-%systemd_post google-accounts-daemon.service
-%systemd_post google-clock-skew-daemon.service
-%systemd_post google-instance-setup.service
-%systemd_post google-network-daemon.service
-%systemd_post google-shutdown-scripts.service
-%systemd_post google-startup-scripts.service
-# On upgrade run instance setup again to handle any new configs and restart daemons.
-if [ $1 -eq 2 ]; then
-  /usr/bin/google_instance_setup
-  systemctl reload-or-restart google-accounts-daemon.service
-  systemctl reload-or-restart google-clock-skew-daemon.service
-  systemctl reload-or-restart google-network-daemon.service
-fi
-%endif
-
-
-%preun
+%preun el6
 # On uninstall only.
 if [ $1 -eq 0 ]; then
-%if 0%{?el6}
   stop -q -n google-accounts-daemon
   stop -q -n google-clock-skew-daemon
   stop -q -n google-network-daemon
   if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
     stop -q -n google-ip-forwarding-daemon
   fi
-%endif
-%if 0%{?el7}
+fi
+
+%preun el7
+# On uninstall only.
+if [ $1 -eq 0 ]; then
   %systemd_preun google-accounts-daemon.service
   %systemd_preun google-clock-skew-daemon.service
   %systemd_preun google-instance-setup.service
   %systemd_preun google-network-daemon.service
   %systemd_preun google-shutdown-scripts.service
   %systemd_preun google-startup-scripts.service
-%endif
 fi

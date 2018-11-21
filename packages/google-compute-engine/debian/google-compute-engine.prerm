@@ -15,7 +15,7 @@
 
 # Stop all services on remove.
 set -e
-if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
+if [ -d /run/systemd/system ] && [ "$1" = "remove" ]; then
   deb-systemd-invoke stop \
     google-instance-setup.service \
     google-accounts-daemon.service \

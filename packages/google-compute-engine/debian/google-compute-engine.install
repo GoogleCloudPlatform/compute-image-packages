@@ -1,0 +1,9 @@
+systemd/*.service lib/systemd/system
+systemd/90-google-compute-engine.preset lib/systemd/system-preset
+debian/apt/01autoremove-gce etc/apt/apt.conf.d
+debian/apt/99ipv4-only etc/apt/apt.conf.d
+src/usr/bin/google_set_hostname etc/dhcp/dhclient-exit-hooks.d
+src/etc/modprobe.d/gce-blacklist.conf etc/modprobe.d
+src/etc/rsyslog.d/* etc/rsyslog.d
+src/etc/sysctl.d/* etc/sysctl.d
+src/etc/udev/rules.d/* lib/udev/rules.d

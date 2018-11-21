@@ -33,8 +33,9 @@ setuptools.setup(
     license='Apache Software License',
     long_description='Google Compute Engine guest environment.',
     name='google-compute-engine',
-    packages=setuptools.find_packages(where="python"),
-    scripts=glob.glob('scripts/*'),
+    package_dir={'': 'packages/python-google-compute-engine'},
+    packages=setuptools.find_packages(where="packages/python-google-compute-engine"),
+    scripts=glob.glob('packages/python-google-compute-engine/shellscripts/*'),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages',
     version='2.8.8',
     # Entry points create scripts in /usr/bin that call a function.
