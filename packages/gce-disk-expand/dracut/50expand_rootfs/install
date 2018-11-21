@@ -1,0 +1,14 @@
+#!/bin/sh
+# Dracut install script for RHEL/CentOS
+
+inst "$moddir/expandfs-lib.sh" "/lib/expandfs-lib.sh"
+inst_hook pre-mount 50 "$moddir/expand_rootfs.sh"
+inst_hook pre-pivot 50 "$moddir/xfs_growfs.sh"
+
+dracut_install parted
+dracut_install cut
+dracut_install sed
+dracut_install grep
+dracut_install resize2fs
+dracut_install e2fsck
+dracut_install -o xfs_growfs

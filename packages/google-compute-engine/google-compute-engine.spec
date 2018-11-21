@@ -21,11 +21,10 @@ Source0: %{name}_%{version}.orig.tar.gz
 Requires: curl
 Requires: google-compute-engine-oslogin
 Requires: python-google-compute-engine = %{version}
-Requires: python-setuptools
 Requires: rsyslog
 
 BuildArch: noarch
-BuildRequires: python2-devel python-setuptools python-boto systemd
+BuildRequires: systemd
 
 %description
 This package contains scripts, configuration, and init files for features
@@ -45,7 +44,6 @@ Release 1.el6
 Requires: curl
 Requires: google-compute-engine-oslogin
 Requires: python-google-compute-engine = %{version}
-Requires: python-setuptools
 Requires: rsyslog
 # Old packages
 Obsoletes: google-compute-engine-init
@@ -61,7 +59,6 @@ Requires: systemd
 Requires: curl
 Requires: google-compute-engine-oslogin
 Requires: python-google-compute-engine = %{version}
-Requires: python-setuptools
 Requires: rsyslog
 # Old packages
 Obsoletes: google-compute-engine-init
@@ -75,10 +72,6 @@ rsync -Pravz src/ %{buildroot}
 install -d %{buildroot}%{_unitdir}
 rsync -Pravz systemd/*.conf %{buildroot}%{_unitdir}
 install -D systemd/*.preset %{buildroot}%{_presetdir}/90-google-compute-engine.preset
-
-# Install the python package to get the entry scripts.
-python setup.py install --prefix=%{_prefix} --root %{buildroot}
-rm -Rf %{buildroot}/usr/lib/python*
 
 %files el6
 %defattr(0644,root,root,0755)
@@ -118,15 +111,6 @@ if [ $1 -eq 2 ]; then
   start -q -n google-accounts-daemon
   start -q -n google-clock-skew-daemon
   start -q -n google-network-daemon
-fi
-
-# Install google-compute-engine from pypi into the SCL environment if it exists.
-# The google-compute-engine package in the SCL environment needs to be maintained
-# along with the python 2.6 package from the RPM. In particular, SCL python2.7
-# packages that use boto will need the up to date package available in case of
-# any changes in the shared libraries.
-if [ -d /opt/rh/python27/root/usr/lib/python2.7/site-packages/google_compute_engine ]; then
-  scl enable python27 "pip2.7 install --upgrade google_compute_engine"
 fi
 
 if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
