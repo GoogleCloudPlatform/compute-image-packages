@@ -18,11 +18,13 @@
 # for creating production Debian packages.
 #####################################################################
 
-# Run from the top of the source directory.
 NAME="google-compute-engine-oslogin"
-VERSION="1.3.1"
+VERSION="1.3.2"
 
 working_dir=${PWD}
+
+# Run from the $NAME directory, not the packaging/ directory.
+[[ $(basename "$working_dir") == $NAME ]] || exit 1
 
 # Build dependencies.
 sudo apt-get -y install make g++ libcurl4-openssl-dev libjson-c-dev libpam-dev
@@ -40,8 +42,7 @@ tar xzvf ${NAME}_${VERSION}.orig.tar.gz
 
 cd ${NAME}-${VERSION}
 
-deb_version=$(cut -d "." -f 1 /etc/debian_version)
-cp -r ${working_dir}/packaging/debian${deb_version} debian
+cp -r ${working_dir}/packaging/debian ./
 
 debuild -us -uc
 
