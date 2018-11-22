@@ -1,0 +1,41 @@
+#!/bin/sh
+
+PREREQ=""
+prereqs()
+{
+	echo "$PREREQ"
+}
+case $1 in
+# get pre-requisites
+prereqs)
+	prereqs
+	exit 0
+	;;
+esac
+
+. /scripts/functions
+
+if ! real_root=$(resolve_device "${ROOT}"); then
+	log_failure_message "Failed to resolve root device for \"${ROOT}\""
+fi
+
+if ! fs_type=$(get_fstype "${real_root}"); then
+	log_failure_message "Failed to determine fstype for \"${real_root}\""
+fi
+
+echo "This is xfs_growfs"
+
+if [ $fs_type != "xfs" ]; then
+    exit 0
+fi
+
+if xfs_growfs -d -n /; then
+   log_begin_msg "Resizing xfs filesystem on ${real_root}"
+   if ! out=$(xfs_growfs -d /); then
+       log_failure_msg "Failed to resize ${real_root}: ${out}"
+       exit 1
+   fi
+   log_end_msg
+fi
+
+exit 0

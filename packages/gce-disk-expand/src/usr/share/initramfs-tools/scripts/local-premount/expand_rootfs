@@ -1,0 +1,72 @@
+#!/bin/sh
+
+PREREQ=""
+prereqs()
+{
+	echo "$PREREQ"
+}
+case $1 in
+# get pre-requisites
+prereqs)
+	prereqs
+	exit 0
+	;;
+esac
+
+. /scripts/functions
+
+if ! real_root=$(resolve_device "${ROOT}"); then
+	log_failure_message "Failed to resolve root device for \"${ROOT}\""
+fi
+
+if ! fs_type=$(get_fstype "${real_root}"); then
+	log_failure_message "Failed to determine fstype for \"${real_root}\""
+fi
+
+rootdisk=${real_root%%[0-9]*}
+partnum=${real_root##$rootdisk}
+
+if parted -sm "$rootdisk" print 2>&1 | grep "fix the GPT"; then
+	parted -m ---pretend-input-tty "$rootdisk" print Fix  # Ugly hack
+        if parted -sm "$rootdisk" print 2>&1 | grep "fix the GPT"; then
+		log_failure_msg "Failed to correct GPT label on ${rootdisk}. Not resizing!"
+		exit 1
+	else
+		log_success_msg "Corrected GPT label on ${rootdisk}."
+	fi
+fi
+
+
+if ! parted -sm "$rootdisk" print | tail -1 | grep -q "^${partnum}:"; then
+	log_failure_msg "Root partition is not final partition on disk. Not resizing!"
+	exit 1
+fi
+
+if ! out=$(parted -sm "$rootdisk" -- resizepart "$partnum" -1); then
+	log_failure_msg "Failed to resize part ${partnum} on ${rootdisk}: ${out}"
+	exit 1
+fi
+
+case "${fs_type}" in
+       	xfs)  
+		log_info_msg "xfs filesystems must be mounted to be resized, deferring to local-bottom/xfs_growfs"
+		;;
+       	ext*) 
+                log_begin_msg "Resizing ${fs_type} filesystem on ${real_root}"
+		if ! out=$(echo resize2fs "${real_root}"); then
+			log_failure_msg "resize2fs \"${real_root}\" failed:\n${out}"
+			exit 1
+		else
+			log_end_msg
+		fi
+	       	;;
+       	*)
+		echo "Unsupported filesystem type,  unable to expand size."
+		exit 1
+		;;
+esac
+
+
+log_success_msg "This is a success message containing real_root=${real_root}, fs_type=${fs_type}"
+
+exit 0
