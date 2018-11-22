@@ -1,4 +1,4 @@
-Source: google-compute-image-packages
+Source: google-compute-engine
 Section: admin
 Priority: optional
 Maintainer: Google Cloud Team <gc-team@google.com>
