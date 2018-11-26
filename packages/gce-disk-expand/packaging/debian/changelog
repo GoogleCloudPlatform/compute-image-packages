@@ -1,0 +1,6 @@
+gce-disk-expand (2.0.0-1) stable; urgency=low
+
+  * Initial debian package import
+  * Standardize on initramfs scripts for disk resizing
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 26 Nov 2018 12:00:00 -0700

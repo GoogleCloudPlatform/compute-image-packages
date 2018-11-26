@@ -17,9 +17,9 @@ main() {
         # might fail
         udevsettle
 
-        if ! out=$(split_partition "$rootdev"); then
-			echo "Failed to detect disk and partition info: ${out}"
-            return
+        if ! out=$(get_partition "$rootdev"); then
+          echo "Failed to detect disk and partition info: ${out}"
+          return
         fi
 
         disk=${out%:*}
@@ -53,7 +53,7 @@ main() {
                 return
             fi
         fi
-    
+
         udevsettle
 
         if ! out=$(resize_filesystem "$rootdev"); then

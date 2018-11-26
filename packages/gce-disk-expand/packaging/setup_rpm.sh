@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2017 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,40 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [[ -d $1 ]]; then
-  echo "Saving packages to $1"
-  RPM_DEST=$1
-else
-  RPM_DEST="/tmp"
+############################## WARNING ##############################
+# This script is for testing purposes only. It is not intended
+# for creating production RPM packages.
+#####################################################################
+
+# Run from the top of the source directory.
+NAME="gce-disk-expand"
+VERSION="2.0.0"
+
+working_dir=${PWD}
+rpm_working_dir=/tmp/rpmpackage/
+
+if [[ $(basename "$working_dir") == $NAME ]]; then
+  echo "packaging scripts must be run from top of package dir"
+  exit 1
 fi
 
-RPM_TOP=$(mktemp -d)
-SPEC_FILES="gce-disk-expand-el6.spec gce-disk-expand-el7.spec"
+# .rpm creation tools.
+sudo yum -y install rpmdevtools
 
-for spec_file in ${SPEC_FILES}; do
-  echo "Setup ${spec_file}"
-  mkdir -p ${RPM_TOP}/SOURCES/etc/init.d
-  mkdir -p ${RPM_TOP}/SOURCES/usr/bin
-  mkdir -p ${RPM_TOP}/SOURCES/usr/lib/systemd/system
-  mkdir -p ${RPM_TOP}/SOURCES/usr/lib/systemd/system-preset
-  mkdir -p ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
+rm -rf ${rpm_working_dir}
+mkdir -p ${rpm_working_dir}/{SOURCES,SPECS}
+cp packaging/${NAME}.spec ${rpm_working_dir}/SPECS/
 
-  cp expand-root ${RPM_TOP}/SOURCES/etc/init.d
-  cp expand-root ${RPM_TOP}/SOURCES/usr/bin
-  cp third_party/cloud-utils/* ${RPM_TOP}/SOURCES/usr/bin
-  cp expand-root.service ${RPM_TOP}/SOURCES/usr/lib/systemd/system
-  cp 90-gce-disk-expand.preset ${RPM_TOP}/SOURCES/usr/lib/systemd/system-preset
-  cp third_party/dracut-modules-growroot/* \
-    ${RPM_TOP}/SOURCES/usr/share/dracut/modules.d/50growroot
+tar czvf ${rpm_working_dir}/SOURCES/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
-  echo "Building"
-  rpmbuild --define "_topdir ${RPM_TOP}" -ba ${spec_file}
-
-  echo "Copying rpm's to ${RPM_DEST}"
-  cp ${RPM_TOP}/RPMS/x86_64/*.rpm ${RPM_DEST}
-  cp ${RPM_TOP}/SRPMS/*.rpm ${RPM_DEST}
-  ls -l ${RPM_DEST}/*.rpm
-
-  echo "Cleaning up"
-  rm -Rf ${RPM_TOP}
-done
+rpmbuild --define "_topdir ${rpm_working_dir}/" -ba ${rpm_working_dir}/SPECS/${NAME}.spec
