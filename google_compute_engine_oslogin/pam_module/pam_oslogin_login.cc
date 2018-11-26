@@ -144,7 +144,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
 
   // System accounts begin with the prefix `sa_`.
   string sa_prefix = "sa_";
-  if (user_name.compare(0, sa_prefix.size(), sa_prefix) == 0) {
+  if (str_user_name.compare(0, sa_prefix.size(), sa_prefix) == 0) {
     return PAM_SUCCESS;
   }
 
