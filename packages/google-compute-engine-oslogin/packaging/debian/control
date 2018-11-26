@@ -1,5 +1,5 @@
 Source: google-compute-engine-oslogin
-Maintainer: Google Compute Engine <gc-team@google.com>
+Maintainer: Google Cloud Team <gc-team@google.com>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.6.1

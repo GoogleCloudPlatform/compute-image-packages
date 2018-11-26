@@ -4,6 +4,7 @@ google-compute-engine-oslogin (1.3.2-1) unstable; urgency=low
   * Return to unified versioning.
 
  -- Google Cloud Team <gc-team@google.com>  Wed, 21 Nov 2018 12:00:00 -0700
+
 google-compute-engine-oslogin (1.3.1-1+deb10) unstable; urgency=low
 
   * Add user name validation to pam modules.

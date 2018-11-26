@@ -4,7 +4,7 @@ BASENAME = oslogin
 NAME = google-compute-engine-$(BASENAME)
 MAJOR = 1
 MINOR = 3
-REVISION = 1
+REVISION = 2
 
 LIBNSS_CACHE_OSLOGIN = libnss_cache_$(BASENAME)
 LIBNSS_CACHE_OSLOGIN_NAME = libnss_cache_$(NAME)-$(MAJOR).$(MINOR).$(REVISION).so

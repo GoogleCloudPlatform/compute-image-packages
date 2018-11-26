@@ -20,9 +20,7 @@
 
 NAME="google-compute-engine-oslogin"
 VERSION="1.3.2"
-
 working_dir=${PWD}
-
 # Run from the $NAME directory, not the packaging/ directory.
 [[ $(basename "$working_dir") == $NAME ]] || exit 1
 

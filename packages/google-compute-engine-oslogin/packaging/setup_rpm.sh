@@ -20,7 +20,7 @@
 
 # Run from the top of the source directory.
 NAME="google-compute-engine-oslogin"
-VERSION="1.3.1"
+VERSION="1.3.2"
 
 working_dir=${PWD}
 rpm_working_dir=/tmp/rpmpackage/${NAME}-${VERSION}
