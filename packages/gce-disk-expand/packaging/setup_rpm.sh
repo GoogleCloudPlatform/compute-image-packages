@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,24 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-############################## WARNING ##############################
-# This script is for testing purposes only. It is not intended
-# for creating production RPM packages.
-#####################################################################
-
-# Run from the top of the source directory.
 NAME="gce-disk-expand"
 VERSION="2.0.0"
 
-working_dir=${PWD}
 rpm_working_dir=/tmp/rpmpackage/
-
+working_dir=${PWD}
 if [[ $(basename "$working_dir") != $NAME ]]; then
-  echo "packaging scripts must be run from top of package dir"
+  echo "Packaging scripts must be run from top of package dir."
   exit 1
 fi
 
-# .rpm creation tools.
+# RPM creation tools.
 sudo yum -y install rpmdevtools
 
 rm -rf ${rpm_working_dir}

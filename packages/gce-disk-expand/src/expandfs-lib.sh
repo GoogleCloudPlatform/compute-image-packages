@@ -1,4 +1,17 @@
 #!/bin/sh
+# Copyright 2018 Google Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 resize_filesystem() {
   local disk="$1" fs_type=""
@@ -10,17 +23,17 @@ resize_filesystem() {
 
   case "${fs_type}" in
     xfs)
-      echo "XFS filesystems must be mounted to be resized, deferring"
+      echo "XFS filesystems must be mounted to be resized, deferring."
       expand_xfs="true"
       return 1
       ;;
     ext*)
       if ! out=$(e2fsck -pf "$disk"); then
-        echo "e2fsck \"${disk}\" failed: ${out}"
+        echo "Calling e2fsck \"${disk}\" failed: ${out}"
         return 1
       fi
       if ! out=$(resize2fs "$disk"); then
-        echo "resize2fs \"${disk}\" failed: ${out}"
+        echo "Calling resize2fs \"${disk}\" failed: ${out}"
         return 1
       fi
       ;;
@@ -35,13 +48,13 @@ blkid_get_fstype() (
     local root="$1"
 
     if ! out=$(blkid -o udev "$root"); then
-        echo "blkid failed: ${out}"
+        echo "Detecting fstype by blkid failed: ${out}"
         return 1
     fi
 
     eval "$out"
     if [ -z "$ID_FS_TYPE" ]; then
-        echo "blkid didn't provide ID_FS_TYPE info"
+        echo "No ID_FS_TYPE from blkid."
         return 1
     fi
     echo $ID_FS_TYPE
@@ -55,12 +68,16 @@ parted_fix_gpt() {
   [ -z "$disk" ] && return
 
   if parted -sm "$rootdisk" print 2>&1 | grep "fix the GPT"; then
-    parted -m ---pretend-input-tty "$rootdisk" print Fix  # Ugly hack
+    # Running parted prompts the user to fix this condition, but only does so in
+    # the interactive exception handler. In order to pass input we must use the
+    # hidden triple-dash flag and pass both print and Fix arguments. `print`
+    # alone will not perform the fix, but `Fix` alone will fail the argument
+    # parser.
+    parted -m ---pretend-input-tty "$rootdisk" print Fix
     if parted -sm "$rootdisk" print 2>&1 | grep "fix the GPT"; then
-      echo "Failed to fix the GPT"
+      echo "Failed to fix the GPT."
       return 1
     fi
-    echo "Fixed the GPT"
   fi
 }
 
@@ -70,7 +87,7 @@ split_partition() {
   [ -z "$root" ] && return
 
   if [ -e /sys/block/${root##*/} ]; then
-    echo "Root is not a partition, skipping partition resize"
+    echo "Root is not a partition, skipping partition resize."
     return 1
   fi
 
@@ -93,8 +110,8 @@ parted_needresize() {
     return 1
   fi
 
-  if ! echo -e "$out"|sed '$!d'|grep -q "^${partnum}:"; then
-    echo "Root partition is not final partition on disk. Not resizing!"
+  if ! echo -e "$out" | sed '$!d' | grep -q "^${partnum}:"; then
+    echo "Root partition is not final partition on disk. Not resizing."
     return 1
   fi
 
@@ -131,7 +148,7 @@ parted_resize_mkpart() (
   local fstype="" partname="" flags="" temp=""
 
   if ! out=$(parted -sm "$disk" unit b print 2>&1); then
-    echo "Unable to get partition info"
+    echo "Unable to get partition info."
     return 1
   fi
 
@@ -147,7 +164,7 @@ parted_resize_mkpart() (
 
   if ! out=$(parted -sm "$disk" -- mkpart pri $fstype $partbegin -1 2>&1); then
     echo "Failed to recreate original partition: ${out}"
-    echo "Trying to create with original parameters"
+    echo "Trying to create with original parameters."
     if ! out=$(parted -sm "$disk" mkpart pri $fstype $partbegin $partend 2>&1); then
       echo "Failed to recreate original partition: ${out}"
       return 1

@@ -47,8 +47,8 @@ modify_sshd_conf() (
   add_or_update_sshd() {
     local entry="$1"
     local sshd_config="$2"
-    local directive="$(echo "${entry}"|cut -d' ' -f1)"
-    local value="$(echo "${entry}"|cut -d' ' -f2-)"
+    local directive="$(echo "${entry}" | cut -d' ' -f1)"
+    local value="$(echo "${entry}" | cut -d' ' -f2-)"
  
     # Check if directive is present .
     if grep -Eq "^\s*${directive}" "${sshd_config}"; then
@@ -158,7 +158,7 @@ restart_service() {
 
   # The other options will be wrappers to systemctl on
   # systemd-enabled systems, so stop if found.
-  if readlink -f /sbin/init|grep -q systemd; then
+  if readlink -f /sbin/init | grep -q systemd; then
     if systemctl is-active --quiet "${service}"; then
       echo "Restarting ${service}."
       systemctl restart "${service}"

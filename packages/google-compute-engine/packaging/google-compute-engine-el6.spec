@@ -14,7 +14,7 @@
 
 Name: google-compute-engine
 Version: 2.8.8
-Release 1.el7
+Release 1.el6
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
@@ -23,6 +23,10 @@ Requires: curl
 Requires: google-compute-engine-oslogin
 Requires: python-google-compute-engine = %{version}
 Requires: rsyslog
+# Old packages
+Obsoletes: google-compute-engine-init
+Obsoletes: google-config
+Obsoletes: google-startup-scripts
 
 BuildArch: noarch
 BuildRequires: systemd
@@ -43,51 +47,45 @@ install -d %{buildroot}%{_unitdir}
 rsync -Pravz systemd/*.service %{buildroot}%{_unitdir}
 install -D systemd/*.preset %{buildroot}%{_presetdir}/90-google-compute-engine.preset
 
-%files el7
+%files
 %defattr(0644,root,root,0755)
+/etc/init/*.conf
 /etc/udev/rules.d/*.rules
-%attr(0755,-,-) %{_bindir}/*
-%attr(0755,-,-) /etc/dhcp/dhclient.d/google_hostname.sh
-%{_unitdir}/*.service
-%{_presetdir}/90-google-compute-engine.preset
+%attr(0755,root,root) %{_bindir}/*
+%attr(0755,-,-) /sbin/google-dhclient-script
+%attr(0755,-,-) /etc/dhcp/dhclient-exit-hooks/google_set_hostname
 %config /etc/modprobe.d/gce-blacklist.conf
 %config /etc/rsyslog.d/90-google.conf
 %config /etc/sysctl.d/11-gce-network-security.conf
 
-%post el7
+%post
+if [ $1 -eq 2 ]; then
+  # New service might not be enabled during upgrade.
+  systemctl enable google-network-daemon.service
+fi
+
 # On upgrade run instance setup again to handle any new configs and restart daemons.
 if [ $1 -eq 2 ]; then
+  stop -q -n google-accounts-daemon
+  stop -q -n google-clock-skew-daemon
+  stop -q -n google-network-daemon
   /usr/bin/google_instance_setup
-  systemctl reload-or-restart google-accounts-daemon.service
-  systemctl reload-or-restart google-clock-skew-daemon.service
-  systemctl reload-or-restart google-network-daemon.service
+  start -q -n google-accounts-daemon
+  start -q -n google-clock-skew-daemon
+  start -q -n google-network-daemon
 fi
 
-%systemd_post google-accounts-daemon.service
-%systemd_post google-clock-skew-daemon.service
-%systemd_post google-instance-setup.service
-%systemd_post google-network-daemon.service
-%systemd_post google-shutdown-scripts.service
-%systemd_post google-startup-scripts.service
-
-# Remove old services.
-if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
-  systemctl stop --no-block google-ip-forwarding-daemon
-  systemctl disable google-ip-forwarding-daemon.service
+if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
+  stop -q -n google-ip-forwarding-daemon
 fi
 
-if [ -f /lib/systemd/system/google-network-setup.service ]; then
-  systemctl stop --no-block google-network-setup
-  systemctl disable google-network-setup.service
-fi
-
-%preun el7
+%preun
 # On uninstall only.
 if [ $1 -eq 0 ]; then
-  %systemd_preun google-accounts-daemon.service
-  %systemd_preun google-clock-skew-daemon.service
-  %systemd_preun google-instance-setup.service
-  %systemd_preun google-network-daemon.service
-  %systemd_preun google-shutdown-scripts.service
-  %systemd_preun google-startup-scripts.service
+  stop -q -n google-accounts-daemon
+  stop -q -n google-clock-skew-daemon
+  stop -q -n google-network-daemon
+  if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
+    stop -q -n google-ip-forwarding-daemon
+  fi
 fi

@@ -15,8 +15,7 @@ Name: gce-disk-expand
 Summary: Google Compute Engine root disk expansion module
 Version: 2.0.0
 Release: 1
-# TODO: is this the correct license now?
-License: GPLv3, Apache Software License
+License: Apache Software License
 Group: System Environment/Base
 URL: https://github.com/GoogleCloudPlatform/compute-image-packages
 Source0: %{name}_%{version}.orig.tar.gz

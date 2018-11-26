@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,32 +13,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-############################## WARNING ##############################
-# This script is for testing purposes only. It is not intended
-# for creating production RPM packages.
-#####################################################################
-
-# Run from the top of the source directory.
 NAME="google-compute-engine"
 VERSION="2.8.8"
 
-working_dir=${PWD}
 rpm_working_dir=/tmp/rpmpackage/${NAME}-${VERSION}
-
+working_dir=${PWD}
 if [[ $(basename "$working_dir") != $NAME ]]; then
-  echo "packaging scripts must be run from top of package dir"
+  echo "Packaging scripts must be run from top of package dir."
   exit 1
 fi
+
+[[ -f /etc/os-release ]] && eval `grep VERSION_ID /etc/os-release`
 
 # Build dependencies.
 sudo yum -y install make gcc-c++ libcurl-devel json-c json-c-devel pam-devel policycoreutils-python boost-devel
 
-# .rpm creation tools.
+# RPM creation tools.
 sudo yum -y install rpmdevtools
 
 rm -rf /tmp/rpmpackage
 mkdir -p ${rpm_working_dir}/{SOURCES,SPECS}
-cp packaging/${NAME}.spec ${rpm_working_dir}/SPECS/
+
+# EL6 has a separate .spec file
+if [[ $VERSION_ID =~ ^6 ]]; then
+  cp packaging/${NAME}-el6.spec ${rpm_working_dir}/SPECS/${NAME}.spec
+else
+  cp packaging/${NAME}.spec ${rpm_working_dir}/SPECS/
+fi
 
 tar czvf ${rpm_working_dir}/SOURCES/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 

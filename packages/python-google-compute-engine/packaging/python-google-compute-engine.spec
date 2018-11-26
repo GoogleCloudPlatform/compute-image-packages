@@ -13,14 +13,9 @@
 # limitations under the License.
 
 # Force the dist to be el7 to avoid el7.centos.
-# TODO: what to do about dist in build-many scenario?
-%if 0%{?rhel} == 7
-  %define dist .el7
-%endif
-
 Name: python-google-compute-engine
 Version: 2.8.8
-Release: 1%{?dist}
+Release: 1
 Summary: Google Compute Engine python library
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
