@@ -5,7 +5,3 @@
 
 override_dh_systemd_start:
 	# Configured in google-compute-engine.postinst instead.
-
-override_dh_clean:
-	rm -rf google_compute_engine.egg-info
-	dh_clean

@@ -14,6 +14,7 @@
 
 Name: google-compute-engine
 Version: 2.8.8
+Release 1.el7
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
@@ -40,6 +41,7 @@ specific to the Google Compute Engine cloud environment.
 
 %package el6
 Release 1.el6
+Provides: google-compute-engine
 
 Requires: curl
 Requires: google-compute-engine-oslogin
@@ -54,6 +56,7 @@ Obsoletes: google-compute-engine
 
 %package el7
 Release 1.el7
+Provides: google-compute-engine
 
 Requires: systemd
 Requires: curl
@@ -67,10 +70,13 @@ Obsoletes: google-startup-scripts
 # non-distro version of this package
 Obsoletes: google-compute-engine
 
+%prep
+%autosetup
+
 %install
 rsync -Pravz src/ %{buildroot}
 install -d %{buildroot}%{_unitdir}
-rsync -Pravz systemd/*.conf %{buildroot}%{_unitdir}
+rsync -Pravz systemd/*.service %{buildroot}%{_unitdir}
 install -D systemd/*.preset %{buildroot}%{_presetdir}/90-google-compute-engine.preset
 
 %files el6
