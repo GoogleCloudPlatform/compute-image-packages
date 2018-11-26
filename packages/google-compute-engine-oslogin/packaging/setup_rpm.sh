@@ -25,6 +25,11 @@ VERSION="1.3.2"
 working_dir=${PWD}
 rpm_working_dir=/tmp/rpmpackage/${NAME}-${VERSION}
 
+if [[ $(basename "$working_dir") == $NAME ]]; then
+  echo "packaging scripts must be run from top of package dir"
+  exit 1
+fi
+
 # Build dependencies.
 sudo yum -y install make gcc-c++ libcurl-devel json-c json-c-devel pam-devel policycoreutils-python boost-devel
 
@@ -32,12 +37,9 @@ sudo yum -y install make gcc-c++ libcurl-devel json-c json-c-devel pam-devel pol
 sudo yum -y install rpmdevtools
 
 rm -rf /tmp/rpmpackage
-mkdir -p ${rpm_working_dir}
-cp -r ${working_dir}/packaging/rpmbuild ${rpm_working_dir}/
-mkdir -p ${rpm_working_dir}/rpmbuild/SOURCES
+mkdir -p ${rpm_working_dir}/{SOURCES,SPECS}
+cp packaging/${NAME}.spec ${rpm_working_dir}/SPECS/
 
-tar czvf ${rpm_working_dir}/rpmbuild/SOURCES/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
+tar czvf ${rpm_working_dir}/SOURCES/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
-pushd /tmp/rpmpackage
-
-rpmbuild --define "_topdir ${rpm_working_dir}/rpmbuild" -ba ${rpm_working_dir}/rpmbuild/SPECS/${NAME}.spec
+rpmbuild --define "_topdir ${rpm_working_dir}/" -ba ${rpm_working_dir}/SPECS/${NAME}.spec

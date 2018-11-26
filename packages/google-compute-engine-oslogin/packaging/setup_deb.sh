@@ -21,8 +21,11 @@
 NAME="google-compute-engine-oslogin"
 VERSION="1.3.2"
 working_dir=${PWD}
-# Run from the $NAME directory, not the packaging/ directory.
-[[ $(basename "$working_dir") == $NAME ]] || exit 1
+
+if [[ $(basename "$working_dir") == $NAME ]]; then
+  echo "packaging scripts must be run from top of package dir"
+  exit 1
+fi
 
 # Build dependencies.
 sudo apt-get -y install make g++ libcurl4-openssl-dev libjson-c-dev libpam-dev
@@ -31,8 +34,6 @@ sudo apt-get -y install make g++ libcurl4-openssl-dev libjson-c-dev libpam-dev
 sudo apt-get -y install debhelper devscripts build-essential
 
 rm -rf /tmp/debpackage
-mkdir -p /tmp/debpackage/${NAME}-${VERSION}
-
 tar czvf /tmp/debpackage/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
 pushd /tmp/debpackage
