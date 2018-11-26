@@ -16,8 +16,4 @@ esac
 . /usr/share/initramfs-tools/hook-functions
 
 parted=$(command -v "parted")
-if [ -n "$parted" ]; then
-	copy_exec "$parted" /bin
-else
-	echo "Something"
-fi
+copy_exec "$parted" /bin

@@ -63,5 +63,4 @@ main() {
 }
 
 . /lib/expandfs-lib.sh
-echo DEBUG DEBUG
 main

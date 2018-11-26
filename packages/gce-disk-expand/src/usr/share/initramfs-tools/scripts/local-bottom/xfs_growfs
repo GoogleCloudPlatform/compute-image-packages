@@ -3,27 +3,25 @@
 PREREQ=""
 prereqs()
 {
-	echo "$PREREQ"
+  echo "$PREREQ"
 }
+
 case $1 in
-# get pre-requisites
-prereqs)
-	prereqs
-	exit 0
-	;;
+  prereqs)
+    prereqs
+    exit 0
+    ;;
 esac
 
 . /scripts/functions
 
 if ! real_root=$(resolve_device "${ROOT}"); then
-	log_failure_message "Failed to resolve root device for \"${ROOT}\""
+  log_failure_message "Failed to resolve root device for \"${ROOT}\""
 fi
 
 if ! fs_type=$(get_fstype "${real_root}"); then
-	log_failure_message "Failed to determine fstype for \"${real_root}\""
+  log_failure_message "Failed to determine fstype for \"${real_root}\""
 fi
-
-echo "This is xfs_growfs"
 
 if [ $fs_type != "xfs" ]; then
     exit 0
