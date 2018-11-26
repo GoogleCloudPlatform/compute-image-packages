@@ -24,7 +24,7 @@ Release: 1%{?dist}
 Summary: Google Compute Engine python library
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
-Source0: google-compute-engine_%{version}.orig.tar.gz
+Source0: %{name}_%{version}.orig.tar.gz
 
 BuildArch: noarch
 BuildRequires: python2-devel python-setuptools python-boto
@@ -42,7 +42,7 @@ Conflicts: google-startup-scripts
 Google Compute Engine python library for Python 2.x.
 
 %prep
-%autosetup -n compute-image-packages
+%autosetup
 
 %build
 python setup.py build
@@ -51,5 +51,5 @@ python setup.py build
 python setup.py install --prefix=%{_prefix} --root %{buildroot}
 
 %files
-%{python_sitelib}/google_compute_engine
-# TODO: binaries?
+%{python_sitelib}/*
+%{_bindir}/*

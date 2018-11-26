@@ -25,7 +25,7 @@ VERSION="1.3.2"
 working_dir=${PWD}
 rpm_working_dir=/tmp/rpmpackage/${NAME}-${VERSION}
 
-if [[ $(basename "$working_dir") == $NAME ]]; then
+if [[ $(basename "$working_dir") != $NAME ]]; then
   echo "packaging scripts must be run from top of package dir"
   exit 1
 fi
