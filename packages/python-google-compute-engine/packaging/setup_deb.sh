@@ -18,7 +18,7 @@
 # for creating production Debian packages.
 #####################################################################
 
-NAME="google-compute-engine"
+NAME="python-google-compute-engine"
 VERSION="2.8.8"
 working_dir=${PWD}
 

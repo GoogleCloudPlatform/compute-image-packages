@@ -37,10 +37,6 @@ main() {
             return
         fi
 
-        # TODO: check all error conditions and echos
-        # TODO: move split into resize ? (but both resize and check need split)
-        # TODO: variable names and indentation
-        # TODO: split fs resize, run afterward
         if parted --help|grep -q 'resizepart'; then
             if ! out=$(parted_resizepart "$disk" "$partnum"); then
                 echo "Failed to resize partition: ${out}"

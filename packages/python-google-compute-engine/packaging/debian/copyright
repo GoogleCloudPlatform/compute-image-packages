@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: google-compute-engine
+Upstream-Name: python-google-compute-engine
 Upstream-Contact: gc-team@google.com
 
 Files: *

@@ -1,4 +1,4 @@
-google-compute-image-packages (2.8.8-1) stable; urgency=low
+python-google-compute-engine (2.8.8-1) stable; urgency=low
 
   * Update sudoer group membership without overriding local groups.
 
