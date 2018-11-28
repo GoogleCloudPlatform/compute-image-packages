@@ -57,8 +57,8 @@ class AccountsDaemonTest(unittest.TestCase):
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.AccountsUtils(
               logger=mock_logger_instance, groups='foo,bar', remove=True,
-              useradd_cmd=mock.ANY, userdel_cmd=mock.ANY, usermod_cmd=mock.ANY,
-              groupadd_cmd=mock.ANY),
+              gpasswd_cmd=mock.ANY, groupadd_cmd=mock.ANY, useradd_cmd=mock.ANY,
+              userdel_cmd=mock.ANY, usermod_cmd=mock.ANY),
           mock.call.lock.LockFile(accounts_daemon.LOCKFILE),
           mock.call.lock.LockFile().__enter__(),
           mock.call.logger.Logger().info(mock.ANY),
@@ -90,8 +90,8 @@ class AccountsDaemonTest(unittest.TestCase):
           mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
           mock.call.utils.AccountsUtils(
               logger=mock_logger_instance, groups=None, remove=False,
-              useradd_cmd=mock.ANY, userdel_cmd=mock.ANY, usermod_cmd=mock.ANY,
-              groupadd_cmd=mock.ANY),
+              gpasswd_cmd=mock.ANY, groupadd_cmd=mock.ANY, useradd_cmd=mock.ANY,
+              userdel_cmd=mock.ANY, usermod_cmd=mock.ANY),
           mock.call.lock.LockFile(accounts_daemon.LOCKFILE),
           mock.call.logger.Logger().warning('Test Error'),
       ]
@@ -381,6 +381,64 @@ class AccountsDaemonTest(unittest.TestCase):
             {'sshKeys': '3', 'ssh-keys': '2', 'enable-oslogin': 'true'})
     _AssertEnableOsLogin(data, True)
 
+  def testGetEnableTwoFactorValue(self):
+
+    def _AssertEnableTwoFactor(data, expected):
+      """Test the correct value for enable-oslogin-2fa is returned.
+
+      Args:
+        data: dictionary, the faux metadata server contents.
+        expected: bool, if True, two factor authentication is enabled.
+      """
+      self.mock_setup._GetInstanceAndProjectAttributes.return_value = data
+      actual = accounts_daemon.AccountsDaemon._GetEnableTwoFactorValue(
+          self.mock_setup, data)
+      self.assertEqual(actual, expected)
+
+    data = ({}, {})
+    _AssertEnableTwoFactor(data, False)
+
+    data = ({'enable-oslogin-2fa': 'true'}, {})
+    _AssertEnableTwoFactor(data, True)
+
+    data = ({'enable-oslogin-2fa': 'false'}, {})
+    _AssertEnableTwoFactor(data, False)
+
+    data = ({'enable-oslogin-2fa': 'yep'}, {})
+    _AssertEnableTwoFactor(data, False)
+
+    data = ({'enable-oslogin-2fa': 'True'}, {})
+    _AssertEnableTwoFactor(data, True)
+
+    data = ({'enable-oslogin-2fa': 'TRUE'}, {})
+    _AssertEnableTwoFactor(data, True)
+
+    data = ({'enable-oslogin-2fa': ''}, {})
+    _AssertEnableTwoFactor(data, False)
+
+    data = ({'enable-oslogin-2fa': 'true'}, {'enable-oslogin-2fa': 'true'})
+    _AssertEnableTwoFactor(data, True)
+
+    data = ({'enable-oslogin-2fa': 'false'}, {'enable-oslogin-2fa': 'true'})
+    _AssertEnableTwoFactor(data, False)
+
+    data = ({'enable-oslogin-2fa': ''}, {'enable-oslogin-2fa': 'true'})
+    _AssertEnableTwoFactor(data, True)
+
+    data = ({}, {'enable-oslogin-2fa': 'true'})
+    _AssertEnableTwoFactor(data, True)
+
+    data = ({}, {'enable-oslogin-2fa': 'false'})
+    _AssertEnableTwoFactor(data, False)
+
+    data = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
+            {'sshKeys': '3', 'ssh-keys': '2'})
+    _AssertEnableTwoFactor(data, False)
+
+    data = ({'block-project-ssh-keys': 'false', 'ssh-keys': '1'},
+            {'sshKeys': '3', 'ssh-keys': '2', 'enable-oslogin-2fa': 'true'})
+    _AssertEnableTwoFactor(data, True)
+
   def testUpdateUsers(self):
     update_users = {
         'a': '1',
@@ -452,6 +510,7 @@ class AccountsDaemonTest(unittest.TestCase):
         mock.call.setup.logger.debug(mock.ANY),
         mock.call.utils.GetConfiguredUsers(),
         mock.call.setup._GetEnableOsLoginValue(result),
+        mock.call.setup._GetEnableTwoFactorValue(result),
         mock.call.setup._GetAccountsData(result),
         mock.call.oslogin.UpdateOsLogin(enable=False),
         mock.call.setup._UpdateUsers(desired),
@@ -474,6 +533,7 @@ class AccountsDaemonTest(unittest.TestCase):
     self.mock_utils.GetConfiguredUsers.return_value = configured
     self.mock_setup._GetAccountsData.return_value = desired
     self.mock_setup._GetEnableOsLoginValue.return_value = True
+    self.mock_setup._GetEnableTwoFactorValue.return_value = False
     self.mock_oslogin.UpdateOsLogin.return_value = 0
     result = 'result'
     expected_add = []
@@ -484,7 +544,8 @@ class AccountsDaemonTest(unittest.TestCase):
         mock.call.setup.logger.debug(mock.ANY),
         mock.call.utils.GetConfiguredUsers(),
         mock.call.setup._GetEnableOsLoginValue(result),
-        mock.call.oslogin.UpdateOsLogin(enable=True),
+        mock.call.setup._GetEnableTwoFactorValue(result),
+        mock.call.oslogin.UpdateOsLogin(enable=True, two_factor=False),
         mock.call.setup._UpdateUsers(desired),
         mock.call.setup._RemoveUsers(mock.ANY),
         mock.call.utils.SetConfiguredUsers(mock.ANY),

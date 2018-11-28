@@ -39,8 +39,8 @@ class AccountsDaemon(object):
   user_ssh_keys = {}
 
   def __init__(
-      self, groups=None, remove=False, useradd_cmd=None, userdel_cmd=None,
-      usermod_cmd=None, groupadd_cmd=None, debug=False):
+      self, groups=None, remove=False, gpasswd_cmd=None, groupadd_cmd=None,
+      useradd_cmd=None, userdel_cmd=None, usermod_cmd=None, debug=False):
     """Constructor.
 
     Args:
@@ -50,6 +50,7 @@ class AccountsDaemon(object):
       userdel_cmd: string, command to delete a user.
       usermod_cmd: string, command to modify user's groups.
       groupadd_cmd: string, command to add a new group.
+      gpasswd_cmd: string, command to remove a user from a group.
       debug: bool, True if debug output should write to the console.
     """
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
@@ -58,8 +59,9 @@ class AccountsDaemon(object):
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.utils = accounts_utils.AccountsUtils(
         logger=self.logger, groups=groups, remove=remove,
+        gpasswd_cmd=gpasswd_cmd, groupadd_cmd=groupadd_cmd,
         useradd_cmd=useradd_cmd, userdel_cmd=userdel_cmd,
-        usermod_cmd=usermod_cmd, groupadd_cmd=groupadd_cmd)
+        usermod_cmd=usermod_cmd)
     self.oslogin = oslogin_utils.OsLoginUtils(logger=self.logger)
 
     try:
@@ -242,6 +244,23 @@ class AccountsDaemon(object):
 
     return value.lower() == 'true'
 
+  def _GetEnableTwoFactorValue(self, metadata_dict):
+    """Get the value of the enable-oslogin-2fa metadata key.
+
+    Args:
+      metadata_dict: json, the deserialized contents of the metadata server.
+
+    Returns:
+      bool, True if two factor authentication is enabled for VM access.
+    """
+    instance_data, project_data = self._GetInstanceAndProjectAttributes(
+        metadata_dict)
+    instance_value = instance_data.get('enable-oslogin-2fa')
+    project_value = project_data.get('enable-oslogin-2fa')
+    value = instance_value or project_value or ''
+
+    return value.lower() == 'true'
+
   def HandleAccounts(self, result):
     """Called when there are changes to the contents of the metadata server.
 
@@ -251,9 +270,10 @@ class AccountsDaemon(object):
     self.logger.debug('Checking for changes to user accounts.')
     configured_users = self.utils.GetConfiguredUsers()
     enable_oslogin = self._GetEnableOsLoginValue(result)
+    enable_two_factor = self._GetEnableTwoFactorValue(result)
     if enable_oslogin:
       desired_users = {}
-      self.oslogin.UpdateOsLogin(enable=True)
+      self.oslogin.UpdateOsLogin(enable=True, two_factor=enable_two_factor)
     else:
       desired_users = self._GetAccountsData(result)
       self.oslogin.UpdateOsLogin(enable=False)
@@ -279,6 +299,7 @@ def main():
         usermod_cmd=instance_config.GetOptionString('Accounts', 'usermod_cmd'),
         groupadd_cmd=instance_config.GetOptionString(
             'Accounts', 'groupadd_cmd'),
+        gpasswd_cmd=instance_config.GetOptionString('Accounts', 'gpasswd_cmd'),
         debug=bool(options.debug))
 
 

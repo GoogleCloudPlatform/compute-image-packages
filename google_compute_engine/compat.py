@@ -40,6 +40,8 @@ elif 'red hat enterprise linux' in distro_name and distro_version == '6':
   import google_compute_engine.distro_lib.el_6.utils as distro_utils
 elif 'red hat enterprise linux' in distro_name:
   import google_compute_engine.distro_lib.el_7.utils as distro_utils
+elif 'fedora' in distro_name:
+  import google_compute_engine.distro_lib.el_7.utils as distro_utils
 elif 'debian' in distro_name and distro_version == '8':
   import google_compute_engine.distro_lib.debian_8.utils as distro_utils
 elif 'debian' in distro_name:
@@ -102,3 +104,9 @@ if sys.version_info < (2, 7, 9):
     subprocess.check_call(command)
 
   urlretrieve.urlretrieve = curlretrieve
+
+if sys.version_info < (3, 2):
+  parser.SafeConfigParser.read_file = parser.SafeConfigParser.readfp
+  parser.Parser = parser.SafeConfigParser
+else:
+  parser.Parser = parser.ConfigParser

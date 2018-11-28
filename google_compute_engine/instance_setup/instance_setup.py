@@ -61,9 +61,9 @@ class InstanceSetup(object):
         self._SetupBotoConfig()
     if self.instance_config.GetOptionBool(
         'InstanceSetup', 'optimize_local_ssd'):
-      self._RunScript('optimize_local_ssd')
+      self._RunScript('google_optimize_local_ssd')
     if self.instance_config.GetOptionBool('InstanceSetup', 'set_multiqueue'):
-      self._RunScript('set_multiqueue')
+      self._RunScript('google_set_multiqueue')
     try:
       self.instance_config.WriteConfig()
     except (IOError, OSError) as e:
@@ -87,8 +87,8 @@ class InstanceSetup(object):
       project_data = {}
       self.logger.warning('Project attributes were not found.')
 
-    return (instance_data.get('google-instance-configs') or
-            project_data.get('google-instance-configs'))
+    return (instance_data.get('google-instance-configs')
+            or project_data.get('google-instance-configs'))
 
   def _RunScript(self, script):
     """Run a script and log the streamed script output.
@@ -147,12 +147,12 @@ class InstanceSetup(object):
     # Instance setup systemd scripts block sshd from starting.
     if os.path.exists(constants.LOCALBASE + '/bin/systemctl'):
       return
-    elif (os.path.exists('/etc/init.d/ssh') or
-          os.path.exists('/etc/init/ssh.conf')):
+    elif (os.path.exists('/etc/init.d/ssh')
+          or os.path.exists('/etc/init/ssh.conf')):
       subprocess.call(['service', 'ssh', 'start'])
       subprocess.call(['service', 'ssh', 'reload'])
-    elif (os.path.exists('/etc/init.d/sshd') or
-          os.path.exists('/etc/init/sshd.conf')):
+    elif (os.path.exists('/etc/init.d/sshd')
+          or os.path.exists('/etc/init/sshd.conf')):
       subprocess.call(['service', 'sshd', 'start'])
       subprocess.call(['service', 'sshd', 'reload'])
 

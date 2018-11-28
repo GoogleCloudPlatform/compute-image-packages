@@ -239,6 +239,7 @@ Accounts          | groups                 | Comma separated list of groups for 
 Accounts          | useradd\_cmd           | Command string to create a new user.
 Accounts          | userdel\_cmd           | Command string to delete a user.
 Accounts          | usermod\_cmd           | Command string to modify a user's groups.
+Accounts          | gpasswd\_cmd           | Command string to remove a user from a group.
 Accounts          | groupadd\_cmd          | Command string to create a new group.
 Daemons           | accounts\_daemon       | `false` disables the accounts daemon.
 Daemons           | clock\_skew\_daemon    | `false` disables the clock skew daemon.
