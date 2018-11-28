@@ -18,7 +18,7 @@
 %endif
 
 Name:           google-compute-engine-oslogin
-Version:        1.3.1
+Version:        1.4.0
 Release:        1%{?dist}
 Summary:        OS Login Functionality for Google Compute Engine
 
