@@ -96,22 +96,34 @@ class OsLoginUtilsTest(unittest.TestCase):
   def testGetStatusActive(self, mock_exists):
     mocks = mock.Mock()
     mocks.attach_mock(mock_exists, 'exists')
+    mocks.attach_mock(self.mock_oslogin, 'oslogin')
     self.mock_oslogin._RunOsLoginControl.return_value = 0
     mock_exists.return_value = True
 
-    self.assertTrue(oslogin_utils.OsLoginUtils._GetStatus(self.mock_oslogin))
-    expected_calls = [mock.call.exists(self.oslogin_nss_cache)]
+    self.assertTrue(
+        oslogin_utils.OsLoginUtils._GetStatus(
+            self.mock_oslogin, two_factor=False))
+    expected_calls = [
+        mock.call.oslogin._RunOsLoginControl(['status']),
+        mock.call.exists(self.oslogin_nss_cache),
+    ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.accounts.oslogin_utils.os.path.exists')
   def testGetStatusNotActive(self, mock_exists):
     mocks = mock.Mock()
     mocks.attach_mock(mock_exists, 'exists')
+    mocks.attach_mock(self.mock_oslogin, 'oslogin')
     self.mock_oslogin._RunOsLoginControl.return_value = 3
     mock_exists.return_value = True
 
-    self.assertFalse(oslogin_utils.OsLoginUtils._GetStatus(self.mock_oslogin))
-    expected_calls = [mock.call.exists(self.oslogin_nss_cache)]
+    self.assertFalse(
+        oslogin_utils.OsLoginUtils._GetStatus(
+            self.mock_oslogin, two_factor=True))
+    expected_calls = [
+        mock.call.oslogin._RunOsLoginControl(['status', '--twofactor']),
+        mock.call.exists(self.oslogin_nss_cache),
+    ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.accounts.oslogin_utils.os.path.exists')
@@ -227,7 +239,7 @@ class OsLoginUtilsTest(unittest.TestCase):
 
     oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True)
     expected_calls = [
-        mock.call.oslogin._GetStatus(),
+        mock.call.oslogin._GetStatus(two_factor=False),
         mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl(['activate']),
         mock.call.oslogin._RunOsLoginNssCache(),
@@ -241,9 +253,10 @@ class OsLoginUtilsTest(unittest.TestCase):
     self.mock_oslogin._RunOsLoginControl.return_value = 0
     self.mock_oslogin._GetStatus.return_value = False
 
-    oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True, True)
+    oslogin_utils.OsLoginUtils.UpdateOsLogin(
+        self.mock_oslogin, True, two_factor=True)
     expected_calls = [
-        mock.call.oslogin._GetStatus(),
+        mock.call.oslogin._GetStatus(two_factor=True),
         mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl(['activate', '--twofactor']),
         mock.call.oslogin._RunOsLoginNssCache(),
@@ -259,7 +272,7 @@ class OsLoginUtilsTest(unittest.TestCase):
 
     oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, False)
     expected_calls = [
-        mock.call.oslogin._GetStatus(),
+        mock.call.oslogin._GetStatus(two_factor=False),
         mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl(['deactivate']),
         mock.call.oslogin._RemoveOsLoginNssCache(),
@@ -274,9 +287,10 @@ class OsLoginUtilsTest(unittest.TestCase):
     self.mock_oslogin._GetStatus.return_value = True
     mock_time.return_value = 6 * 60 * 60 + 1
 
-    oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True)
+    oslogin_utils.OsLoginUtils.UpdateOsLogin(
+        self.mock_oslogin, True, two_factor=True)
     expected_calls = [
-        mock.call.oslogin._GetStatus(),
+        mock.call.oslogin._GetStatus(two_factor=True),
         mock.call.oslogin._RunOsLoginNssCache(),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
@@ -289,11 +303,11 @@ class OsLoginUtilsTest(unittest.TestCase):
     self.mock_oslogin._GetStatus.return_value = True
     mock_time.return_value = 6 * 60 * 60
 
-    oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True)
-    expected_calls = [
-        mock.call.oslogin._GetStatus(),
-    ]
+    return_value = oslogin_utils.OsLoginUtils.UpdateOsLogin(
+        self.mock_oslogin, True, two_factor=True)
+    expected_calls = [mock.call.oslogin._GetStatus(two_factor=True)]
     self.assertEqual(mocks.mock_calls, expected_calls)
+    self.assertEqual(return_value, 0)
 
   def testUpdateOsLoginRedundantDeactivate(self):
     mocks = mock.Mock()
@@ -301,11 +315,11 @@ class OsLoginUtilsTest(unittest.TestCase):
     self.mock_oslogin._RunOsLoginControl.return_value = 0
     self.mock_oslogin._GetStatus.return_value = False
 
-    oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, False)
-    expected_calls = [
-        mock.call.oslogin._GetStatus(),
-    ]
+    return_value = oslogin_utils.OsLoginUtils.UpdateOsLogin(
+        self.mock_oslogin, False, two_factor=True)
+    expected_calls = [mock.call.oslogin._GetStatus(two_factor=False)]
     self.assertEqual(mocks.mock_calls, expected_calls)
+    self.assertEqual(return_value, 0)
 
   def testUpdateOsLoginNotInstalled(self):
     mocks = mock.Mock()
@@ -313,11 +327,11 @@ class OsLoginUtilsTest(unittest.TestCase):
     self.mock_oslogin._RunOsLoginControl.return_value = 0
     self.mock_oslogin._GetStatus.return_value = None
 
-    oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True)
-    expected_calls = [
-        mock.call.oslogin._GetStatus(),
-    ]
+    return_value = oslogin_utils.OsLoginUtils.UpdateOsLogin(
+        self.mock_oslogin, True)
+    expected_calls = [mock.call.oslogin._GetStatus(two_factor=False)]
     self.assertEqual(mocks.mock_calls, expected_calls)
+    self.assertEqual(return_value, None)
 
 
 if __name__ == '__main__':
