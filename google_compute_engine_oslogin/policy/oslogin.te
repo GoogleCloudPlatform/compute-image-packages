@@ -1,0 +1,24 @@
+
+module oslogin 1.0;
+
+
+require {
+	attribute file_type;
+	attribute non_security_file_type;
+	type http_port_t;
+	type sshd_t;
+	class tcp_socket name_connect;
+	class file { create getattr setattr write open };
+	class dir { search write remove_name add_name };
+}
+
+#============= types ==============
+
+type google_sudoers_t;  # defined in oslogin.fc
+typeattribute google_sudoers_t file_type, non_security_file_type;
+
+#============= sshd_t ==============
+
+allow sshd_t google_sudoers_t:file { create getattr setattr write open };
+allow sshd_t google_sudoers_t:dir { search write remove_name add_name };
+allow sshd_t http_port_t:tcp_socket name_connect;
