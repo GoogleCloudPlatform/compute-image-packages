@@ -1,3 +1,10 @@
+google-compute-engine-oslogin (1.4.1-1+deb10) unstable; urgency=low
+
+  * Improve SELinux support.
+  * Improve OS Login control file.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 30 Nov 2018 12:00:00 -0700
+
 google-compute-engine-oslogin (1.4.0-1+deb10) unstable; urgency=low
 
   * Support OS Login two factor authentication.
