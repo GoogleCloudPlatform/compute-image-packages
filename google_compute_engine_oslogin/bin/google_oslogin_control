@@ -77,7 +77,7 @@ modify_sshd_conf() (
 
   # Update AuthorizedKeysCommand to work on EL 6.
   if grep -qs "release 6" /etc/redhat-release; then
-    sshd_user="AuthorizedKeysCommandRunAs root"
+    sshd_auth_keys_command_user="AuthorizedKeysCommandRunAs root"
   fi
 
   for entry in "${sshd_auth_keys_command}" "${sshd_auth_keys_command_user}"; do
@@ -208,6 +208,9 @@ restart_nscd() {
 setup_sudoers() {
   mkdir -p "${sudoers_dir}"
   chmod 750 "${sudoers_dir}"
+  if fixfiles=$(which fixfiles); then
+    $fixfiles restore "${sudoers_dir}"
+  fi
   echo "#includedir ${sudoers_dir}" > "${sudoers_file}"
 }
 
