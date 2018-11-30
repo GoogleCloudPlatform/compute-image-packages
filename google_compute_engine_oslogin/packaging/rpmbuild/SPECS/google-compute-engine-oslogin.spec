@@ -18,7 +18,7 @@
 %endif
 
 Name:           google-compute-engine-oslogin
-Version:        1.4.0
+Version:        1.4.1
 Release:        1%{?dist}
 Summary:        OS Login Functionality for Google Compute Engine
 
@@ -49,11 +49,7 @@ make %{?_smp_mflags} LIBS="-lcurl -ljson-c -lboost_regex"
 
 %install
 rm -rf %{buildroot}
-%if 0%{?el6}
-make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true DIST=".el6"
-%else
-make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true DIST=".el7"
-%endif
+make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true
 
 %files
 %doc
@@ -64,13 +60,29 @@ make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{p
 /usr/bin/google_authorized_keys
 /usr/bin/google_oslogin_control
 /usr/bin/google_oslogin_nss_cache
-/usr/share/selinux/packages/oslogin.cil
+/usr/share/selinux/packages/oslogin.pp
 
 %post
 /sbin/ldconfig
-semodule -i /usr/share/selinux/packages/oslogin.cil
+if [ $1 -gt 1 ]; then  # This is an upgrade.
+  if semodule -l | grep -qi oslogin.el6; then
+    echo "Removing old SELinux module for OS Login."
+    semodule -r oslogin.el6
+  fi
+fi
+echo "Installing SELinux module for OS Login."
+semodule -i /usr/share/selinux/packages/oslogin.pp
+if [ -e /var/google-sudoers.d ]; then
+  fixfiles restore /var/google-sudoers.d
+fi
 
 %postun
 /sbin/ldconfig
+if [ $1 = 0 ]; then  # This is an uninstall.
+  if semodule -l|grep -qi oslogin; then
+    echo "Removing SELinux module for OS Login."
+    semodule -r oslogin
+  fi
+fi
 
 %changelog
