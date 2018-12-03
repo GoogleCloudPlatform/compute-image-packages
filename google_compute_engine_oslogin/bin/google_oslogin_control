@@ -17,55 +17,41 @@ nss_config="/etc/nsswitch.conf"
 pam_config="/etc/pam.d/sshd"
 sshd_config="/etc/ssh/sshd_config"
 sudoers_dir="/var/google-sudoers.d"
+users_dir="/var/google-users.d"
 sudoers_file="/etc/sudoers.d/google-oslogin"
 added_comment="# Added by Google Compute Engine OS Login."
-
+sshd_block="#### Google OS Login control. Do not edit this section. ####"
+sshd_end_block="#### End Google OS Login control section. ####"
 
 is_freebsd() {
   [ "$(uname)" = "FreeBSD" ]
   return $?
 }
 
+# Update nsswitch.conf to include OS Login NSS module for passwd.
 modify_nsswitch_conf() {
   local nss_config="${1:-${nss_config}}"
 
-  ${sed} -i '/^passwd:/ s/$/ cache_oslogin oslogin/' ${nss_config}
-  if is_freebsd; then
-    ${sed} -i '/^passwd:/ s/compat/files/' ${nss_config}
+  if ! grep -q '^passwd:.*oslogin' ${nss_config}; then
+    $sed -i"" '/^passwd:/ s/$/ cache_oslogin oslogin/' ${nss_config}
+  fi
+
+  if is_freebsd && grep -q '^passwd:.*compat'; then
+    $sed -i"" '/^passwd:/ s/compat/files/' ${nss_config}
   fi
 }
 
 restore_nsswitch_conf() {
   local nss_config="${1:-${nss_config}}"
 
-  ${sed} -i '/^passwd:/ s/ cache_oslogin oslogin//' ${nss_config}
+  $sed -i"" '/^passwd:/ s/ cache_oslogin oslogin//' ${nss_config}
+  if is_freebsd; then
+    $sed -i"" '/^passwd:/ s/files/compat/' ${nss_config}
+  fi
 }
 
 modify_sshd_conf() (
   set -e
-
-  add_or_update_sshd() {
-    local entry="$1"
-    local sshd_config="$2"
-    local directive="$(echo "${entry}"|cut -d' ' -f1)"
-    local value="$(echo "${entry}"|cut -d' ' -f2-)"
- 
-    # Check if directive is present .
-    if grep -Eq "^\s*${directive}" "${sshd_config}"; then
-      # Check if value is correct.
-      if ! grep -Eq "^\s*${directive}(\s|=)+${value}" "${sshd_config}"; then
-        # Amend the line.
-        ${sed} -Ei \
-          "/^\s*${directive}/ s/\>(\s|=)+.*/ ${value}/" "${sshd_config}"
-      fi
-    else
-      if [ -z "${added}" ]; then
-        ${sed} -i "\$a \\\n${added_comment}" "${sshd_config}"
-        added="yes"
-      fi
-      ${sed} -i "\$a ${entry}" "${sshd_config}"
-    fi
-  }
 
   local sshd_config="${1:-${sshd_config}}"
 
@@ -73,24 +59,66 @@ modify_sshd_conf() (
   local sshd_auth_keys_command_user="AuthorizedKeysCommandUser root"
   local sshd_auth_methods="AuthenticationMethods publickey,keyboard-interactive"
   local sshd_challenge="ChallengeResponseAuthentication yes"
-  local added=""
 
-  # Update AuthorizedKeysCommand to work on EL 6.
+  # Update directives for EL 6.
   if grep -qs "release 6" /etc/redhat-release; then
     sshd_auth_keys_command_user="AuthorizedKeysCommandRunAs root"
+    sshd_auth_methods="RequiredAuthentications2 publickey,keyboard-interactive"
   fi
 
-  for entry in "${sshd_auth_keys_command}" "${sshd_auth_keys_command_user}"; do
-    add_or_update_sshd "${entry}" "${sshd_config}"
+  add_or_update_sshd() {
+    local entry="$1"
+    local sshd_config="$2"
+    local directive="$(echo "$entry" | cut -d' ' -f1)"
+    local value="$(echo "$entry" | cut -d' ' -f2-)"
+
+    # Check if directive is present.
+    if grep -Eq "^\s*${directive}" "$sshd_config"; then
+      # Check if value is incorrect.
+      if ! grep -Eq "^\s*${directive}(\s|=)+${value}" "$sshd_config"; then
+        # Comment out the line (because sshd_config is first-directive-found)
+        # and add to end section.
+        $sed -i"" -E "/^\s*${directive}/ s/^/${added_comment}\n#/" "$sshd_config"
+        $sed -i"" "/$sshd_end_block/ i${entry}" "$sshd_config"
+      fi
+    else
+      $sed -i"" "/$sshd_end_block/ i${entry}" "$sshd_config"
+    fi
+  }
+
+  # Setup Google config block.
+  if ! grep -q "$sshd_block" "$sshd_config"; then
+    # Remove old-style additions.
+    $sed -i"" "/${added_comment}/,+1d" "$sshd_config"
+    /bin/echo -e "\n\n${sshd_block}\n${sshd_end_block}" >> "$sshd_config"
+  fi
+
+  for entry in "$sshd_auth_keys_command" "$sshd_auth_keys_command_user"; do
+    add_or_update_sshd "$entry" "$sshd_config"
   done
 
-  if [ "${two_factor}" = "true" ]; then
-    for entry in "${sshd_auth_methods}" "${sshd_challenge}"; do
-      add_or_update_sshd "${entry}" "${sshd_config}"
+  if [ -n "$two_factor" ]; then
+    for entry in "$sshd_auth_methods" "$sshd_challenge"; do
+      add_or_update_sshd "$entry" "$sshd_config"
     done
   fi
 )
 
+restore_sshd_conf() {
+  local sshd_config="${1:-${sshd_config}}"
+
+  if ! grep -q "$sshd_block" "$sshd_config"; then
+    # Remove old-style additions.
+    $sed -i"" "/${added_comment}/,+1d" "$sshd_config"
+  else
+    # Uncomment commented-out fields and remove Google config block.
+    $sed -i"" "/${added_comment}/{n;s/^#//}" "$sshd_config"
+    $sed -i"" "/${added_comment}/d" "$sshd_config"
+    $sed -i"" "/${sshd_block}/,/${sshd_end_block}/d" "$sshd_config"
+  fi
+}
+
+# Inserts pam modules to relevant pam stacks if missing.
 modify_pam_sshd() (
   set -e
 
@@ -103,55 +131,68 @@ modify_pam_sshd() (
 
   local added_config=""
 
-  # For COS simply prepend the new config.
+  # For COS this file is solely includes, so simply prepend the new config,
+  # making each entry the top of its stack.
   if [ -e /etc/os-release ] && grep -q "ID=cos" /etc/os-release; then
     added_config="${added_comment}\n"
-    for cfg in "${pam_account_admin}" "${pam_account_oslogin}" \
-               "${pam_session_homedir}"; do
-      added_config+="${cfg}\n"
+    for cfg in "$pam_account_admin" "$pam_account_oslogin" \
+        "$pam_session_homedir"; do
+      grep -qE "^${cfg%% *}.*${cfg##* }" ${pam_config} || added_config+="${cfg}\n"
     done
 
-    if [ -n "${two_factor}" ]; then
-      added_config+="${pam_auth_oslogin}\n"
+    if [ -n "$two_factor" ]; then
+      grep -q "$pam_auth_oslogin" "$pam_config" || added_config+="${pam_auth_oslogin}\n"
     fi
 
-    ${sed} -i "1i ${added_config}\n\n" "${pam_config}"
+    $sed -i"" "1i ${added_config}\n\n" "$pam_config"
 
     return 0
   fi
 
-  if [ -n "${two_factor}" ]; then
-    # Insert pam_auth_oslogin at top of auth stack.
+  # Find the distro-specific insertion point for auth and insert OS Login
+  # two-factor auth module if requested.
+  if [ -n "$two_factor" ] && ! grep -q "$pam_auth_oslogin" ${pam_config}; then
     if [ -e /etc/debian_version ]; then
       # Get location of common-auth and check if preceding line is a comment.
-      insert=$(${sed} -rn "/^@include\s+common-auth/=" "${pam_config}")
-      ${sed} -n "$((insert-1))p" "${pam_config}" | grep -q '^#' && insert=$((insert-1))
+      insert=$($sed -rn "/^@include\s+common-auth/=" "$pam_config")
+      $sed -n "$((insert-1))p" "$pam_config" | grep -q '^#' && insert=$((insert-1))
     elif [ -e /etc/redhat-release ]; then
       # Get location of password-auth.
-      insert=$(${sed} -rn "/^auth\s+(substack|include)\s+password-auth/=" "${pam_config}")
-    elif [ -e /etc/SuSE-release ]; then
+      insert=$($sed -rn "/^auth\s+(substack|include)\s+password-auth/=" "$pam_config")
+    elif [ -e /etc/os-release ] && grep -q 'ID="sles"' /etc/os-release; then
       # Get location of common-auth.
-      insert=$(${sed} -rn "/^auth\s+include\s+common-auth/=" "${pam_config}")
+      insert=$($sed -rn "/^auth\s+include\s+common-auth/=" "$pam_config")
     fi
 
-    if [ -n "${insert}" ]; then
+    # Insert pam_auth_oslogin at insertion point detected above.
+    if [ -n "$insert" ]; then
       added_config="${added_comment}\n${pam_auth_oslogin}"
-      ${sed} -i "${insert}i ${added_config}" "${pam_config}"
+      $sed -i"" "${insert}i ${added_config}" "$pam_config"
     fi
   fi
 
-  # Append at end of `account` stack
-  added_config="\\\n${added_comment}\n${pam_account_admin}\n${pam_account_oslogin}"
-  account_end=$(${sed} -n '/^account/=' "${pam_config}" | tail -1)
-  ${sed} -i "${account_end}a ${added_config}" "${pam_config}"
+  # Append account modules at end of `account` stack.
+  if ! grep -qE '^account.*oslogin' ${pam_config}; then
+    added_config="\\\n${added_comment}\n${pam_account_admin}\n${pam_account_oslogin}"
+    account_end=$($sed -n '/^account/=' "$pam_config" | tail -1)
+    $sed -i"" "${account_end}a ${added_config}" "$pam_config"
+  fi
 
-  # Append at end of `session` stack
-  added_config="\\\n${added_comment}\n${pam_session_homedir}"
-  session_end=$(${sed} -n '/^session/=' "${pam_config}" | tail -1)
-  ${sed} -i "${session_end}a ${added_config}" "${pam_config}"
-
-  # TODO: SLES, FreeBSD, others?
+  # Append mkhomedir module at end of `session` stack.
+  if ! grep -qE '^session.*mkhomedir' ${pam_config}; then
+    added_config="\\\n${added_comment}\n${pam_session_homedir}"
+    session_end=$($sed -n '/^session/=' "$pam_config" | tail -1)
+    $sed -i"" "${session_end}a ${added_config}" "$pam_config"
+  fi
 )
+
+restore_pam_sshd() {
+  local pam_config="${1:-${pam_config}}"
+
+  $sed -i"" "/${added_comment}/d" "$pam_config"
+  $sed -i"" "/pam_oslogin/d" "$pam_config"
+  $sed -i"" "/^session.*mkhomedir/d" "$pam_config"
+}
 
 restart_service() {
   local service="$1"
@@ -159,9 +200,8 @@ restart_service() {
   # The other options will be wrappers to systemctl on
   # systemd-enabled systems, so stop if found.
   if readlink -f /sbin/init|grep -q systemd; then
-    if systemctl is-active --quiet "${service}"; then
-      echo "Restarting ${service}."
-      systemctl restart "${service}"
+    if systemctl is-active --quiet "$service"; then
+      systemctl restart "$service"
       return $?
     else
       return 0
@@ -170,9 +210,8 @@ restart_service() {
 
   # Use the service helper if it exists.
   if command -v service > /dev/null; then
-    if service "${service}" status; then
-      echo "Restarting ${service}."
-      service "${service}" restart
+    if ! service "$service" status 2>&1 | grep -q unrecognized; then
+      service "$service" restart
       return $?
     else
       return 0
@@ -180,88 +219,89 @@ restart_service() {
   fi
 
   # Fallback to trying sysvinit script of the same name.
-  if command -v /etc/init.d/"${service}" > /dev/null; then
-    if /etc/init.d/"${service}" status > /dev/null 2>&1; then
-      echo "Restarting ${service}."
-      /etc/init.d/"${service}" restart
+  if command -v /etc/init.d/"$service" > /dev/null; then
+    if /etc/init.d/"$service" status > /dev/null 2>&1; then
+      /etc/init.d/"$service" restart
       return $?
     else
       return 0
     fi
   fi
 
-  return 0
+  # We didn't find any way to restart this service.
+  return 1
 }
 
+# Restart sshd unless --norestartsshd flag is set.
 restart_sshd() {
+  if [ -n "$no_restart_sshd" ]; then
+    return 0
+  fi
+  echo "Restarting SSHD"
   for svc in "ssh" "sshd"; do
-    restart_service "${svc}"
+    restart_service "$svc"
   done
 }
 
 restart_nscd() {
+  echo "Restarting NSCD, if present"
   for svc in "nscd" "unscd"; do
-    restart_service "${svc}"
+    restart_service "$svc"
   done
 }
 
-setup_sudoers() {
-  mkdir -p "${sudoers_dir}"
-  chmod 750 "${sudoers_dir}"
-  if fixfiles=$(which fixfiles); then
-    $fixfiles restore "${sudoers_dir}"
-  fi
-  echo "#includedir ${sudoers_dir}" > "${sudoers_file}"
-}
-
-remove_sudoers() {
-  rm -f "${sudoers_file}"
-  rm -rf "${sudoers_dir}"
-}
-
-restore_config() {
-  local config="$1"
-
-  [ -f "${config}.pre_oslogin" ] && mv -f "${config}.pre_oslogin" "${config}"
-}
-
-restore_all_configs() {
-  for config in "${sshd_config}" "${pam_config}"; do
-    restore_config "${config}"
+setup_google_dirs() {
+  for dir in "$sudoers_dir" "$users_dir"; do
+    [ -d "$dir" ] && continue
+    mkdir -p "$dir"
+    chmod 750 "$dir"
+    if fixfiles=$(command -v fixfiles); then
+      $fixfiles restore "$dir"
+    fi
   done
+  echo "#includedir ${sudoers_dir}" > "$sudoers_file"
+}
+
+remove_google_dirs() {
+  for dir in "$sudoers_dir" "$users_dir"; do
+    rm -rf "$dir"
+  done
+  rm -f "$sudoers_file"
 }
 
 activate() {
-  for cfg in "${sshd_config}" "${pam_config}"; do
-    cp "${cfg}" "${cfg}.pre_oslogin" || return 1
-  done
   for func in modify_sshd_conf modify_nsswitch_conf \
-              modify_pam_sshd setup_sudoers restart_nscd; do
+              modify_pam_sshd setup_google_dirs restart_nscd restart_sshd; do
     $func
     [ $? -eq 0 ] || return 1
   done
 }
 
 deactivate() {
-  for func in remove_sudoers restore_nsswitch_conf \
-              restore_all_configs restart_nscd; do
+  for func in remove_google_dirs restore_nsswitch_conf \
+              restore_sshd_conf restore_pam_sshd restart_nscd restart_sshd; do
     $func
   done
 }
 
-get_status() {
-  if grep -q "^passwd:.*oslogin" "${nss_config}"; then
-    exit 0
-  else
-    exit 3
-  fi
-}
+# get_status checks each file for appropriate updates and exits on first
+# failure. Checks for two factor config changes only if requested.
+get_status() (
+  set -e
 
+  grep -Eq '^account.*oslogin' "$pam_config"
+  grep -Eq 'google_authorized_keys' "$sshd_config"
+  grep -Eq 'passwd:.*oslogin' "$nss_config"
+  if [ -n "$two_factor" ]; then
+    grep -Eq '^auth.*oslogin' "$pam_config"
+    grep -Eq '^(AuthenticationMethods|RequiredAuthentications2).*publickey,keyboard-interactive' "$sshd_config"
+  fi
+)
 
 usage() {
   echo "Usage: $(basename "$0") {activate|deactivate|status} [--norestartsshd] [--twofactor]"
   echo "This script will activate or deactivate the features for"
-  echo "Google Compute Engine OS Login."
+  echo "Google Compute Engine OS Login and (optionally) two-factor authentication."
   echo "This script must be run as root."
   exit 1
 }
@@ -303,7 +343,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-case "${action}" in
+case "$action" in
   activate)
     echo "Activating Google Compute Engine OS Login."
     activate
@@ -319,13 +359,9 @@ case "${action}" in
     ;;
   status)
     get_status
+    exit $?
     ;;
   *)
     usage
     ;;
 esac
-
-# Restart sshd unless --norestartsshd flag is set.
-if [ -z "${no_restart_sshd}" ]; then
-  restart_sshd
-fi
