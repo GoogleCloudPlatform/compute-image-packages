@@ -31,7 +31,8 @@ class AccountsUtilsTest(unittest.TestCase):
     self.sudoers_file = '/sudoers/file'
     self.users_dir = '/users'
     self.users_file = '/users/file'
-    self.gpasswd_cmd = 'gpasswd {option} {user} {group}'
+    self.gpasswd_add_cmd = 'gpasswd -a {user} {group}'
+    self.gpasswd_remove_cmd = 'gpasswd -d {user} {group}'
     self.groupadd_cmd = 'groupadd {group}'
     self.useradd_cmd = 'useradd -m -s /bin/bash -p * {user}'
     self.userdel_cmd = 'userdel -r {user}'
@@ -44,7 +45,8 @@ class AccountsUtilsTest(unittest.TestCase):
     self.mock_utils.google_users_dir = self.users_dir
     self.mock_utils.google_users_file = self.users_file
     self.mock_utils.logger = self.mock_logger
-    self.mock_utils.gpasswd_cmd = self.gpasswd_cmd
+    self.mock_utils.gpasswd_add_cmd = self.gpasswd_add_cmd
+    self.mock_utils.gpasswd_remove_cmd = self.gpasswd_remove_cmd
     self.mock_utils.groupadd_cmd = self.groupadd_cmd
     self.mock_utils.useradd_cmd = self.useradd_cmd
     self.mock_utils.userdel_cmd = self.userdel_cmd
@@ -433,8 +435,8 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   def testUpdateSudoer(self, mock_call):
     user = 'user'
-    command = self.gpasswd_cmd.format(
-        option='-d', user=user, group=self.sudoers_group)
+    command = self.gpasswd_remove_cmd.format(
+        user=user, group=self.sudoers_group)
 
     self.assertTrue(
         accounts_utils.AccountsUtils._UpdateSudoer(self.mock_utils, user))
@@ -448,8 +450,8 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   def testUpdateSudoerAddSudoer(self, mock_call):
     user = 'user'
-    command = self.gpasswd_cmd.format(
-        option='-a', user=user, group=self.sudoers_group)
+    command = self.gpasswd_add_cmd.format(
+        user=user, group=self.sudoers_group)
 
     self.assertTrue(
         accounts_utils.AccountsUtils._UpdateSudoer(

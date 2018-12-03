@@ -58,7 +58,8 @@ class InstanceConfig(config_manager.ConfigManager):
           #
           # To solve the issue, make the password '*' which is also recognized
           # as locked but does not prevent SSH login.
-          'gpasswd_cmd': 'gpasswd {option} {user} {group}',
+          'gpasswd_add_cmd': 'gpasswd -a {user} {group}',
+          'gpasswd_remove_cmd': 'gpasswd -d {user} {group}',
           'groupadd_cmd': 'groupadd {group}',
           'useradd_cmd': 'useradd -m -s /bin/bash -p * {user}',
           'userdel_cmd': 'userdel -r {user}',
