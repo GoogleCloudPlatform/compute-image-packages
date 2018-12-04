@@ -243,9 +243,9 @@ restart_sshd() {
   done
 }
 
-restart_nscd() {
-  echo "Restarting NSCD, if present"
-  for svc in "nscd" "unscd"; do
+restart_svcs() {
+  echo "Restarting optional services."
+  for svc in "nscd" "unscd" "systemd-logind"; do
     restart_service "$svc"
   done
 }
@@ -271,7 +271,7 @@ remove_google_dirs() {
 
 activate() {
   for func in modify_sshd_conf modify_nsswitch_conf \
-              modify_pam_sshd setup_google_dirs restart_nscd restart_sshd; do
+              modify_pam_sshd setup_google_dirs restart_svcs restart_sshd; do
     $func
     [ $? -eq 0 ] || return 1
   done
@@ -279,7 +279,7 @@ activate() {
 
 deactivate() {
   for func in remove_google_dirs restore_nsswitch_conf \
-              restore_sshd_conf restore_pam_sshd restart_nscd restart_sshd; do
+              restore_sshd_conf restore_pam_sshd restart_svcs restart_sshd; do
     $func
   done
 }
