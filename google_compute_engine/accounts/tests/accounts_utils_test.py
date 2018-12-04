@@ -450,8 +450,7 @@ class AccountsUtilsTest(unittest.TestCase):
   @mock.patch('google_compute_engine.accounts.accounts_utils.subprocess.check_call')
   def testUpdateSudoerAddSudoer(self, mock_call):
     user = 'user'
-    command = self.gpasswd_add_cmd.format(
-        user=user, group=self.sudoers_group)
+    command = self.gpasswd_add_cmd.format(user=user, group=self.sudoers_group)
 
     self.assertTrue(
         accounts_utils.AccountsUtils._UpdateSudoer(
