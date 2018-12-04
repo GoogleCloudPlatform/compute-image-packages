@@ -27,7 +27,8 @@ from google_compute_engine import constants
 from google_compute_engine import file_utils
 
 USER_REGEX = re.compile(r'\A[A-Za-z0-9._][A-Za-z0-9._-]{0,31}\Z')
-DEFAULT_GPASSWD_CMD = 'gpasswd {option} {user} {group}'
+DEFAULT_GPASSWD_ADD_CMD = 'gpasswd -a {user} {group}'
+DEFAULT_GPASSWD_REMOVE_CMD = 'gpasswd -d {user} {group}'
 DEFAULT_GROUPADD_CMD = 'groupadd {group}'
 DEFAULT_USERADD_CMD = 'useradd -m -s /bin/bash -p * {user}'
 DEFAULT_USERDEL_CMD = 'userdel -r {user}'
@@ -40,21 +41,24 @@ class AccountsUtils(object):
   google_comment = '# Added by Google'
 
   def __init__(
-      self, logger, groups=None, remove=False, gpasswd_cmd=None,
-      groupadd_cmd=None, useradd_cmd=None, userdel_cmd=None, usermod_cmd=None):
+      self, logger, groups=None, remove=False, gpasswd_add_cmd=None,
+      gpasswd_remove_cmd=None, groupadd_cmd=None, useradd_cmd=None,
+      userdel_cmd=None, usermod_cmd=None):
     """Constructor.
 
     Args:
       logger: logger object, used to write to SysLog and serial port.
       groups: string, a comma separated list of groups.
       remove: bool, True if deprovisioning a user should be destructive.
-      gpasswd_cmd: string, command to add or remove a user from a group.
+      gpasswd_add_cmd: string, command to add an user to a group.
+      gpasswd_remove_cmd: string, command to remove an user from a group.
       groupadd_cmd: string, command to add a new group.
       useradd_cmd: string, command to create a new user.
       userdel_cmd: string, command to delete a user.
       usermod_cmd: string, command to modify user's groups.
     """
-    self.gpasswd_cmd = gpasswd_cmd or DEFAULT_GPASSWD_CMD
+    self.gpasswd_add_cmd = gpasswd_add_cmd or DEFAULT_GPASSWD_ADD_CMD
+    self.gpasswd_remove_cmd = gpasswd_remove_cmd or DEFAULT_GPASSWD_REMOVE_CMD
     self.groupadd_cmd = groupadd_cmd or DEFAULT_GROUPADD_CMD
     self.useradd_cmd = useradd_cmd or DEFAULT_USERADD_CMD
     self.userdel_cmd = userdel_cmd or DEFAULT_USERDEL_CMD
@@ -256,12 +260,12 @@ class AccountsUtils(object):
     """
     if sudoer:
       self.logger.info('Adding user %s to the Google sudoers group.', user)
-      command = self.gpasswd_cmd.format(
-          option='-a', user=user, group=self.google_sudoers_group)
+      command = self.gpasswd_add_cmd.format(
+          user=user, group=self.google_sudoers_group)
     else:
       self.logger.info('Removing user %s from the Google sudoers group.', user)
-      command = self.gpasswd_cmd.format(
-          option='-d', user=user, group=self.google_sudoers_group)
+      command = self.gpasswd_remove_cmd.format(
+          user=user, group=self.google_sudoers_group)
 
     try:
       subprocess.check_call(command.split(' '))

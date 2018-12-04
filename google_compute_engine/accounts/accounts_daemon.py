@@ -39,8 +39,9 @@ class AccountsDaemon(object):
   user_ssh_keys = {}
 
   def __init__(
-      self, groups=None, remove=False, gpasswd_cmd=None, groupadd_cmd=None,
-      useradd_cmd=None, userdel_cmd=None, usermod_cmd=None, debug=False):
+      self, groups=None, remove=False, gpasswd_add_cmd=None,
+      gpasswd_remove_cmd=None, groupadd_cmd=None, useradd_cmd=None,
+      userdel_cmd=None, usermod_cmd=None, debug=False):
     """Constructor.
 
     Args:
@@ -50,7 +51,8 @@ class AccountsDaemon(object):
       userdel_cmd: string, command to delete a user.
       usermod_cmd: string, command to modify user's groups.
       groupadd_cmd: string, command to add a new group.
-      gpasswd_cmd: string, command to remove a user from a group.
+      gpasswd_add_cmd: string, command to add an user to a group.
+      gpasswd_remove_cmd: string, command to remove an user from a group.
       debug: bool, True if debug output should write to the console.
     """
     facility = logging.handlers.SysLogHandler.LOG_DAEMON
@@ -59,9 +61,9 @@ class AccountsDaemon(object):
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.utils = accounts_utils.AccountsUtils(
         logger=self.logger, groups=groups, remove=remove,
-        gpasswd_cmd=gpasswd_cmd, groupadd_cmd=groupadd_cmd,
-        useradd_cmd=useradd_cmd, userdel_cmd=userdel_cmd,
-        usermod_cmd=usermod_cmd)
+        gpasswd_add_cmd=gpasswd_add_cmd, gpasswd_remove_cmd=gpasswd_remove_cmd,
+        groupadd_cmd=groupadd_cmd, useradd_cmd=useradd_cmd,
+        userdel_cmd=userdel_cmd, usermod_cmd=usermod_cmd)
     self.oslogin = oslogin_utils.OsLoginUtils(logger=self.logger)
 
     try:
@@ -299,7 +301,8 @@ def main():
         usermod_cmd=instance_config.GetOptionString('Accounts', 'usermod_cmd'),
         groupadd_cmd=instance_config.GetOptionString(
             'Accounts', 'groupadd_cmd'),
-        gpasswd_cmd=instance_config.GetOptionString('Accounts', 'gpasswd_cmd'),
+        gpasswd_add_cmd=instance_config.GetOptionString('Accounts', 'gpasswd_add_cmd'),
+        gpasswd_remove_cmd=instance_config.GetOptionString('Accounts', 'gpasswd_remove_cmd'),
         debug=bool(options.debug))
 
 

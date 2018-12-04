@@ -55,13 +55,19 @@ class OsLoginUtils(object):
       else:
         raise
 
-  def _GetStatus(self):
+  def _GetStatus(self, two_factor=False):
     """Check whether OS Login is installed.
+
+    Args:
+      two_factor: bool, True if two factor should be enabled.
 
     Returns:
       bool, True if OS Login is installed.
     """
-    retcode = self._RunOsLoginControl(['status'])
+    params = ['status']
+    if two_factor:
+      params += ['--twofactor']
+    retcode = self._RunOsLoginControl(params)
     if retcode is None:
       if self.oslogin_installed:
         self.logger.warning('OS Login not installed.')
@@ -97,36 +103,37 @@ class OsLoginUtils(object):
         if e.errno != errno.ENOENT:
           raise
 
-  def UpdateOsLogin(self, enable, two_factor=False):
+  def UpdateOsLogin(self, enable_oslogin, two_factor=False):
     """Update whether OS Login is enabled and update NSS cache if necessary.
 
     Args:
-      enable: bool, enable OS Login if True, disable if False.
+      enable_oslogin: bool, enable OS Login if True, disable if False.
       duration: int, number of seconds before updating the NSS cache.
 
     Returns:
       int, the return code from updating OS Login, or None if not present.
     """
-    status = self._GetStatus()
+    # Two factor can only be enabled when OS Login is enabled.
+    two_factor = two_factor and enable_oslogin
+    status = self._GetStatus(two_factor=two_factor)
     if status is None:
       return None
 
-    current_time = time.time()
-    if status == enable:
-      if status and current_time - self.update_time > NSS_CACHE_DURATION_SEC:
+    if enable_oslogin:
+      if not status:
+        self.logger.info('Activating OS Login.')
+        params = ['activate']
+        if two_factor:
+          params += ['--twofactor']
+        return self._RunOsLoginControl(params) or self._RunOsLoginNssCache()
+      # OS Login is already enabled. Update the cache if appropriate.
+      current_time = time.time()
+      if current_time - self.update_time > NSS_CACHE_DURATION_SEC:
         self.update_time = current_time
         return self._RunOsLoginNssCache()
-      else:
-        return None
-
-    self.update_time = current_time
-    if enable:
-      self.logger.info('Activating OS Login.')
-      params = ['activate']
-      if two_factor:
-        params += ['--twofactor']
-      return self._RunOsLoginControl(params) or self._RunOsLoginNssCache()
-    else:
+    elif status:
       self.logger.info('Deactivating OS Login.')
       return (self._RunOsLoginControl(['deactivate'])
               or self._RemoveOsLoginNssCache())
+    # No action was needed.
+    return 0
