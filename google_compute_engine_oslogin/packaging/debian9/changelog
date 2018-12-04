@@ -1,3 +1,10 @@
+google-compute-engine-oslogin (1.4.2-1+deb9) unstable; urgency=low
+
+  * Improve OS Login control file.
+  * Restart systemd-logind on OS Login enable.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 04 Dec 2018 12:00:00 -0700
+
 google-compute-engine-oslogin (1.4.1-1+deb9) unstable; urgency=low
 
   * Improve SELinux support.
