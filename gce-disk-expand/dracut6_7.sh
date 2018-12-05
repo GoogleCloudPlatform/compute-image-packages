@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,19 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-### BEGIN INIT INFO
-# Provides: expand-root
-# Default-Start: 2 3 4 5
-# Description: Expand the filesystem of the mounted root volume/partition to its maximum possible size
-### END INIT INFO
+# Modifies rhel6 dracut for rhel7.
 
-device_path="/dev/sda1"
-filesystem=$(blkid -s TYPE -o value $device_path)
+mv src/usr/share src/usr/lib
+pushd src/usr/lib/dracut/modules.d/50expand_rootfs
 
-case $filesystem in
-  xfs)  xfs_growfs / ;;
-  ext2) resize2fs $device_path ;;
-  ext3) resize2fs $device_path ;;
-  ext4) resize2fs $device_path ;;
-  *)    echo "The filesystem $filesystem was not recognized. Unable to expand." ;;
-esac
+cat >module-setup.sh <<EOF
+#!/bin/bash
+
+check() {
+`grep -iv ^'#!' check`
+}
+
+install() {
+`grep -iv ^'#!' install`
+}
+EOF
+
+rm install check
+popd

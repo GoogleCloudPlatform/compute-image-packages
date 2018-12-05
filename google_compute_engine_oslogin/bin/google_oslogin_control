@@ -129,6 +129,15 @@ modify_pam_sshd() (
   local pam_account_admin="account    [success=ok ignore=ignore default=die] pam_oslogin_login.so"
   local pam_session_homedir="session    [success=ok default=ignore] pam_mkhomedir.so"
 
+  # In FreeBSD, the used flags are not supported, replacing them with the
+  # previous ones (requisite and optional).
+  if is_freebsd; then
+    pam_auth_oslogin="auth       optional pam_oslogin_login.so"
+    pam_account_oslogin="account    optional pam_oslogin_admin.so"
+    pam_account_admin="account    requisite pam_oslogin_login.so"
+    pam_session_homedir="session    optional pam_mkhomedir.so"
+  fi
+
   local added_config=""
 
   # For COS this file is solely includes, so simply prepend the new config,
@@ -184,6 +193,8 @@ modify_pam_sshd() (
     session_end=$($sed -n '/^session/=' "$pam_config" | tail -1)
     $sed -i"" "${session_end}a ${added_config}" "$pam_config"
   fi
+
+  # TODO: SLES, others?
 )
 
 restore_pam_sshd() {

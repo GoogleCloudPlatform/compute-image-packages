@@ -18,7 +18,7 @@
 %endif
 
 Name: google-compute-engine
-Version: 2.8.11
+Version: 2.8.12
 Release: 1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0

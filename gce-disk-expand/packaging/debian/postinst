@@ -1,4 +1,5 @@
-# Copyright 2016 Google Inc. All Rights Reserved.
+#!/bin/sh
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[Unit]
-Description=Disk expand for EL7
-After=local-fs.target
-Wants=local-fs.target
+#DEBHELPER#
 
-[Service]
-ExecStart=/usr/bin/growpart /dev/sda 1
-ExecStop=/usr/bin/expand-root
-Type=oneshot
-SuccessExitStatus=1
+set -e
 
-[Install]
-WantedBy=multi-user.target
+case "$1" in
+  configure)
+    if which /usr/sbin/update-initramfs > /dev/null; then
+      update-initramfs -u
+    fi
+    ;;
+esac

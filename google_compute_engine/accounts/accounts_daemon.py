@@ -275,11 +275,10 @@ class AccountsDaemon(object):
     enable_two_factor = self._GetEnableTwoFactorValue(result)
     if enable_oslogin:
       desired_users = {}
-      self.oslogin.UpdateOsLogin(
-          enable_oslogin=True, two_factor=enable_two_factor)
+      self.oslogin.UpdateOsLogin(True, two_factor_desired=enable_two_factor)
     else:
       desired_users = self._GetAccountsData(result)
-      self.oslogin.UpdateOsLogin(enable_oslogin=False)
+      self.oslogin.UpdateOsLogin(False)
     remove_users = sorted(set(configured_users) - set(desired_users.keys()))
     self._UpdateUsers(desired_users)
     self._RemoveUsers(remove_users)
