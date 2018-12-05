@@ -240,6 +240,7 @@ class OsLoginUtilsTest(unittest.TestCase):
     oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True)
     expected_calls = [
         mock.call.oslogin._GetStatus(two_factor=False),
+        mock.call.oslogin._GetStatus(two_factor=True),
         mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl(['activate']),
         mock.call.oslogin._RunOsLoginNssCache(),
@@ -251,15 +252,34 @@ class OsLoginUtilsTest(unittest.TestCase):
     mocks.attach_mock(self.mock_logger, 'logger')
     mocks.attach_mock(self.mock_oslogin, 'oslogin')
     self.mock_oslogin._RunOsLoginControl.return_value = 0
-    self.mock_oslogin._GetStatus.return_value = False
+    self.mock_oslogin._GetStatus.side_effect = [True, False]
 
     oslogin_utils.OsLoginUtils.UpdateOsLogin(
-        self.mock_oslogin, True, two_factor=True)
+        self.mock_oslogin, True, two_factor_desired=True)
     expected_calls = [
+        mock.call.oslogin._GetStatus(two_factor=False),
         mock.call.oslogin._GetStatus(two_factor=True),
         mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl(['activate', '--twofactor']),
         mock.call.oslogin._RunOsLoginNssCache(),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  def testUpdateOsLoginDeactivateTwoFactor(self):
+    mocks = mock.Mock()
+    mocks.attach_mock(self.mock_logger, 'logger')
+    mocks.attach_mock(self.mock_oslogin, 'oslogin')
+    self.mock_oslogin._RunOsLoginControl.return_value = 0
+    self.mock_oslogin._GetStatus.side_effect = [True, True]
+
+    oslogin_utils.OsLoginUtils.UpdateOsLogin(
+        self.mock_oslogin, True, two_factor_desired=False)
+    expected_calls = [
+        mock.call.oslogin._GetStatus(two_factor=False),
+        mock.call.oslogin._GetStatus(two_factor=True),
+        mock.call.logger.info(mock.ANY),
+        mock.call.oslogin._RunOsLoginControl(['deactivate']),
+        mock.call.oslogin._RunOsLoginControl(['activate']),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
@@ -273,6 +293,7 @@ class OsLoginUtilsTest(unittest.TestCase):
     oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, False)
     expected_calls = [
         mock.call.oslogin._GetStatus(two_factor=False),
+        mock.call.oslogin._GetStatus(two_factor=True),
         mock.call.logger.info(mock.ANY),
         mock.call.oslogin._RunOsLoginControl(['deactivate']),
         mock.call.oslogin._RemoveOsLoginNssCache(),
@@ -288,8 +309,9 @@ class OsLoginUtilsTest(unittest.TestCase):
     mock_time.return_value = 6 * 60 * 60 + 1
 
     oslogin_utils.OsLoginUtils.UpdateOsLogin(
-        self.mock_oslogin, True, two_factor=True)
+        self.mock_oslogin, True, two_factor_desired=True)
     expected_calls = [
+        mock.call.oslogin._GetStatus(two_factor=False),
         mock.call.oslogin._GetStatus(two_factor=True),
         mock.call.oslogin._RunOsLoginNssCache(),
     ]
@@ -304,8 +326,11 @@ class OsLoginUtilsTest(unittest.TestCase):
     mock_time.return_value = 6 * 60 * 60
 
     return_value = oslogin_utils.OsLoginUtils.UpdateOsLogin(
-        self.mock_oslogin, True, two_factor=True)
-    expected_calls = [mock.call.oslogin._GetStatus(two_factor=True)]
+        self.mock_oslogin, True, two_factor_desired=True)
+    expected_calls = [
+        mock.call.oslogin._GetStatus(two_factor=False),
+        mock.call.oslogin._GetStatus(two_factor=True),
+    ]
     self.assertEqual(mocks.mock_calls, expected_calls)
     self.assertEqual(return_value, 0)
 
@@ -316,8 +341,11 @@ class OsLoginUtilsTest(unittest.TestCase):
     self.mock_oslogin._GetStatus.return_value = False
 
     return_value = oslogin_utils.OsLoginUtils.UpdateOsLogin(
-        self.mock_oslogin, False, two_factor=True)
-    expected_calls = [mock.call.oslogin._GetStatus(two_factor=False)]
+        self.mock_oslogin, False, two_factor_desired=True)
+    expected_calls = [
+        mock.call.oslogin._GetStatus(two_factor=False),
+        mock.call.oslogin._GetStatus(two_factor=True),
+    ]
     self.assertEqual(mocks.mock_calls, expected_calls)
     self.assertEqual(return_value, 0)
 

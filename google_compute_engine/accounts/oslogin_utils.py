@@ -103,37 +103,50 @@ class OsLoginUtils(object):
         if e.errno != errno.ENOENT:
           raise
 
-  def UpdateOsLogin(self, enable_oslogin, two_factor=False):
+  def UpdateOsLogin(self, oslogin_desired, two_factor_desired=False):
     """Update whether OS Login is enabled and update NSS cache if necessary.
 
     Args:
-      enable_oslogin: bool, enable OS Login if True, disable if False.
-      duration: int, number of seconds before updating the NSS cache.
+      oslogin_desired: bool, enable OS Login if True, disable if False.
+      two_factor_desired: bool, enable two factor if True, disable if False.
 
     Returns:
       int, the return code from updating OS Login, or None if not present.
     """
-    # Two factor can only be enabled when OS Login is enabled.
-    two_factor = two_factor and enable_oslogin
-    status = self._GetStatus(two_factor=two_factor)
-    if status is None:
+    oslogin_configured = self._GetStatus(two_factor=False)
+    if oslogin_configured is None:
       return None
+    two_factor_configured = self._GetStatus(two_factor=True)
+    # Two factor can only be enabled when OS Login is enabled.
+    two_factor_desired = two_factor_desired and oslogin_desired
 
-    if enable_oslogin:
-      if not status:
+    if oslogin_desired:
+      params = ['activate']
+      if two_factor_desired:
+        params += ['--twofactor']
+      # OS Login is desired and not enabled.
+      if not oslogin_configured:
         self.logger.info('Activating OS Login.')
-        params = ['activate']
-        if two_factor:
-          params += ['--twofactor']
         return self._RunOsLoginControl(params) or self._RunOsLoginNssCache()
-      # OS Login is already enabled. Update the cache if appropriate.
+      # Enable two factor authentication.
+      if two_factor_desired and not two_factor_configured:
+        self.logger.info('Activating OS Login two factor authentication.')
+        return self._RunOsLoginControl(params) or self._RunOsLoginNssCache()
+      # Deactivate two factor authentication.
+      if two_factor_configured and not two_factor_desired:
+        self.logger.info('Reactivating OS Login with two factor disabled.')
+        return (self._RunOsLoginControl(['deactivate'])
+                or self._RunOsLoginControl(params))
+      # OS Login features are already enabled. Update the cache if appropriate.
       current_time = time.time()
       if current_time - self.update_time > NSS_CACHE_DURATION_SEC:
         self.update_time = current_time
         return self._RunOsLoginNssCache()
-    elif status:
+
+    elif oslogin_configured:
       self.logger.info('Deactivating OS Login.')
       return (self._RunOsLoginControl(['deactivate'])
               or self._RemoveOsLoginNssCache())
+
     # No action was needed.
     return 0
