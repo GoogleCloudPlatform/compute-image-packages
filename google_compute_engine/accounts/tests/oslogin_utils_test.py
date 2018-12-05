@@ -15,7 +15,7 @@
 
 """Unittest for oslogin_utils.py module."""
 
-import time
+import itertools
 
 from google_compute_engine.accounts import oslogin_utils
 from google_compute_engine.test_compat import mock
@@ -86,7 +86,8 @@ class OsLoginUtilsTest(unittest.TestCase):
     mock_call.side_effect = OSError
 
     with self.assertRaises(OSError):
-      oslogin_utils.OsLoginUtils._RunOsLoginControl(self.mock_oslogin, ['status'])
+      oslogin_utils.OsLoginUtils._RunOsLoginControl(
+          self.mock_oslogin, ['status'])
     expected_calls = [
         mock.call.call([self.oslogin_control_script, 'status']),
     ]
@@ -230,76 +231,6 @@ class OsLoginUtilsTest(unittest.TestCase):
     with self.assertRaises(OSError):
       oslogin_utils.OsLoginUtils._RemoveOsLoginNssCache(self.mock_oslogin)
 
-  def testUpdateOsLoginActivate(self):
-    mocks = mock.Mock()
-    mocks.attach_mock(self.mock_logger, 'logger')
-    mocks.attach_mock(self.mock_oslogin, 'oslogin')
-    self.mock_oslogin._RunOsLoginControl.return_value = 0
-    self.mock_oslogin._GetStatus.return_value = False
-
-    oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, True)
-    expected_calls = [
-        mock.call.oslogin._GetStatus(two_factor=False),
-        mock.call.oslogin._GetStatus(two_factor=True),
-        mock.call.logger.info(mock.ANY),
-        mock.call.oslogin._RunOsLoginControl(['activate']),
-        mock.call.oslogin._RunOsLoginNssCache(),
-    ]
-    self.assertEqual(mocks.mock_calls, expected_calls)
-
-  def testUpdateOsLoginActivateTwoFactor(self):
-    mocks = mock.Mock()
-    mocks.attach_mock(self.mock_logger, 'logger')
-    mocks.attach_mock(self.mock_oslogin, 'oslogin')
-    self.mock_oslogin._RunOsLoginControl.return_value = 0
-    self.mock_oslogin._GetStatus.side_effect = [True, False]
-
-    oslogin_utils.OsLoginUtils.UpdateOsLogin(
-        self.mock_oslogin, True, two_factor_desired=True)
-    expected_calls = [
-        mock.call.oslogin._GetStatus(two_factor=False),
-        mock.call.oslogin._GetStatus(two_factor=True),
-        mock.call.logger.info(mock.ANY),
-        mock.call.oslogin._RunOsLoginControl(['activate', '--twofactor']),
-        mock.call.oslogin._RunOsLoginNssCache(),
-    ]
-    self.assertEqual(mocks.mock_calls, expected_calls)
-
-  def testUpdateOsLoginDeactivateTwoFactor(self):
-    mocks = mock.Mock()
-    mocks.attach_mock(self.mock_logger, 'logger')
-    mocks.attach_mock(self.mock_oslogin, 'oslogin')
-    self.mock_oslogin._RunOsLoginControl.return_value = 0
-    self.mock_oslogin._GetStatus.side_effect = [True, True]
-
-    oslogin_utils.OsLoginUtils.UpdateOsLogin(
-        self.mock_oslogin, True, two_factor_desired=False)
-    expected_calls = [
-        mock.call.oslogin._GetStatus(two_factor=False),
-        mock.call.oslogin._GetStatus(two_factor=True),
-        mock.call.logger.info(mock.ANY),
-        mock.call.oslogin._RunOsLoginControl(['deactivate']),
-        mock.call.oslogin._RunOsLoginControl(['activate']),
-    ]
-    self.assertEqual(mocks.mock_calls, expected_calls)
-
-  def testUpdateOsLoginDeactivate(self):
-    mocks = mock.Mock()
-    mocks.attach_mock(self.mock_logger, 'logger')
-    mocks.attach_mock(self.mock_oslogin, 'oslogin')
-    self.mock_oslogin._RunOsLoginControl.return_value = 0
-    self.mock_oslogin._GetStatus.return_value = True
-
-    oslogin_utils.OsLoginUtils.UpdateOsLogin(self.mock_oslogin, False)
-    expected_calls = [
-        mock.call.oslogin._GetStatus(two_factor=False),
-        mock.call.oslogin._GetStatus(two_factor=True),
-        mock.call.logger.info(mock.ANY),
-        mock.call.oslogin._RunOsLoginControl(['deactivate']),
-        mock.call.oslogin._RemoveOsLoginNssCache(),
-    ]
-    self.assertEqual(mocks.mock_calls, expected_calls)
-
   @mock.patch('time.time')
   def testUpdateOsLoginUpdateCache(self, mock_time):
     mocks = mock.Mock()
@@ -318,36 +249,79 @@ class OsLoginUtilsTest(unittest.TestCase):
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('time.time')
-  def testUpdateOsLoginRedundantActivate(self, mock_time):
-    mocks = mock.Mock()
-    mocks.attach_mock(self.mock_oslogin, 'oslogin')
-    self.mock_oslogin._RunOsLoginControl.return_value = 0
-    self.mock_oslogin._GetStatus.return_value = True
-    mock_time.return_value = 6 * 60 * 60
+  def testUpdateOsLogin(self, mock_time):
 
-    return_value = oslogin_utils.OsLoginUtils.UpdateOsLogin(
-        self.mock_oslogin, True, two_factor_desired=True)
-    expected_calls = [
-        mock.call.oslogin._GetStatus(two_factor=False),
-        mock.call.oslogin._GetStatus(two_factor=True),
-    ]
-    self.assertEqual(mocks.mock_calls, expected_calls)
-    self.assertEqual(return_value, 0)
+    def _AssertNoUpdate():
+      expected_calls = [
+          mock.call.oslogin._GetStatus(two_factor=False),
+          mock.call.oslogin._GetStatus(two_factor=True),
+      ]
+      self.assertEqual(mocks.mock_calls, expected_calls)
+      self.assertEqual(return_value, 0)
 
-  def testUpdateOsLoginRedundantDeactivate(self):
-    mocks = mock.Mock()
-    mocks.attach_mock(self.mock_oslogin, 'oslogin')
-    self.mock_oslogin._RunOsLoginControl.return_value = 0
-    self.mock_oslogin._GetStatus.return_value = False
+    def _AssertActivated(two_factor=False):
+      params = ['activate', '--twofactor'] if two_factor else ['activate']
+      expected_calls = [
+          mock.call.oslogin._GetStatus(two_factor=False),
+          mock.call.oslogin._GetStatus(two_factor=True),
+          mock.call.logger.info(mock.ANY),
+          mock.call.oslogin._RunOsLoginControl(params),
+          mock.call.oslogin._RunOsLoginNssCache(),
+      ]
+      self.assertEqual(mocks.mock_calls, expected_calls)
 
-    return_value = oslogin_utils.OsLoginUtils.UpdateOsLogin(
-        self.mock_oslogin, False, two_factor_desired=True)
-    expected_calls = [
-        mock.call.oslogin._GetStatus(two_factor=False),
-        mock.call.oslogin._GetStatus(two_factor=True),
-    ]
-    self.assertEqual(mocks.mock_calls, expected_calls)
-    self.assertEqual(return_value, 0)
+    def _AssertDeactivated():
+      expected_calls = [
+          mock.call.oslogin._GetStatus(two_factor=False),
+          mock.call.oslogin._GetStatus(two_factor=True),
+          mock.call.logger.info(mock.ANY),
+          mock.call.oslogin._RunOsLoginControl(['deactivate']),
+          mock.call.oslogin._RemoveOsLoginNssCache(),
+      ]
+      self.assertEqual(mocks.mock_calls, expected_calls)
+
+    def _AssertReactivated():
+      expected_calls = [
+          mock.call.oslogin._GetStatus(two_factor=False),
+          mock.call.oslogin._GetStatus(two_factor=True),
+          mock.call.logger.info(mock.ANY),
+          mock.call.oslogin._RunOsLoginControl(['deactivate']),
+          mock.call.oslogin._RunOsLoginControl(['activate']),
+      ]
+      self.assertEqual(mocks.mock_calls, expected_calls)
+
+    parameters = list(itertools.product([False, True], repeat=4))
+    for (oslogin, two_factor, oslogin_config, two_factor_config) in parameters:
+      mocks = mock.Mock()
+      mocks.attach_mock(self.mock_logger, 'logger')
+      mocks.attach_mock(self.mock_oslogin, 'oslogin')
+      self.mock_oslogin._RunOsLoginControl.return_value = 0
+      self.mock_oslogin._GetStatus.side_effect = [
+          oslogin_config, two_factor_config]
+      mock_time.return_value = 6 * 60 * 60
+      return_value = oslogin_utils.OsLoginUtils.UpdateOsLogin(
+          self.mock_oslogin, oslogin, two_factor_desired=two_factor)
+
+      if oslogin_config:
+        if not oslogin:
+          _AssertDeactivated()
+        elif two_factor_config:
+          if not two_factor:
+            _AssertReactivated()
+          else:
+            _AssertNoUpdate()
+        else:
+          if two_factor:
+            _AssertActivated(two_factor=True)
+          else:
+            _AssertNoUpdate()
+      else:
+        if oslogin:
+          _AssertActivated(two_factor=two_factor)
+        else:
+          _AssertNoUpdate()
+      self.mock_logger.reset_mock()
+      self.mock_oslogin.reset_mock()
 
   def testUpdateOsLoginNotInstalled(self):
     mocks = mock.Mock()
