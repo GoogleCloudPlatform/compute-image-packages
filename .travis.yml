@@ -8,12 +8,11 @@ python:
 - pypy
 matrix:
   include:
-    - python: 3.7
-      dist: xenial  # required for Python 3.7 (travis-ci/travis-ci#9069)
+  - python: 3.7
+    dist: xenial
 os:
 - linux
 install:
-# Tox needs an older version of virtualenv.
 - pip install "virtualenv<14.0.0"
 - pip install tox tox-travis codecov
 - pip install "setuptools>20.0.0"
@@ -21,15 +20,14 @@ script:
 - tox
 after_success:
 - codecov
-
 deploy:
   provider: pypi
   user: gc-team
-  password:
-    secure: hh1iPe4033hHRhhjSWyogjqECgPLcTLjlgtfI6qZdhyE9K2xIdL4HUYoVJdEXIp3hXvafJ/egcJvmaxpyNDhRcNfZjv4aRy3daBWFDEqaJFqbmF3F2eCu8Fn28xs4ZFqzi0O7hhgtweJZg66ux6fKtoBbVeVR9+hy6iUH08AoOg=
   on:
     branch: master
     python: 3.6
     distributions: sdist bdist_wheel
     repo: GoogleCloudPlatform/compute-image-packages
     tags: true
+  password:
+    secure: I1gAg+NiZy7L80OtQfh5G5IP+LmRgmS6H+t9vzoSfRXz3ByH1E1Mthv0bn1y7oXO9GKGkNO2sp9c4hv6UePbDwv7/y8UEhIpqi1qGq0DhlLUpl3+e64jtvfNZrHeGFu9Ny7ndsZdMwrnWbCqD10O3nCJLqt9zNnFhhcJ0cUogILkq+/wvRiD1ywvvoI/Hh5n92275XUi1ejEfEkA8t1dbTK4B/7/kWM0TWk8Y8PZ1WLaLV73VQmIQclHgeMw1ySIhGHOlDFxi1gySlUesbD5TNTzcmzQuMgfZMd7T6D3R4p2EJA5tBxFifXpk1b/CF1EesvhsCBANShn9qbg1RFUu0HYnvkSEPL4zk1dIDqGR0Lhs6pvR+7OOXXKsz3X4Z9ZhmsVGDQXkJdVroHTZwuAZFCzKgjhbK3M3aK+5sUXOMPiZj8SDpQ/q93XkphfkL8HaWi8G2wQX4uHIFImUANNDnNVyUkK73iqnrSqpUTufy5ESPvcmb1p40hpAAg5bMyP5+mV8EIRXTIpVb+nLlDMnGtm3Z33Krq2IPiXYdPfDFPzgyyuak85giX8bNbC1dIbKxuFk1Z2ldF/gTiNTBaSSiwF3lhFw8cPS3BHYoBT8Wsc5XL9r01010QSTPfgw+Ospyp1eEWL7wqxdHbgiWzuevCqCWwXR88OCWhWvb/sjVw=
