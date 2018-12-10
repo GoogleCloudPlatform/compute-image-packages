@@ -17,9 +17,13 @@ install:
 - pip install tox tox-travis codecov
 - pip install "setuptools>20.0.0"
 script:
+- cd packages/python-google-compute-engine
 - tox
 after_success:
 - codecov
+
+before_deploy:
+  cd packages/python-google-compute-engine
 deploy:
   provider: pypi
   user: gc-team

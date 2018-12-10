@@ -1,0 +1,189 @@
+python-google-compute-engine (2.8.12-1) stable; urgency=low
+
+  * Fix two factor enablement on change.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 05 Dec 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.11-1) stable; urgency=low
+
+  * Split up the gpasswd command into two commands.
+  * Update two factor enablement on change.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 04 Dec 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.10-1) stable; urgency=low
+
+  * Fix the gpasswd command default.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 30 Nov 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.9-1) stable; urgency=low
+
+  * Support enabling OS Login two factor authentication.
+  * Improve accounts support for FreeBSD.
+  * Improve SELinux support.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 28 Nov 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.8-1) stable; urgency=low
+
+  * Update sudoer group membership without overriding local groups.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 23 Oct 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.7-1) stable; urgency=low
+
+  * Remove users from sudoers group on removal (fixed).
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 18 Oct 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.6-1) stable; urgency=low
+
+  * Revert PR: Remove users from sudoers group on removal.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 11 Oct 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.5-1) stable; urgency=low
+
+  * Remove users from sudoers group on removal.
+  * Remove gsutil dependency for metadata scripts.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 05 Oct 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.4-1) stable; urgency=low
+
+  * Remove ntp dependency.
+  * Support Debian 10 Buster.
+  * Restart the network daemon if networking is restarted.
+  * Prevent setup of the default ethernet interface.
+  * Accounts daemon can now verify username is 32 characters or less.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 05 Sep 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.3-1) stable; urgency=low
+
+  * Prevent IP forwarding daemon log spam.
+  * Make default shell configurable when executing metadata scripts.
+  * Rename distro directory to distro_lib.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 11 June 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.2-1) stable; urgency=low
+
+  * Prevent delay in configuring IP forwarding routes.
+  * Improve instance setup support for FreeBSD.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 10 May 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.1-1) stable; urgency=low
+
+  * Improve OS Login disablement.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 04 May 2018 12:00:00 -0700
+
+google-compute-image-packages (2.8.0-1) stable; urgency=low
+
+  * Create a new network daemon.
+  * Refactor the IP forwarding daemon and network setup.
+  * Improvements for using NSS cache in the accounts daemon.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 01 May 2018 12:00:00 -0700
+
+google-compute-image-packages (2.7.7-1) stable; urgency=low
+
+  * Add support for NSS cache in OS Login.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 08 Mar 2018 12:00:00 -0700
+
+google-compute-image-packages (2.7.6-1) stable; urgency=low
+
+  * Add distro specific logic.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 21 Feb 2018 12:00:00 -0700
+
+google-compute-image-packages (2.7.5-2) stable; urgency=low
+
+  * Fix dependencies for syslog.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 06 Feb 2018 12:00:00 -0700
+
+google-compute-image-packages (2.7.5-1) stable; urgency=low
+
+  * Revert hostname setting change in Debian.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 29 Jan 2018 12:00:00 -0700
+
+google-compute-image-packages (2.7.4-1) stable; urgency=low
+
+  * Fix hostname setting in Debian.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 29 Jan 2018 12:00:00 -0700
+
+google-compute-image-packages (2.7.3-1) stable; urgency=low
+
+  * Improve hostname setting and correctly restart rsyslog.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 25 Jan 2018 12:00:00 -0700
+
+google-compute-image-packages (2.7.2-2) stable; urgency=low
+
+  * Force IPv4 for apt.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 13 Dec 2017 12:00:00 -0700
+
+google-compute-image-packages (2.7.2-1) stable; urgency=low
+
+  * Generate SSH host keys when none are present.
+  * Improve logging when activating OS Login.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 29 Nov 2017 12:00:00 -0700
+
+google-compute-image-packages (2.7.1-1) stable; urgency=low
+
+  * Update set_hostname file name to prevent conflict.
+  * Add apt config to prevent auto-removal of google-compute-engine.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 25 Oct 2017 12:00:00 -0700
+
+google-compute-image-packages (2.7.0-6) stable; urgency=low
+
+  * Linux guest environment support for OS Login.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 17 Oct 2017 12:00:00 -0700
+
+google-compute-image-packages (2.6.2-1) stable; urgency=low
+
+  * Fix system hang during VM shutdown.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 06 Oct 2017 12:00:00 -0700
+
+google-compute-image-packages (2.6.1-1) stable; urgency=low
+
+  * Use curl to download metadata script files for SSL certificate validation.
+  * Use netifaces for retrieving MAC address names if the import exists.
+
+ -- Google Cloud Team <gc-team@google.com>  Thurs, 14 Sep 2017 12:00:00 -0700
+
+google-compute-image-packages (2.6.0-4) stable; urgency=low
+
+  * Fix DHCP exit hook install.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 28 Aug 2017 12:00:00 -0700
+
+google-compute-image-packages (2.6.0-3) stable; urgency=low
+
+  * Add systemd preset.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 25 Aug 2017 14:00:00 -0700
+
+google-compute-image-packages (2.6.0-2) stable; urgency=low
+
+  * Add DHCP exit hook script back into package.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 25 Aug 2017 12:00:00 -0700
+
+google-compute-image-packages (2.6.0-1) stable; urgency=low
+
+  * New packaging.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 27 Jun 2017 12:00:00 -0700
