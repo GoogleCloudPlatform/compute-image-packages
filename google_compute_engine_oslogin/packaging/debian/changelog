@@ -1,4 +1,4 @@
-google-compute-engine-oslogin (1.4.3-1+deb9) unstable; urgency=low
+google-compute-engine-oslogin (1.4.3-1) unstable; urgency=low
 
   * Improve OS Login control file for BSD support.
   * Improve SELinux support.
