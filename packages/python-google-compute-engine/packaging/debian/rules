@@ -1,0 +1,26 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME=google-compute-engine
+export PYBUILD_TEST_PYTEST=1
+export PYBUILD_TEST_ARGS={dir}/google_compute_engine/
+export PYBUILD_SYSTEM=distutils
+
+%:
+	dh $@ --with python2,python3 --buildsystem=pybuild
+
+override_dh_clean:
+	rm -rf google_compute_engine.egg-info
+	dh_clean
+
+override_dh_auto_install:
+	dh_auto_install
+	mv debian/python3-google-compute-engine/usr/bin/google_instance_setup \
+		debian/python3-google-compute-engine/usr/bin/google_instance_setup3
+	mv debian/python3-google-compute-engine/usr/bin/google_accounts_daemon \
+		debian/python3-google-compute-engine/usr/bin/google_accounts_daemon3
+	mv debian/python3-google-compute-engine/usr/bin/google_network_daemon \
+		debian/python3-google-compute-engine/usr/bin/google_network_daemon3
+	mv debian/python3-google-compute-engine/usr/bin/google_clock_skew_daemon \
+		debian/python3-google-compute-engine/usr/bin/google_clock_skew_daemon3
+	mv debian/python3-google-compute-engine/usr/bin/google_metadata_script_runner \
+		debian/python3-google-compute-engine/usr/bin/google_metadata_script_runner3
