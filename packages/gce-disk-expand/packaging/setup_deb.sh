@@ -22,6 +22,9 @@ if [[ $(basename "$working_dir") != $NAME ]]; then
   exit 1
 fi
 
+# Build dependencies.
+sudo apt-get -y install dh-systemd
+
 # DEB creation tools.
 sudo apt-get -y install debhelper devscripts build-essential
 
@@ -29,13 +32,10 @@ rm -rf /tmp/debpackage
 mkdir /tmp/debpackage
 tar czvf /tmp/debpackage/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
-pushd /tmp/debpackage
+cd /tmp/debpackage
 tar xzvf ${NAME}_${VERSION}.orig.tar.gz
 
 cd ${NAME}-${VERSION}
-
 cp -r ${working_dir}/packaging/debian ./
 
 debuild -us -uc
-
-popd
