@@ -9,7 +9,6 @@ For more information on Daisy and how workflows work, refer to the
 # Builds Debian packages from the development branch.
 ./daisy -project YOUR_PROJECT \
         -zone ZONE \
-        -gcs_path YOUR_GCS_PATCH \
         -var:package_version=2.6.0 \
         -var:github_branch=development \
         -var:output_path=YOUR_GS_BUCKET \
@@ -18,7 +17,6 @@ For more information on Daisy and how workflows work, refer to the
 # Builds EL packages.
 ./daisy -project YOUR_PROJECT \
         -zone ZONE \
-        -gcs_path YOUR_GCS_PATCH \
         -var:output_path=YOUR_GS_BUCKET \
         build_el.wf.json
 
