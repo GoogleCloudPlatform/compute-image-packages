@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2018 Google Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,49 +14,48 @@
 # limitations under the License.
 
 URL="http://metadata/computeMetadata/v1/instance/attributes"
+
 BRANCH="$(curl -f -H Metadata-Flavor:Google ${URL}/github_branch)"
 GIT_REPO="$(curl -f -H Metadata-Flavor:Google ${URL}/github_repo)"
-VERSION="$(curl -f -H Metadata-Flavor:Google ${URL}/package_version)"
 OUTPUT="$(curl -f -H Metadata-Flavor:Google ${URL}/output_path)"
 
-if [ -z ${OUTPUT} ]; then
+if [ -z $OUTPUT ]; then
   OUTPUT="$(curl -f -H Metadata-Flavor:Google ${URL}/daisy-outs-path)"
 fi
 
-# Install build dependencies.
-yum -y install git rpmdevtools \
-  python2-devel python-setuptools python-boto \
-  make gcc-c++ libcurl-devel json-c json-c-devel pam-devel \
-  policycoreutils-python
+if [[ ! -e /etc/redhat-release ]]; then
+  echo "BuildFailed: not a RHEL host!"
+  exit 1
+fi
+
+workdir=$(pwd)
+mkdir output
+
+sudo yum install -y git
 
 # Clone the github repo.
-git clone ${GIT_REPO} -b ${BRANCH}
+git clone ${GIT_REPO} -b ${BRANCH} compute-image-packages
 if [ $? -ne 0 ]; then
   echo "BuildFailed: Unable to clone github repo ${GIT_REPO} and branch ${BRANCH}"
   exit 1
 fi
 
-# Create tar's for package builds.
-tar -czvf google-compute-engine_${VERSION}.orig.tar.gz --exclude .git compute-image-packages
-
-# Setup rpmbuild tree.
-for d in BUILD BUILDROOT RPMS SOURCES SPECS SRPMS; do
-  mkdir -p /rpmbuild/$d
-done
-cp compute-image-packages/specs/*.spec /rpmbuild/SPECS/
-cp google-compute-engine_${VERSION}.orig.tar.gz /rpmbuild/SOURCES/
-
-# Build the RPM's
-for spec in $(ls /rpmbuild/SPECS/*.spec); do
- rpmbuild --define "_topdir /rpmbuild" -ba $spec
-  if [ $? -ne 0 ]; then
-    echo "BuildFailed: rpmbuild for $spec failed."
+# Build packages.
+cd compute-image-packages/packages
+for package in *; do
+  pushd "$package"
+  ./packaging/setup_rpm.sh
+  if [[ $? -ne 0 ]]; then
+    echo "BuildFailed: Unable to build $package"
     exit 1
   fi
+  find /tmp/rpmpackage -iname '*.rpm' -exec mv '{}' "${workdir}/output/" \;
+  popd
 done
 
-# Copy the rpm and srpms to the output.
-gsutil cp /rpmbuild/RPMS/*/*.rpm /rpmbuild/SRPMS/*.src.rpm ${OUTPUT}/
+# Copy the rpm files to the output.
+cd "${workdir}/output"
+gsutil cp *.rpm ${OUTPUT}
 if [ $? -ne 0 ]; then
   echo "BuildFailed: copying to ${OUTPUT} failed."
   exit 1

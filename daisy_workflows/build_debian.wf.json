@@ -2,7 +2,6 @@
   "Name": "build-debian-packages",
   "Vars": {
     "output_path": {
-      "Value": "${OUTSPATH}",
       "Description": "GCS output path for packages."
     },
     "github_repo": {
@@ -12,10 +11,6 @@
     "github_branch": {
       "Value": "master",
       "Description": "Github branch to build packages from."
-    },
-    "package_version": {
-      "Required": true,
-      "Description": "The package version to build."
     }
   },
   "Sources": {
@@ -43,8 +38,7 @@
           "Metadata": {
             "github_branch": "${github_branch}",
             "github_repo": "${github_repo}",
-            "output_path": "${output_path}",
-            "package_version": "${package_version}"
+            "output_path": "${output_path}"
           },
           "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"],
           "StartupScript": "build_deb_packages.sh"
