@@ -15,6 +15,7 @@
 // An NSS module which adds supports for file /etc/oslogin_passwd.cache
 
 #include "nss_cache_oslogin.h"
+#include "../compat.h"
 
 #include <sys/mman.h>
 
@@ -31,8 +32,7 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
   } while (0)
 
 static FILE *p_file = NULL;
-static char p_filename[NSS_CACHE_OSLOGIN_PATH_LENGTH] =
-    "/etc/oslogin_passwd.cache";
+static char p_filename[NSS_CACHE_OSLOGIN_PATH_LENGTH] = NSS_CACHE_OSLOGIN_PATH;
 #ifdef BSD
 extern int fgetpwent_r(FILE *, struct passwd *, char *, size_t,
                        struct passwd **);
@@ -435,3 +435,24 @@ enum nss_status _nss_cache_oslogin_getpwnam_r(const char *name,
 
   return ret;
 }
+
+NSS_METHOD_PROTOTYPE(__nss_compat_getpwnam_r);
+NSS_METHOD_PROTOTYPE(__nss_compat_getpwuid_r);
+NSS_METHOD_PROTOTYPE(__nss_compat_getpwent_r);
+NSS_METHOD_PROTOTYPE(__nss_compat_setpwent);
+NSS_METHOD_PROTOTYPE(__nss_compat_endpwent);
+
+DECLARE_NSS_METHOD_TABLE(methods,
+    { NSDB_PASSWD, "getpwnam_r", __nss_compat_getpwnam_r,
+      (void*)_nss_cache_oslogin_getpwnam_r },
+    { NSDB_PASSWD, "getpwuid_r", __nss_compat_getpwuid_r,
+      (void*)_nss_cache_oslogin_getpwuid_r },
+    { NSDB_PASSWD, "getpwent_r", __nss_compat_getpwent_r,
+      (void*)_nss_cache_oslogin_getpwent_r },
+    { NSDB_PASSWD, "endpwent",   __nss_compat_endpwent,
+      (void*)_nss_cache_oslogin_endpwent },
+    { NSDB_PASSWD, "setpwent",   __nss_compat_setpwent,
+      (void*)_nss_cache_oslogin_setpwent },
+)
+
+NSS_REGISTER_METHODS(methods)

@@ -23,6 +23,7 @@
 
 #include <fstream>
 
+#include "../compat.h"
 #include "../utils/oslogin_utils.h"
 
 
@@ -31,8 +32,8 @@ using oslogin_utils::MutexLock;
 using oslogin_utils::NssCache;
 
 // File paths for the nss cache file.
-static const char kDefaultFilePath[] = "/etc/oslogin_passwd.cache";
-static const char kDefaultBackupFilePath[] = "/etc/oslogin_passwd.cache.bak";
+static const char kDefaultFilePath[] = K_DEFAULT_FILE_PATH;
+static const char kDefaultBackupFilePath[] = K_DEFAULT_BACKUP_FILE_PATH;
 
 // Local NSS Cache size. This affects the maximum number of passwd entries per
 // http request.

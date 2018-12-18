@@ -23,8 +23,7 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef __GNUC__
-#if __GNUC__ > 4 || \
+#if defined(__clang__) || __GNUC__ > 4 || \
   (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
                      (__GNUC_MINOR__ == 9 && \
                       __GNUC_PATCHLEVEL__ > 0)))
@@ -34,9 +33,9 @@
 #include <boost/regex.hpp>
 #define Regex boost
 #endif
-#endif
 
 #include "oslogin_utils.h"
+#include "../compat.h"
 
 using std::string;
 
@@ -292,7 +291,7 @@ bool ValidatePasswd(struct passwd* result, BufferManager* buf,
     }
   }
   if (strlen(result->pw_shell) == 0) {
-    if (!buf->AppendString("/bin/bash", &result->pw_shell, errnop)) {
+    if (!buf->AppendString(DEFAULT_SHELL, &result->pw_shell, errnop)) {
       return false;
     }
   }
