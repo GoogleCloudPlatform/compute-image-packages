@@ -25,8 +25,7 @@ Conflicts: dracut-modules-growroot
 # Allow other files in the source that don't end up in the package.
 %define _unpackaged_files_terminate_build 0
 
-%description Automatically resize the root partition on first boot.
-
+%description
 This package resizes the root partition on first boot using parted.
 
 %prep
