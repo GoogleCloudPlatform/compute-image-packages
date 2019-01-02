@@ -63,7 +63,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     urlopen_read = mock_urlopen().read(return_value='foo')
     self.mock_logger.warning.assert_not_called()
 
-    mock_open.assert_called_once_with(self.dest, 'w')
+    mock_open.assert_called_once_with(self.dest, 'wb')
     handle = mock_open()
     handle.write.assert_called_once_with(urlopen_read)
 
