@@ -173,6 +173,9 @@ modify_pam_sshd() (
   elif [ -e /etc/os-release ] && grep -q 'ID="sles"' /etc/os-release; then
     # Get location of common-auth.
     insert=$($sed -rn "/^auth\s+include\s+common-auth/=" "$pam_config")
+  elif [ -e /etc/arch-release ]; then
+    # Get location of system-remote-login.
+    insert=$($sed -rn "/^auth\s+include\s+system-remote-login/=" "$pam_config")
   fi
 
   added_config="$added_comment"
