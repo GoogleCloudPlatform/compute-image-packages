@@ -294,6 +294,7 @@ setup_google_dirs() {
     fi
   done
   echo "#includedir ${sudoers_dir}" > "$sudoers_file"
+  chmod 0440 "$sudoers_file"
 }
 
 remove_google_dirs() {
