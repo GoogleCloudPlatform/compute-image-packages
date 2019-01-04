@@ -90,7 +90,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
                    << "\n";
       sudoers_file.close();
       chown(filename.c_str(), 0, 0);
-      chmod(filename.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
+      chmod(filename.c_str(), S_IRUSR | S_IRGRP);
     }
   } else if (file_exists) {
     remove(filename.c_str());
