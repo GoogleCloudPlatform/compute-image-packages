@@ -125,14 +125,15 @@ modify_pam_sshd() (
 
   local pam_config="${1:-${pam_config}}"
 
-  local pam_auth_oslogin="auth       [success=done perm_denied=bad default=ignore] pam_oslogin_login.so"
+  local pam_auth_oslogin="auth       [success=done perm_denied=die default=ignore] pam_oslogin_login.so"
   local pam_auth_group="auth       [default=ignore] pam_group.so"
   local pam_account_oslogin="account    [success=ok default=ignore] pam_oslogin_admin.so"
   local pam_account_admin="account    [success=ok ignore=ignore default=die] pam_oslogin_login.so"
   local pam_session_homedir="session    [success=ok default=ignore] pam_mkhomedir.so"
 
   # In FreeBSD, the used flags are not supported, replacing them with the
-  # previous ones (requisite and optional).
+  # previous ones (requisite and optional). This is not an exact feature parity
+  # with Linux.
   if is_freebsd; then
     pam_auth_oslogin="auth       optional pam_oslogin_login.so"
     pam_auth_group="auth       optional pam_group.so"
@@ -149,11 +150,11 @@ modify_pam_sshd() (
     added_config="${added_comment}\n"
     for cfg in "$pam_account_admin" "$pam_account_oslogin" \
         "$pam_session_homedir" "$pam_auth_group"; do
-      grep -qE "^${cfg%% *}.*${cfg##* }" ${pam_config} || added_config+="${cfg}\n"
+      grep -qE "^${cfg%% *}.*${cfg##* }" ${pam_config} || added_config="${added_config}${cfg}\n"
     done
 
     if [ -n "$two_factor" ]; then
-      grep -q "$pam_auth_oslogin" "$pam_config" || added_config+="${pam_auth_oslogin}\n"
+      grep -q "$pam_auth_oslogin" "$pam_config" || added_config="${added_config}${pam_auth_oslogin}\n"
     fi
 
     $sed -i"" "1i ${added_config}\n\n" "$pam_config"
@@ -180,10 +181,10 @@ modify_pam_sshd() (
 
   added_config="$added_comment"
   if [ -n "$two_factor" ] && ! grep -qE '^auth.*oslogin' "$pam_config"; then
-    added_config+="\n${pam_auth_oslogin}"
+    added_config="${added_config}\n${pam_auth_oslogin}"
   fi
   if ! grep -qE '^auth.*pam_group' "$pam_config"; then
-    added_config+="\n${pam_auth_group}"
+    added_config="${added_config}\n${pam_auth_group}"
   fi
 
   # We can and should insert auth modules at top of `auth` stack.
