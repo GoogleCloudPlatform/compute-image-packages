@@ -60,7 +60,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     mocked_request.add_unredirected_header.assert_called_with(
         'Authorization', 'bar')
     mock_urlopen.assert_called_with(mocked_request)
-    urlopen_read = mock_urlopen().read(return_value='foo')
+    urlopen_read = mock_urlopen().read(return_value=b'foo').decode()
     self.mock_logger.warning.assert_not_called()
 
     mock_open.assert_called_once_with(self.dest, 'w')
