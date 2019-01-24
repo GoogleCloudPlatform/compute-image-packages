@@ -312,18 +312,12 @@ packaging directory for more details.
 
 #### Version Updates
 
-There are several places where package versions have to be updated and must
-match to successfully release an update.
+The method for making version updates differs by package.
 
-* `setup.py` Update the version string with the Python package version. Used
+* All packages need the `VERSION` variable set in the `setup_{deb,rpm}.sh` build scripts.
+* All packages need the `debian/changelog` file updated. Please use `dch(1)` to update it.
+* `python-google-compute-engine` additionally needs the version specified in `setup.py`. This is used
   for entry points through the Python egg and PyPI.
-* `specs/google-compute-engine.spec` Update the version of the
-  `google-compute-engine` package for EL6 and EL7.
-* `specs/python-google-compute-engine.spec` Update the version string of the
-  `python-google-compute-engine` package for EL6 and EL7.
-* `debian/changelog` Update `google-compute-image-packages (VERSION) stable`,
-  the version of the Debian packages.
-* Update the variable `package_version` when invoking the package build workflows.
 
 #### Package Distribution
 
