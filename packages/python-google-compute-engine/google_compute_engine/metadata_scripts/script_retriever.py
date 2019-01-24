@@ -81,7 +81,7 @@ class ScriptRetriever(object):
       request = urlrequest.Request(url)
       request.add_unredirected_header('Metadata-Flavor', 'Google')
       request.add_unredirected_header('Authorization', self.token)
-      content = urlrequest.urlopen(request).read()
+      content = urlrequest.urlopen(request).read().decode('utf-8')
     except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
       self.logger.warning('Could not download %s. %s.', url, str(e))
       return None
