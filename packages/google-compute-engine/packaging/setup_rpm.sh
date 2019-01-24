@@ -23,10 +23,6 @@ if [[ $(basename "$working_dir") != $NAME ]]; then
   exit 1
 fi
 
-# Build dependencies.
-sudo yum -y install make gcc-c++ libcurl-devel json-c json-c-devel pam-devel \
-  policycoreutils-python boost-devel
-
 # RPM creation tools.
 sudo yum -y install rpmdevtools
 

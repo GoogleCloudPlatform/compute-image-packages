@@ -24,7 +24,7 @@ if [[ $(basename "$working_dir") != $NAME ]]; then
 fi
 
 # RPM creation tools.
-sudo yum -y install rpmdevtools
+sudo yum -y install rpmdevtools rsync
 
 rm -rf ${rpm_working_dir}
 mkdir -p ${rpm_working_dir}/{SOURCES,SPECS}
