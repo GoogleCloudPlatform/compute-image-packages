@@ -85,7 +85,7 @@ eventually_add_hostnames_domain_to_search() {
 
        if [ "${is_in}" = "false" ]; then
           # Add domain name to search list (#637763)
-          sed -i -e "s/${search}/${search} ${domain}/" /etc/resolv.conf
+          sed -i"" -e "s/${search}/${search} ${domain}/" /etc/resolv.conf
        fi
     fi
 }
