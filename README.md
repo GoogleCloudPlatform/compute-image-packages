@@ -42,7 +42,7 @@ machine run properly on our platform.
 
 ## Guest Overview
 
-The guest environment is made up of the following components:
+The Linux guest environment is made up of the following components:
 
 *   **Accounts** daemon to setup and manage user accounts, and to enable SSH key
     based authentication.
@@ -279,16 +279,17 @@ provided Python versions.
 
 Distro       | Package Type | Python Version | Init System
 ------------ | ------------ | -------------- | -----------
-Debian 8     | deb          | 2.7            | systemd
-Debian 9     | deb          | 3.5 or 2.7     | systemd
+SLES 12      | rpm          | 2.7            | systemd
+SLES 15      | rpm          | 3.6            | systemd
 CentOS 6     | rpm          | 2.6            | upstart
 CentOS 7     | rpm          | 2.7            | systemd
 RHEL 6       | rpm          | 2.6            | upstart
 RHEL 7       | rpm          | 2.7            | systemd
 Ubuntu 14.04 | deb          | 2.7            | upstart
 Ubuntu 16.04 | deb          | 3.5 or 2.7     | systemd
-SLES 11      | rpm          | 2.6            | sysvinit
-SLES 12      | rpm          | 2.7            | systemd
+Ubuntu 18.04 | deb          | 3.6            | systemd
+Ubuntu 18.10 | deb          | 3.6            | systemd
+Debian 9     | deb          | 3.5 or 2.7     | systemd
 
 We build the following packages for the Linux guest environment.
 
@@ -302,10 +303,13 @@ We build the following packages for the Linux guest environment.
     *  The Python 2 package for Linux daemons and libraries.
 *   `python3-google-compute-engine`
     *  The Python 3 package for Linux daemons and libraries.
+*   `google-compute-engine-oslogin`
+    *  The PAM and NSS modules for [GCE OS Login](https://cloud.google.com/compute/docs/oslogin/)
+*   `gce-disk-expand`
+    *  The on-boot resize scripts for root partition.
 
-The package source for Debian and RPM specs for Enterprise Linux 6 and 7 are
-included in this project. There are also
-[Daisy](https://github.com/GoogleCloudPlatform/compute-image-tools/tree/master/daisy)
+The package sources (RPM spec files and Debian packaging directories) are also
+included in this project. There are also [Daisy](https://github.com/GoogleCloudPlatform/compute-image-tools/tree/master/daisy)
 workflows for spinning up GCE VM's to automatically build the packages for
 Debian, Red Hat, and CentOS. See the [README](packaging/README.md) in the
 packaging directory for more details.
@@ -314,55 +318,34 @@ packaging directory for more details.
 
 The method for making version updates differs by package.
 
-* All packages need the `VERSION` variable set in the `setup_{deb,rpm}.sh` build scripts.
-* All packages need the `debian/changelog` file updated. Please use `dch(1)` to update it.
-* `python-google-compute-engine` additionally needs the version specified in `setup.py`. This is used
-  for entry points through the Python egg and PyPI.
+* All packages need the `VERSION` variable set in the `setup_{deb,rpm}.sh` build
+  scripts.
+* All packages need the `debian/changelog` file updated. Please use `dch(1)` to
+  update it.
+* `python-google-compute-engine` additionally needs the version specified in
+  `setup.py`. This is used for entry points through the Python egg and PyPI.
+* `google-compute-engine-oslogin` needs the version also updated in the
+  `Makefile`.
 
 #### Package Distribution
 
-The deb and rpm packages used in some GCE images are published to Google Cloud
-repositories. Debian 8 and 9, CentOS 6 and 7, and RHEL 6 and 7 use these
-repositories to install and update the `google-compute-engine`, and
-`python-google-compute-engine` (and `python3-google-compute-engine` for Python 3)
-packages. If you are creating a custom image, you can also use these repositories
-in your image.
+The deb and rpm packages are published to Google Cloud repositories. Debian,
+CentOS, and RHEL use these repositories to install and update the
+`google-compute-engine`, `google-compute-engine-oslogin` and
+`python-google-compute-engine` (and `python3-google-compute-engine` for Python
+3) packages. If you are creating a custom image, you can also use these
+repositories in your image.
 
-**For Debian 8, run the following commands as root:**
+**For Debian, run the following commands as root:**
 
 Add the public repo key to your system:
 ```
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 ```
 
 Add a source list file `/etc/apt/sources.list.d/google-cloud.list`:
 ```
-tee /etc/apt/sources.list.d/google-cloud.list << EOM
-deb http://packages.cloud.google.com/apt google-compute-engine-jessie-stable main
-deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-jessie main
-EOM
-```
-
-Install the packages to maintain the public key over time:
-```
-apt-get update; apt-get install google-cloud-packages-archive-keyring
-```
-
-Install the `google-compute-engine` and `python-google-compute-engine` packages:
-```
-apt-get update; apt-get install -y google-compute-engine python-google-compute-engine
-```
-
-**For Debian 9, run the following commands as root:**
-
-Add the public repo key to your system:
-```
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-```
-
-Add a source list file `/etc/apt/sources.list.d/google-cloud.list`:
-```
-tee /etc/apt/sources.list.d/google-cloud.list << EOM
+sudo tee /etc/apt/sources.list.d/google-cloud.list << EOM
 deb http://packages.cloud.google.com/apt google-compute-engine-stretch-stable main
 deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-stretch main
 EOM
@@ -370,15 +353,12 @@ EOM
 
 Install the packages to maintain the public key over time:
 ```
-apt-get update; apt-get install google-cloud-packages-archive-keyring
+sudo apt update; sudo apt install -y google-cloud-packages-archive-keyring
 ```
 
-Install the `google-compute-engine` and `python-google-compute-engine` packages:
-```
-apt-get update; apt-get install -y google-compute-engine python-google-compute-engine
-```
+You are then able to install any of the packages from this repo.
 
-**For EL6 and EL7 based distributions, run the following commands as root:**
+**For RedHat based distributions, run the following commands as root:**
 
 Add the yum repo to a repo file `/etc/yum.repos.d/google-cloud.repo` for either
 EL6 or EL7. Change `DIST` to either 6 or 7 respectively:
@@ -396,10 +376,7 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 EOM
 ```
 
-Install the `google-compute-engine`, `python-google-compute-engine` packages:
-```
-yum install -y google-compute-engine python-google-compute-engine
-```
+You are then able to install any of the packages from this repo.
 
 ## Troubleshooting
 

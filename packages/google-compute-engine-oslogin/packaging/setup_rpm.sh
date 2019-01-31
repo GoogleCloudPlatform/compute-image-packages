@@ -36,4 +36,5 @@ cp packaging/${NAME}.spec ${rpm_working_dir}/SPECS/
 
 tar czvf ${rpm_working_dir}/SOURCES/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
-rpmbuild --define "_topdir ${rpm_working_dir}/" -ba ${rpm_working_dir}/SPECS/${NAME}.spec
+rpmbuild --define "_topdir ${rpm_working_dir}/" --define "_version ${VERSION}" \
+  -ba ${rpm_working_dir}/SPECS/${NAME}.spec
