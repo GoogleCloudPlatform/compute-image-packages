@@ -1,0 +1,8 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	dh_auto_install -- PAM_INSTALL_PATH=/lib/$(DEB_HOST_MULTIARCH)/security \
+	BIN_INSTALL_PATH=/usr/bin NSS_INSTALL_PATH=/lib/$(DEB_HOST_MULTIARCH)/ \
+	MAKE_LINKS=true
