@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="python-google-compute-engine"
-VERSION="2.8.12"
+VERSION="2.8.13"
 
 working_dir=${PWD}
 if [[ $(basename "$working_dir") != $NAME ]]; then
