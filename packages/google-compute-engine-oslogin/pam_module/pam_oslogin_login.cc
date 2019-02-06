@@ -188,7 +188,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
   user_prompts[AUTHZEN] = "Google phone prompt";
   user_prompts[TOTP] = "Security code from Google Authenticator application";
   user_prompts[INTERNAL_TWO_FACTOR] = "Security code from security key";
-  user_prompts[IDV_PREREGISTERED_PHONE] = 
+  user_prompts[IDV_PREREGISTERED_PHONE] =
       "Voice or text message verification code";
 
   oslogin_utils::Challenge challenge;
