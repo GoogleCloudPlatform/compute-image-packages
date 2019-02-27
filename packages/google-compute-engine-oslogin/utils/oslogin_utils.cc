@@ -586,6 +586,7 @@ bool StartSession(const string& email, string* response) {
 
   jarr = json_object_new_array();
   json_object_array_add(jarr, json_object_new_string(INTERNAL_TWO_FACTOR));
+  json_object_array_add(jarr, json_object_new_string(AUTHZEN));
   json_object_array_add(jarr, json_object_new_string(TOTP));
   json_object_array_add(jarr, json_object_new_string(IDV_PREREGISTERED_PHONE));
 

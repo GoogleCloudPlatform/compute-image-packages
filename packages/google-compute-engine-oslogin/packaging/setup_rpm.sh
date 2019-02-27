@@ -15,7 +15,7 @@
 
 
 NAME="google-compute-engine-oslogin"
-VERSION="1.4.3"
+VERSION="1.5.0"
 
 rpm_working_dir=/tmp/rpmpackage/${NAME}-${VERSION}
 working_dir=${PWD}
