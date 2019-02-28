@@ -1,3 +1,9 @@
+google-compute-engine-oslogin (1.5.0-1) unstable; urgency=low
+
+  * Support Google prompt for two factor authentication.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 19 Feb 2019 12:00:00 -0700
+
 google-compute-engine-oslogin (1.4.3-1) unstable; urgency=low
 
   * Improve OS Login control file for BSD support.
