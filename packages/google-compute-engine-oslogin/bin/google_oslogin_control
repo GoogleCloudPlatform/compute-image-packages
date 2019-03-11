@@ -61,7 +61,7 @@ modify_sshd_conf() (
   local sshd_auth_methods="AuthenticationMethods publickey,keyboard-interactive"
   local sshd_challenge="ChallengeResponseAuthentication yes"
 
-  # Update google_authorized_keys path in FreeBSD
+  # Update google_authorized_keys path in FreeBSD.
   if is_freebsd; then
     sshd_auth_keys_command="AuthorizedKeysCommand /usr/local/bin/google_authorized_keys"
   fi
