@@ -632,7 +632,7 @@ bool ContinueSession(const string& email, const string& user_token,
 
   if (challenge.status != "READY") {
     json_object_object_add(jobj, "action",
-                           json_object_new_string("startAlternate"));
+                           json_object_new_string("START_ALTERNATE"));
   }
 
   const char* data = NULL;
