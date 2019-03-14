@@ -218,6 +218,16 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     challenge = challenges[0];
   }
 
+  if (challenge.status != "READY") {
+    // Call continueSession with startAlternate flag
+    if (!ContinueSession(true, email, "", session_id, challenge, &response)) {
+      PAM_SYSLOG(pamh, LOG_ERR,
+                 "Bad response from two-factor continue session request: %s",
+                 response.empty() ? "empty response" : response.c_str());
+      return PAM_PERM_DENIED;
+    }
+  }
+
   char* user_token = NULL;
   if (challenge.type == INTERNAL_TWO_FACTOR) {
     if (pam_prompt(pamh, PAM_PROMPT_ECHO_ON, &user_token,
@@ -247,7 +257,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     return PAM_PERM_DENIED;
   }
 
-  if (!ContinueSession(email, user_token, session_id, challenge, &response)) {
+  if (!ContinueSession(false, email, user_token, session_id, challenge,
+                       &response)) {
       PAM_SYSLOG(pamh, LOG_ERR,
                  "Bad response from two-factor continue session request: %s",
                  response.empty() ? "empty response" : response.c_str());
