@@ -37,7 +37,7 @@ modify_nsswitch_conf() {
     $sed -i"" '/^passwd:/ s/$/ cache_oslogin oslogin/' "$nss_config"
   fi
 
-  if is_freebsd && grep -q '^passwd:.*compat'; then
+  if is_freebsd && grep -q '^passwd:.*compat' "$nss_config"; then
     $sed -i"" '/^passwd:/ s/compat/files/' "$nss_config"
   fi
 }
@@ -60,6 +60,11 @@ modify_sshd_conf() (
   local sshd_auth_keys_command_user="AuthorizedKeysCommandUser root"
   local sshd_auth_methods="AuthenticationMethods publickey,keyboard-interactive"
   local sshd_challenge="ChallengeResponseAuthentication yes"
+
+  # Update google_authorized_keys path in FreeBSD.
+  if is_freebsd; then
+    sshd_auth_keys_command="AuthorizedKeysCommand /usr/local/bin/google_authorized_keys"
+  fi
 
   # Update directives for EL 6.
   if grep -qs "release 6" /etc/redhat-release; then

@@ -612,7 +612,7 @@ bool StartSession(const string& email, string* response) {
   return ret;
 }
 
-bool ContinueSession(const string& email, const string& user_token,
+bool ContinueSession(bool alt, const string& email, const string& user_token,
                      const string& session_id, const Challenge& challenge,
                      string* response) {
   bool ret = true;
@@ -623,16 +623,20 @@ bool ContinueSession(const string& email, const string& user_token,
   json_object_object_add(jobj, "challengeId",
                          json_object_new_int(challenge.id));
 
-  if (challenge.type != AUTHZEN) {
+  if (alt) {
+    json_object_object_add(jobj, "action",
+                           json_object_new_string("START_ALTERNATE"));
+  } else {
+    json_object_object_add(jobj, "action",
+                           json_object_new_string("RESPOND"));
+  }
+
+  // AUTHZEN type and START_ALTERNATE action don't provide credentials.
+  if (challenge.type != AUTHZEN && !alt) {
     jresp = json_object_new_object();
     json_object_object_add(jresp, "credential",
                            json_object_new_string(user_token.c_str()));
     json_object_object_add(jobj, "proposalResponse", jresp);
-  }
-
-  if (challenge.status != "READY") {
-    json_object_object_add(jobj, "action",
-                           json_object_new_string("startAlternate"));
   }
 
   const char* data = NULL;
@@ -648,7 +652,8 @@ bool ContinueSession(const string& email, const string& user_token,
   }
 
   json_object_put(jobj);
-  if (challenge.type != AUTHZEN) {
+  // Match condition where we created this to avoid double-free.
+  if (challenge.type != AUTHZEN && !alt) {
     json_object_put(jresp);
   }
 
