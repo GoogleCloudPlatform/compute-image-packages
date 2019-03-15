@@ -219,7 +219,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
   }
 
   if (challenge.status != "READY") {
-    // Call continueSession with startAlternate flag
+    // Call continueSession with the START_ALTERNATE flag.
     if (!ContinueSession(true, email, "", session_id, challenge, &response)) {
       PAM_SYSLOG(pamh, LOG_ERR,
                  "Bad response from two-factor continue session request: %s",
