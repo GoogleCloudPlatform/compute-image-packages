@@ -193,7 +193,7 @@ bool ParseJsonToChallenges(const string& json, vector<Challenge> *challenges);
 bool StartSession(const string& email, string* response);
 
 // Calls the continueSession API.
-bool ContinueSession(const string& email, const string& user_token,
+bool ContinueSession(bool alt, const string& email, const string& user_token,
                      const string& session_id, const Challenge& challenge,
                      string* response);
 
