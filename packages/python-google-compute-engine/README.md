@@ -241,8 +241,7 @@ MetadataScripts   | startup                | `false` disables startup script exe
 MetadataScripts   | shutdown               | `false` disables shutdown script execution.
 NetworkInterfaces | setup                  | `false` skips network interface setup.
 NetworkInterfaces | ip\_forwarding         | `false` skips IP forwarding.
-NetworkInterfaces | dhclient\_script       | String path to a dhclient script used by dhclient.
-NetworkInterfaces | dhcp\_command          | String to execute to enable network interfaces.
+NetworkInterfaces | dhcp\_command          | String path for alternate dhcp executable used to enable network interfaces.
 
 Setting `network_enabled` to `false` will skip setting up host keys and the
 `boto` config in the guest. The setting may also prevent startup and shutdown
