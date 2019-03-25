@@ -185,11 +185,15 @@ modify_pam_sshd() (
   fi
 
   added_config="$added_comment"
-  if [ -n "$two_factor" ] && ! grep -qE '^auth.*oslogin' "$pam_config"; then
-    added_config="${added_config}\n${pam_auth_oslogin}"
-  fi
   if ! grep -qE '^auth.*pam_group' "$pam_config"; then
     added_config="${added_config}\n${pam_auth_group}"
+  fi
+
+  # This auth entry for OS Login+two factor MUST be added last, as it will
+  # short-circuit processing of the auth stack via [success=ok]. auth stack
+  # entries after this one will not be processed.
+  if [ -n "$two_factor" ] && ! grep -qE '^auth.*oslogin' "$pam_config"; then
+    added_config="${added_config}\n${pam_auth_oslogin}"
   fi
 
   # We can and should insert auth modules at top of `auth` stack.
