@@ -15,6 +15,7 @@
 
 """A library for logging text to SysLog and the serial console."""
 
+from google_compute_engine import constants
 from google_compute_engine.compat import logging
 
 
@@ -46,7 +47,7 @@ def Logger(name, debug=False, facility=None):
   if facility:
     # Create a handler for sending logs to SysLog.
     syslog_handler = logging.handlers.SysLogHandler(
-        address='/dev/log', facility=facility)
+        address=constants.SYSLOG_SOCKET, facility=facility)
     syslog_handler.setLevel(logging.INFO)
     syslog_handler.setFormatter(formatter)
     logger.addHandler(syslog_handler)

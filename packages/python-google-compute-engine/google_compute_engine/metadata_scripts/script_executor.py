@@ -19,8 +19,6 @@ import os
 import stat
 import subprocess
 
-from google_compute_engine import constants
-
 
 class ScriptExecutor(object):
   """A class for executing user provided metadata scripts."""
