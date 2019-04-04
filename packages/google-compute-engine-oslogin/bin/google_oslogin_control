@@ -292,7 +292,7 @@ restart_sshd() {
 
 restart_svcs() {
   echo "Restarting optional services."
-  for svc in "nscd" "unscd" "systemd-logind"; do
+  for svc in "nscd" "unscd" "systemd-logind" "cron" "crond"; do
     restart_service "$svc"
   done
 }
