@@ -25,11 +25,17 @@ else:
   import platform as distro
 
 if 'freebsd' in sys.platform:
-  distribution = distro.version().split()
+  # Note: Do not use .version() method which is from either platform or distro
+  # platform.version() and distro.version() return different values.
+  # platform.version() returns 'FreeBSD 11.2-RELEASE-p9.....'
+  # distro.version() returns '11.2'
+  distro_name = 'freebsd'
+  # distro_version is not used for FreeBSD later in this code
+  distro_version = None
 else:
   distribution = distro.linux_distribution()
-distro_name = distribution[0].lower()
-distro_version = distribution[1].split('.')[0]
+  distro_name = distribution[0].lower()
+  distro_version = distribution[1].split('.')[0]
 distro_utils = None
 
 if 'centos' in distro_name and distro_version == '6':

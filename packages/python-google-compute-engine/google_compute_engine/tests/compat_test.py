@@ -109,10 +109,8 @@ class CompatTest(unittest.TestCase):
       self.assertEqual(
           test_cases[distro], google_compute_engine.compat.distro_utils)
 
-  @mock.patch('google_compute_engine.compat.sys.platform', 'freebsd')
-  @mock.patch('google_compute_engine.compat.distro.version')
-  def testDistroCompatFreeBSD(self, mock_call):
-    mock_call.return_value = 'FreeBSD 11.1-RELEASE-p4 #0: Tue Nov 14 06:12:40'
+  @mock.patch('google_compute_engine.compat.sys.platform', 'freebsd11')
+  def testDistroCompatFreeBSD(self):
     reload_import(google_compute_engine.compat)
     self.assertEqual(
         google_compute_engine.distro_lib.freebsd_11.utils,
