@@ -25,12 +25,12 @@ else:
   import platform as distro
 
 if 'freebsd' in sys.platform:
-  # Note: Do not use .version() method which is from either platform or distro
+  # Note: Do not use .version() method which is from either platform or distro.
   # platform.version() and distro.version() return different values.
-  # platform.version() returns 'FreeBSD 11.2-RELEASE-p9.....'
-  # distro.version() returns '11.2'
+  # platform.version() returns 'FreeBSD 11.2-RELEASE-p9.....'.
+  # distro.version() returns '11.2'.
   distro_name = 'freebsd'
-  # distro_version is not used for FreeBSD later in this code
+  # distro_version is not used for FreeBSD later in this code.
   distro_version = None
 else:
   distribution = distro.linux_distribution()
