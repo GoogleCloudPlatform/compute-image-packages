@@ -29,8 +29,6 @@
 #include "../compat.h"
 #include "../utils/oslogin_utils.h"
 
-using std::string;
-
 using oslogin_utils::ContinueSession;
 using oslogin_utils::GetUser;
 using oslogin_utils::HttpGet;
@@ -47,47 +45,49 @@ using oslogin_utils::ValidateUserName;
 static const char kUsersDir[] = "/var/google-users.d/";
 
 extern "C" {
-
 PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
                                 const char **argv) {
-  int pam_result = PAM_PERM_DENIED;
   const char *user_name;
-  if ((pam_result = pam_get_user(pamh, &user_name, NULL)) != PAM_SUCCESS) {
+  if (pam_get_user(pamh, &user_name, NULL) != PAM_SUCCESS) {
     PAM_SYSLOG(pamh, LOG_INFO, "Could not get pam user.");
-    return pam_result;
+    return PAM_AUTH_ERR;
   }
-  string str_user_name(user_name);
+
   if (!ValidateUserName(user_name)) {
-    // If the user name is not a valid oslogin user, don't bother continuing.
-    return PAM_SUCCESS;
+    // Not a valid OS Login username.
+    return PAM_IGNORE;
   }
-  string users_filename = kUsersDir;
+
+  std::string users_filename = kUsersDir;
   users_filename.append(user_name);
   struct stat buffer;
   bool file_exists = !stat(users_filename.c_str(), &buffer);
 
+  std::string str_user_name(user_name);
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(str_user_name);
-  string response;
+
+  std::string response;
   long http_code = 0;
   if (!HttpGet(url.str(), &response, &http_code) || response.empty() ||
       http_code != 200) {
     if (http_code == 404) {
-      // Return success on non-oslogin users.
-      return PAM_SUCCESS;
+      // This module is only consulted for OS Login users.
+      return PAM_IGNORE;
     }
-    // If we can't reliably tell if this is an oslogin user, check if there is
-    // a local file for that user as a last resort.
+
+    // Check local file for that user as a last resort.
     if (file_exists) {
       return PAM_PERM_DENIED;
     }
-    // Otherwise, fall back on success to allow local users to log in.
-    return PAM_SUCCESS;
+
+    // We can't confirm this is an OS Login user, ignore module.
+    return PAM_IGNORE;
   }
 
-  string email;
+  std::string email;
   if (!ParseJsonToEmail(response, &email) || email.empty()) {
-    return PAM_PERM_DENIED;
+    return PAM_AUTH_ERR;
   }
 
   url.str("");
@@ -101,27 +101,25 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
       chmod(users_filename.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
     }
     PAM_SYSLOG(pamh, LOG_INFO,
-               "Granting login permission for organization user %s.",
+               "Organization user %s has login permission.",
                user_name);
-    pam_result = PAM_SUCCESS;
+    return PAM_SUCCESS;
   } else {
     if (file_exists) {
       remove(users_filename.c_str());
     }
     PAM_SYSLOG(pamh, LOG_INFO,
-               "Denying login permission for organization user %s.",
+               "Organization user %s does not have login permission.",
                user_name);
 
-    pam_result = PAM_PERM_DENIED;
+    return PAM_PERM_DENIED;
   }
-  return pam_result;
-}
-PAM_EXTERN int pam_sm_setcred(pam_handle_t * pamh, int flags, int argc,
-                              const char **argv)
-{
-  return PAM_SUCCESS;
 }
 
+PAM_EXTERN int pam_sm_setcred(pam_handle_t * pamh, int flags, int argc,
+                              const char **argv) {
+  return PAM_SUCCESS;
+}
 
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
                                    int argc, const char **argv)
@@ -132,23 +130,23 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     return PAM_PERM_DENIED;
   }
 
-  string str_user_name(user_name);
+  std::string str_user_name(user_name);
   if (!ValidateUserName(user_name)) {
     return PAM_PERM_DENIED;
   }
 
-  string response;
+  std::string response;
   if (!(GetUser(str_user_name, &response))) {
     return PAM_PERM_DENIED;
   }
 
   // System accounts begin with the prefix `sa_`.
-  string sa_prefix = "sa_";
+  std::string sa_prefix = "sa_";
   if (str_user_name.compare(0, sa_prefix.size(), sa_prefix) == 0) {
     return PAM_SUCCESS;
   }
 
-  string email;
+  std::string email;
   if (!ParseJsonToEmail(response, &email) || email.empty()) {
     return PAM_PERM_DENIED;
   }
@@ -161,7 +159,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     return PAM_PERM_DENIED;
   }
 
-  string status;
+  std::string status;
   if (!ParseJsonToKey(response, "status", &status)) {
     PAM_SYSLOG(pamh, LOG_ERR,
                "Failed to parse status from start session response");
@@ -172,7 +170,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     return PAM_SUCCESS; // User is not two-factor enabled.
   }
 
-  string session_id;
+  std::string session_id;
   if (!ParseJsonToKey(response, "sessionId", &session_id)) {
     return PAM_PERM_DENIED;
   }
@@ -184,7 +182,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     return PAM_PERM_DENIED;
   }
 
-  std::map<string,string> user_prompts;
+  std::map<std::string,std::string> user_prompts;
   user_prompts[AUTHZEN] = "Google phone prompt";
   user_prompts[TOTP] = "Security code from Google Authenticator application";
   user_prompts[INTERNAL_TWO_FACTOR] = "Security code from security key";
