@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="google-compute-engine-oslogin"
-VERSION="1.5.1"
+VERSION="1.5.2"
 
 working_dir=${PWD}
 if [[ $(basename "$working_dir") != $NAME ]]; then

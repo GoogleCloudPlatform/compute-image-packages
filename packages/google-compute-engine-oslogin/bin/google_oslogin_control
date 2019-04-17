@@ -14,7 +14,8 @@
 # limitations under the License.
 
 nss_config="/etc/nsswitch.conf"
-pam_config="/etc/pam.d/sshd"
+pam_sshd_config="/etc/pam.d/sshd"
+pam_su_config="/etc/pam.d/su"
 sshd_config="/etc/ssh/sshd_config"
 group_config="/etc/security/group.conf"
 sudoers_dir="/var/google-sudoers.d"
@@ -125,16 +126,21 @@ restore_sshd_conf() {
 }
 
 # Inserts pam modules to relevant pam stacks if missing.
-modify_pam_sshd() (
+modify_pam_config() (
+  # TODO: idempotency of this function would be better assured if it wiped out
+  # and applied desired changes each time rather than detecting deltas.
+
   set -e
 
-  local pam_config="${1:-${pam_config}}"
+  local pam_sshd_config="${1:-${pam_sshd_config}}"
+  local pam_su_config="${1:-${pam_su_config}}"
 
   local pam_auth_oslogin="auth       [success=done perm_denied=die default=ignore] pam_oslogin_login.so"
   local pam_auth_group="auth       [default=ignore] pam_group.so"
   local pam_account_oslogin="account    [success=ok default=ignore] pam_oslogin_admin.so"
   local pam_account_admin="account    [success=ok ignore=ignore default=die] pam_oslogin_login.so"
   local pam_session_homedir="session    [success=ok default=ignore] pam_mkhomedir.so"
+  local pam_account_su="account    [success=bad ignore=ignore] pam_oslogin_login.so"
 
   # In FreeBSD, the used flags are not supported, replacing them with the
   # previous ones (requisite and optional). This is not an exact feature parity
@@ -148,6 +154,7 @@ modify_pam_sshd() (
   fi
 
   local added_config=""
+  local added_su_config=""
 
   # For COS this file is solely includes, so simply prepend the new config,
   # making each entry the top of its stack.
@@ -155,70 +162,93 @@ modify_pam_sshd() (
     added_config="${added_comment}\n"
     for cfg in "$pam_account_admin" "$pam_account_oslogin" \
         "$pam_session_homedir" "$pam_auth_group"; do
-      grep -qE "^${cfg%% *}.*${cfg##* }" ${pam_config} || added_config="${added_config}${cfg}\n"
+      grep -qE "^${cfg%% *}.*${cfg##* }" ${pam_sshd_config} || added_config="${added_config}${cfg}\n"
     done
 
     if [ -n "$two_factor" ]; then
-      grep -q "$pam_auth_oslogin" "$pam_config" || added_config="${added_config}${pam_auth_oslogin}\n"
+      grep -q "$pam_auth_oslogin" "$pam_sshd_config" || added_config="${added_config}${pam_auth_oslogin}\n"
     fi
 
-    $sed -i"" "1i ${added_config}\n\n" "$pam_config"
+    $sed -i"" "1i ${added_config}\n\n" "$pam_sshd_config"
+
+    added_su_config="${added_comment}\n${pam_account_su}"
+    $sed -i"" "1i ${added_su_config}" "$pam_su_config"
 
     return 0
   fi
 
-  # Find the distro-specific insertion point for auth.
+  # Find the distro-specific insertion point for auth and su.
   if [ -e /etc/debian_version ]; then
     # Get location of common-auth and check if preceding line is a comment.
-    insert=$($sed -rn "/^@include\s+common-auth/=" "$pam_config")
-    $sed -n "$((insert-1))p" "$pam_config" | grep -q '^#' && insert=$((insert-1))
+    insert=$($sed -rn "/^@include\s+common-auth/=" "$pam_sshd_config")
+    $sed -n "$((insert-1))p" "$pam_sshd_config" | grep -q '^#' && insert=$((insert-1))
+    su_insert=$($sed -rn "/^@include\s+common-account/=" "$pam_su_config")
   elif [ -e /etc/redhat-release ]; then
     # Get location of password-auth.
     insert=$($sed -rn "/^auth\s+(substack|include)\s+password-auth/=" \
-      "$pam_config")
+      "$pam_sshd_config")
+    # Get location of system-auth.
+    su_insert=$($sed -rn "/^account\s+include\s+system-auth/=" "$pam_su_config")
   elif [ -e /etc/os-release ] && grep -q 'ID="sles"' /etc/os-release; then
     # Get location of common-auth.
-    insert=$($sed -rn "/^auth\s+include\s+common-auth/=" "$pam_config")
+    insert=$($sed -rn "/^auth\s+include\s+common-auth/=" "$pam_sshd_config")
+    # Get location of common-account.
+    su_insert=$($sed -rn "/^account\s+include\s+common-account/=" "$pam_su_config")
   elif [ -e /etc/arch-release ]; then
     # Get location of system-remote-login.
-    insert=$($sed -rn "/^auth\s+include\s+system-remote-login/=" "$pam_config")
+    insert=$($sed -rn "/^auth\s+include\s+system-remote-login/=" "$pam_sshd_config")
+    # TODO: find su_insert point for arch linux.
   fi
 
   added_config="$added_comment"
-  if [ -n "$two_factor" ] && ! grep -qE '^auth.*oslogin' "$pam_config"; then
-    added_config="${added_config}\n${pam_auth_oslogin}"
-  fi
-  if ! grep -qE '^auth.*pam_group' "$pam_config"; then
+  if ! grep -qE '^auth.*pam_group' "$pam_sshd_config"; then
     added_config="${added_config}\n${pam_auth_group}"
   fi
 
-  # We can and should insert auth modules at top of `auth` stack.
+  # This auth entry for OS Login+two factor MUST be added last, as it will
+  # short-circuit processing of the auth stack via [success=ok]. auth stack
+  # entries after this one will not be processed.
+  if [ -n "$two_factor" ] && ! grep -qE '^auth.*oslogin' "$pam_sshd_config"; then
+    added_config="${added_config}\n${pam_auth_oslogin}"
+  fi
+
+  # Insert auth modules at top of `sshd:auth` stack.
   if [ -n "$insert" ] && [ "$added_config" != "$added_comment" ]; then
-    $sed -i"" "${insert}i ${added_config}" "$pam_config"
+    $sed -i"" "${insert}i ${added_config}" "$pam_sshd_config"
   fi
 
-  # Append account modules at end of `account` stack.
-  if ! grep -qE '^account.*oslogin' "$pam_config"; then
+  # Insert su blocker at top of `su:account` stack.
+  if [ -n "$su_insert" ] && ! grep -qE "$pam_account_su" "$pam_su_config"; then
+    added_su_config="${added_comment}\n${pam_account_su}"
+    sed -i"" "${su_insert}i ${added_su_config}" "$pam_su_config"
+  fi
+
+  # Append account modules at end of `sshd:account` stack.
+  if ! grep -qE '^account.*oslogin' "$pam_sshd_config"; then
     added_config="\\\n${added_comment}\n${pam_account_admin}\n${pam_account_oslogin}"
-    account_end=$($sed -n '/^account/=' "$pam_config" | tail -1)
-    $sed -i"" "${account_end}a ${added_config}" "$pam_config"
+    account_end=$($sed -n '/^account/=' "$pam_sshd_config" | tail -1)
+    $sed -i"" "${account_end}a ${added_config}" "$pam_sshd_config"
   fi
 
-  # Append mkhomedir module at end of `session` stack.
-  if ! grep -qE '^session.*mkhomedir' "$pam_config"; then
+  # Append mkhomedir module at end of `sshd:session` stack.
+  if ! grep -qE '^session.*mkhomedir' "$pam_sshd_config"; then
     added_config="\\\n${added_comment}\n${pam_session_homedir}"
-    session_end=$($sed -n '/^session/=' "$pam_config" | tail -1)
-    $sed -i"" "${session_end}a ${added_config}" "$pam_config"
+    session_end=$($sed -n '/^session/=' "$pam_sshd_config" | tail -1)
+    $sed -i"" "${session_end}a ${added_config}" "$pam_sshd_config"
   fi
 )
 
-restore_pam_sshd() {
-  local pam_config="${1:-${pam_config}}"
+restore_pam_config() {
+  local pam_sshd_config="${1:-${pam_sshd_config}}"
+  local pam_su_config="${1:-${pam_su_config}}"
 
-  $sed -i"" "/${added_comment}/d" "$pam_config"
-  $sed -i"" "/pam_oslogin/d" "$pam_config"
-  $sed -i"" "/^session.*mkhomedir/d" "$pam_config"
-  $sed -i"" "/^auth.*pam_group/d" "$pam_config"
+  $sed -i"" "/${added_comment}/d" "$pam_sshd_config"
+  $sed -i"" "/pam_oslogin/d" "$pam_sshd_config"
+  $sed -i"" "/^session.*mkhomedir/d" "$pam_sshd_config"
+  $sed -i"" "/^auth.*pam_group/d" "$pam_sshd_config"
+
+  $sed -i"" "/${added_comment}/d" "$pam_su_config"
+  $sed -i"" "/pam_oslogin/d" "$pam_su_config"
 }
 
 modify_group_conf() {
@@ -288,7 +318,7 @@ restart_sshd() {
 
 restart_svcs() {
   echo "Restarting optional services."
-  for svc in "nscd" "unscd" "systemd-logind"; do
+  for svc in "nscd" "unscd" "systemd-logind" "cron" "crond"; do
     restart_service "$svc"
   done
 }
@@ -315,7 +345,7 @@ remove_google_dirs() {
 
 activate() {
   for func in modify_sshd_conf modify_nsswitch_conf \
-              modify_pam_sshd setup_google_dirs restart_svcs restart_sshd \
+              modify_pam_config setup_google_dirs restart_svcs restart_sshd \
               modify_group_conf; do
     $func
     [ $? -eq 0 ] || return 1
@@ -324,7 +354,7 @@ activate() {
 
 deactivate() {
   for func in remove_google_dirs restore_nsswitch_conf \
-              restore_sshd_conf restore_pam_sshd restart_svcs restart_sshd \
+              restore_sshd_conf restore_pam_config restart_svcs restart_sshd \
               restore_group_conf; do
     $func
   done
@@ -335,11 +365,11 @@ deactivate() {
 get_status() (
   set -e
 
-  grep -Eq '^account.*oslogin' "$pam_config"
+  grep -Eq '^account.*oslogin' "$pam_sshd_config"
   grep -Eq 'google_authorized_keys' "$sshd_config"
   grep -Eq 'passwd:.*oslogin' "$nss_config"
   if [ -n "$two_factor" ]; then
-    grep -Eq '^auth.*oslogin' "$pam_config"
+    grep -Eq '^auth.*oslogin' "$pam_sshd_config"
     grep -Eq '^(AuthenticationMethods|RequiredAuthentications2).*publickey,keyboard-interactive' "$sshd_config"
   fi
 )

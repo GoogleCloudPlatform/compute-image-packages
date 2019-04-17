@@ -1,3 +1,11 @@
+google-compute-engine-oslogin (1.5.2-1) unstable; urgency=low
+
+  * Fix pam_group ordering detection.
+  * Restart cron on OS Login control.
+  * Add PAM entry to su:account stack.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 16 Apr 2019 12:00:00 -0700
+
 google-compute-engine-oslogin (1.5.1-1) unstable; urgency=low
 
   * Fix two factor auth action name.
