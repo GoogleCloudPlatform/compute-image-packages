@@ -18,6 +18,7 @@
 import subprocess
 
 from google_compute_engine.instance_setup import instance_setup
+from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
@@ -231,22 +232,25 @@ class InstanceSetupTest(unittest.TestCase):
     temp_dest = '/tmp/dest'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
+    mock_open = mock.mock_open()
 
-    instance_setup.InstanceSetup._GenerateSshKey(
-        self.mock_setup, key_type, key_dest)
-    expected_calls = [
-        mock.call.tempfile(prefix=key_type, delete=True),
-        mock.call.tempfile.__enter__(),
-        mock.call.tempfile.__exit__(None, None, None),
-        mock.call.logger.info(mock.ANY, key_dest),
-        mock.call.call(
-            ['ssh-keygen', '-t', key_type, '-f', temp_dest, '-N', '', '-q']),
-        mock.call.move(temp_dest, key_dest),
-        mock.call.move('%s.pub' % temp_dest, '%s.pub' % key_dest),
-        mock.call.permissions(key_dest, mode=0o600),
-        mock.call.permissions('%s.pub' % key_dest, mode=0o644),
-    ]
-    self.assertEqual(mocks.mock_calls, expected_calls)
+    with mock.patch('%s.open' % builtin, mock_open, create=False):
+      mock_open().read.side_effect = 'ssh-rsa asdfasdf'
+      instance_setup.InstanceSetup._GenerateSshKey(
+          self.mock_setup, key_type, key_dest)
+      expected_calls = [
+          mock.call.tempfile(prefix=key_type, delete=True),
+          mock.call.tempfile.__enter__(),
+          mock.call.tempfile.__exit__(None, None, None),
+          mock.call.logger.info(mock.ANY, key_dest),
+          mock.call.call(
+              ['ssh-keygen', '-t', key_type, '-f', temp_dest, '-N', '', '-q']),
+          mock.call.move(temp_dest, key_dest),
+          mock.call.move('%s.pub' % temp_dest, '%s.pub' % key_dest),
+          mock.call.permissions(key_dest, mode=0o600),
+          mock.call.permissions('%s.pub' % key_dest, mode=0o644),
+      ]
+      self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess.check_call')
   def testGenerateSshKeyProcessError(self, mock_call):
@@ -309,6 +313,7 @@ class InstanceSetupTest(unittest.TestCase):
     expected_calls = [mock.call.exists('/bin/systemctl')]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
+
   def testSetSshHostKeys(self):
     self.mock_instance_config.GetOptionString.return_value = '123'
     mock_instance_id = mock.Mock()
@@ -325,6 +330,7 @@ class InstanceSetupTest(unittest.TestCase):
     mock_instance_id.return_value = '123'
     self.mock_setup._GetInstanceId = mock_instance_id
     mock_generate_key = mock.Mock()
+    mock_generate_key.return_value = ('ssh-rsa', 'asdfasdf')
     self.mock_setup._GenerateSshKey = mock_generate_key
     mock_listdir.return_value = [
         'ssh_config',
@@ -344,6 +350,7 @@ class InstanceSetupTest(unittest.TestCase):
         mock.call('ed25519', '/etc/ssh/ssh_host_ed25519_key'),
         mock.call('rsa', '/etc/ssh/ssh_host_rsa_key'),
     ]
+
     self.assertEqual(sorted(mock_generate_key.mock_calls), expected_calls)
     self.mock_instance_config.SetOption.assert_called_once_with(
         'Instance', 'instance_id', '123')

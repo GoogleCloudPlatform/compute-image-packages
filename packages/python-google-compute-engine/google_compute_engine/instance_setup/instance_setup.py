@@ -30,6 +30,22 @@ from google_compute_engine import metadata_watcher
 from google_compute_engine.boto import boto_config
 from google_compute_engine.instance_setup import instance_config
 
+try:
+  # Python 3
+  import urllib.request as url_lib
+except ImportError:
+  # Python 2
+  import urllib2 as url_lib
+
+
+class PutRequest(url_lib.Request):
+    def get_method(self):
+        return 'PUT'
+
+
+GUEST_ATTRIBUTES_URL = ('http://metadata.google.internal/computeMetadata/v1beta1/'
+                        'instance/guest-attributes/hostkeys/')
+
 
 class InstanceSetup(object):
   """Initialize the instance the first time it boots."""
@@ -122,6 +138,8 @@ class InstanceSetup(object):
     Args:
       key_type: string, the type of the SSH key.
       key_dest: string, a file location to store the SSH key.
+    Returns:
+      tuple, key_type and public key string.
     """
     # Create a temporary file to save the created RSA keys.
     with tempfile.NamedTemporaryFile(prefix=key_type, delete=True) as temp:
@@ -140,6 +158,26 @@ class InstanceSetup(object):
 
     file_utils.SetPermissions(key_dest, mode=0o600)
     file_utils.SetPermissions('%s.pub' % key_dest, mode=0o644)
+    with open('%s.pub' % key_dest, 'r') as pk:
+        key_data = pk.read()
+
+    key_values = key_data.split()
+    if len(key_values) < 2:
+        return
+    else:
+        return key_values[0], key_values[1]
+
+  def _WriteHostKeyToGuestAttributes(self, key_type, key_value):
+    """Write a host key to guest attributes, ignoring errors."""
+    headers = {'Metadata-Flavor' : 'Google'}
+    url = GUEST_ATTRIBUTES_URL + key_type
+    req = PutRequest(url, key_value, headers)
+    try:
+      response = url_lib.urlopen(req)
+      self.logger.debug(response)
+      self.logger.info('Wrote %s host key to guest attributes.' % key_type)
+    except url_lib.HTTPError:
+      pass
 
   def _StartSshd(self):
     """Initialize the SSH daemon."""
@@ -180,7 +218,9 @@ class InstanceSetup(object):
       for key_file in set(key_files) | set(key_types_files):
         key_type = file_regex.match(key_file).group('type')
         key_dest = os.path.join(key_dir, key_file)
-        self._GenerateSshKey(key_type, key_dest)
+        key_data = self._GenerateSshKey(key_type, key_dest)
+        if key_data:
+            self._WriteHostKeyToGuestAttributes(key_data[0], key_data[1])
       self._StartSshd()
       self.instance_config.SetOption(section, 'instance_id', str(instance_id))
 
