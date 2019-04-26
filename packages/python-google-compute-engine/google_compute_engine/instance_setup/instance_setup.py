@@ -177,7 +177,8 @@ class InstanceSetup(object):
       self.logger.debug(response)
       self.logger.info('Wrote %s host key to guest attributes.' % key_type)
     except url_lib.HTTPError:
-      pass
+      self.logger.info('Unable to write %s host key to guest attributes.'
+                       % key_type)
 
   def _StartSshd(self):
     """Initialize the SSH daemon."""
