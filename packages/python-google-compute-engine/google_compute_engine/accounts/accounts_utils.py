@@ -99,8 +99,11 @@ class AccountsUtils(object):
         self.logger.warning('Could not create the sudoers group. %s.', str(e))
 
     if os.path.exists(self.google_sudoers_file):
-      if os.path.getsize(self.google_sudoers_file) == 0:
-        os.remove(self.google_sudoers_file)
+      try:
+        if os.path.getsize(self.google_sudoers_file) == 0:
+          os.remove(self.google_sudoers_file)
+      except OSError as e:
+        pass
 
     if not os.path.exists(self.google_sudoers_file):
       try:
