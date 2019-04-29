@@ -98,7 +98,7 @@ class AccountsUtils(object):
       except subprocess.CalledProcessError as e:
         self.logger.warning('Could not create the sudoers group. %s.', str(e))
 
-    if not os.path.exists(self.google_sudoers_file):
+    if not os.path.exists(self.google_sudoers_file) or os.path.size(self.google_sudoers_file) == 0:
       try:
         with open(self.google_sudoers_file, 'w') as group:
           message = '%{0} ALL=(ALL:ALL) NOPASSWD:ALL'.format(
