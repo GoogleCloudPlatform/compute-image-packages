@@ -164,7 +164,7 @@ class InstanceSetup(object):
 
   def _WriteHostKeyToGuestAttributes(self, key_type, key_value):
     """Write a host key to guest attributes, ignoring errors."""
-    headers = {'Metadata-Flavor' : 'Google'}
+    headers = {'Metadata-Flavor': 'Google'}
     url = GUEST_ATTRIBUTES_URL + key_type
     req = PutRequest(url, key_value, headers)
     try:

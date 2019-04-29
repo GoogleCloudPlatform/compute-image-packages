@@ -322,15 +322,11 @@ class InstanceSetupTest(unittest.TestCase):
     instance_setup.InstanceSetup._SetSshHostKeys(self.mock_setup)
     self.mock_instance_config.SetOption.assert_not_called()
 
-
   @mock.patch('google_compute_engine.instance_setup.instance_setup.PutRequest')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.urlrequest.urlopen')
   def testWriteHostKeyToGuestAttributes(self, mock_urlopen, mock_put_request):
     instance_setup.InstanceSetup._WriteHostKeyToGuestAttributes(
         self.mock_setup, 'ssh-rsa', 'asdfasdf')
-    expected_calls = [
-        mock.call('ssh-rsa', 'asdfasdf')
-    ]
     self.mock_logger.info.assert_called_with(
         'Wrote ssh-rsa host key to guest attributes.')
 
@@ -338,12 +334,8 @@ class InstanceSetupTest(unittest.TestCase):
         'http://foo', 403, 'Forbidden', {}, None)
     instance_setup.InstanceSetup._WriteHostKeyToGuestAttributes(
         self.mock_setup, 'ssh-rsa', 'asdfasdf')
-    expected_calls = [
-        mock.call('ssh-rsa', 'asdfasdf')
-    ]
     self.mock_logger.info.assert_called_with(
         'Unable to write ssh-rsa host key to guest attributes.')
-
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.os.listdir')
   def testSetSshHostKeysFirstBoot(self, mock_listdir):
