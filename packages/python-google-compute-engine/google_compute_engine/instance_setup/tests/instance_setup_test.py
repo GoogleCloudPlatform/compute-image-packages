@@ -233,10 +233,12 @@ class InstanceSetupTest(unittest.TestCase):
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.__enter__.return_value.name = temp_dest
     mock_open = mock.mock_open()
+    key_file_contents = 'ssh-rsa asdfasdf'
+    expected_key_data = ('ssh-rsa', 'asdfasdf')
 
     with mock.patch('%s.open' % builtin, mock_open, create=False):
-      mock_open().read.side_effect = 'ssh-rsa asdfasdf'
-      instance_setup.InstanceSetup._GenerateSshKey(
+      mock_open().read.return_value = key_file_contents
+      key_data = instance_setup.InstanceSetup._GenerateSshKey(
           self.mock_setup, key_type, key_dest)
       expected_calls = [
           mock.call.tempfile(prefix=key_type, delete=True),
@@ -251,6 +253,13 @@ class InstanceSetupTest(unittest.TestCase):
           mock.call.permissions('%s.pub' % key_dest, mode=0o644),
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)
+      self.assertEqual(key_data, expected_key_data)
+
+      mock_open().read.return_value = ''
+      key_data = instance_setup.InstanceSetup._GenerateSshKey(
+          self.mock_setup, key_type, key_dest)
+      self.assertEqual(key_data, None)
+
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess.check_call')
   def testGenerateSshKeyProcessError(self, mock_call):
@@ -322,9 +331,9 @@ class InstanceSetupTest(unittest.TestCase):
     instance_setup.InstanceSetup._SetSshHostKeys(self.mock_setup)
     self.mock_instance_config.SetOption.assert_not_called()
 
-  @mock.patch('google_compute_engine.instance_setup.instance_setup.PutRequest')
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.urlrequest.Request')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.urlrequest.urlopen')
-  def testWriteHostKeyToGuestAttributes(self, mock_urlopen, mock_put_request):
+  def testWriteHostKeyToGuestAttributes(self, mock_urlopen, mock_request):
     instance_setup.InstanceSetup._WriteHostKeyToGuestAttributes(
         self.mock_setup, 'ssh-rsa', 'asdfasdf')
     self.mock_logger.info.assert_called_with(
@@ -336,6 +345,9 @@ class InstanceSetupTest(unittest.TestCase):
         self.mock_setup, 'ssh-rsa', 'asdfasdf')
     self.mock_logger.info.assert_called_with(
         'Unable to write ssh-rsa host key to guest attributes.')
+
+    put_request = instance_setup.PutRequest('http://example.com/')
+    self.assertEqual(put_request.get_method(), 'PUT')
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.os.listdir')
   def testSetSshHostKeysFirstBoot(self, mock_listdir):
