@@ -101,7 +101,7 @@ class AccountsUtils(object):
     try:
       if os.path.getsize(self.google_sudoers_file) == 0:
         os.remove(self.google_sudoers_file)
-    except OSError as e:
+    except OSError:
       pass
 
     if not os.path.exists(self.google_sudoers_file):
