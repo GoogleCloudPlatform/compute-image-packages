@@ -260,7 +260,6 @@ class InstanceSetupTest(unittest.TestCase):
           self.mock_setup, key_type, key_dest)
       self.assertEqual(key_data, None)
 
-
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess.check_call')
   def testGenerateSshKeyProcessError(self, mock_call):
     key_type = 'key-type'
