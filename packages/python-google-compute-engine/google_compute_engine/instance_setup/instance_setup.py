@@ -39,7 +39,8 @@ class PutRequest(urlrequest.Request):
 
 
 GUEST_ATTRIBUTES_URL = ('http://metadata.google.internal/computeMetadata/v1beta1/'
-                        'instance/guest-attributes/hostkeys/')
+                        'instance/guest-attributes')
+GA_NAMESPACE = 'hostkeys'
 
 
 class InstanceSetup(object):
@@ -133,6 +134,7 @@ class InstanceSetup(object):
     Args:
       key_type: string, the type of the SSH key.
       key_dest: string, a file location to store the SSH key.
+
     Returns:
       tuple, key_type and public key string.
     """
@@ -165,15 +167,15 @@ class InstanceSetup(object):
   def _WriteHostKeyToGuestAttributes(self, key_type, key_value):
     """Write a host key to guest attributes, ignoring errors."""
     headers = {'Metadata-Flavor': 'Google'}
-    url = GUEST_ATTRIBUTES_URL + key_type
+    url = '%s/%s/%s' % (GUEST_ATTRIBUTES_URL, GA_NAMESPACE, key_type)
     req = PutRequest(url, key_value, headers)
     try:
       response = urlrequest.urlopen(req)
       self.logger.debug(response)
-      self.logger.info('Wrote %s host key to guest attributes.' % key_type)
+      self.logger.info('Wrote %s host key to guest attributes.', key_type)
     except urlerror.HTTPError:
-      self.logger.info('Unable to write %s host key to guest attributes.'
-                       % key_type)
+      self.logger.info('Unable to write %s host key to guest attributes.',
+                       key_type)
 
   def _StartSshd(self):
     """Initialize the SSH daemon."""

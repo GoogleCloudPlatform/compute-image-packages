@@ -330,21 +330,29 @@ class InstanceSetupTest(unittest.TestCase):
     instance_setup.InstanceSetup._SetSshHostKeys(self.mock_setup)
     self.mock_instance_config.SetOption.assert_not_called()
 
-  @mock.patch('google_compute_engine.instance_setup.instance_setup.urlrequest.Request')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.urlrequest.urlopen')
-  def testWriteHostKeyToGuestAttributes(self, mock_urlopen, mock_request):
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.PutRequest')
+  def testWriteHostKeyToGuestAttributes(self, mock_put, mock_urlopen):
+    key_type = 'ssh-rsa'
+    key_value = 'asdfasdf'
+    expected_url = ('http://metadata.google.internal/computeMetadata/v1beta1/'
+                    'instance/guest-attributes/hostkeys/%s' % key_type)
+    headers = {'Metadata-Flavor': 'Google'}
+
     instance_setup.InstanceSetup._WriteHostKeyToGuestAttributes(
-        self.mock_setup, 'ssh-rsa', 'asdfasdf')
+        self.mock_setup, key_type, key_value)
     self.mock_logger.info.assert_called_with(
-        'Wrote ssh-rsa host key to guest attributes.')
+        'Wrote %s host key to guest attributes.', key_type)
+    mock_put.assert_called_with(expected_url, key_value, headers)
 
     mock_urlopen.side_effect = instance_setup.urlerror.HTTPError(
         'http://foo', 403, 'Forbidden', {}, None)
     instance_setup.InstanceSetup._WriteHostKeyToGuestAttributes(
-        self.mock_setup, 'ssh-rsa', 'asdfasdf')
+        self.mock_setup, key_type, key_value)
     self.mock_logger.info.assert_called_with(
-        'Unable to write ssh-rsa host key to guest attributes.')
+        'Unable to write %s host key to guest attributes.', key_type)
 
+  def testPutRequest(self):
     put_request = instance_setup.PutRequest('http://example.com/')
     self.assertEqual(put_request.get_method(), 'PUT')
 
