@@ -34,13 +34,13 @@ from google_compute_engine.instance_setup import instance_config
 
 
 class PutRequest(urlrequest.Request):
-    def get_method(self):
-        return 'PUT'
+  def get_method(self):
+    return 'PUT'
 
 
 GUEST_ATTRIBUTES_URL = ('http://metadata.google.internal/computeMetadata/v1beta1/'
                         'instance/guest-attributes')
-GA_NAMESPACE = 'hostkeys'
+HOSTKEY_NAMESPACE = 'hostkeys'
 
 
 class InstanceSetup(object):
@@ -156,18 +156,18 @@ class InstanceSetup(object):
     file_utils.SetPermissions(key_dest, mode=0o600)
     file_utils.SetPermissions('%s.pub' % key_dest, mode=0o644)
     with open('%s.pub' % key_dest, 'r') as pk:
-        key_data = pk.read()
+     key_data = pk.read()
 
     key_values = key_data.split()
     if len(key_values) < 2:
-        return
+      return
     else:
-        return key_values[0], key_values[1]
+      return key_values[0], key_values[1]
 
   def _WriteHostKeyToGuestAttributes(self, key_type, key_value):
     """Write a host key to guest attributes, ignoring errors."""
     headers = {'Metadata-Flavor': 'Google'}
-    url = '%s/%s/%s' % (GUEST_ATTRIBUTES_URL, GA_NAMESPACE, key_type)
+    url = '%s/%s/%s' % (GUEST_ATTRIBUTES_URL, HOSTKEY_NAMESPACE, key_type)
     req = PutRequest(url, key_value, headers)
     try:
       response = urlrequest.urlopen(req)
