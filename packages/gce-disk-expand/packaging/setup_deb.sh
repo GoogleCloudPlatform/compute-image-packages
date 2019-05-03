@@ -26,7 +26,7 @@ fi
 sudo apt-get -y install dh-systemd
 
 # DEB creation tools.
-sudo apt-get -y install debhelper devscripts build-essential
+sudo apt-get -y install debhelper devscripts build-essential rsync
 
 rm -rf /tmp/debpackage
 mkdir /tmp/debpackage
