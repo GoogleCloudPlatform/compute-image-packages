@@ -218,7 +218,7 @@ class InstanceSetup(object):
         key_dest = os.path.join(key_dir, key_file)
         key_data = self._GenerateSshKey(key_type, key_dest)
         if key_data:
-            self._WriteHostKeyToGuestAttributes(key_data[0], key_data[1])
+          self._WriteHostKeyToGuestAttributes(key_data[0], key_data[1])
       self._StartSshd()
       self.instance_config.SetOption(section, 'instance_id', str(instance_id))
 
