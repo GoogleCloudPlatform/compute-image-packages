@@ -12,16 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# For EL7, if building on CentOS, override dist to be el7.
+%if 0%{?rhel} == 7
+  %define dist .el7
+%endif
+
 Name: google-compute-engine
 Version: %{_version}
-Release: 1.el7
+Release: 1%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
 Source0: %{name}_%{version}.orig.tar.gz
 Requires: curl
 Requires: google-compute-engine-oslogin
+%if 0%{?rhel} == 8
+Requires: python3-google-compute-engine = %{version}
+%else
 Requires: python-google-compute-engine = %{version}
+%endif
 Requires: rsyslog
 
 BuildArch: noarch

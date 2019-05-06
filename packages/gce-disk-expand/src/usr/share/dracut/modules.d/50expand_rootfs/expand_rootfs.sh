@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-expand_xfs=""  # Global to message next script.
-
 # Contains dracut-specific logic for detecting disk, then calls appropriate
 # library functions.
 main() {
@@ -26,11 +24,7 @@ main() {
     return
   fi
 
-  # Wait for any of the initial udev events to finish otherwise growpart
-  # might fail.
-  udevsettle
-
-  if ! out=$(get_partition "$rootdev"); then
+  if ! out=$(split_partition "$rootdev"); then
     echo "Failed to detect disk and partition info: ${out}"
     return
   fi
@@ -62,8 +56,6 @@ main() {
       return
     fi
   fi
-
-  udevsettle
 
   if ! out=$(resize_filesystem "$rootdev"); then
     echo "Failed to resize filesystem: ${out}"
