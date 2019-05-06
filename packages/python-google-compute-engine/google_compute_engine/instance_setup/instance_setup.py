@@ -160,6 +160,7 @@ class InstanceSetup(object):
 
     key_values = key_data.split()
     if len(key_values) < 2:
+      self.logger.warning('Could not read host key from %s.pub.', key_dest)
       return
     else:
       return key_values[0], key_values[1]
