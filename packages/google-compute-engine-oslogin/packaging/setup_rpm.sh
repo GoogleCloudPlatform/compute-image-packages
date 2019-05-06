@@ -24,11 +24,14 @@ if [[ $(basename "$working_dir") != $NAME ]]; then
   exit 1
 fi
 
-# Build dependencies.
-sudo yum -y install make gcc-c++ libcurl-devel json-c json-c-devel pam-devel policycoreutils-python boost-devel
+sudo yum -y install rpmdevtools make gcc-c++ json-c \
+  libcurl-devel pam-devel boost-devel json-c-devel
 
-# RPM creation tools.
-sudo yum -y install rpmdevtools
+if grep -q '^\(CentOS\|Red Hat\)[^0-9]*8\..' /etc/redhat-release; then
+  sudo yum -y install python3-policycoreutils
+else
+  sudo yum -y install policycoreutils-python
+fi
 
 rm -rf /tmp/rpmpackage
 mkdir -p ${rpm_working_dir}/{SOURCES,SPECS}
