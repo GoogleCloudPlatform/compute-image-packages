@@ -15,11 +15,16 @@
 
 """Unittest for compute_auth.py module."""
 
-from google_compute_engine.boto import compute_auth
+import sys
+
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
 
+if sys.version_info < (3, 0):
+  from google_compute_engine.boto import compute_auth
 
+
+@unittest.skipIf(sys.version_info > (3, 0), 'Skipping for python3.')
 class ComputeAuthTest(unittest.TestCase):
 
   def setUp(self):

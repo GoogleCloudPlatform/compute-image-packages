@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Force the dist to be el7 to avoid el7.centos.
+# For EL7, if building on CentOS, override dist to be el7.
 %if 0%{?rhel} == 7
   %define dist .el7
 %endif
@@ -29,17 +29,25 @@ BuildRequires:  boost-devel
 BuildRequires:  gcc-c++
 BuildRequires:  make
 BuildRequires:  libcurl
-BuildRequires:  json-c
+BuildRequires:  json-c-devel
 BuildRequires:  pam-devel
+%if 0%{?rhel} == 8
+BuildRequires:  python3-policycoreutils
+Requires:  python3-policycoreutils
+%else
 BuildRequires:  policycoreutils-python
-Requires:  boost-regex
 Requires:  policycoreutils-python
+%endif
+Requires:  boost-regex
+Requires: json-c
 
 %define pam_install_path /%{_lib}/security
 
 %description
 This package contains several libraries and changes to enable OS Login functionality
 for Google Compute Engine.
+
+%global debug_package %{nil}
 
 %prep
 %setup
@@ -53,10 +61,14 @@ make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{p
 
 %files
 %doc
-/%{_lib}/libnss_%{name}-%{version}.so
-/%{_lib}/libnss_cache_%{name}-%{version}.so
-%{pam_install_path}/pam_oslogin_admin.so
-%{pam_install_path}/pam_oslogin_login.so
+%attr(0755,-,-) /%{_lib}/libnss_%{name}-%{version}.so
+%attr(0755,-,-) /%{_lib}/libnss_cache_%{name}-%{version}.so
+%if 0%{?rhel} == 8
+/%{_lib}/libnss_oslogin.so.2
+/%{_lib}/libnss_cache_oslogin.so.2
+%endif
+%attr(0755,-,-) %{pam_install_path}/pam_oslogin_admin.so
+%attr(0755,-,-) %{pam_install_path}/pam_oslogin_login.so
 /usr/bin/google_authorized_keys
 /usr/bin/google_oslogin_control
 /usr/bin/google_oslogin_nss_cache
