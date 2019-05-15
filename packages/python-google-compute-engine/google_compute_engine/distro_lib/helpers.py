@@ -42,6 +42,27 @@ def CallDhclient(
     logger.warning('Could not enable interfaces %s.', interfaces)
 
 
+def CallDhclientIpv6(interfaces, logger, dhclient_script=None):
+  """Configure the network interfaces for IPv6 using dhclient.
+
+  Args:
+    interface: string, the output device names for enabling IPv6.
+    logger: logger object, used to write to SysLog and serial port.
+    dhclient_script: string, the path to a dhclient script used by dhclient.
+  """
+  logger.info('Enabling IPv6 on the Ethernet interfaces %s.', interfaces)
+
+  dhclient_command = ['dhclient']
+
+  if dhclient_script and os.path.exists(dhclient_script):
+    dhclient_command += ['-sf', dhclient_script]
+
+  try:
+    subprocess.check_call(dhclient_command + ['-1', '-6', '-v'] + interfaces)
+  except subprocess.CalledProcessError:
+    logger.warning('Could not enable IPv6 on interface %s.', interfaces)
+
+
 def CallHwclock(logger):
   """Sync clock using hwclock.
 

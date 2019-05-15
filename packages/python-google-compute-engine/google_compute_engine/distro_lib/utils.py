@@ -27,8 +27,17 @@ class Utils(object):
     """
     self.debug = debug
 
-  def EnableNetworkInterfaces(
-      self, interfaces, logger, dhclient_script=None):
+  def EnableIpv6(self, interfaces, logger, dhclient_script=None):
+    """Enable IPv6 on the list of network interfaces.
+
+    Args:
+      interfaces: list of string, the output device names for enabling IPv6.
+      logger: logger object, used to write to SysLog and serial port.
+      dhclient_script: string, the path to a dhclient script used by dhclient.
+    """
+    pass
+
+  def EnableNetworkInterfaces(self, interfaces, logger, dhclient_script=None):
     """Enable the list of network interfaces.
 
     Args:
