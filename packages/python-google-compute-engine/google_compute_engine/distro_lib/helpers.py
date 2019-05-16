@@ -42,18 +42,27 @@ def CallDhclient(
     logger.warning('Could not enable interfaces %s.', interfaces)
 
 
-def CallDhclientIpv6(interfaces, logger, dhclient_script=None):
+def CallDhclientIpv6(interfaces, logger, dhclient_script=None, release_lease=False):
   """Configure the network interfaces for IPv6 using dhclient.
 
   Args:
     interface: string, the output device names for enabling IPv6.
     logger: logger object, used to write to SysLog and serial port.
     dhclient_script: string, the path to a dhclient script used by dhclient.
+    release_lease: Release the IPv6 lease.
   """
   logger.info('Enabling IPv6 on the Ethernet interfaces %s.', interfaces)
 
   timeout_command = ['timeout', '5']
   dhclient_command = ['dhclient']
+
+  if release_lease:
+    try:
+      subprocess.check_call(timeout_command + dhclient_command + ['-1', '-6', '-r', '-v']
+                            + interfaces)
+    except subprocess.CalledProcessError:
+      logger.warning('Could not release IPv6 lease on interface %s.', interfaces)
+    return
 
   if dhclient_script and os.path.exists(dhclient_script):
     dhclient_command += ['-sf', dhclient_script]
@@ -63,7 +72,6 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None):
         timeout_command + dhclient_command + ['-1', '-6', '-v'] + interfaces)
   except subprocess.CalledProcessError:
     logger.warning('Could not enable IPv6 on interface %s.', interfaces)
-
 
 def CallHwclock(logger):
   """Sync clock using hwclock.
@@ -98,3 +106,37 @@ def CallNtpdate(logger):
     logger.warning('Failed to sync system time with ntp server.')
   else:
     logger.info('Synced system time with ntp server.')
+
+
+def CallRouteAdvertisement(interfaces, logger):
+  """Sets accept_ra_rt_info_max_plen on a per interface basis.
+  Args:
+    interfaces: string, the output device names for enabling Route Advertisements.
+    logger: logger object, used to write to SysLog and serial port.
+  """
+  logger.info('Enabling Route Advertisements on the Ethernet interfaces %s.', interfaces)
+
+  for interface in interfaces:
+    sysctl_name = 'net.ipv6.conf.{ethinterface}.accept_ra_rt_info_max_plen'.format(
+        ethinterface=interface)
+    CallWriteViaSysCtl(logger, sysctl_name, 128)
+
+  # Force a route solicit by disabling and enabling IPv6.
+  CallWriteViaSysCtl(logger, "net.ipv6.conf.all.disable_ipv6", 1)
+  CallWriteViaSysCtl(logger, "net.ipv6.conf.all.disable_ipv6", 0)
+
+
+def CallWriteViaSysCtl(logger, name, value):
+  """Write a variable using sysctl,
+  Args:
+      name: name of the sysctl variable.
+      value: value of the sysctl variable.
+  """
+  logger.info('Configuring sysctl %s.', name)
+
+  sysctl_command = ['sysctl', '-w',
+                    '{name}={value}'.format(name=name, value=value)]
+  try:
+    subprocess.check_call(sysctl_command)
+  except subprocess.CalledProcessError:
+    logger.warning('Unable to configure sysctl %s.', name)

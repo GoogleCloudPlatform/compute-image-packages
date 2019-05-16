@@ -68,6 +68,47 @@ class NetworkSetupTest(unittest.TestCase):
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.networking.network_setup.network_setup.subprocess.check_call')
+  def testDisableIpv6(self, mock_call):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_call, 'call')
+    mocks.attach_mock(self.mock_logger, 'logger')
+    mocks.attach_mock(self.mock_distro_utils.EnableIpv6, 'enable')
+    mocks.attach_mock(self.mock_distro_utils.DisableIpv6, 'disable')
+
+    # Enable interfaces.
+    network_setup.NetworkSetup.EnableIpv6(
+        self.setup, ['A', 'B', 'C'])
+    # Remove interface
+    network_setup.NetworkSetup.DisableIpv6(
+        self.setup, ['A'])
+    self.assertEqual(self.setup.ipv6_interfaces, set(['B', 'C']))
+    # Add it back
+    network_setup.NetworkSetup.EnableIpv6(
+        self.setup, ['A', 'B', 'C'])
+    self.assertEqual(self.setup.ipv6_interfaces, set(['A', 'B', 'C']))
+    # Remove list
+    network_setup.NetworkSetup.DisableIpv6(
+        self.setup, ['A', 'B'])
+    self.assertEqual(self.setup.ipv6_interfaces, set(['C']))
+
+    # Try removing again, should be a no-op
+    network_setup.NetworkSetup.DisableIpv6(self.setup, ['A'])
+    network_setup.NetworkSetup.DisableIpv6(self.setup, ['A', 'B'])
+
+    expected_calls = [
+        mock.call.logger.info(mock.ANY, ['A', 'B', 'C']),
+        mock.call.enable(['A', 'B', 'C'], mock.ANY, dhclient_script='/bin/script'),
+        mock.call.logger.info(mock.ANY, ['A']),
+        mock.call.disable(['A'], mock.ANY, dhclient_script='/bin/script'),
+        mock.call.logger.info(mock.ANY, ['A', 'B', 'C']),
+        mock.call.enable(['A', 'B', 'C'], mock.ANY, dhclient_script='/bin/script'),
+        mock.call.logger.info(mock.ANY, ['A', 'B']),
+        mock.call.disable(['A', 'B'], mock.ANY, dhclient_script='/bin/script'),
+    ]
+
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.networking.network_setup.network_setup.subprocess.check_call')
   def testEnableNetworkInterfaces(self, mock_call):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call, 'call')
