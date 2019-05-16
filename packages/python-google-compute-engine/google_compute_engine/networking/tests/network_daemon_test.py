@@ -149,6 +149,7 @@ class NetworkDaemonTest(unittest.TestCase):
         self.mock_setup, result)
     expected_calls = [
         mock.call.setup._ExtractInterfaceMetadata(result),
+        mock.call.network_setup.DisableIpv6(['eth0']),
         mock.call.network_setup.EnableNetworkInterfaces(['eth1']),
         mock.call.forwarding.HandleForwardedIps(
             'eth0', ['a'], '1.1.1.1'),
@@ -176,6 +177,32 @@ class NetworkDaemonTest(unittest.TestCase):
     expected_calls = [
         mock.call.setup._ExtractInterfaceMetadata(result),
         mock.call.network_setup.EnableIpv6(['eth0']),
+        mock.call.network_setup.EnableNetworkInterfaces([]),
+        mock.call.forwarding.HandleForwardedIps(
+            'eth0', ['a'], '1.1.1.1'),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  def testHandleNetworkInterfacesIpv6Disabled(self):
+    mocks = mock.Mock()
+    mocks.attach_mock(self.mock_ip_forwarding, 'forwarding')
+    mocks.attach_mock(self.mock_network_setup, 'network_setup')
+    mocks.attach_mock(self.mock_setup, 'setup')
+    self.mock_setup.ip_aliases = None
+    self.mock_setup.target_instance_ips = None
+    self.mock_setup.ip_forwarding_enabled = True
+    self.mock_setup.network_setup_enabled = True
+    self.mock_setup._ExtractInterfaceMetadata.return_value = [
+        network_daemon.NetworkDaemon.NetworkInterface(
+            'eth0', forwarded_ips=['a'], ip='1.1.1.1', ipv6=False),
+    ]
+    result = mock.Mock()
+
+    network_daemon.NetworkDaemon.HandleNetworkInterfaces(
+        self.mock_setup, result)
+    expected_calls = [
+        mock.call.setup._ExtractInterfaceMetadata(result),
+        mock.call.network_setup.DisableIpv6(['eth0']),
         mock.call.network_setup.EnableNetworkInterfaces([]),
         mock.call.forwarding.HandleForwardedIps(
             'eth0', ['a'], '1.1.1.1'),

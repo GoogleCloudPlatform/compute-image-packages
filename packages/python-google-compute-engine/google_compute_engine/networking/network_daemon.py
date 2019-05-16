@@ -93,6 +93,8 @@ class NetworkDaemon(object):
       default_interface = network_interfaces[0]
       if default_interface.ipv6:
         self.network_setup.EnableIpv6([default_interface.name])
+      else:
+        self.network_setup.DisableIpv6([default_interface.name])
       self.network_setup.EnableNetworkInterfaces(
           [interface.name for interface in network_interfaces[1:]])
 
