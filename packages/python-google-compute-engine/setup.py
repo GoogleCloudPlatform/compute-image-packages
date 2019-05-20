@@ -20,8 +20,10 @@ import sys
 
 import setuptools
 
-install_requires = ['boto', 'setuptools']
-if sys.version_info >= (3, 6):
+install_requires = ['setuptools']
+if sys.version_info < (3, 0):
+  install_requires += ['boto']
+if sys.version_info >= (3, 7):
   install_requires += ['distro']
 
 setuptools.setup(

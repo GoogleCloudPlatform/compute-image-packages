@@ -14,7 +14,7 @@
 # limitations under the License.
 
 main() {
-  if [ -z "$expand_xfs" ]; then
+  if [ ! -e /tmp/xfs_resize ]; then
     return
   fi
 
@@ -23,11 +23,18 @@ main() {
     return
   fi
   if xfs_growfs -d -n /sysroot; then
+    echo "Mounting filesystem rw."
+    if ! $(mount -o rw,remount /sysroot); then
+      echo "Remount failed."
+      return
+    fi
     echo "Resizing XFS filesystem"
     if ! out=$(xfs_growfs -d /sysroot); then
       echo "Failed to resize: ${out}"
+      mount -o ro,remount /sysroot
       return
     fi
+    mount -o ro,remount /sysroot
   fi
 }
 

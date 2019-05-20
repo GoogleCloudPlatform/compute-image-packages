@@ -125,10 +125,16 @@ for q in $XPS; do
     xps=$((xps | (1 << cpu)))
   done
 
-  # Linux xps_cpus requires a hex number with commas every 32 bits.
-  # It ignores all bits above # cpus, so unconditionally write a
-  # 64 bit hex value, with a comma between dwords.
-  xps_string=`printf "%08x,%08x" $((xps >> 32 & 0xffffffff)) $((xps & 0xffffffff))`
+  # Linux xps_cpus requires a hex number with commas every 32 bits. It ignores
+  # all bits above # cpus, so write a list of comma separated 32 bit hex values
+  # with a comma between dwords.
+  xps_dwords=()
+  for i in $(seq 0 $(((num_cpus - 1) / 32)))
+  do
+    xps_dwords+=(`printf "%08x" $((xps & 0xffffffff))`)
+  done
+  xps_string=$(IFS=, ; echo "${xps_dwords[*]}")
+
 
   echo ${xps_string} > $q
   printf "Queue %d XPS=%s for %s\n" $queue_num `cat $q` $q
