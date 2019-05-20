@@ -350,6 +350,7 @@ class ScriptRetrieverTest(unittest.TestCase):
 
     self.assertEqual(self.retriever.GetScripts(self.dest_dir), expected_data)
     self.assertEqual(self.mock_logger.info.call_count, 2)
+    self.assertEqual(self.mock_logger.warning.call_count, 0)
     mock_dest.write.assert_called_once_with('a')
     mock_download.assert_called_once_with('b', self.dest_dir)
 
@@ -376,6 +377,44 @@ class ScriptRetrieverTest(unittest.TestCase):
     self.assertEqual(self.retriever.GetScripts(self.dest_dir), expected_data)
     self.mock_logger.info.assert_not_called()
     self.assertEqual(self.mock_logger.warning.call_count, 2)
+
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
+  def testGetScriptsFailed(self, mock_tempfile):
+    script_dest = '/tmp/script'
+    script_url_dest = '/tmp/script_url'
+    metadata = {
+        'instance': {
+            'attributes': {
+                '%s-script' % self.script_type: 'a',
+                '%s-script-url' % self.script_type: 'b',
+            },
+        },
+        'project': {
+            'attributes': {
+                '%s-script' % self.script_type: 'c',
+                '%s-script-url' % self.script_type: 'd',
+            },
+        },
+    }
+    expected_data = {
+        '%s-script' % self.script_type: script_dest,
+        '%s-script-url' % self.script_type: None,
+    }
+    self.mock_watcher.GetMetadata.return_value = metadata
+    self.retriever.watcher = self.mock_watcher
+    # Mock saving a script to a file.
+    mock_dest = mock.Mock()
+    mock_dest.name = script_dest
+    mock_tempfile.__enter__.return_value = mock_dest
+    mock_tempfile.return_value = mock_tempfile
+    # Mock downloading a script from a URL.
+    mock_download = mock.Mock()
+    mock_download.return_value = None
+    self.retriever._DownloadScript = mock_download
+
+    self.assertEqual(self.retriever.GetScripts(self.dest_dir), expected_data)
+    self.assertEqual(self.mock_logger.info.call_count, 2)
+    self.assertEqual(self.mock_logger.warning.call_count, 1)
 
 
 if __name__ == '__main__':
