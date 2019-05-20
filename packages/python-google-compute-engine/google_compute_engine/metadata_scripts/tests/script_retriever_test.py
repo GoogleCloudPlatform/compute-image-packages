@@ -381,7 +381,7 @@ class ScriptRetrieverTest(unittest.TestCase):
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   def testGetScriptsFailed(self, mock_tempfile):
     script_dest = '/tmp/script'
-    script_url_dest = '/tmp/script_url'
+    script_url_dest = None
     metadata = {
         'instance': {
             'attributes': {
@@ -398,7 +398,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     }
     expected_data = {
         '%s-script' % self.script_type: script_dest,
-        '%s-script-url' % self.script_type: None,
+        '%s-script-url' % self.script_type: script_url_dest,
     }
     self.mock_watcher.GetMetadata.return_value = metadata
     self.retriever.watcher = self.mock_watcher
