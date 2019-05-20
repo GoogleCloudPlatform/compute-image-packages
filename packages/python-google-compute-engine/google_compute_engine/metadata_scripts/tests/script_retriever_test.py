@@ -19,7 +19,6 @@ import subprocess
 
 from google_compute_engine.compat import urlerror
 from google_compute_engine.metadata_scripts import script_retriever
-from google_compute_engine.metadata_watcher import MetadataWatcher
 from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
@@ -145,15 +144,41 @@ class ScriptRetrieverTest(unittest.TestCase):
     mock_retrieve.assert_called_once_with(url, self.dest)
     self.mock_logger.warning.assert_not_called()
 
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.time')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
-  def testDownloadUrlProcessError(self, mock_retrieve, mock_tempfile):
+  def testDownloadUrlProcessError(self, mock_retrieve, mock_tempfile, mock_time):
     url = 'http://www.google.com/fake/url'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    mock_retrieve.side_effect = script_retriever.socket.timeout()
+    mock_success = mock.Mock()
+    mock_success.getcode.return_value = script_retriever.httpclient.OK
+    # Success after 3 timeout. Since max_retry = 3, the final result is fail.
+    mock_retrieve.side_effect = [
+        script_retriever.socket.timeout(),
+        script_retriever.socket.timeout(),
+        script_retriever.socket.timeout(),
+        mock_success,
+    ]
     self.assertIsNone(self.retriever._DownloadUrl(url, self.dest_dir))
     self.assertEqual(self.mock_logger.warning.call_count, 1)
+
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.time')
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
+  def testDownloadUrlWithRetry(self, mock_retrieve, mock_tempfile, mock_time):
+    url = 'http://www.google.com/fake/url'
+    mock_tempfile.return_value = mock_tempfile
+    mock_tempfile.name = self.dest
+    mock_success = mock.Mock()
+    mock_success.getcode.return_value = script_retriever.httpclient.OK
+    # Success after 2 timeout. Since max_retry = 3, the final result is success.
+    mock_retrieve.side_effect = [
+        script_retriever.socket.timeout(),
+        script_retriever.socket.timeout(),
+        mock_success,
+    ]
+    self.assertIsNotNone(self.retriever._DownloadUrl(url, self.dest_dir))
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
