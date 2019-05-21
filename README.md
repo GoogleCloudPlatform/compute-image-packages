@@ -126,7 +126,7 @@ DIST=7
 tee /etc/yum.repos.d/google-cloud.repo << EOM
 [google-compute-engine]
 name=Google Compute Engine
-baseurl=https://packages.cloud.google.com/yum/repos/google-compute-engine-el${DIST}-x86_64
+baseurl=https://packages.cloud.google.com/yum/repos/google-compute-engine-el${DIST}-x86_64-stable
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
