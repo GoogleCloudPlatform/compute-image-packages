@@ -21,6 +21,12 @@
     "setup-disk": {
       "CreateDisks": [
         {
+          "Name": "disk-el8-build",
+          "SourceImage": "projects/rhel-cloud/global/images/family/rhel-8",
+          "SizeGb": "10",
+          "Type": "pd-ssd"
+        },
+        {
           "Name": "disk-el7-build",
           "SourceImage": "projects/centos-cloud/global/images/family/centos-7",
           "SizeGb": "10",
@@ -36,6 +42,20 @@
     },
     "package-build": {
       "CreateInstances": [
+        {
+          "Name": "inst-el8-build",
+          "Disks": [
+            {"Source": "disk-el8-build"}
+          ],
+          "MachineType": "n1-standard-2",
+          "Metadata": {
+            "github_branch": "${github_branch}",
+            "github_repo": "${github_repo}",
+            "output_path": "${output_path}"
+          },
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"],
+          "StartupScript": "build_el_packages.sh"
+        },
         {
           "Name": "inst-el7-build",
           "Disks": [
@@ -68,6 +88,14 @@
     },
     "wait-for-build": {
       "WaitForInstancesSignal": [
+        {
+          "Name": "inst-el8-build",
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "BuildSuccess:",
+            "FailureMatch": "BuildFailed:"
+          }
+        },
         {
           "Name": "inst-el7-build",
           "SerialOutput": {

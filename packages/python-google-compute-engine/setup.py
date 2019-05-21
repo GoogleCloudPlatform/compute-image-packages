@@ -20,8 +20,10 @@ import sys
 
 import setuptools
 
-install_requires = ['boto', 'setuptools']
-if sys.version_info >= (3, 6):
+install_requires = ['setuptools']
+if sys.version_info < (3, 0):
+  install_requires += ['boto']
+if sys.version_info >= (3, 7):
   install_requires += ['distro']
 
 setuptools.setup(
@@ -35,7 +37,7 @@ setuptools.setup(
     name='google-compute-engine',
     packages=setuptools.find_packages(),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages',
-    version='2.8.13',
+    version='2.8.15',
     # Entry points create scripts in /usr/bin that call a function.
     entry_points={
         'console_scripts': [

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="google-compute-engine"
-VERSION="2.8.14"
+VERSION="2.8.15"
 
 rpm_working_dir=/tmp/rpmpackage/${NAME}-${VERSION}
 working_dir=${PWD}
@@ -22,10 +22,6 @@ if [[ $(basename "$working_dir") != $NAME ]]; then
   echo "Packaging scripts must be run from top of package dir."
   exit 1
 fi
-
-# Build dependencies.
-sudo yum -y install make gcc-c++ libcurl-devel json-c json-c-devel pam-devel \
-  policycoreutils-python boost-devel
 
 # RPM creation tools.
 sudo yum -y install rpmdevtools

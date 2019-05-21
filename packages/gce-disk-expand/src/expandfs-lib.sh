@@ -24,7 +24,7 @@ resize_filesystem() {
   case "${fs_type}" in
     xfs)
       echo "XFS filesystems must be mounted to be resized, deferring."
-      expand_xfs="true"
+      echo "true" > /tmp/xfs_resize
       return 1
       ;;
     ext*)
@@ -136,6 +136,7 @@ parted_resizepart() {
     echo "Unable to resize ${disk}${partnum}: ${out}"
     return 1
   fi
+  udevadm settle
 }
 
 # Resizes partition by deleting and recreating with end position.
@@ -184,4 +185,5 @@ parted_resize_mkpart() (
       return 1
     fi
   done
+  udevadm settle
 )

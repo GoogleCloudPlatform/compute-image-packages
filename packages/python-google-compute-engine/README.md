@@ -28,8 +28,6 @@ The Linux guest environment is made up of the following components:
     based authentication.
 *   **Clock skew** daemon to keep the system clock in sync after VM start and
     stop events.
-*   **Disk expand** scripts to expand the VM root partition for CentOS 6,
-    CentOS 7, RHEL 6, and RHEL 7 images.
 *   **Instance setup** scripts to execute VM configuration scripts during boot.
 *   **Network** daemon that handles network setup for multiple network interfaces
     on boot and integrates network load balancing with
@@ -38,7 +36,7 @@ The Linux guest environment is made up of the following components:
     shutdown.
 
 The Linux guest environment is written in Python and is version agnostic
-between Python 2.6 and 3.5. There is complete unittest coverage for every Python
+between Python 2.6 and 3.7. There is complete unittest coverage for every Python
 library and script. The design of various guest libraries, daemons, and scripts,
 are detailed in the sections below.
 

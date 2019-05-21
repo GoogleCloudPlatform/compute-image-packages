@@ -43,10 +43,11 @@ CentOS 6     | rpm          | 2.6            | upstart
 CentOS 7     | rpm          | 2.7            | systemd
 RHEL 6       | rpm          | 2.6            | upstart
 RHEL 7       | rpm          | 2.7            | systemd
+RHEL 8       | rpm          | 3.6            | systemd
 Ubuntu 14.04 | deb          | 2.7            | upstart
 Ubuntu 16.04 | deb          | 3.5 or 2.7     | systemd
 Ubuntu 18.04 | deb          | 3.6            | systemd
-Ubuntu 18.10 | deb          | 3.6            | systemd
+Ubuntu 19.04 | deb          | 3.7            | systemd
 Debian 9     | deb          | 3.5 or 2.7     | systemd
 
 We build the following packages for the Linux guest environment.
@@ -123,9 +124,9 @@ EL6 or EL7. Change `DIST` to either 6 or 7 respectively:
 ```
 DIST=7
 tee /etc/yum.repos.d/google-cloud.repo << EOM
-[google-cloud-compute]
-name=Google Cloud Compute
-baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-compute-el${DIST}-x86_64
+[google-compute-engine]
+name=Google Compute Engine
+baseurl=https://packages.cloud.google.com/yum/repos/google-compute-engine-el${DIST}-x86_64-stable
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1

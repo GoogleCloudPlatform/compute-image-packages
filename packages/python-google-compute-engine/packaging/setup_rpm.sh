@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="python-google-compute-engine"
-VERSION="2.8.14"
+VERSION="2.8.15"
 
 rpm_working_dir=/tmp/rpmpackage/${NAME}-${VERSION}
 working_dir=${PWD}
@@ -23,11 +23,16 @@ if [[ $(basename "$working_dir") != $NAME ]]; then
   exit 1
 fi
 
-# Build dependencies.
-sudo yum -y install python2-devel python-setuptools python-boto
-
-# RPM creation tools.
 sudo yum -y install rpmdevtools
+
+# RHEL/CentOS 8 uses python3.
+if grep -q '^\(CentOS\|Red Hat\)[^0-9]*8\..' /etc/redhat-release; then
+  NAME="python3-google-compute-engine"
+  rpm_working_dir=/tmp/rpmpackage/${NAME}-${VERSION}
+  sudo yum -y install python36-devel python3-setuptools python36-rpm-macros
+else
+  sudo yum -y install python2-devel python-setuptools python-boto
+fi
 
 rm -rf /tmp/rpmpackage
 mkdir -p ${rpm_working_dir}/{SOURCES,SPECS}

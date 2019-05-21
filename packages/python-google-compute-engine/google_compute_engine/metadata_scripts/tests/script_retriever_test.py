@@ -19,7 +19,6 @@ import subprocess
 
 from google_compute_engine.compat import urlerror
 from google_compute_engine.metadata_scripts import script_retriever
-from google_compute_engine.metadata_watcher import MetadataWatcher
 from google_compute_engine.test_compat import builtin
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
@@ -63,7 +62,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     urlopen_read = mock_urlopen().read(return_value=b'foo').decode()
     self.mock_logger.warning.assert_not_called()
 
-    mock_open.assert_called_once_with(self.dest, 'wb')
+    mock_open.assert_called_once_with(self.dest, 'w')
     handle = mock_open()
     handle.write.assert_called_once_with(urlopen_read)
 
@@ -145,15 +144,41 @@ class ScriptRetrieverTest(unittest.TestCase):
     mock_retrieve.assert_called_once_with(url, self.dest)
     self.mock_logger.warning.assert_not_called()
 
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.time')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
-  def testDownloadUrlProcessError(self, mock_retrieve, mock_tempfile):
+  def testDownloadUrlProcessError(self, mock_retrieve, mock_tempfile, mock_time):
     url = 'http://www.google.com/fake/url'
     mock_tempfile.return_value = mock_tempfile
     mock_tempfile.name = self.dest
-    mock_retrieve.side_effect = script_retriever.socket.timeout()
+    mock_success = mock.Mock()
+    mock_success.getcode.return_value = script_retriever.httpclient.OK
+    # Success after 3 timeout. Since max_retry = 3, the final result is fail.
+    mock_retrieve.side_effect = [
+        script_retriever.socket.timeout(),
+        script_retriever.socket.timeout(),
+        script_retriever.socket.timeout(),
+        mock_success,
+    ]
     self.assertIsNone(self.retriever._DownloadUrl(url, self.dest_dir))
     self.assertEqual(self.mock_logger.warning.call_count, 1)
+
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.time')
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
+  def testDownloadUrlWithRetry(self, mock_retrieve, mock_tempfile, mock_time):
+    url = 'http://www.google.com/fake/url'
+    mock_tempfile.return_value = mock_tempfile
+    mock_tempfile.name = self.dest
+    mock_success = mock.Mock()
+    mock_success.getcode.return_value = script_retriever.httpclient.OK
+    # Success after 2 timeout. Since max_retry = 3, the final result is success.
+    mock_retrieve.side_effect = [
+        script_retriever.socket.timeout(),
+        script_retriever.socket.timeout(),
+        mock_success,
+    ]
+    self.assertIsNotNone(self.retriever._DownloadUrl(url, self.dest_dir))
 
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
   @mock.patch('google_compute_engine.metadata_scripts.script_retriever.urlretrieve.urlretrieve')
@@ -325,6 +350,7 @@ class ScriptRetrieverTest(unittest.TestCase):
 
     self.assertEqual(self.retriever.GetScripts(self.dest_dir), expected_data)
     self.assertEqual(self.mock_logger.info.call_count, 2)
+    self.assertEqual(self.mock_logger.warning.call_count, 0)
     mock_dest.write.assert_called_once_with('a')
     mock_download.assert_called_once_with('b', self.dest_dir)
 
@@ -351,6 +377,44 @@ class ScriptRetrieverTest(unittest.TestCase):
     self.assertEqual(self.retriever.GetScripts(self.dest_dir), expected_data)
     self.mock_logger.info.assert_not_called()
     self.assertEqual(self.mock_logger.warning.call_count, 2)
+
+  @mock.patch('google_compute_engine.metadata_scripts.script_retriever.tempfile.NamedTemporaryFile')
+  def testGetScriptsFailed(self, mock_tempfile):
+    script_dest = '/tmp/script'
+    script_url_dest = None
+    metadata = {
+        'instance': {
+            'attributes': {
+                '%s-script' % self.script_type: 'a',
+                '%s-script-url' % self.script_type: 'b',
+            },
+        },
+        'project': {
+            'attributes': {
+                '%s-script' % self.script_type: 'c',
+                '%s-script-url' % self.script_type: 'd',
+            },
+        },
+    }
+    expected_data = {
+        '%s-script' % self.script_type: script_dest,
+        '%s-script-url' % self.script_type: script_url_dest,
+    }
+    self.mock_watcher.GetMetadata.return_value = metadata
+    self.retriever.watcher = self.mock_watcher
+    # Mock saving a script to a file.
+    mock_dest = mock.Mock()
+    mock_dest.name = script_dest
+    mock_tempfile.__enter__.return_value = mock_dest
+    mock_tempfile.return_value = mock_tempfile
+    # Mock downloading a script from a URL.
+    mock_download = mock.Mock()
+    mock_download.return_value = None
+    self.retriever._DownloadScript = mock_download
+
+    self.assertEqual(self.retriever.GetScripts(self.dest_dir), expected_data)
+    self.assertEqual(self.mock_logger.info.call_count, 2)
+    self.assertEqual(self.mock_logger.warning.call_count, 1)
 
 
 if __name__ == '__main__':
