@@ -117,7 +117,7 @@ class ScriptRetriever(object):
       self.logger.warning('Could not download %s. %s.', url, str(e))
       return None
 
-    with open(dest, 'wb') as f:
+    with open(dest, 'w') as f:
       f.write(content)
 
     return dest
