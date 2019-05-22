@@ -286,7 +286,7 @@ restart_service() {
 
   # Use the service helper if it exists.
   if command -v service > /dev/null; then
-    if ! service "$service" status 2>&1 | grep -q unrecognized; then
+    if ! service "$service" status 2>&1 | grep -Eq "unrecognized|does not exist"; then
       service "$service" restart
       return $?
     else
