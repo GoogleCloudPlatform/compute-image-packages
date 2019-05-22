@@ -169,6 +169,7 @@ class InstanceSetup(object):
     """Write a host key to guest attributes, ignoring errors."""
     headers = {'Metadata-Flavor': 'Google'}
     url = '%s/%s/%s' % (GUEST_ATTRIBUTES_URL, HOSTKEY_NAMESPACE, key_type)
+    key_value = key_value.encode('utf-8')
     req = PutRequest(url, key_value, headers)
     try:
       response = urlrequest.urlopen(req)

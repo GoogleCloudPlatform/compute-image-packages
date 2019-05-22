@@ -335,6 +335,7 @@ class InstanceSetupTest(unittest.TestCase):
   def testWriteHostKeyToGuestAttributes(self, mock_put, mock_urlopen):
     key_type = 'ssh-rsa'
     key_value = 'asdfasdf'
+    encoded_key_value = key_value.encode('utf-8')
     expected_url = ('http://metadata.google.internal/computeMetadata/v1beta1/'
                     'instance/guest-attributes/hostkeys/%s' % key_type)
     headers = {'Metadata-Flavor': 'Google'}
@@ -343,7 +344,7 @@ class InstanceSetupTest(unittest.TestCase):
         self.mock_setup, key_type, key_value)
     self.mock_logger.info.assert_called_with(
         'Wrote %s host key to guest attributes.', key_type)
-    mock_put.assert_called_with(expected_url, key_value, headers)
+    mock_put.assert_called_with(expected_url, encoded_key_value, headers)
 
     mock_urlopen.side_effect = instance_setup.urlerror.HTTPError(
         'http://foo', 403, 'Forbidden', {}, None)
