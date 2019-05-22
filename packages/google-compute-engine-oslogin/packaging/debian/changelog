@@ -1,3 +1,9 @@
+google-compute-engine-oslogin (1.5.3-1) unstable; urgency=low
+
+  * Fixes for FreeBSD control scripts.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 22 Nay 2019 12:00:00 -0700
+
 google-compute-engine-oslogin (1.5.2-1) unstable; urgency=low
 
   * Fix pam_group ordering detection.
