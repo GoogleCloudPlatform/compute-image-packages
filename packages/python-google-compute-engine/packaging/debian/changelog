@@ -1,3 +1,9 @@
+python-google-compute-engine (2.8.16-1) stable; urgency=low
+
+  * Fix guest attributes flow in python3.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 22 May 2019 12:00:00 -0700
+
 python-google-compute-engine (2.8.15-1) stable; urgency=low
 
   * Retry download for metadata scripts.
