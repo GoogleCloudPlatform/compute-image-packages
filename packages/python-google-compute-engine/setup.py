@@ -37,7 +37,7 @@ setuptools.setup(
     name='google-compute-engine',
     packages=setuptools.find_packages(),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages',
-    version='2.8.15',
+    version='2.8.16',
     # Entry points create scripts in /usr/bin that call a function.
     entry_points={
         'console_scripts': [
