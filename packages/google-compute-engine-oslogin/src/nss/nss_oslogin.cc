@@ -36,6 +36,8 @@ using oslogin_utils::HttpGet;
 using oslogin_utils::MutexLock;
 using oslogin_utils::NssCache;
 using oslogin_utils::ParseJsonToPasswd;
+using oslogin_utils::ParseJsonToGroup;
+using oslogin_utils::ParseJsonToGroupUsers;
 using oslogin_utils::UrlEncode;
 using oslogin_utils::kMetadataServerUrl;
 
@@ -101,6 +103,62 @@ int _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
   return NSS_STATUS_SUCCESS;
 }
 
+int _nss_oslogin_getgrby(string params, struct group *grp, char *buf, size_t buflen, int *errnop) {
+  BufferManager buffer_manager(buf, buflen);
+  std::stringstream url;
+  url << kMetadataServerUrl << "groups?" << params;
+  string response;
+  long http_code = 0;
+  if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+      response.empty()) {
+    *errnop = ENOENT;
+    return NSS_STATUS_NOTFOUND;
+  }
+  if (!ParseJsonToGroup(response, grp, &buffer_manager, errnop)) {
+    if (*errnop == EINVAL) {
+      openlog("nss_oslogin", LOG_PID, LOG_USER);
+      syslog(LOG_ERR, "Received malformed response from server: %s",
+             response.c_str());
+      closelog();
+    }
+    return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
+  }
+
+  url.clear();
+  url << kMetadataServerUrl << "users?" << params;
+  response.clear();
+  http_code = 0;
+
+  if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+      response.empty()) {
+    *errnop = ENOENT;
+    return NSS_STATUS_NOTFOUND;
+  }
+  if (!ParseJsonToGroupUsers(response, grp, &buffer_manager, errnop)) {
+    if (*errnop == EINVAL) {
+      openlog("nss_oslogin", LOG_PID, LOG_USER);
+      syslog(LOG_ERR, "Received malformed response from server: %s",
+             response.c_str());
+      closelog();
+    }
+    return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
+  }
+
+  return NSS_STATUS_SUCCESS;
+}
+
+int _nss_oslogin_getgrnam_r(gid_t gid, struct group *grp, char *buf, size_t buflen, int *errnop) {
+  std::stringstream params;
+  params << "gid=" << gid;
+  return _nss_oslogin_getgrby(params.str(), grp, buf, buflen, errnop);
+}
+
+int _nss_oslogin_getgrgid_r(const char *name, struct group *grp, char *buf, size_t buflen, int *errnop) {
+  std::stringstream params;
+  params << "groupname=" << name;
+  return _nss_oslogin_getgrby(params.str(), grp, buf, buflen, errnop);
+}
+
 // nss_getpwent_r() is intentionally left unimplemented. This functionality is
 // now covered by the nss_cache binary and nss_cache module.
 
@@ -113,6 +171,8 @@ NSS_METHOD_PROTOTYPE(__nss_compat_getpwuid_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_getpwent_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_setpwent);
 NSS_METHOD_PROTOTYPE(__nss_compat_endpwent);
+NSS_METHOD_PROTOTYPE(__nss_compat_getgrnam_r);
+NSS_METHOD_PROTOTYPE(__nss_compat_getgrgid_r);
 
 DECLARE_NSS_METHOD_TABLE(methods,
     { NSDB_PASSWD, "getpwnam_r", __nss_compat_getpwnam_r,
@@ -121,10 +181,14 @@ DECLARE_NSS_METHOD_TABLE(methods,
       (void*)_nss_oslogin_getpwuid_r },
     { NSDB_PASSWD, "getpwent_r", __nss_compat_getpwent_r,
       (void*)_nss_oslogin_getpwent_r },
-    { NSDB_PASSWD, "endpwent",   __nss_compat_endpwent,
+    { NSDB_PASSWD, "endpwent", __nss_compat_endpwent,
       (void*)_nss_oslogin_endpwent },
-    { NSDB_PASSWD, "setpwent",   __nss_compat_setpwent,
+    { NSDB_PASSWD, "setpwent", __nss_compat_setpwent,
       (void*)_nss_oslogin_setpwent },
+    { NSDB_PASSWD, "getgrnam_r", __nss_compat_getgrnam_r,
+      (void*)_nss_oslogin_getgrnam_r },
+    { NSDB_PASSWD, "getgrgid_r", __nss_compat_getgrgid_r,
+      (void*)_nss_oslogin_getgrgid_r },
 )
 
 NSS_REGISTER_METHODS(methods)
