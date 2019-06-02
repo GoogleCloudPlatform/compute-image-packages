@@ -16,6 +16,7 @@
 #include <curl/curl.h>
 #include <errno.h>
 #include <json.h>
+#include <grp.h>
 #include <nss.h>
 #include <stdio.h>
 #include <time.h>
@@ -53,11 +54,10 @@ BufferManager::BufferManager(char* buf, size_t buflen)
 bool BufferManager::AppendString(const string& value, char** buffer,
                                  int* errnop) {
   size_t bytes_to_write = value.length() + 1;
-  if (!CheckSpaceAvailable(bytes_to_write)) {
-    *errnop = ERANGE;
+  *buffer = static_cast<char*>(Reserve(bytes_to_write, errnop));
+  if (*buffer == NULL) {
     return false;
   }
-  *buffer = static_cast<char*>(Reserve(bytes_to_write));
   strncpy(*buffer, value.c_str(), bytes_to_write);
   return true;
 }
@@ -69,11 +69,10 @@ bool BufferManager::CheckSpaceAvailable(size_t bytes_to_write) const {
   return true;
 }
 
-void* BufferManager::Reserve(size_t bytes) {
-  if (buflen_ < bytes) {
-    std::cerr << "Attempted to reserve more bytes than the buffer can hold!"
-              << "\n";
-    abort();
+void* BufferManager::Reserve(size_t bytes, int* errnop) {
+  if (!CheckSpaceAvailable(bytes)) {
+    *errnop = ERANGE;
+    return NULL;
   }
   void* result = buf_;
   buf_ += bytes;
@@ -468,6 +467,90 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
   }
 
   return ValidatePasswd(result, buf, errnop);
+}
+
+bool ParseJsonToGroup(const string& json, struct group* result,
+                       BufferManager* buf, int* errnop) {
+  json_object* root = NULL;
+  root = json_tokener_parse(json.c_str());
+
+  if (root == NULL) {
+    *errnop = ENOENT;
+    return false;
+  }
+
+  json_object* groups = NULL;
+  if (!json_object_object_get_ex(root, "posixGroups", &groups)) {
+    // TODO: set errnop
+    return false;
+  }
+
+  if (json_object_get_type(groups) != json_type_array) {
+    return false;
+  }
+
+  // Use first group entry.
+  groups = json_object_array_get_idx(groups, 0);
+
+  json_object* name = NULL;
+  if (!json_object_object_get_ex(groups, "name", &name)) {
+    return false;
+  }
+  if (!buf->AppendString((char*)json_object_get_string(name),
+                             &result->gr_name, errnop)) {
+  }
+
+  json_object* gid = NULL;
+  if (!json_object_object_get_ex(groups, "gid", &gid)) {
+    return false;
+  }
+  result->gr_gid = atoi(json_object_get_string(gid));
+  return true;
+}
+
+bool ParseJsonToGroupUsers(const string& json, struct group* result,
+                       BufferManager* buf, int* errnop) {
+  json_object* root = NULL;
+  root = json_tokener_parse(json.c_str());
+
+  if (root == NULL) {
+    *errnop = ENOENT;
+    return false;
+  }
+
+  json_object* usernames = NULL;
+  if (!json_object_object_get_ex(root, "usernames", &usernames)) {
+    // TODO: set errnop
+    return false;
+  }
+
+  if (json_object_get_type(usernames) != json_type_array) {
+    // TODO: set errnop
+    return false;
+  }
+
+  int numusers = json_object_array_length(usernames);
+  if (numusers < 1) {
+    return true;
+  }
+
+  // Get some space for the char* array for number of users + 1 for NULL cap.
+  char **bufp;
+  if (!(bufp = (char **) buf->Reserve(sizeof(char *) * (numusers+1), errnop)))
+  {
+    return false;
+  }
+  result->gr_mem = bufp;
+
+  for (int i = 0; i < numusers; bufp++, i++) {
+    if (!buf->AppendString((char*)json_object_get_string(json_object_array_get_idx(usernames, i)), bufp, errnop)) {
+      result->gr_mem = NULL;
+      return false;
+    }
+  }
+  *bufp = NULL; // End the array with a null pointer.
+
+  return true;
 }
 
 bool ParseJsonToEmail(const string& json, string* email) {

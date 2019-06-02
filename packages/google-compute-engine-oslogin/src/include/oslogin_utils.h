@@ -44,9 +44,11 @@ class BufferManager {
   // buffer for the string.
   bool AppendString(const string& value, char** buffer, int* errnop);
 
+  // Return a pointer to a buffer of size bytes. Returns NULL and sets errnop to
+  // ERANGE if there is not enough space left in the buffer for the request.
+  void* Reserve(size_t bytes, int* errnop);
+
  private:
-  // Return a pointer to a buffer of size bytes.
-  void* Reserve(size_t bytes);
   // Whether there is space available in the buffer.
   bool CheckSpaceAvailable(size_t bytes_to_write) const;
 
@@ -181,6 +183,12 @@ bool ParseJsonToEmail(const string& json, string* email);
 // successful or not. If unsuccessful, errnop will also be set.
 bool ParseJsonToPasswd(const string& response, struct passwd* result,
                        BufferManager* buf, int* errnop);
+
+// Parses a JSON Groups or Users response and populates the group struct with the
+// corresponding values set in the JSON object. Returns whether the parse was
+// successful or not. If unsuccessful, errnop will also be set.
+bool ParseJsonToGroup(const string& json, struct group* result, BufferManager* buf, int* errnop);
+bool ParseJsonToGroupUsers(const string& json, struct group* result, BufferManager* buf, int* errnop);
 
 // Parses a JSON adminLogin or login response and returns whether the user has
 // the requested privilege.
