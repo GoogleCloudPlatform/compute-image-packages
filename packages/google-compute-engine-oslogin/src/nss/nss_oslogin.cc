@@ -147,13 +147,13 @@ int _nss_oslogin_getgrby(string params, struct group *grp, char *buf, size_t buf
   return NSS_STATUS_SUCCESS;
 }
 
-int _nss_oslogin_getgrnam_r(gid_t gid, struct group *grp, char *buf, size_t buflen, int *errnop) {
+int _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf, size_t buflen, int *errnop) {
   std::stringstream params;
   params << "gid=" << gid;
   return _nss_oslogin_getgrby(params.str(), grp, buf, buflen, errnop);
 }
 
-int _nss_oslogin_getgrgid_r(const char *name, struct group *grp, char *buf, size_t buflen, int *errnop) {
+int _nss_oslogin_getgrnam_r(const char *name, struct group *grp, char *buf, size_t buflen, int *errnop) {
   std::stringstream params;
   params << "groupname=" << name;
   return _nss_oslogin_getgrby(params.str(), grp, buf, buflen, errnop);
@@ -185,9 +185,9 @@ DECLARE_NSS_METHOD_TABLE(methods,
       (void*)_nss_oslogin_endpwent },
     { NSDB_PASSWD, "setpwent", __nss_compat_setpwent,
       (void*)_nss_oslogin_setpwent },
-    { NSDB_PASSWD, "getgrnam_r", __nss_compat_getgrnam_r,
+    { NSDB_GROUP, "getgrnam_r", __nss_compat_getgrnam_r,
       (void*)_nss_oslogin_getgrnam_r },
-    { NSDB_PASSWD, "getgrgid_r", __nss_compat_getgrgid_r,
+    { NSDB_GROUP, "getgrgid_r", __nss_compat_getgrgid_r,
       (void*)_nss_oslogin_getgrgid_r },
 )
 
