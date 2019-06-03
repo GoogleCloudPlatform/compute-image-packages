@@ -471,6 +471,9 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
 
 bool ParseJsonToGroup(const string& json, struct group* result,
                        BufferManager* buf, int* errnop) {
+  result->gr_name = NULL;
+  result->gr_gid = 0;
+
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
 
@@ -481,11 +484,12 @@ bool ParseJsonToGroup(const string& json, struct group* result,
 
   json_object* groups = NULL;
   if (!json_object_object_get_ex(root, "posixGroups", &groups)) {
-    // TODO: set errnop
+    *errnop = EINVAL;
     return false;
   }
 
   if (json_object_get_type(groups) != json_type_array) {
+    *errnop = EINVAL;
     return false;
   }
 
@@ -494,22 +498,33 @@ bool ParseJsonToGroup(const string& json, struct group* result,
 
   json_object* name = NULL;
   if (!json_object_object_get_ex(groups, "name", &name)) {
+    *errnop = EINVAL;
     return false;
   }
   if (!buf->AppendString((char*)json_object_get_string(name),
                              &result->gr_name, errnop)) {
+    return false;
   }
 
   json_object* gid = NULL;
   if (!json_object_object_get_ex(groups, "gid", &gid)) {
+    *errnop = EINVAL;
     return false;
   }
-  result->gr_gid = atoi(json_object_get_string(gid));
+  result->gr_gid = (uint32_t)json_object_get_int64(gid);
+
+  if (result->gr_name == NULL || result->gr_gid == 0) {
+    *errnop = EINVAL;
+    return false;
+  }
+
   return true;
 }
 
 bool ParseJsonToGroupUsers(const string& json, struct group* result,
                        BufferManager* buf, int* errnop) {
+  result->gr_mem = NULL;
+
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
 
@@ -520,12 +535,12 @@ bool ParseJsonToGroupUsers(const string& json, struct group* result,
 
   json_object* usernames = NULL;
   if (!json_object_object_get_ex(root, "usernames", &usernames)) {
-    // TODO: set errnop
+    *errnop = EINVAL;
     return false;
   }
 
   if (json_object_get_type(usernames) != json_type_array) {
-    // TODO: set errnop
+    *errnop = EINVAL;
     return false;
   }
 
