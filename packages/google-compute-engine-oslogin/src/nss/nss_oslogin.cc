@@ -18,6 +18,7 @@
 #include <nss.h>
 #include <pthread.h>
 #include <pwd.h>
+#include <string.h>
 #include <sys/types.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -31,15 +32,16 @@
 
 using std::string;
 
+using oslogin_utils::AddUsersToGroup;
 using oslogin_utils::BufferManager;
+using oslogin_utils::FindGroup;
+using oslogin_utils::GetGroupUsers;
 using oslogin_utils::HttpGet;
+using oslogin_utils::kMetadataServerUrl;
 using oslogin_utils::MutexLock;
 using oslogin_utils::NssCache;
 using oslogin_utils::ParseJsonToPasswd;
-using oslogin_utils::ParseJsonToGroup;
-using oslogin_utils::ParseJsonToGroupUsers;
 using oslogin_utils::UrlEncode;
-using oslogin_utils::kMetadataServerUrl;
 
 // Size of the NssCache. This also determines how many users will be requested
 // per HTTP call.
@@ -103,60 +105,29 @@ int _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
   return NSS_STATUS_SUCCESS;
 }
 
-int _nss_oslogin_getgrby(string params, struct group *grp, char *buf, size_t buflen, int *errnop) {
+int _nss_oslogin_getgrby(struct group *grp, char *buf, size_t buflen, int *errnop) {
   BufferManager buffer_manager(buf, buflen);
-  std::stringstream url;
-  url << kMetadataServerUrl << "groups?" << params;
-  string response;
-  long http_code = 0;
-  if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
-      response.empty()) {
-    *errnop = ENOENT;
-    return NSS_STATUS_NOTFOUND;
-  }
-  if (!ParseJsonToGroup(response, grp, &buffer_manager, errnop)) {
-    if (*errnop == EINVAL) {
-      openlog("nss_oslogin", LOG_PID, LOG_USER);
-      syslog(LOG_ERR, "Received malformed response from server: %s",
-             response.c_str());
-      closelog();
-    }
+  if (!FindGroup(grp, &buffer_manager, errnop))
     return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
-  }
 
-  url.clear();
-  url << kMetadataServerUrl << "users?" << params;
-  response.clear();
-  http_code = 0;
-
-  if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
-      response.empty()) {
-    *errnop = ENOENT;
-    return NSS_STATUS_NOTFOUND;
-  }
-  if (!ParseJsonToGroupUsers(response, grp, &buffer_manager, errnop)) {
-    if (*errnop == EINVAL) {
-      openlog("nss_oslogin", LOG_PID, LOG_USER);
-      syslog(LOG_ERR, "Received malformed response from server: %s",
-             response.c_str());
-      closelog();
-    }
+  std::vector<string> users;
+  if (!GetGroupUsers(grp->gr_name, &users, errnop))
     return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
-  }
+
+  if (!AddUsersToGroup(users, grp, &buffer_manager, errnop))
+    return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
 
   return NSS_STATUS_SUCCESS;
 }
 
 int _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf, size_t buflen, int *errnop) {
-  std::stringstream params;
-  params << "gid=" << gid;
-  return _nss_oslogin_getgrby(params.str(), grp, buf, buflen, errnop);
+  grp->gr_gid = gid;
+  return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
 int _nss_oslogin_getgrnam_r(const char *name, struct group *grp, char *buf, size_t buflen, int *errnop) {
-  std::stringstream params;
-  params << "groupname=" << name;
-  return _nss_oslogin_getgrby(params.str(), grp, buf, buflen, errnop);
+  grp->gr_name = (char *) name;
+  return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
 // nss_getpwent_r() is intentionally left unimplemented. This functionality is

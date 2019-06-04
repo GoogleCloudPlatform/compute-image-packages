@@ -306,6 +306,64 @@ bool ValidatePasswd(struct passwd* result, BufferManager* buf,
   return true;
 }
 
+bool ParseJsonToUsers(const string& json, std::vector<string> *result) {
+  json_object* root = NULL;
+  root = json_tokener_parse(json.c_str());
+  if (root == NULL) {
+    return false;
+  }
+
+  json_object* users = NULL;
+  if (!json_object_object_get_ex(root, "usernames", &users)) {
+    return false;
+  }
+  if (json_object_get_type(users) != json_type_array) {
+    return false;
+  }
+  for (int idx=0; idx < json_object_array_length(users); idx++) {
+    json_object* user = json_object_array_get_idx(users, idx);
+    const char* username = json_object_get_string(user);
+    result->push_back(string(username));
+  }
+  return true;
+}
+
+bool ParseJsonToGroups(const string& json, std::vector<Group> *result) {
+  json_object* root = NULL;
+  root = json_tokener_parse(json.c_str());
+  if (root == NULL) {
+    return false;
+  }
+
+  json_object* groups = NULL;
+  if (!json_object_object_get_ex(root, "posixGroups", &groups)) {
+    return false;
+  }
+  if (json_object_get_type(groups) != json_type_array) {
+    return false;
+  }
+  for (int idx=0; idx < json_object_array_length(groups); idx++) {
+    json_object* group = json_object_array_get_idx(groups, idx);
+
+    json_object* gid;
+    if (!json_object_object_get_ex(group, "gid", &gid)) {
+      return false;
+    }
+
+    json_object* name;
+    if (!json_object_object_get_ex(group, "name", &name)) {
+      return false;
+    }
+
+    Group g;
+    g.name = json_object_get_string(name);
+    g.gid = json_object_get_int64(gid);
+
+    result->push_back(g);
+  }
+  return true;
+}
+
 std::vector<string> ParseJsonToSshKeys(const string& json) {
   std::vector<string> result;
   json_object* root = NULL;
@@ -469,96 +527,22 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
   return ValidatePasswd(result, buf, errnop);
 }
 
-bool ParseJsonToGroup(const string& json, struct group* result,
+bool AddUsersToGroup(std::vector<string> users, struct group* result,
                        BufferManager* buf, int* errnop) {
-  result->gr_name = NULL;
-  result->gr_gid = 0;
-
-  json_object* root = NULL;
-  root = json_tokener_parse(json.c_str());
-
-  if (root == NULL) {
-    *errnop = ENOENT;
-    return false;
-  }
-
-  json_object* groups = NULL;
-  if (!json_object_object_get_ex(root, "posixGroups", &groups)) {
-    *errnop = EINVAL;
-    return false;
-  }
-
-  if (json_object_get_type(groups) != json_type_array) {
-    *errnop = EINVAL;
-    return false;
-  }
-
-  // Use first group entry.
-  groups = json_object_array_get_idx(groups, 0);
-
-  json_object* name = NULL;
-  if (!json_object_object_get_ex(groups, "name", &name)) {
-    *errnop = EINVAL;
-    return false;
-  }
-  if (!buf->AppendString((char*)json_object_get_string(name),
-                             &result->gr_name, errnop)) {
-    return false;
-  }
-
-  json_object* gid = NULL;
-  if (!json_object_object_get_ex(groups, "gid", &gid)) {
-    *errnop = EINVAL;
-    return false;
-  }
-  result->gr_gid = (uint32_t)json_object_get_int64(gid);
-
-  if (result->gr_name == NULL || result->gr_gid == 0) {
-    *errnop = EINVAL;
-    return false;
-  }
-
-  return true;
-}
-
-bool ParseJsonToGroupUsers(const string& json, struct group* result,
-                       BufferManager* buf, int* errnop) {
-  result->gr_mem = NULL;
-
-  json_object* root = NULL;
-  root = json_tokener_parse(json.c_str());
-
-  if (root == NULL) {
-    *errnop = ENOENT;
-    return false;
-  }
-
-  json_object* usernames = NULL;
-  if (!json_object_object_get_ex(root, "usernames", &usernames)) {
-    *errnop = EINVAL;
-    return false;
-  }
-
-  if (json_object_get_type(usernames) != json_type_array) {
-    *errnop = EINVAL;
-    return false;
-  }
-
-  int numusers = json_object_array_length(usernames);
-  if (numusers < 1) {
+  if (users.size() < 1) {
     return true;
   }
 
   // Get some space for the char* array for number of users + 1 for NULL cap.
   char **bufp;
-  if (!(bufp = (char **) buf->Reserve(sizeof(char *) * (numusers+1), errnop)))
+  if (!(bufp = (char **) buf->Reserve(sizeof(char *) * (users.size()+1), errnop)))
   {
     return false;
   }
   result->gr_mem = bufp;
 
-  for (int i = 0; i < numusers; bufp++, i++) {
-    if (!buf->AppendString((char*)json_object_get_string(json_object_array_get_idx(usernames, i)), bufp, errnop)) {
+  for (auto & el: users) {
+    if (!buf->AppendString(el, bufp, errnop)) {
       result->gr_mem = NULL;
       return false;
     }
@@ -663,6 +647,91 @@ bool ParseJsonToChallenges(const string& json,
     challenges->push_back(challenge);
   }
 
+  return true;
+}
+
+bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
+  std::stringstream url;
+  std::vector<Group> groups;
+
+  string response;
+  long http_code;
+  string* pageToken = NULL;
+
+  do {
+    url.clear();
+    url << kMetadataServerUrl << "groups";
+    if (pageToken != NULL)
+      url << "?pageToken=" << *pageToken;
+
+    response.clear();
+    http_code = 0;
+    if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+        response.empty()) {
+      *errnop = ENOENT;
+      return false;
+    }
+
+    if (!ParseJsonToKey(response, "pageToken", pageToken)) {
+      pageToken = NULL;
+    }
+
+    groups.clear();
+    if (!ParseJsonToGroups(response, &groups) || groups.empty()) {
+      *errnop = ENOENT;
+      return false;
+    }
+
+    // Check for a match.
+    for (auto & el: groups) {
+      if ((result->gr_name != NULL) && (string(result->gr_name) == el.name)) {
+        // Set the name even though it matches because the final string must
+        // be stored in the provided buffer.
+        if (!buf->AppendString(el.name, &result->gr_name, errnop)) {
+          return false;
+        }
+        result->gr_gid = el.gid;
+        return true;
+      }
+      if ((result->gr_gid != 0) && (result->gr_gid == el.gid)) {
+        if (!buf->AppendString(el.name, &result->gr_name, errnop)) {
+          return false;
+        }
+        return true;
+      }
+    }
+  } while (pageToken != NULL);
+  *errnop = ENOENT;
+  return false;
+}
+
+bool GetGroupUsers(string groupname, std::vector<string>* users, int* errnop) {
+  string response;
+  long http_code;
+  string* pageToken = NULL;
+  std::stringstream url;
+
+  do {
+    url.clear();
+    url << kMetadataServerUrl << "users";
+    if (pageToken != NULL)
+      url << "?pageToken=" << *pageToken;
+
+    response.clear();
+    http_code = 0;
+    if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+        response.empty()) {
+      *errnop = ENOENT;
+      return false;
+    }
+    if (!ParseJsonToKey(response, "pageToken", pageToken)) {
+      pageToken = NULL;
+    }
+    if (!ParseJsonToUsers(response, users)) {
+      *errnop = EINVAL;
+      return false;
+    }
+  } while(pageToken != NULL);
   return true;
 }
 
