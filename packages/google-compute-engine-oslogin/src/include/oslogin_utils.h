@@ -69,6 +69,12 @@ class Challenge {
   string status;
 };
 
+class Group {
+ public:
+  int gid;
+  string name;
+};
+
 // NssCache caches passwd entries for getpwent_r. This is used to prevent making
 // an HTTP call on every getpwent_r invocation. Stores up to cache_size entries
 // at a time. This class is not thread safe.
@@ -169,14 +175,34 @@ std::string UrlEncode(const string& param);
 bool ValidatePasswd(struct passwd* result, BufferManager* buf,
                     int* errnop);
 
+// Adds users and associated array of char* to provided buffer and store pointer
+// to array in result.gr_mem.
+bool AddUsersToGroup(std::vector<string> users, struct group* result,
+                       BufferManager* buf, int* errnop);
+
+// Iterates through all groups until one matching provided group is found,
+// replacing gr_name with a buffermanager provided string.
+bool FindGroup(struct group* grp, BufferManager* buf, int* errnop);
+
+// Iterates through all users for a group, storing results in a provided string vector.
+bool GetGroupUsers(string groupname, std::vector<string>* users, int* errnop);
+
+// Parses a JSON groups response, storing results in a provided Group vector.
+bool ParseJsonToGroups(const string& json, std::vector<Group>* groups);
+
+// Parses a JSON users response, storing results in a provided string vector.
+bool ParseJsonToUsers(const string& json, std::vector<string> *users);
+
 // Parses a JSON LoginProfiles response for SSH keys. Returns a vector of valid
 // ssh_keys. A key is considered valid if it's expiration date is greater than
 // current unix time.
 std::vector<string> ParseJsonToSshKeys(const string& json);
 
+// Parses a JSON object and returns the value associated with a given key.
+bool ParseJsonToKey(const string& json, const string& key, string* response);
+
 // Parses a JSON LoginProfiles response and returns the email under the "name"
 // field.
-bool ParseJsonToKey(const string& json, const string& key, string* email);
 bool ParseJsonToEmail(const string& json, string* email);
 
 // Parses a JSON LoginProfiles response and populates the passwd struct with the
@@ -184,12 +210,6 @@ bool ParseJsonToEmail(const string& json, string* email);
 // successful or not. If unsuccessful, errnop will also be set.
 bool ParseJsonToPasswd(const string& response, struct passwd* result,
                        BufferManager* buf, int* errnop);
-
-// Parses a JSON Groups or Users response and populates the group struct with the
-// corresponding values set in the JSON object. Returns whether the parse was
-// successful or not. If unsuccessful, errnop will also be set.
-bool ParseJsonToGroup(const string& json, struct group* result, BufferManager* buf, int* errnop);
-bool ParseJsonToGroupUsers(const string& json, struct group* result, BufferManager* buf, int* errnop);
 
 // Parses a JSON adminLogin or login response and returns whether the user has
 // the requested privilege.
