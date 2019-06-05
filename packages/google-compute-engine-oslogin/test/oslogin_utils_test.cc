@@ -25,7 +25,6 @@ using std::vector;
 
 namespace oslogin_utils {
 
-
 // Test that the buffer can successfully append multiple strings.
 TEST(BufferManagerTest, TestAppendString) {
   size_t buflen = 20;
@@ -347,69 +346,39 @@ TEST(ParseJsonPasswdTest, ValidateInvalidJsonResponse) {
 }
 
 // Test parsing a valid JSON response from the metadata server.
-TEST(ParseJsonGroupTest, ParseJsonToGroupSucceeds) {
+TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceeds) {
   string test_group = 
       "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":123452}]}";
 
-  size_t buflen = 200 * sizeof(char);
-  char* buffer = (char*)malloc(buflen);
-  ASSERT_STRNE(buffer, NULL);
-  BufferManager buf(buffer, buflen);
-  struct group result;
-  int test_errno = 0;
-  ASSERT_TRUE(ParseJsonToGroup(test_group, &result, &buf, &test_errno));
-  ASSERT_EQ(result.gr_gid, 123452);
-  ASSERT_STREQ(result.gr_name, "demo");
+  std::vector<Group> groups;
+  ASSERT_TRUE(ParseJsonToGroups(test_group, &groups));
+  ASSERT_EQ(groups[0].gid, 123452);
+  ASSERT_EQ(groups[0].name, "demo");
 }
 
 // Test parsing a valid JSON response from the metadata server with gid > 2^31.
-TEST(ParseJsonGroupTest, ParseJsonToGroupSucceedsWithHighGid) {
+TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceedsWithHighGid) {
   string test_group =
       "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":4294967295}]}";
 
-  size_t buflen = 200 * sizeof(char);
-  char* buffer = (char*)malloc(buflen);
-  ASSERT_STRNE(buffer, NULL);
-  BufferManager buf(buffer, buflen);
-  struct group result;
-  int test_errno = 0;
-  ASSERT_TRUE(ParseJsonToGroup(test_group, &result, &buf, &test_errno));
-  ASSERT_EQ(result.gr_gid, 4294967295);
-  ASSERT_STREQ(result.gr_name, "demo");
+  std::vector<Group> groups;
+  ASSERT_TRUE(ParseJsonToGroups(test_group, &groups));
+  ASSERT_EQ(groups[0].gid, 4294967295);
+  ASSERT_EQ(groups[0].name, "demo");
 }
 
-TEST(ParseJsonGroupTest, ParseJsonToGroupSucceedsWithStringGid) {
+TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceedsWithStringGid) {
   string test_group = 
       "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":\"123452\"}]}";
 
-  size_t buflen = 200 * sizeof(char);
-  char* buffer = (char*)malloc(buflen);
-  ASSERT_STRNE(buffer, NULL);
-  BufferManager buf(buffer, buflen);
-  struct group result;
-  int test_errno = 0;
-  ASSERT_TRUE(ParseJsonToGroup(test_group, &result, &buf, &test_errno));
-  ASSERT_EQ(result.gr_gid, 123452);
-  ASSERT_STREQ(result.gr_name, "demo");
-}
-
-// Test parsing a JSON response without enough space in the buffer.
-TEST(ParseJsonGroupTest, ParseJsonToGroupFailsWithERANGE) {
-  string test_group =
-      "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":\"123452\"}]}";
-
-  size_t buflen = 1 * sizeof(char);
-  char* buffer = (char*)malloc(buflen);
-  ASSERT_STRNE(buffer, NULL);
-  BufferManager buf(buffer, buflen);
-  struct group result;
-  int test_errno = 0;
-  ASSERT_FALSE(ParseJsonToGroup(test_group, &result, &buf, &test_errno));
-  ASSERT_EQ(test_errno, ERANGE);
+  std::vector<Group> groups;
+  ASSERT_TRUE(ParseJsonToGroups(test_group, &groups));
+  ASSERT_EQ(groups[0].gid, 123452);
+  ASSERT_EQ(groups[0].name, "demo");
 }
 
 // Test parsing malformed JSON responses.
-TEST(ParseJsonGroupTest, ParseJsonToGroupFailsWithEINVAL) {
+TEST(ParseJsonToGroupsTest, ParseJsonToGroupsFails) {
   string test_badgid =
       "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":\"this-should-be-int\"}]}";
   string test_nogid = 
@@ -417,102 +386,94 @@ TEST(ParseJsonGroupTest, ParseJsonToGroupFailsWithEINVAL) {
   string test_noname = 
       "{\"posixGroups\":[{\"gid\":123452}]}";
 
-  size_t buflen = 200;
-  char* buffer = (char*)malloc(buflen * sizeof(char));
-  ASSERT_STRNE(buffer, NULL);
-  BufferManager buf(buffer, buflen);
-  struct group result;
-  int test_errno = 0;
-  ASSERT_FALSE(ParseJsonToGroup(test_badgid, &result, &buf, &test_errno));
-  ASSERT_EQ(test_errno, EINVAL);
-  test_errno = 0;
-  ASSERT_FALSE(ParseJsonToGroup(test_nogid, &result, &buf, &test_errno));
-  ASSERT_EQ(test_errno, EINVAL);
-  test_errno = 0;
-  ASSERT_FALSE(ParseJsonToGroup(test_noname, &result, &buf, &test_errno));
-  ASSERT_EQ(test_errno, EINVAL);
-
+  std::vector<Group> groups;
+  ASSERT_FALSE(ParseJsonToGroups(test_badgid, &groups));
+  ASSERT_FALSE(ParseJsonToGroups(test_nogid, &groups));
+  ASSERT_FALSE(ParseJsonToGroups(test_noname, &groups));
 }
 
 // Test parsing a valid JSON response from the metadata server.
-TEST(ParseJsonGroupUsersTest, ParseJsonToGroupUsersSucceeds) {
+TEST(ParseJsonToUsersTest, ParseJsonToUsersSucceeds) {
   string test_group_users = 
       "{\"usernames\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\",\"user0005\"]}";
 
-  size_t buflen = 200 * sizeof(char);
-  char* buffer = (char*)malloc(buflen);
-  ASSERT_STRNE(buffer, NULL);
-  BufferManager buf(buffer, buflen);
-  struct group result;
-  int test_errno = 0;
-  ASSERT_TRUE(ParseJsonToGroupUsers(test_group_users, &result, &buf, &test_errno));
-  ASSERT_FALSE(result.gr_mem == NULL);
+  std::vector<string> users;
+  ASSERT_TRUE(ParseJsonToUsers(test_group_users, &users));
+  ASSERT_FALSE(users.empty());
+  ASSERT_EQ(users.size(), 5);
 
-  ASSERT_STREQ(*result.gr_mem, "user0001");
-  *(result.gr_mem)++;
-
-  ASSERT_STRNE(*result.gr_mem, NULL);
-  ASSERT_STREQ(*result.gr_mem, "user0002");
-  *(result.gr_mem)++;
-
-  ASSERT_STRNE(*result.gr_mem, NULL);
-  ASSERT_STREQ(*result.gr_mem, "user0003");
-  *(result.gr_mem)++;
-
-  ASSERT_STRNE(*result.gr_mem, NULL);
-  ASSERT_STREQ(*result.gr_mem, "user0004");
-  *(result.gr_mem)++;
-
-  ASSERT_STRNE(*result.gr_mem, NULL);
-  ASSERT_STREQ(*result.gr_mem, "user0005");
-  *(result.gr_mem)++;
-
-  ASSERT_TRUE(*result.gr_mem == NULL);
+  ASSERT_EQ(users[0], "user0001");
+  ASSERT_EQ(users[1], "user0002");
+  ASSERT_EQ(users[2], "user0003");
+  ASSERT_EQ(users[3], "user0004");
+  ASSERT_EQ(users[4], "user0005");
 }
 
 // Test parsing a valid JSON response from the metadata server.
-TEST(ParseJsonGroupUsersTest, ParseJsonToGroupUsersEmptyGroupSucceeds) {
+TEST(ParseJsonToUsersTest, ParseJsonToUsersEmptyGroupSucceeds) {
   string test_group_users = 
       "{\"usernames\":[]}";
 
+  std::vector<string> users;
+  ASSERT_TRUE(ParseJsonToUsers(test_group_users, &users));
+  ASSERT_TRUE(users.empty());
+}
+
+// Test parsing malformed JSON responses.
+TEST(ParseJsonToUsersTest, ParseJsonToUsersFails) {
+  string test_group_users = 
+      "{\"badstuff\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\",\"user0005\"]}";
+
+  std::vector<string> users;
+  ASSERT_FALSE(ParseJsonToUsers(test_group_users, &users));
+}
+
+TEST(GetUsersForGroupTest, GetUsersForGroupSucceeds) {
+  string response;
+  long http_code;
+  ASSERT_TRUE(HttpGet("http://metadata.google.internal/reset", &response, &http_code));
+
+  std::vector<string> users;
+  int errnop = 0;
+
+  ASSERT_TRUE(GetUsersForGroup("demo", &users, &errnop));
+  ASSERT_FALSE(users.empty());
+  ASSERT_EQ(users[0], "user000173_grande_focustest_org");
+  ASSERT_EQ(errnop, 0);
+}
+
+TEST(FindGroupTest, FindGroupByGidSucceeds) {
+  string response;
+  long http_code;
+  ASSERT_TRUE(HttpGet("http://metadata.google.internal/reset", &response, &http_code));
+
   size_t buflen = 200 * sizeof(char);
   char* buffer = (char*)malloc(buflen);
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  struct group result;
-  int test_errno = 0;
-  ASSERT_TRUE(ParseJsonToGroupUsers(test_group_users, &result, &buf, &test_errno));
-  ASSERT_TRUE(result.gr_mem == NULL);
+  int errnop = 0;
+
+  struct group grp = {};
+  grp.gr_gid = 123452;
+  ASSERT_TRUE(FindGroup(&grp, &buf, &errnop));
+  ASSERT_EQ(errnop, 0);
 }
 
-// Test parsing a JSON response without enough space in the buffer.
-TEST(ParseJsonGroupUsersTest, ParseJsonToGroupUsersFailsWithERANGE) {
-  string test_group_users = 
-      "{\"usernames\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\",\"user0005\"]}";
+TEST(FindGroupTest, FindGroupByNameSucceeds) {
+  string response;
+  long http_code;
+  ASSERT_TRUE(HttpGet("http://metadata.google.internal/reset", &response, &http_code));
 
-  size_t buflen = 1 * sizeof(char);
+  size_t buflen = 200 * sizeof(char);
   char* buffer = (char*)malloc(buflen);
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  struct group result;
-  int test_errno = 0;
-  ASSERT_FALSE(ParseJsonToGroupUsers(test_group_users, &result, &buf, &test_errno));
-  ASSERT_EQ(test_errno, ERANGE);
-}
+  int errnop;
 
-// Test parsing malformed JSON responses.
-TEST(ParseJsonGroupUsersTest, ParseJsonToGroupUsersFailsWithEINVAL) {
-  string test_group_users = 
-      "{\"badstuff\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\",\"user0005\"]}";
-
-  size_t buflen = 200;
-  char* buffer = (char*)malloc(buflen * sizeof(char));
-  ASSERT_STRNE(buffer, NULL);
-  BufferManager buf(buffer, buflen);
-  struct group result;
-  int test_errno = 0;
-  ASSERT_FALSE(ParseJsonToGroupUsers(test_group_users, &result, &buf, &test_errno));
-  ASSERT_EQ(test_errno, EINVAL);
+  const char* match = "demo";
+  struct group grp = {};
+  grp.gr_name = (char*)match;
+  ASSERT_TRUE(FindGroup(&grp, &buf, &errnop));
 }
 
 TEST(ParseJsonEmailTest, SuccessfullyParsesEmail) {
@@ -541,7 +502,6 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysSucceeds) {
   char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  int test_errno = 0;
   std::vector<string> result = ParseJsonToSshKeys(test_user);
   ASSERT_EQ(result.size(), 1);
   ASSERT_EQ(result[0], "test_key");
@@ -557,7 +517,6 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysMultipleKeys) {
   char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  int test_errno = 0;
   std::vector<string> result = ParseJsonToSshKeys(test_user);
   ASSERT_EQ(result.size(), 2);
   ASSERT_EQ(result[0], "test_key");
@@ -574,7 +533,6 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersExpiredKeys) {
   char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  int test_errno = 0;
   std::vector<string> result = ParseJsonToSshKeys(test_user);
   ASSERT_EQ(result.size(), 1);
   ASSERT_EQ(result[0], "test_key");
@@ -590,7 +548,6 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersMalformedExpiration) {
   char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  int test_errno = 0;
   std::vector<string> result = ParseJsonToSshKeys(test_user);
   ASSERT_EQ(result.size(), 1);
   ASSERT_EQ(result[0], "test_key");
@@ -672,7 +629,6 @@ TEST(ParseJsonChallengesTest, TestMalformedChallenges) {
   ASSERT_EQ(challenges.size(), 1);
 }
 }  // namespace oslogin_utils
-
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

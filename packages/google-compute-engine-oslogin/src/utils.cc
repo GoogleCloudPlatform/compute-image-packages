@@ -94,7 +94,7 @@ void NssCache::Reset() {
 }
 
 bool NssCache::HasNextPasswd() {
-  return index_ < passwd_cache_.size() && !passwd_cache_[index_].empty();
+  return (index_ < passwd_cache_.size()) && !passwd_cache_[index_].empty();
 }
 
 bool NssCache::GetNextPasswd(BufferManager* buf, passwd* result, int* errnop) {
@@ -356,8 +356,16 @@ bool ParseJsonToGroups(const string& json, std::vector<Group> *result) {
     }
 
     Group g;
-    g.name = json_object_get_string(name);
     g.gid = json_object_get_int64(gid);
+    // get_int64 will confusingly return 0 if the string can't be converted to
+    // an integer. We can't rely on type check as it may be a string in the API.
+    if (g.gid == 0) {
+      return false;
+    }
+    g.name = json_object_get_string(name);
+    if (g.name == "") {
+      return false;
+    }
 
     result->push_back(g);
   }
@@ -390,17 +398,14 @@ std::vector<string> ParseJsonToSshKeys(const string& json) {
   if (json_object_get_type(ssh_public_keys) != json_type_object) {
     return result;
   }
-  json_object_object_foreach(ssh_public_keys, key, val) {
-    json_object* iter;
-    if (!json_object_object_get_ex(ssh_public_keys, key, &iter)) {
-      return result;
-    }
-    if (json_object_get_type(iter) != json_type_object) {
+  json_object_object_foreach(ssh_public_keys, key, obj) {
+    (void)(key);
+    if (json_object_get_type(obj) != json_type_object) {
       continue;
     }
     string key_to_add = "";
     bool expired = false;
-    json_object_object_foreach(iter, key, val) {
+    json_object_object_foreach(obj, key, val) {
       string string_key(key);
       int val_type = json_object_get_type(val);
       if (string_key == "key") {
@@ -651,29 +656,32 @@ bool ParseJsonToChallenges(const string& json,
 }
 
 bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
+  if (result->gr_name == NULL && result->gr_gid == 0) {
+    return false;
+  }
   std::stringstream url;
   std::vector<Group> groups;
 
   string response;
   long http_code;
-  string* pageToken = NULL;
+  string pageToken = "";
 
   do {
-    url.clear();
+    url.str("");
     url << kMetadataServerUrl << "groups";
-    if (pageToken != NULL)
-      url << "?pageToken=" << *pageToken;
+    if (pageToken != "")
+      url << "?pageToken=" << pageToken;
 
     response.clear();
     http_code = 0;
     if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
         response.empty()) {
-      *errnop = ENOENT;
+      *errnop = EAGAIN;
       return false;
     }
 
-    if (!ParseJsonToKey(response, "pageToken", pageToken)) {
-      pageToken = NULL;
+    if (!ParseJsonToKey(response, "pageToken", &pageToken)) {
+      pageToken = "";
     }
 
     groups.clear();
@@ -681,6 +689,7 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
       *errnop = ENOENT;
       return false;
     }
+
 
     // Check for a match.
     for (auto & el: groups) {
@@ -700,38 +709,38 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
         return true;
       }
     }
-  } while (pageToken != NULL);
+  } while (pageToken != "");
   *errnop = ENOENT;
   return false;
 }
 
-bool GetGroupUsers(string groupname, std::vector<string>* users, int* errnop) {
+bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop) {
   string response;
   long http_code;
-  string* pageToken = NULL;
+  string pageToken = "";
   std::stringstream url;
 
   do {
-    url.clear();
-    url << kMetadataServerUrl << "users";
-    if (pageToken != NULL)
-      url << "?pageToken=" << *pageToken;
+    url.str("");
+    url << kMetadataServerUrl << "users?groupname=" << groupname;
+    if (pageToken != "")
+      url << "?pageToken=" << pageToken;
 
     response.clear();
     http_code = 0;
     if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
         response.empty()) {
-      *errnop = ENOENT;
+      *errnop = EAGAIN;
       return false;
     }
-    if (!ParseJsonToKey(response, "pageToken", pageToken)) {
-      pageToken = NULL;
+    if (!ParseJsonToKey(response, "pageToken", &pageToken)) {
+      pageToken = "";
     }
     if (!ParseJsonToUsers(response, users)) {
       *errnop = EINVAL;
       return false;
     }
-  } while(pageToken != NULL);
+  } while(pageToken != "");
   return true;
 }
 
