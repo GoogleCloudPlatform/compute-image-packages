@@ -30,15 +30,12 @@ class UtilsTest(unittest.TestCase):
     pass
 
   @mock.patch('google_compute_engine.distro_lib.helpers.CallDhclientIpv6')
-  @mock.patch('google_compute_engine.distro_lib.helpers.CallRouteAdvertisement')
-  def testEnableIpv6(self, mock_call_dhclient, mock_call_ra):
+  def testEnableIpv6(self, mock_call_dhclient):
     mocks = mock.Mock()
     mocks.attach_mock(mock_call_dhclient, 'dhclient')
-    mocks.attach_mock(mock_call_ra, 'call_ra')
 
     utils.Utils.EnableIpv6(self.mock_setup, ['A', 'B'], self.mock_logger)
-    expected_calls = [mock.call.dhclient(['A', 'B'], mock.ANY),
-                      mock.call.call_ra(['A', 'B'], mock.ANY,dhclient_script=None)]
+    expected_calls = [mock.call.dhclient(['A', 'B'], mock.ANY, dhclient_script=None)]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro_lib.helpers.CallDhclientIpv6')

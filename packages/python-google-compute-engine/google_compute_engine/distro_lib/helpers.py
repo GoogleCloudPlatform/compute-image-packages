@@ -107,25 +107,6 @@ def CallNtpdate(logger):
   else:
     logger.info('Synced system time with ntp server.')
 
-
-def CallRouteAdvertisement(interfaces, logger):
-  """Sets accept_ra_rt_info_max_plen on a per interface basis.
-  Args:
-    interfaces: string, the output device names for enabling Route Advertisements.
-    logger: logger object, used to write to SysLog and serial port.
-  """
-  logger.info('Enabling Route Advertisements on the Ethernet interfaces %s.', interfaces)
-
-  for interface in interfaces:
-    sysctl_name = 'net.ipv6.conf.{ethinterface}.accept_ra_rt_info_max_plen'.format(
-        ethinterface=interface)
-    CallWriteViaSysCtl(logger, sysctl_name, 128)
-
-  # Force a route solicit by disabling and enabling IPv6.
-  CallWriteViaSysCtl(logger, "net.ipv6.conf.all.disable_ipv6", 1)
-  CallWriteViaSysCtl(logger, "net.ipv6.conf.all.disable_ipv6", 0)
-
-
 def CallWriteViaSysCtl(logger, name, value):
   """Write a variable using sysctl,
   Args:
