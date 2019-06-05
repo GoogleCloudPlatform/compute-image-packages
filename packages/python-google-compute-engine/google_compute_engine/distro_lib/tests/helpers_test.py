@@ -185,19 +185,6 @@ class HelpersTest(unittest.TestCase):
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
-  def testCallRouteAdvertisement(self, mock_call):
-    mock_call.side_effect = [None, subprocess.CalledProcessError(1, 'Test'),
-                             None, None]
-    helpers.CallRouteAdvertisement(['a', 'b'], self.mock_logger)
-    expected_calls = [
-        mock.call.call(['sysctl', '-w', 'net.ipv6.conf.a.accept_ra_rt_info_max_plen=128']),
-        mock.call.call(['sysctl', '-w', 'net.ipv6.conf.b.accept_ra_rt_info_max_plen=128']),
-        mock.call.call(['sysctl', '-w', 'net.ipv6.conf.all.disable_ipv6=1']),
-        mock.call.call(['sysctl', '-w', 'net.ipv6.conf.all.disable_ipv6=0']),
-    ]
-    self.assertEqual(mock_call.mock_calls, expected_calls)
-
-  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallWriteViaSysCtl(self, mock_call):
     command = ['sysctl', '-w']
     mock_logger = mock.Mock()

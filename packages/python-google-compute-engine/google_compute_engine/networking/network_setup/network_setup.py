@@ -50,11 +50,11 @@ class NetworkSetup(object):
     Args:
       interfaces: list of string, the output device names for enabling IPv6.
     """
-    if not interfaces or set(interfaces) == self.ipv6_interfaces:
+    if not interfaces:
       return
 
     self.logger.info('Enabling IPv6 on Ethernet interface: %s.', interfaces)
-    self.ipv6_interfaces = set(interfaces)
+    self.ipv6_interfaces = self.ipv6_interfaces.union(set(interfaces))
 
     # Distro-specific setup for enabling IPv6 on network interfaces.
     self.distro_utils.EnableIpv6(
@@ -66,7 +66,7 @@ class NetworkSetup(object):
     Args:
       interfaces: list of string, the output device names for disabling IPv6.
     """
-    if not interfaces or not len(self.ipv6_interfaces.intersection(set(interfaces))):
+    if not interfaces:
       return
 
     self.logger.info('Disabling IPv6 on Ethernet interface: %s.', interfaces)
