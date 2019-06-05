@@ -680,7 +680,7 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
       return false;
     }
 
-    if (!ParseJsonToKey(response, "pageToken", &pageToken)) {
+    if (!ParseJsonToKey(response, "nextPageToken", &pageToken)) {
       pageToken = "";
     }
 
@@ -710,8 +710,42 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
       }
     }
   } while (pageToken != "");
+  // Not found.
   *errnop = ENOENT;
   return false;
+}
+
+bool GetGroupsForUser(string username, std::vector<Group>* groups, int* errnop) {
+  std::stringstream url;
+
+  string response;
+  long http_code;
+  string pageToken = "";
+
+  do {
+    url.str("");
+    url << kMetadataServerUrl << "groups?username=" << username;
+    if (pageToken != "")
+      url << "?pageToken=" << pageToken;
+
+    response.clear();
+    http_code = 0;
+    if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+        response.empty()) {
+      *errnop = EAGAIN;
+      return false;
+    }
+
+    if (!ParseJsonToKey(response, "pageToken", &pageToken)) {
+      pageToken = "";
+    }
+
+    if (!ParseJsonToGroups(response, groups)) {
+      *errnop = ENOENT;
+      return false;
+    }
+  } while (pageToken != "");
+  return true;
 }
 
 bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop) {
@@ -733,7 +767,7 @@ bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop)
       *errnop = EAGAIN;
       return false;
     }
-    if (!ParseJsonToKey(response, "pageToken", &pageToken)) {
+    if (!ParseJsonToKey(response, "nextPageToken", &pageToken)) {
       pageToken = "";
     }
     if (!ParseJsonToUsers(response, users)) {

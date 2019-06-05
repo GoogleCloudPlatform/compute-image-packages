@@ -20,6 +20,7 @@
 #include <pwd.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -35,7 +36,9 @@ using std::string;
 using oslogin_utils::AddUsersToGroup;
 using oslogin_utils::BufferManager;
 using oslogin_utils::FindGroup;
+using oslogin_utils::GetGroupsForUser;
 using oslogin_utils::GetUsersForGroup;
+using oslogin_utils::Group;
 using oslogin_utils::HttpGet;
 using oslogin_utils::kMetadataServerUrl;
 using oslogin_utils::MutexLock;
@@ -56,7 +59,7 @@ static pthread_mutex_t cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 extern "C" {
 
 // Get a passwd entry by id.
-int _nss_oslogin_getpwuid_r(uid_t uid, struct passwd *result, char *buffer,
+enum nss_status _nss_oslogin_getpwuid_r(uid_t uid, struct passwd *result, char *buffer,
                             size_t buflen, int *errnop) {
   BufferManager buffer_manager(buffer, buflen);
   std::stringstream url;
@@ -81,7 +84,7 @@ int _nss_oslogin_getpwuid_r(uid_t uid, struct passwd *result, char *buffer,
 }
 
 // Get a passwd entry by name.
-int _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
+enum nss_status _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
                             char *buffer, size_t buflen, int *errnop) {
   BufferManager buffer_manager(buffer, buflen);
   std::stringstream url;
@@ -105,7 +108,7 @@ int _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
   return NSS_STATUS_SUCCESS;
 }
 
-int _nss_oslogin_getgrby(struct group *grp, char *buf, size_t buflen, int *errnop) {
+enum nss_status _nss_oslogin_getgrby(struct group *grp, char *buf, size_t buflen, int *errnop) {
   BufferManager buffer_manager(buf, buflen);
   if (!FindGroup(grp, &buffer_manager, errnop))
     return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
@@ -120,14 +123,49 @@ int _nss_oslogin_getgrby(struct group *grp, char *buf, size_t buflen, int *errno
   return NSS_STATUS_SUCCESS;
 }
 
-int _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf, size_t buflen, int *errnop) {
+enum nss_status _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf, size_t buflen, int *errnop) {
   grp->gr_gid = gid;
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
-int _nss_oslogin_getgrnam_r(const char *name, struct group *grp, char *buf, size_t buflen, int *errnop) {
+enum nss_status _nss_oslogin_getgrnam_r(const char *name, struct group *grp, char *buf, size_t buflen,
+                                        int *errnop) {
   grp->gr_name = (char *) name;
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
+}
+
+enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup, long int *start,
+                                            long int *size, gid_t **groupsp, long int limit, int *errnop) {
+  std::vector<Group> grouplist;
+  if (!GetGroupsForUser(string(user), &grouplist, errnop)) {
+    return NSS_STATUS_NOTFOUND;
+  }
+
+  gid_t* groups = *groupsp;
+  for (auto & group: grouplist) {
+    // Resize the buffer if needed.
+    if (*start == *size) {
+      gid_t* newgroups;
+      long int newsize = 2 * *size;
+      // Stop at limit if provided.
+      if (limit > 0) {
+        if (*size >= limit) {
+          *errnop = ERANGE;
+          return NSS_STATUS_TRYAGAIN;
+        }
+        newsize = MIN (limit, newsize);
+      }
+      newgroups = (gid_t*)realloc(groups, newsize * sizeof(gid_t*));
+      if (newgroups == NULL) {
+        *errnop = EAGAIN;
+        return NSS_STATUS_TRYAGAIN;
+      }
+      *groupsp = groups = newgroups;
+      *size = newsize;
+    }
+    groups[(*start)++] = group.gid;
+  }
+  return NSS_STATUS_SUCCESS;
 }
 
 // nss_getpwent_r() is intentionally left unimplemented. This functionality is

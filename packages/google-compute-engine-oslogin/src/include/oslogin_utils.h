@@ -187,6 +187,9 @@ bool FindGroup(struct group* grp, BufferManager* buf, int* errnop);
 // Iterates through all users for a group, storing results in a provided string vector.
 bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop);
 
+// Iterates through all groups for a user, storing results in a provided string vector.
+bool GetGroupsForUser(string username, std::vector<Group>* groups, int* errnop);
+
 // Parses a JSON groups response, storing results in a provided Group vector.
 bool ParseJsonToGroups(const string& json, std::vector<Group>* groups);
 
