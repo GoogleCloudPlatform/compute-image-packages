@@ -71,7 +71,7 @@ class Challenge {
 
 class Group {
  public:
-  int gid;
+  int64_t gid;
   string name;
 };
 
@@ -123,7 +123,7 @@ class NssCache {
   std::string page_token_;
 
   // Index for requesting the next passwd from the cache.
-  int index_;
+  uint32_t index_;
 
   // Whether the NssCache has reached the last page of the database.
   bool on_last_page_;
@@ -185,7 +185,7 @@ bool AddUsersToGroup(std::vector<string> users, struct group* result,
 bool FindGroup(struct group* grp, BufferManager* buf, int* errnop);
 
 // Iterates through all users for a group, storing results in a provided string vector.
-bool GetGroupUsers(string groupname, std::vector<string>* users, int* errnop);
+bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop);
 
 // Parses a JSON groups response, storing results in a provided Group vector.
 bool ParseJsonToGroups(const string& json, std::vector<Group>* groups);

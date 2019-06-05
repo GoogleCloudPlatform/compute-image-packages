@@ -35,7 +35,7 @@ using std::string;
 using oslogin_utils::AddUsersToGroup;
 using oslogin_utils::BufferManager;
 using oslogin_utils::FindGroup;
-using oslogin_utils::GetGroupUsers;
+using oslogin_utils::GetUsersForGroup;
 using oslogin_utils::HttpGet;
 using oslogin_utils::kMetadataServerUrl;
 using oslogin_utils::MutexLock;
@@ -111,7 +111,7 @@ int _nss_oslogin_getgrby(struct group *grp, char *buf, size_t buflen, int *errno
     return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
 
   std::vector<string> users;
-  if (!GetGroupUsers(grp->gr_name, &users, errnop))
+  if (!GetUsersForGroup(grp->gr_name, &users, errnop))
     return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
 
   if (!AddUsersToGroup(users, grp, &buffer_manager, errnop))
