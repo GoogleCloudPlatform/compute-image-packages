@@ -73,8 +73,7 @@ class NetworkSetup(object):
     self.ipv6_interfaces.difference_update(interfaces)
 
     # Distro-specific setup for disabling IPv6 on network interfaces.
-    self.distro_utils.DisableIpv6(
-        interfaces, self.logger, dhclient_script=self.dhclient_script)
+    self.distro_utils.DisableIpv6(interfaces, self.logger)
 
   def EnableNetworkInterfaces(self, interfaces):
     """Enable the list of network interfaces.
