@@ -39,6 +39,6 @@ cd ${NAME}-${VERSION}
 
 cp -r ${working_dir}/packaging/debian ./
 
-debuild -us -uc
+DEB_BUILD_OPTIONS=noddebs debuild -us -uc
 
 popd
