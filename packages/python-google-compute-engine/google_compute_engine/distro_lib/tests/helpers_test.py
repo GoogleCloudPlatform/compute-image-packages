@@ -114,6 +114,16 @@ class HelpersTest(unittest.TestCase):
         mock.call.warning(mock.ANY, ['k', 'l'])])
 
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  def testEnableRouteAdvertisements(self, mock_call):
+    mock_logger = mock.Mock()
+    interfaces = ['foo', 'bar', 'baz']
+    helpers.CallEnableRouteAdvertisements(interfaces, mock_logger)
+    mock_call.assert_has_calls([
+        mock.call(['sysctl', '-w',
+           'net.ipv6.conf.%s.accept_ra_rt_info_max_plen=128' % interface])
+        for interface in interfaces])
+
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallHwclock(self, mock_call):
     command = ['/sbin/hwclock', '--hctosys']
     mock_logger = mock.Mock()

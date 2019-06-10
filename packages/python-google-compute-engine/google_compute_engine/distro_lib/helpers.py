@@ -51,7 +51,8 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None, release_lease=Fal
     dhclient_script: string, the path to a dhclient script used by dhclient.
     release_lease: Release the IPv6 lease.
   """
-  logger.info('Enabling IPv6 on the Ethernet interfaces %s.', interfaces)
+  logger.info('Calling Dhclient for IPv6 configuration '
+              'on the Ethernet interfaces %s.', interfaces)
 
   dhclient_command = ['dhclient']
 
@@ -70,6 +71,20 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None, release_lease=Fal
    subprocess.check_call(dhclient_command + ['-1', '-6', '-v'] + interfaces)
   except subprocess.CalledProcessError:
     logger.warning('Could not enable IPv6 on interface %s.', interfaces)
+
+
+def CallEnableRouteAdvertisements(interfaces, logger):
+  """Enable route advertisements.
+  Args:
+    interfaces: list of string, the output device names to enable.
+    logger: logger object, used to write to SysLog and serial port.
+    dhclient_script: string, the path to a dhclient script used by dhclient.
+  """
+  for interface in interfaces:
+    accept_ra = (
+      'net.ipv6.conf.{interface}.accept_ra_rt_info_max_plen'.format(
+        interface=interface))
+    CallWriteViaSysCtl(logger, accept_ra, 128)
 
 def CallHwclock(logger):
   """Sync clock using hwclock.
