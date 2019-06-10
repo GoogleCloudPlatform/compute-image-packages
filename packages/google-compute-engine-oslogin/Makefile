@@ -4,4 +4,8 @@ all clean install :
 tests :
 	$(MAKE) -C test $@
 
+clean :
+	$(MAKE) -C src clean
+	$(MAKE) -C test clean
+
 .PHONY : all clean install

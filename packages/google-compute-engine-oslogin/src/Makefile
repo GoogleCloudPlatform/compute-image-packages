@@ -34,7 +34,7 @@ all : $(NSS_OSLOGIN) $(NSS_CACHE_OSLOGIN) $(PAM_LOGIN) $(PAM_ADMIN) $(BINARIES)
 
 clean :
 	rm -f $(BINARIES)
-	find . -type f \( -iname '*.o' -o '*.so' \) -delete
+	find . -type f \( -iname '*.o' -o -iname '*.so' \) -delete
 
 .PHONY : all clean install
 

@@ -26,8 +26,8 @@
 #include <sstream>
 #include <string>
 
-#include "../compat.h"
-#include "../utils/oslogin_utils.h"
+#include <compat.h>
+#include <oslogin_utils.h>
 
 using std::string;
 
