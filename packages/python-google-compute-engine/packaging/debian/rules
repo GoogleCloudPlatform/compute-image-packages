@@ -14,13 +14,5 @@ override_dh_clean:
 
 override_dh_auto_install:
 	dh_auto_install
-	mv debian/python3-google-compute-engine/usr/bin/google_instance_setup \
-		debian/python3-google-compute-engine/usr/bin/google_instance_setup3
-	mv debian/python3-google-compute-engine/usr/bin/google_accounts_daemon \
-		debian/python3-google-compute-engine/usr/bin/google_accounts_daemon3
-	mv debian/python3-google-compute-engine/usr/bin/google_network_daemon \
-		debian/python3-google-compute-engine/usr/bin/google_network_daemon3
-	mv debian/python3-google-compute-engine/usr/bin/google_clock_skew_daemon \
-		debian/python3-google-compute-engine/usr/bin/google_clock_skew_daemon3
-	mv debian/python3-google-compute-engine/usr/bin/google_metadata_script_runner \
-		debian/python3-google-compute-engine/usr/bin/google_metadata_script_runner3
+	# Remove python2.7 entry points.
+	rm -Rf debian/python-google-compute-engine/usr/bin

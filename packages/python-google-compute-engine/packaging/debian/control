@@ -2,7 +2,7 @@ Source: python-google-compute-engine
 Section: admin
 Priority: optional
 Maintainer: Google Cloud Team <gc-team@google.com>
-Build-Depends: debhelper (>= 9),
+Build-Depends: debhelper (>= 10),
                dh-python,
                python-all,
                python-setuptools,
@@ -12,7 +12,6 @@ Build-Depends: debhelper (>= 9),
                python3-pytest,
                python-mock,
                python-boto,
-               python3-boto,
                python3-distro
 Standards-Version: 3.9.8
 Homepage: https://github.com/GoogleCloudPlatform/compute-image-packages
@@ -26,13 +25,14 @@ Conflicts: google-compute-engine-jessie,
            google-compute-daemon,
            google-startup-scripts
 Description: Google Compute Engine python library for Python 2.x.
+  Python libraries used for interacting with Google Compute Engine instance
+  metadata to provide platform integration.
 
 Package: python3-google-compute-engine
 Section: python
 Architecture: all
 Depends: ${misc:Depends},
          python3-distro | python3-distro-info,
-         python3-boto,
          python3-pkg-resources,
          python3:any
 Conflicts: google-compute-engine-jessie,
@@ -40,3 +40,5 @@ Conflicts: google-compute-engine-jessie,
            google-compute-daemon,
            google-startup-scripts
 Description: Google Compute Engine python library for Python 3.x.
+  Python libraries used for interacting with Google Compute Engine instance
+  metadata to provide platform integration.

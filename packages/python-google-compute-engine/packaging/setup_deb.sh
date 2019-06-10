@@ -24,7 +24,7 @@ fi
 
 # Build dependencies.
 sudo apt-get -y install python-all python-setuptools python3-all \
-  python3-setuptools python-pytest python3-pytest python-mock
+  python3-setuptools python-pytest python3-pytest python-mock python-boto
 
 # DEB creation tools.
 sudo apt-get -y install debhelper devscripts build-essential

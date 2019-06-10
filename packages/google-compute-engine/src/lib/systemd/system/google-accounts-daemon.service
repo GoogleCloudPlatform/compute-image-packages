@@ -1,13 +1,13 @@
 [Unit]
 Description=Google Compute Engine Accounts Daemon
 After=network.target google-instance-setup.service google-network-daemon.service
-Requires=network.target
 
 [Service]
 Type=simple
 ExecStart=/usr/bin/google_accounts_daemon
 OOMScoreAdjust=-999
 Restart=always
+StandardOutput=journal+console
 
 [Install]
 WantedBy=multi-user.target
