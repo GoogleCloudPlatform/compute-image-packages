@@ -27,6 +27,7 @@ class NetworkSetup(object):
 
   interfaces = set()
   ipv6_interfaces = set()
+  ipv6_interfaces_initialized = False
   network_interfaces = 'instance/network-interfaces'
 
   def __init__(self, dhclient_script=None, dhcp_command=None, debug=False):
@@ -50,11 +51,12 @@ class NetworkSetup(object):
     Args:
       interfaces: list of string, the output device names for enabling IPv6.
     """
-    if not interfaces:
+    if not interfaces or self.ipv6_interfaces == set(interfaces):
       return
 
     self.logger.info('Enabling IPv6 on Ethernet interface: %s.', interfaces)
     self.ipv6_interfaces = self.ipv6_interfaces.union(set(interfaces))
+    self.ipv6_interfaces_initialized = True
 
     # Distro-specific setup for enabling IPv6 on network interfaces.
     self.distro_utils.EnableIpv6(
@@ -66,11 +68,17 @@ class NetworkSetup(object):
     Args:
       interfaces: list of string, the output device names for disabling IPv6.
     """
-    if not interfaces:
+
+    # Allow to run once during Initialization and after that only when an
+    # interface is found in the ipv6_interfaces set.
+    if not interfaces or (self.ipv6_interfaces_initialized
+                          and not self.ipv6_interfaces.intersection(
+                              set(interfaces))):
       return
 
     self.logger.info('Disabling IPv6 on Ethernet interface: %s.', interfaces)
     self.ipv6_interfaces.difference_update(interfaces)
+    self.ipv6_interfaces_initialized = True
 
     # Distro-specific setup for disabling IPv6 on network interfaces.
     self.distro_utils.DisableIpv6(interfaces, self.logger)
