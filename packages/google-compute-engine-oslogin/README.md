@@ -48,7 +48,7 @@ The **packaging** directory also contains files used to generate `.deb` and
 #### Authorized Keys Command
 
 The `google_authorized_keys` binary is designed to be used with the sshd
-`AuthorizedKeysCommand` option in [sshd_config(5)](https://linux.die.net/man/5/sshd_config)
+`AuthorizedKeysCommand` option in [sshd_config(5)](https://linux.die.net/man/5/sshd_config).
 It does the following:
 
 *   Reads the user's profile information from the metadata server:
@@ -60,7 +60,7 @@ It does the following:
     http://metadata.google.internal/computeMetadata/v1/oslogin/authorize?email=<user_email>&policy=login
     ```
 *   If the check is successful, returns the SSH keys associated with the user
-    for use by sshd.
+    for use by sshd. Otherwise, exits with an error code.
 
 #### NSS Modules
 
@@ -75,7 +75,7 @@ is activated by adding `oslogin` and `cache_oslogin` entries for services in
     ```
 *   To look up a user by username, the NSS module queries:
     ```
-    http://metadata.google.internal/computeMetadata/v1/oslogin/users?username=<username
+    http://metadata.google.internal/computeMetadata/v1/oslogin/users?username=<username>
     ```
 *   To look up a user by UID, the NSS module queries:
     ```
