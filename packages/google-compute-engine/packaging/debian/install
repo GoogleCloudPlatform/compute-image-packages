@@ -1,5 +1,4 @@
 etc/apt/apt.conf.d/*
-etc/dhcp/dhclient-exit-hooks.d/*
 etc/modprobe.d/*
 etc/rsyslog.d/*
 etc/sysctl.d/*
