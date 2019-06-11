@@ -1,2 +1,0 @@
-/var/google-sudoers.d(/.*)? system_u:object_r:google_t:s0
-/var/google-users.d(/.*)? system_u:object_r:google_t:s0

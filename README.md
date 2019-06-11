@@ -62,8 +62,6 @@ We build the following packages for the Linux guest environment.
     *  The Python 2 package for Linux daemons and libraries.
 *   `python3-google-compute-engine`
     *  The Python 3 package for Linux daemons and libraries.
-*   `google-compute-engine-oslogin`
-    *  The PAM and NSS modules for [OS Login](https://cloud.google.com/compute/docs/oslogin/)
 *   `gce-disk-expand`
     *  The on-boot resize scripts for root partition.
 
@@ -83,17 +81,14 @@ The method for making version updates differs by package.
   update it.
 * `python-google-compute-engine` additionally needs the version specified in
   `setup.py`. This is used for entry points through the Python egg and PyPI.
-* `google-compute-engine-oslogin` needs the version also updated in the
-  `Makefile`.
 
 #### Package Distribution
 
 The deb and rpm packages are published to Google Cloud repositories. Debian,
 CentOS, and RHEL use these repositories to install and update the
-`google-compute-engine`, `google-compute-engine-oslogin` and
-`python-google-compute-engine` (and `python3-google-compute-engine` for Python
-3) packages. If you are creating a custom image, you can also use these
-repositories in your image.
+`google-compute-engine`, and `python-google-compute-engine` (and
+`python3-google-compute-engine` for Python 3) packages. If you are creating a
+custom image, you can also use these repositories in your image.
 
 **For Debian, run the following commands as root:**
 
