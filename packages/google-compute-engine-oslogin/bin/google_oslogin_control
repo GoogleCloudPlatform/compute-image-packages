@@ -13,6 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+is_freebsd() {
+  [ "$(uname)" = "FreeBSD" ]
+  return $?
+}
+
 nss_config="/etc/nsswitch.conf"
 pam_sshd_config="/etc/pam.d/sshd"
 pam_su_config="/etc/pam.d/su"
@@ -20,15 +25,13 @@ sshd_config="/etc/ssh/sshd_config"
 group_config="/etc/security/group.conf"
 sudoers_dir="/var/google-sudoers.d"
 users_dir="/var/google-users.d"
-sudoers_file="/etc/sudoers.d/google-oslogin"
 added_comment="# Added by Google Compute Engine OS Login."
 sshd_block="#### Google OS Login control. Do not edit this section. ####"
 sshd_end_block="#### End Google OS Login control section. ####"
-
-is_freebsd() {
-  [ "$(uname)" = "FreeBSD" ]
-  return $?
-}
+sudoers_file="/etc/sudoers.d/google-oslogin"
+if is_freebsd; then
+  sudoers_file="/usr/local/etc/sudoers.d/google-oslogin"
+fi
 
 # Update nsswitch.conf to include OS Login NSS module for passwd.
 modify_nsswitch_conf() {
@@ -97,7 +100,7 @@ modify_sshd_conf() (
   if ! grep -q "$sshd_block" "$sshd_config"; then
     # Remove old-style additions.
     $sed -i"" "/${added_comment}/,+1d" "$sshd_config"
-    /bin/echo -e "\n\n${sshd_block}\n${sshd_end_block}" >> "$sshd_config"
+    printf "\n\n${sshd_block}\n${sshd_end_block}" >> "$sshd_config"
   fi
 
   for entry in "$sshd_auth_keys_command" "$sshd_auth_keys_command_user"; do
@@ -283,7 +286,7 @@ restart_service() {
 
   # Use the service helper if it exists.
   if command -v service > /dev/null; then
-    if ! service "$service" status 2>&1 | grep -q unrecognized; then
+    if ! service "$service" status 2>&1 | grep -Eq "unrecognized|does not exist"; then
       service "$service" restart
       return $?
     else

@@ -15,17 +15,48 @@
 
 """Retrieve and store user provided metadata scripts."""
 
-import ast
+import functools
 import re
 import socket
-import subprocess
 import tempfile
+import time
 
 from google_compute_engine import metadata_watcher
 from google_compute_engine.compat import httpclient
 from google_compute_engine.compat import urlerror
 from google_compute_engine.compat import urlrequest
 from google_compute_engine.compat import urlretrieve
+
+
+def _RetryOnUnavailable(func):
+  """Function decorator template to retry on a service unavailable exception."""
+
+  @functools.wraps(func)
+  def Wrapper(*args, **kwargs):
+    final_exception = None
+    for _ in range(3):
+      try:
+        response = func(*args, **kwargs)
+      except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
+        final_exception = e
+        time.sleep(5)
+        continue
+      else:
+        return response
+    raise final_exception
+  return Wrapper
+
+
+@_RetryOnUnavailable
+def _UrlOpenWithRetry(request):
+  """Call urlopen with retry."""
+  return urlrequest.urlopen(request)
+
+
+@_RetryOnUnavailable
+def _UrlRetrieveWithRetry(url, dest):
+  """Call urlretrieve with retry."""
+  return urlretrieve.urlretrieve(url, dest)
 
 
 class ScriptRetriever(object):
@@ -81,12 +112,12 @@ class ScriptRetriever(object):
       request = urlrequest.Request(url)
       request.add_unredirected_header('Metadata-Flavor', 'Google')
       request.add_unredirected_header('Authorization', self.token)
-      content = urlrequest.urlopen(request).read().decode('utf-8')
-    except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
+      content = _UrlOpenWithRetry(request).read().decode('utf-8')
+    except Exception as e:
       self.logger.warning('Could not download %s. %s.', url, str(e))
       return None
 
-    with open(dest, 'wb') as f:
+    with open(dest, 'w') as f:
       f.write(content)
 
     return dest
@@ -107,7 +138,7 @@ class ScriptRetriever(object):
 
     self.logger.info('Downloading url from %s to %s.', url, dest)
     try:
-      urlretrieve.urlretrieve(url, dest)
+      _UrlRetrieveWithRetry(url, dest)
       return dest
     except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
       self.logger.warning('Could not download %s. %s.', url, str(e))
@@ -192,8 +223,10 @@ class ScriptRetriever(object):
     metadata_value = attribute_data.get(metadata_key)
     if metadata_value:
       self.logger.info('Found %s in metadata.', metadata_key)
-      script_dict[metadata_key] = self._DownloadScript(
-          metadata_value, dest_dir)
+      downloaded_dest = self._DownloadScript(metadata_value, dest_dir)
+      if downloaded_dest is None:
+        self.logger.warning('Failed to download metadata script.')
+      script_dict[metadata_key] = downloaded_dest
 
     return script_dict
 

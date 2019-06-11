@@ -1,3 +1,15 @@
+google-compute-engine (2.8.16-1) stable; urgency=low
+
+  * Fix instance setup in Python 3 environments.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 22 May 2019 12:00:00 -0700
+
+google-compute-engine (2.8.15-1) stable; urgency=low
+
+  * Fix XPS settings with more than 64 vCPUs.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 21 May 2019 12:00:00 -0700
+
 google-compute-engine (2.8.14-1) stable; urgency=low
 
   * Upstart systems: only run startup scripts at boot.

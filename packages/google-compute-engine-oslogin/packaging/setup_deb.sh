@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="google-compute-engine-oslogin"
-VERSION="1.5.2"
+VERSION="1.5.3"
 
 working_dir=${PWD}
 if [[ $(basename "$working_dir") != $NAME ]]; then
@@ -39,6 +39,6 @@ cd ${NAME}-${VERSION}
 
 cp -r ${working_dir}/packaging/debian ./
 
-debuild -us -uc
+DEB_BUILD_OPTIONS=noddebs debuild -us -uc
 
 popd
