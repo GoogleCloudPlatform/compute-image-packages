@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Requires libgtest-dev and gtest compiled and installed.
-#include "oslogin_utils.h"
+#include <oslogin_utils.h>
 
 #include <errno.h>
 #include <gtest/gtest.h>

@@ -14,8 +14,8 @@
 
 // An NSS module which adds supports for file /etc/oslogin_passwd.cache
 
-#include "nss_cache_oslogin.h"
-#include "../compat.h"
+#include <nss_cache_oslogin.h>
+#include <compat.h>
 
 #include <sys/mman.h>
 
