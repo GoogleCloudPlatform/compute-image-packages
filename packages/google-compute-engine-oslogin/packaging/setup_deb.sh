@@ -16,6 +16,12 @@
 NAME="google-compute-engine-oslogin"
 VERSION="1.5.3"
 
+DEB=$(cut -d. -f1 </etc/debian_version)
+if [[ -z $DEB ]]; then
+  echo "Can't determine debian version of build host"
+  exit 1
+fi
+
 working_dir=${PWD}
 if [[ $(basename "$working_dir") != $NAME ]]; then
   echo "Packaging scripts must be run from top of package dir."
@@ -23,14 +29,14 @@ if [[ $(basename "$working_dir") != $NAME ]]; then
 fi
 
 # Build dependencies.
-sudo apt-get -y install make g++ libcurl4-openssl-dev libjson-c-dev libpam-dev
-
-# DEB creation tools.
-sudo apt-get -y install debhelper devscripts build-essential
+echo "Installing dependencies."
+sudo apt-get -y install make g++ libcurl4-openssl-dev libjson-c-dev libpam-dev \
+  debhelper devscripts build-essential >/dev/null
 
 rm -rf /tmp/debpackage
 mkdir /tmp/debpackage
-tar czvf /tmp/debpackage/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
+tar czvf /tmp/debpackage/${NAME}_${VERSION}.orig.tar.gz  --exclude .git \
+  --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
 pushd /tmp/debpackage
 tar xzvf ${NAME}_${VERSION}.orig.tar.gz
@@ -38,7 +44,11 @@ tar xzvf ${NAME}_${VERSION}.orig.tar.gz
 cd ${NAME}-${VERSION}
 
 cp -r ${working_dir}/packaging/debian ./
+echo "Building on Debian ${DEB}, modifying latest changelog entry."
+sed -r -i"" "1s/^${NAME} \((.*)\) (.+;.*)/${NAME} (\1+deb${DEB}) \2/" \
+  debian/changelog
 
+echo "Starting build"
 DEB_BUILD_OPTIONS=noddebs debuild -us -uc
 
 popd
