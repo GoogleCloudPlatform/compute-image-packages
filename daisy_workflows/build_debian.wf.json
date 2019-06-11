@@ -20,8 +20,14 @@
     "setup-disk": {
       "CreateDisks": [
         {
-          "Name": "disk-deb-build",
+          "Name": "disk-deb9-build",
           "SourceImage": "projects/debian-cloud/global/images/family/debian-9",
+          "SizeGb": "10",
+          "Type": "pd-ssd"
+        },
+        {
+          "Name": "disk-deb10-build",
+          "SourceImage": "projects/debian-cloud-testing/global/images/family/debian-10",
           "SizeGb": "10",
           "Type": "pd-ssd"
         }
@@ -30,9 +36,23 @@
     "package-build": {
       "CreateInstances": [
         {
-          "Name": "inst-deb-build",
+          "Name": "inst-deb9-build",
           "Disks": [
-            {"Source": "disk-deb-build"}
+            {"Source": "disk-deb9-build"}
+          ],
+          "MachineType": "n1-standard-2",
+          "Metadata": {
+            "github_branch": "${github_branch}",
+            "github_repo": "${github_repo}",
+            "output_path": "${output_path}"
+          },
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"],
+          "StartupScript": "build_deb_packages.sh"
+        },
+        {
+          "Name": "inst-deb10-build",
+          "Disks": [
+            {"Source": "disk-deb10-build"}
           ],
           "MachineType": "n1-standard-2",
           "Metadata": {
@@ -48,7 +68,15 @@
     "wait-for-build": {
       "WaitForInstancesSignal": [
         {
-          "Name": "inst-deb-build",
+          "Name": "inst-deb9-build",
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "BuildSuccess:",
+            "FailureMatch": "BuildFailed:"
+          }
+        },
+        {
+          "Name": "inst-deb10-build",
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "BuildSuccess:",

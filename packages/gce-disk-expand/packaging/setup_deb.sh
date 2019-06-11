@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="gce-disk-expand"
-VERSION="2.0.0"
+VERSION="20190703.00"
 
 working_dir=${PWD}
 if [[ $(basename "$working_dir") != $NAME ]]; then
