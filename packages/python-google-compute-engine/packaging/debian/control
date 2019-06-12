@@ -31,7 +31,8 @@ Description: Google Compute Engine python library for Python 2.x.
 Package: python3-google-compute-engine
 Section: python
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, python3-distro
+Depends: ${python3:Depends}, ${misc:Depends},
+         python3-distro, python3-pkg-resources, python3:any
 Description: Google Compute Engine python library for Python 3.x.
   Python libraries used for interacting with Google Compute Engine instance
   metadata to provide platform integration.
