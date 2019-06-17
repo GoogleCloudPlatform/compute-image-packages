@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="gce-disk-expand"
-VERSION="2.0.0"
+VERSION="2.0.1"
 
 rpm_working_dir=/tmp/rpmpackage/
 working_dir=${PWD}
@@ -30,6 +30,8 @@ rm -rf ${rpm_working_dir}
 mkdir -p ${rpm_working_dir}/{SOURCES,SPECS}
 cp packaging/${NAME}.spec ${rpm_working_dir}/SPECS/
 
-tar czvf ${rpm_working_dir}/SOURCES/${NAME}_${VERSION}.orig.tar.gz  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
+tar czvf ${rpm_working_dir}/SOURCES/${NAME}_${VERSION}.orig.tar.gz  \
+  --exclude .git --exclude packaging --transform "s/^\./${NAME}-${VERSION}/" .
 
-rpmbuild --define "_topdir ${rpm_working_dir}/" -ba ${rpm_working_dir}/SPECS/${NAME}.spec
+rpmbuild --define "_topdir ${rpm_working_dir}/" --define "_version ${VERSION}" \
+  -ba ${rpm_working_dir}/SPECS/${NAME}.spec

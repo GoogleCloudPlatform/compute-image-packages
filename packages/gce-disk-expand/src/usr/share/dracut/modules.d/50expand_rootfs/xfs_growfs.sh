@@ -13,29 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+kmsg() {
+  echo "xfs_growfs: $@" >/dev/kmsg
+}
+
 main() {
   if [ ! -e /tmp/xfs_resize ]; then
     return
   fi
 
-  if ! command -v xfs_growfs >/dev/null; then
-    echo "XFS resize requested, but xfs_growfs not installed."
+  if ! type xfs_growfs >/dev/null; then
+    kmsg "XFS resize requested, but xfs_growfs not installed."
     return
   fi
-  if xfs_growfs -d -n /sysroot; then
-    echo "Mounting filesystem rw."
-    if ! $(mount -o rw,remount /sysroot); then
-      echo "Remount failed."
-      return
-    fi
-    echo "Resizing XFS filesystem"
-    if ! out=$(xfs_growfs -d /sysroot); then
-      echo "Failed to resize: ${out}"
-      mount -o ro,remount /sysroot
-      return
-    fi
-    mount -o ro,remount /sysroot
+
+  kmsg "Mounting filesystem rw for resize."
+  if ! $(mount -o rw,remount /sysroot); then
+    kmsg "Remount failed."
+    return
   fi
+
+  kmsg "Resizing XFS filesystem"
+  if ! out=$(xfs_growfs -d /sysroot); then
+    kmsg "Failed to resize: ${out}"
+  fi
+  mount -o ro,remount /sysroot
 }
 
 main
