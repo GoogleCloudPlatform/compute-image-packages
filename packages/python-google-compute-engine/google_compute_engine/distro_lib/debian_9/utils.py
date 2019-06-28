@@ -23,8 +23,17 @@ from google_compute_engine.distro_lib import utils
 class Utils(utils.Utils):
   """Utilities used by Linux guest services on Debian 9."""
 
-  def EnableNetworkInterfaces(
-      self, interfaces, logger, dhclient_script=None):
+  def EnableIpv6(self, interfaces, logger, dhclient_script=None):
+    """Configure the network interfaces for IPv6 using dhclient.
+
+    Args:
+      interface: string, the output device names for enabling IPv6.
+      logger: logger object, used to write to SysLog and serial port.
+      dhclient_script: string, the path to a dhclient script used by dhclient.
+    """
+    helpers.CallDhclientIpv6(interfaces, logger)
+
+  def EnableNetworkInterfaces(self, interfaces, logger, dhclient_script=None):
     """Enable the list of network interfaces.
 
     Args:

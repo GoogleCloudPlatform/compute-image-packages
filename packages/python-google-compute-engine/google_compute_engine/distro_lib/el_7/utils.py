@@ -30,8 +30,17 @@ class Utils(utils.Utils):
 
   network_path = constants.LOCALBASE + '/etc/sysconfig/network-scripts'
 
-  def EnableNetworkInterfaces(
-      self, interfaces, logger, dhclient_script=None):
+  def EnableIpv6(self, interfaces, logger, dhclient_script=None):
+    """Configure the network interfaces for IPv6 using dhclient.
+
+    Args:
+      interface: string, the output device names for enabling IPv6.
+      logger: logger object, used to write to SysLog and serial port.
+      dhclient_script: string, the path to a dhclient script used by dhclient.
+    """
+    helpers.CallDhclientIpv6(interfaces, logger)
+
+  def EnableNetworkInterfaces(self, interfaces, logger, dhclient_script=None):
     """Enable the list of network interfaces.
 
     Args:
