@@ -52,13 +52,15 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None):
   """
   logger.info('Enabling IPv6 on the Ethernet interfaces %s.', interfaces)
 
+  timeout_command = ['timeout', '5']
   dhclient_command = ['dhclient']
 
   if dhclient_script and os.path.exists(dhclient_script):
     dhclient_command += ['-sf', dhclient_script]
 
   try:
-    subprocess.check_call(dhclient_command + ['-1', '-6', '-v'] + interfaces)
+    subprocess.check_call(
+        timeout_command + dhclient_command + ['-1', '-6', '-v'] + interfaces)
   except subprocess.CalledProcessError:
     logger.warning('Could not enable IPv6 on interface %s.', interfaces)
 

@@ -86,15 +86,19 @@ class HelpersTest(unittest.TestCase):
     expected_calls = [
         mock.call.logger.info(mock.ANY, ['a', 'b']),
         mock.call.exists('test_script'),
-        mock.call.call(['dhclient', '-1', '-6', '-v', 'a', 'b']),
+        mock.call.call(
+            ['timeout', '5', 'dhclient', '-1', '-6', '-v', 'a', 'b']),
         mock.call.logger.info(mock.ANY, ['c', 'd']),
         mock.call.exists('test_script'),
         mock.call.call(
-            ['dhclient', '-sf', 'test_script', '-1', '-6', '-v', 'c', 'd']),
+            ['timeout', '5', 'dhclient', '-sf', 'test_script', '-1', '-6',
+             '-v', 'c', 'd']),
         mock.call.logger.info(mock.ANY, ['e', 'f']),
-        mock.call.call(['dhclient', '-1', '-6', '-v', 'e', 'f']),
+        mock.call.call(
+            ['timeout', '5', 'dhclient', '-1', '-6', '-v', 'e', 'f']),
         mock.call.logger.info(mock.ANY, ['g', 'h']),
-        mock.call.call(['dhclient', '-1', '-6', '-v', 'g', 'h']),
+        mock.call.call(
+            ['timeout', '5', 'dhclient', '-1', '-6', '-v', 'g', 'h']),
         mock.call.logger.warning(mock.ANY, ['g', 'h']),
     ]
 
