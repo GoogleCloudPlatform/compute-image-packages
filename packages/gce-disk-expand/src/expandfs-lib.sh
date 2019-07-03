@@ -111,6 +111,8 @@ parted_needresize() {
     return 1
   fi
 
+  udevadm settle
+
   if ! printf "$out" | sed '$!d' | grep -q "^${partnum}:"; then
     echo "Root partition is not final partition on disk. Not resizing."
     return 1
