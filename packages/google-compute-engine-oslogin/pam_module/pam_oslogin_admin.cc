@@ -86,7 +86,7 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc,
                  user_name);
       std::ofstream sudoers_file;
       sudoers_file.open(filename.c_str());
-      sudoers_file << user_name << " ALL=(ALL) NOPASSWD: ALL"
+      sudoers_file << user_name << " ALL=(ALL:ALL) NOPASSWD: ALL"
                    << "\n";
       sudoers_file.close();
       chown(filename.c_str(), 0, 0);
