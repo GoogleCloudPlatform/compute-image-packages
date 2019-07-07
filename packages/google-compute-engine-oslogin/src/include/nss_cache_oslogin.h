@@ -16,6 +16,7 @@
 #include <nss.h>
 #include <stdlib.h>
 #include <pwd.h>
+#include <grp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,26 +41,7 @@
   } while (0)
 #endif /* DEBUG */
 
+// why isn't this in compat.h ?
 #define NSS_CACHE_OSLOGIN_PATH_LENGTH 255
-extern char *_nss_cache_oslogin_setpwent_path(const char *path);
-
-enum nss_cache_oslogin_match {
-  NSS_CACHE_OSLOGIN_EXACT = 0,
-  NSS_CACHE_OSLOGIN_HIGH = 1,
-  NSS_CACHE_OSLOGIN_LOW = 2,
-  NSS_CACHE_OSLOGIN_ERROR = 3,
-};
-
-struct nss_cache_oslogin_args {
-  char *system_filename;
-  char *sorted_filename;
-  void *lookup_function;
-  void *lookup_value;
-  void *lookup_result;
-  char *buffer;
-  size_t buflen;
-  char *lookup_key;
-  size_t lookup_key_length;
-};
 
 #endif /* NSS_CACHE_OSLOGIN_H */
