@@ -1,5 +1,7 @@
 // Copyright 2018 Google Inc. All Rights Reserved.
 //
+//
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -20,20 +22,24 @@
 #include <sys/types.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <sstream>
+
 
 #include <fstream>
 
 #include <compat.h>
 #include <oslogin_utils.h>
 
-
 using oslogin_utils::BufferManager;
 using oslogin_utils::MutexLock;
 using oslogin_utils::NssCache;
+using oslogin_utils::GetUsersForGroup;
 
 // File paths for the nss cache file.
 static const char kDefaultFilePath[] = K_DEFAULT_FILE_PATH;
 static const char kDefaultBackupFilePath[] = K_DEFAULT_BACKUP_FILE_PATH;
+static const char kDefaultGroupPath[] = "/etc/oslogin_group.cache";
+static const char kDefaultBackupGroupPath[] = "/etc/oslogin_group.cache.bak";
 
 // Local NSS Cache size. This affects the maximum number of passwd entries per
 // http request.
@@ -43,35 +49,15 @@ static const uint64_t kNssCacheSize = 2048;
 // exceed 32k.
 static const uint64_t kPasswdBufferSize = 32768;
 
-static NssCache nss_cache(kNssCacheSize);
+static NssCache nss_cache(499);
 
-static pthread_mutex_t cache_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-int main(int argc, char* argv[]) {
+int refreshpasswdcache() {
   int error_code = 0;
   // Temporary buffer to hold passwd entries before writing.
   char buffer[kPasswdBufferSize];
   struct passwd pwd;
 
-  // Perform the writes under a global lock.
-  MutexLock ml(&cache_mutex);
-  nss_cache.Reset();
-
-  // Check if there is a cache already.
-  struct stat stat_buf;
-  bool backup = !stat(kDefaultFilePath, &stat_buf);
-  if (backup) {
-    // Write a backup file first, in case lookup fails.
-    error_code = rename(kDefaultFilePath, kDefaultBackupFilePath);
-    if (error_code) {
-      openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
-      syslog(LOG_ERR, "Could not create backup file.");
-      closelog();
-      return error_code;
-    }
-  }
-
-  std::ofstream cache_file(kDefaultFilePath);
+  std::ofstream cache_file(kDefaultBackupFilePath);
   if (cache_file.fail()) {
     openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
     syslog(LOG_ERR, "Failed to open file %s.", kDefaultFilePath);
@@ -81,14 +67,13 @@ int main(int argc, char* argv[]) {
   chown(kDefaultFilePath, 0, 0);
   chmod(kDefaultFilePath, S_IRUSR | S_IWUSR | S_IROTH);
 
-  while (!nss_cache.OnLastPage() || nss_cache.HasNextPasswd()) {
+  nss_cache.Reset();
+  while (!nss_cache.OnLastPage() || nss_cache.HasNextEntry()) {
     BufferManager buffer_manager(buffer, kPasswdBufferSize);
     if (!nss_cache.NssGetpwentHelper(&buffer_manager, &pwd, &error_code)) {
       break;
     }
-    cache_file << pwd.pw_name << ":" << pwd.pw_passwd << ":" << pwd.pw_uid
-               << ":" << pwd.pw_gid << ":" << pwd.pw_gecos << ":" << pwd.pw_dir
-               << ":" << pwd.pw_shell << "\n";
+    cache_file << pwd.pw_name << ":" << pwd.pw_passwd << ":" << pwd.pw_uid << ":" << pwd.pw_gid << ":" << pwd.pw_gecos << ":" << pwd.pw_dir << ":" << pwd.pw_shell << "\n";
   }
   cache_file.close();
 
@@ -102,18 +87,79 @@ int main(int argc, char* argv[]) {
     } else {
       syslog(LOG_ERR, "Unknown error while retrieving passwd entry.");
     }
-    // Restore the backup.
-    if (backup) {
-      if (rename(kDefaultBackupFilePath, kDefaultFilePath)) {
-        syslog(LOG_ERR, "Could not restore data from backup file.");
-      }
-    }
+    closelog();
+    remove(kDefaultBackupFilePath);
+  } else if (rename(kDefaultBackupFilePath, kDefaultFilePath) != 0) {
+    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    syslog(LOG_ERR, "Could not move passwd cache file.");
     closelog();
   }
 
-  // Remove the backup file on success.
-  if (!error_code && backup) {
-    remove(kDefaultBackupFilePath);
-  }
   return error_code;
+}
+
+int refreshgroupcache() {
+  int error_code = 0;
+  // Temporary buffer to hold passwd entries before writing.
+  char buffer[kPasswdBufferSize];
+
+  std::ofstream cache_file(kDefaultBackupGroupPath);
+  if (cache_file.fail()) {
+    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    syslog(LOG_ERR, "Failed to open file %s.", kDefaultBackupGroupPath);
+    closelog();
+    return -1;
+  }
+  chown(kDefaultGroupPath, 0, 0);
+  chmod(kDefaultGroupPath, S_IRUSR | S_IWUSR | S_IROTH);
+
+  struct group grp;
+  nss_cache.Reset();
+  while (!nss_cache.OnLastPage() || nss_cache.HasNextEntry()) {
+    BufferManager buffer_manager(buffer, kPasswdBufferSize);
+    if (!nss_cache.NssGetgrentHelper(&buffer_manager, &grp, &error_code)) {
+      break;
+    }
+    // TODO: instantiate these vars once or each time ?
+    std::vector<string> users;
+    std::string name(grp.gr_name);
+    if (!GetUsersForGroup(name, &users, &error_code)) {
+      break;
+    }
+    cache_file << grp.gr_name << ":" << grp.gr_passwd << ":" << grp.gr_gid << ":" << users.front();
+    users.erase(users.begin());
+    for (auto &user : users) {
+      cache_file << "," << user;
+    }
+    cache_file << "\n";
+  }
+  cache_file.close();
+
+  // Check for errors.
+  if (error_code) {
+    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    if (error_code == ERANGE) {
+      syslog(LOG_ERR, "Received unusually large group entry.");
+    } else if (error_code == EINVAL) {
+      syslog(LOG_ERR, "Encountered malformed group entry.");
+    } else {
+      syslog(LOG_ERR, "Unknown error while retrieving group entry.");
+    }
+    closelog();
+    remove(kDefaultBackupGroupPath);
+  } else if (rename(kDefaultBackupGroupPath, kDefaultGroupPath) != 0) {
+    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    syslog(LOG_ERR, "Could not move group cache file.");
+    closelog();
+  }
+
+  return error_code;
+}
+
+int main() {
+  int res = 0;
+  if ((res = refreshpasswdcache()) != 0) {
+    return res;
+  }
+  return refreshgroupcache();
 }

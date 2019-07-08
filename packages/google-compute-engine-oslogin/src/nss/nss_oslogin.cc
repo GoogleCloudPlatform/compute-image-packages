@@ -16,7 +16,6 @@
 #include <errno.h>
 #include <grp.h>
 #include <nss.h>
-#include <pthread.h>
 #include <pwd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -41,7 +40,6 @@ using oslogin_utils::GetUsersForGroup;
 using oslogin_utils::Group;
 using oslogin_utils::HttpGet;
 using oslogin_utils::kMetadataServerUrl;
-using oslogin_utils::MutexLock;
 using oslogin_utils::NssCache;
 using oslogin_utils::ParseJsonToPasswd;
 using oslogin_utils::UrlEncode;
@@ -52,9 +50,6 @@ static const uint64_t kNssCacheSize = 2048;
 
 // NssCache for storing passwd entries.
 static NssCache nss_cache(kNssCacheSize);
-
-// Protects access to nss_cache.
-static pthread_mutex_t cache_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 extern "C" {
 
@@ -134,6 +129,7 @@ enum nss_status _nss_oslogin_getgrnam_r(const char *name, struct group *grp, cha
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
+// TODO: thin cache
 enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup, long int *start,
                                             long int *size, gid_t **groupsp, long int limit, int *errnop) {
   std::vector<Group> grouplist;

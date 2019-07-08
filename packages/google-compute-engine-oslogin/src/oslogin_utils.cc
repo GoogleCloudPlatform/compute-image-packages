@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc. All Rights Reserved.
+// Copyright 2019 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include "json_object.h"
 
 #if defined(__clang__) || __GNUC__ > 4 || \
   (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
@@ -82,27 +83,27 @@ void* BufferManager::Reserve(size_t bytes, int* errnop) {
 
 NssCache::NssCache(int cache_size)
     : cache_size_(cache_size),
-      passwd_cache_(cache_size),
+      entry_cache_(cache_size),
       page_token_(""),
       on_last_page_(false) {}
 
 void NssCache::Reset() {
   page_token_ = "";
   index_ = 0;
-  passwd_cache_.clear();
+  entry_cache_.clear();
   on_last_page_ = false;
 }
 
-bool NssCache::HasNextPasswd() {
-  return (index_ < passwd_cache_.size()) && !passwd_cache_[index_].empty();
+bool NssCache::HasNextEntry() {
+  return (index_ < entry_cache_.size()) && !entry_cache_[index_].empty();
 }
 
-bool NssCache::GetNextPasswd(BufferManager* buf, passwd* result, int* errnop) {
-  if (!HasNextPasswd()) {
+bool NssCache::GetNextPasswd(BufferManager* buf, struct passwd* result, int* errnop) {
+  if (!HasNextEntry()) {
     *errnop = ENOENT;
     return false;
   }
-  string cached_passwd = passwd_cache_[index_];
+  string cached_passwd = entry_cache_[index_];
   bool success = ParseJsonToPasswd(cached_passwd, result, buf, errnop);
   if (success) {
     index_++;
@@ -110,7 +111,20 @@ bool NssCache::GetNextPasswd(BufferManager* buf, passwd* result, int* errnop) {
   return success;
 }
 
-bool NssCache::LoadJsonArrayToCache(string response) {
+bool NssCache::GetNextGroup(BufferManager* buf, struct group* result, int* errnop) {
+  if (!HasNextEntry()) {
+    *errnop = ENOENT;
+    return false;
+  }
+  string cached_passwd = entry_cache_[index_];
+  bool success = ParseJsonToGroup(cached_passwd, result, buf, errnop);
+  if (success) {
+    index_++;
+  }
+  return success;
+}
+
+bool NssCache::LoadJsonUsersToCache(string response) {
   Reset();
   json_object* root = NULL;
   root = json_tokener_parse(response.c_str());
@@ -150,15 +164,57 @@ bool NssCache::LoadJsonArrayToCache(string response) {
   }
   for (int i = 0; i < arraylen; i++) {
     json_object* profile = json_object_array_get_idx(login_profiles, i);
-    passwd_cache_.push_back(
-        json_object_to_json_string_ext(profile, JSON_C_TO_STRING_PLAIN));
+    entry_cache_.push_back(json_object_to_json_string_ext(profile, JSON_C_TO_STRING_PLAIN));
   }
   return true;
 }
 
-bool NssCache::NssGetpwentHelper(BufferManager* buf, struct passwd* result,
-                                 int* errnop) {
-  if (!HasNextPasswd() && !OnLastPage()) {
+bool NssCache::LoadJsonGroupsToCache(string response) {
+  Reset();
+  json_object* root = NULL;
+  root = json_tokener_parse(response.c_str());
+  if (root == NULL) {
+    return false;
+  }
+  // First grab the page token.
+  json_object* page_token_object;
+  if (json_object_object_get_ex(root, "nextPageToken", &page_token_object)) {
+    page_token_ = json_object_get_string(page_token_object);
+  } else {
+    // If the page token is not found, assume something went wrong.
+    // TODO: amend this to match loadjsonusers.. when page tokens are available.
+    page_token_ = "";
+    on_last_page_ = true;
+  }
+  // A page_token of 0 means we are done. This response will not contain any
+  // login profiles.
+  if (page_token_ == "0") {
+    page_token_ = "";
+    on_last_page_ = true;
+    return false;
+  }
+  json_object* groups = NULL;
+  if (!json_object_object_get_ex(root, "posixGroups", &groups)) {
+    page_token_ = "";
+    return false;
+  }
+  if (json_object_get_type(groups) != json_type_array) {
+    return false;
+  }
+  int arraylen = json_object_array_length(groups);
+  if (arraylen == 0 || arraylen > cache_size_) {
+    page_token_ = "";
+    return false;
+  }
+  for (int i = 0; i < arraylen; i++) {
+    json_object* group = json_object_array_get_idx(groups, i);
+    entry_cache_.push_back(json_object_to_json_string_ext(group, JSON_C_TO_STRING_PLAIN));
+  }
+  return true;
+}
+
+bool NssCache::NssGetpwentHelper(BufferManager* buf, struct passwd* result, int* errnop) {
+  if (!HasNextEntry() && !OnLastPage()) {
     std::stringstream url;
     url << kMetadataServerUrl << "users?pagesize=" << cache_size_;
     string page_token = GetPageToken();
@@ -168,8 +224,8 @@ bool NssCache::NssGetpwentHelper(BufferManager* buf, struct passwd* result,
     string response;
     long http_code = 0;
     if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
-        response.empty() || !LoadJsonArrayToCache(response)) {
-      // It is possible this to be true after LoadJsonArrayToCache(), so we
+        response.empty() || !LoadJsonUsersToCache(response)) {
+      // It is possible this to be true after LoadJsonUsersToCache(), so we
       // must check it again.
       if(!OnLastPage()) {
         *errnop = ENOENT;
@@ -177,10 +233,45 @@ bool NssCache::NssGetpwentHelper(BufferManager* buf, struct passwd* result,
       return false;
     }
   }
-  if (HasNextPasswd() && !GetNextPasswd(buf, result, errnop)) {
+  if (HasNextEntry() && !GetNextPasswd(buf, result, errnop)) {
     return false;
   }
   return true;
+}
+
+bool NssCache::NssGetgrentHelper(BufferManager* buf, struct group* result, int* errnop) {
+  if (!HasNextEntry() && !OnLastPage()) {
+    std::stringstream url;
+    url << kMetadataServerUrl << "groups?pagesize=" << cache_size_;
+    string page_token = GetPageToken();
+    if (!page_token.empty()) {
+      url << "&pagetoken=" << page_token;
+    }
+    string response;
+    long http_code = 0;
+    if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+        response.empty())  { // || !LoadJsonGroupsToCache(response)) {
+      // It is possible this to be true after LoadJsonGroupsToCache(), so we
+      // must check it again.
+      if(!OnLastPage()) {
+        *errnop = ENOENT;
+      }
+      return false;
+    }
+    if (!LoadJsonGroupsToCache(response)) {
+      return false;
+    }
+  }
+
+  if (HasNextEntry() && !GetNextGroup(buf, result, errnop)) {
+    return false;
+  }
+  std::vector<string> users;
+  std::string name(result->gr_name);
+  if (!GetUsersForGroup(name, &users, errnop)) {
+    return false;
+  }
+  return AddUsersToGroup(users, result, buf, errnop);
 }
 
 size_t OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp) {
@@ -194,8 +285,7 @@ size_t OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp) {
   return 0;
 }
 
-bool HttpDo(const string& url, const string& data, string* response,
-            long* http_code) {
+bool HttpDo(const string& url, const string& data, string* response, long* http_code) {
   if (response == NULL || http_code == NULL) {
     return false;
   }
@@ -217,7 +307,7 @@ bool HttpDo(const string& url, const string& data, string* response,
       response_stream.clear();
       curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header_list);
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &OnCurlWrite);
-      curl_easy_setopt(curl, CURLOPT_FILE, &response_stream);
+      curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_stream);
       curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5);
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
       if (data != "") {
@@ -267,8 +357,7 @@ string UrlEncode(const string& param) {
   return encoded_param;
 }
 
-bool ValidatePasswd(struct passwd* result, BufferManager* buf,
-                    int* errnop) {
+bool ValidatePasswd(struct passwd* result, BufferManager* buf, int* errnop) {
   // OS Login disallows uids less than 1000.
   if (result->pw_uid < 1000) {
     *errnop = EINVAL;
@@ -306,6 +395,20 @@ bool ValidatePasswd(struct passwd* result, BufferManager* buf,
   return true;
 }
 
+// ParseJsonToUsers parses a list of usernames and appends them to a provided
+// string vector.
+//
+// json:
+// {
+//   "usernames": [
+//     "user0001",
+//     "user0002",
+//     "user0003",
+//     "user0004",
+//     "user0005",
+//   ]
+// }
+
 bool ParseJsonToUsers(const string& json, std::vector<string> *result) {
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
@@ -327,6 +430,23 @@ bool ParseJsonToUsers(const string& json, std::vector<string> *result) {
   }
   return true;
 }
+
+// ParseJsonToGroups parses a list of posixGroups and appends them to a provided
+// Group object vector.
+//
+// json:
+// {
+//   "posixGroups": [
+//     {
+//       "name": "mygroup",
+//       "gid": "123452"
+//     },
+//     {
+//       "name": "mygroup2",
+//       "gid": "123453"
+//     }
+//   ]
+// }
 
 bool ParseJsonToGroups(const string& json, std::vector<Group> *result) {
   json_object* root = NULL;
@@ -372,6 +492,42 @@ bool ParseJsonToGroups(const string& json, std::vector<Group> *result) {
   return true;
 }
 
+// TODO: comments with example json for all parsing functions
+// TODO: unify nsscache functions with nss ones
+
+// ParseJsonToGroup parses a single posixGroup object to a struct group.
+//
+// json:
+// {
+//   "name": "mygroup",
+//   "gid":"123452"
+// }
+
+
+bool ParseJsonToGroup(const string& json, struct group* result, BufferManager* buf, int* errnop) {
+  json_object* group = NULL;
+  group = json_tokener_parse(json.c_str());
+  if (group== NULL) {
+    *errnop = ENOENT;
+    return false;
+  }
+
+  json_object* gid;
+  if (!json_object_object_get_ex(group, "gid", &gid)) {
+    return false;
+  }
+
+  json_object* name;
+  if (!json_object_object_get_ex(group, "name", &name)) {
+    return false;
+  }
+
+  result->gr_gid = json_object_get_int64(gid);
+  // TODO ValidateGroup
+  buf->AppendString("", &result->gr_passwd, errnop);
+  return buf->AppendString((char*)json_object_get_string(name), &result->gr_name, errnop);
+}
+
 std::vector<string> ParseJsonToSshKeys(const string& json) {
   std::vector<string> result;
   json_object* root = NULL;
@@ -390,8 +546,7 @@ std::vector<string> ParseJsonToSshKeys(const string& json) {
   login_profiles = json_object_array_get_idx(login_profiles, 0);
 
   json_object* ssh_public_keys = NULL;
-  if (!json_object_object_get_ex(login_profiles, "sshPublicKeys",
-                                 &ssh_public_keys)) {
+  if (!json_object_object_get_ex(login_profiles, "sshPublicKeys", &ssh_public_keys)) {
     return result;
   }
 
@@ -433,8 +588,31 @@ std::vector<string> ParseJsonToSshKeys(const string& json) {
   return result;
 }
 
-bool ParseJsonToPasswd(const string& json, struct passwd* result,
-                       BufferManager* buf, int* errnop) {
+// ParseJsonToPasswd parses a single loginProfile object to a struct passwd.
+//
+// json:
+// {
+//   "name": "12345",
+//   "posixAccounts": [
+//     {
+//       "primary": true,
+//       "username": "myuser",
+//       "uid": "12345",
+//       "gid": "12345",
+//       "homeDirectory": "/home/myuser",
+//       "shell": "/bin/bash",
+//       "accountId": "myproject",
+//       "operatingSystemType": "LINUX"
+//     }
+//   ],
+//   "sshPublicKeys": {
+//     "[FINGERPRINT]": {
+//       "key": "ssh-rsa [KEY]\n",
+//       "fingerprint": "[FINGERPRINT]"
+//     }
+//   }
+// }
+bool ParseJsonToPasswd(const string& json, struct passwd* result, BufferManager* buf, int* errnop) {
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
   if (root == NULL) {
@@ -447,8 +625,7 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
     if (json_object_get_type(login_profiles) != json_type_array) {
       return false;
     }
-    root = login_profiles;
-    root = json_object_array_get_idx(root, 0);
+    root = json_object_array_get_idx(login_profiles, 0);
   }
   // Locate the posixAccounts object.
   json_object* posix_accounts = NULL;
@@ -504,8 +681,7 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
         *errnop = EINVAL;
         return false;
       }
-      if (!buf->AppendString((char*)json_object_get_string(val),
-                             &result->pw_name, errnop)) {
+      if (!buf->AppendString((char*)json_object_get_string(val), &result->pw_name, errnop)) {
         return false;
       }
     } else if (string_key == "homeDirectory") {
@@ -513,8 +689,7 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
         *errnop = EINVAL;
         return false;
       }
-      if (!buf->AppendString((char*)json_object_get_string(val),
-                             &result->pw_dir, errnop)) {
+      if (!buf->AppendString((char*)json_object_get_string(val), &result->pw_dir, errnop)) {
         return false;
       }
     } else if (string_key == "shell") {
@@ -522,8 +697,7 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
         *errnop = EINVAL;
         return false;
       }
-      if (!buf->AppendString((char*)json_object_get_string(val),
-                             &result->pw_shell, errnop)) {
+      if (!buf->AppendString((char*)json_object_get_string(val), &result->pw_shell, errnop)) {
         return false;
       }
     }
@@ -532,8 +706,7 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
   return ValidatePasswd(result, buf, errnop);
 }
 
-bool AddUsersToGroup(std::vector<string> users, struct group* result,
-                       BufferManager* buf, int* errnop) {
+bool AddUsersToGroup(std::vector<string> users, struct group* result, BufferManager* buf, int* errnop) {
   if (users.size() < 1) {
     return true;
   }
@@ -616,8 +789,7 @@ bool ParseJsonToKey(const string& json, const string& key, string* response) {
   return true;
 }
 
-bool ParseJsonToChallenges(const string& json,
-                           std::vector<Challenge> *challenges) {
+bool ParseJsonToChallenges(const string& json, std::vector<Challenge> *challenges) {
   json_object* root = NULL;
 
   root = json_tokener_parse(json.c_str());
@@ -771,6 +943,7 @@ bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop)
       pageToken = "";
     }
     if (!ParseJsonToUsers(response, users)) {
+    // TODO: what if there are no users? add a test.
       *errnop = EINVAL;
       return false;
     }

@@ -208,7 +208,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t * pamh, int flags,
     if (sscanf(choice, "%d", &choicei) == EOF) {
       pam_error(pamh, "Unable to get user input");
     }
-    if (choicei > challenges.size()) {
+    if (size_t(choicei) > challenges.size()) {
       pam_error(pamh, "Invalid option");
     }
     challenge = challenges[choicei - 1];

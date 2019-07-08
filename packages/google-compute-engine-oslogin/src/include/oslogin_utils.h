@@ -75,9 +75,9 @@ class Group {
   string name;
 };
 
-// NssCache caches passwd entries for getpwent_r. This is used to prevent making
-// an HTTP call on every getpwent_r invocation. Stores up to cache_size entries
-// at a time. This class is not thread safe.
+// NssCache caches group or passwd entries for getpwent_r/getgrent_r. This is
+// used to prevent making an HTTP call on every invocation. Stores up to
+// cache_size entries at a time. This class is not thread safe.
 class NssCache {
  public:
   explicit NssCache(int cache_size);
@@ -85,52 +85,55 @@ class NssCache {
   // Clears and resets the NssCache.
   void Reset();
 
-  // Whether the cache has a next passwd entry.
-  bool HasNextPasswd();
+  // Whether the cache has a next entry.
+  bool HasNextEntry();
 
   // Whether the cache has reached the last page of the database.
   bool OnLastPage() { return on_last_page_; }
 
-  // Grabs the next passwd entry. Returns true on success. Sets errnop on
+  // Grabs the next passwd or group entry. Returns true on success. Sets errnop on
   // failure.
-  bool GetNextPasswd(BufferManager* buf, passwd* result, int* errnop);
+  bool GetNextPasswd(BufferManager* buf, struct passwd* result, int* errnop);
+  bool GetNextGroup(BufferManager* buf, struct group* result, int* errnop);
 
-  // Loads a json array of passwd entries in the cache, starting at the
+  // Loads a json array of passwd or group entries in the cache, starting at the
   // beginning of the cache. This will remove all previous entries in the cache.
-  // response is expected to be a JSON array of passwd entries. Returns
+  // response is expected to be a JSON array of passwd or group entries. Returns
   // true on success.
-  bool LoadJsonArrayToCache(string response);
+  bool LoadJsonUsersToCache(string response);
+  bool LoadJsonGroupsToCache(string response);
 
-  // Helper method that effectively implements the getpwent_r nss method. Each
-  // call will iterate through the OsLogin database and return the next entry.
-  // Internally, the cache will keep track of pages of passwd entries, and will
-  // make an http call to the server if necessary to retrieve additional
-  // entries. Returns whether passwd retrieval was successful. If true, the
-  // passwd result will contain valid data.
+  // Helper method for get(pw|gr)ent nss methods. Each call will iterate through the
+  // OsLogin database and return the next entry.  Internally, the cache will
+  // keep track of pages of user or group entries, and will make an http call to
+  // the server if necessary to retrieve additional entries. Returns whether
+  // retrieval was successful. If true, the result will contain
+  // valid data.
   bool NssGetpwentHelper(BufferManager* buf, struct passwd* result, int* errnop);
+  bool NssGetgrentHelper(BufferManager* buf, struct group* result, int* errnop);
 
-  // Returns the page token for requesting the next page of passwd entries.
+  // Returns the page token for requesting the next page of entries.
   string GetPageToken() { return page_token_; }
 
  private:
   // The maximum size of the cache.
   int cache_size_;
 
-  // Vector of passwds. These are represented as stringified json object.
-  std::vector<std::string> passwd_cache_;
+  // Vector of entries. These are represented as stringified json object.
+  std::vector<std::string> entry_cache_;
 
-  // The page token for requesting the next page of passwds.
+  // The page token for requesting the next page of entries.
   std::string page_token_;
 
-  // Index for requesting the next passwd from the cache.
+  // Index for requesting the next entry from the cache.
   uint32_t index_;
 
   // Whether the NssCache has reached the last page of the database.
   bool on_last_page_;
 
   // Not copyable or assignable.
-  NssCache& operator=(const NssCache&);
-  NssCache(const NssCache&);
+  //NssCache& operator=(const NssCache&);
+  //NssCache(const NssCache&);
 };
 
 // Auto locks and unlocks a given mutex on construction/destruction. Does NOT
@@ -212,6 +215,8 @@ bool ParseJsonToEmail(const string& json, string* email);
 // corresponding values set in the JSON object. Returns whether the parse was
 // successful or not. If unsuccessful, errnop will also be set.
 bool ParseJsonToPasswd(const string& response, struct passwd* result,
+                       BufferManager* buf, int* errnop);
+bool ParseJsonToGroup(const string& response, struct group* result,
                        BufferManager* buf, int* errnop);
 
 // Parses a JSON adminLogin or login response and returns whether the user has

@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
   // At this point, we've verified the user can log in. Grab the ssh keys from
   // the user response.
   std::vector<string> ssh_keys = ParseJsonToSshKeys(user_response);
-  for (int i = 0; i < ssh_keys.size(); i++) {
+  for (size_t i = 0; i < ssh_keys.size(); i++) {
     cout << ssh_keys[i] << endl;
   }
   return 0;

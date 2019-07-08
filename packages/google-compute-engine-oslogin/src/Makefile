@@ -41,27 +41,27 @@ clean :
 # NSS modules.
 
 $(NSS_OSLOGIN) : SONAME = $(NSS_OSLOGIN_SONAME)
-$(NSS_OSLOGIN) : nss/nss_oslogin.o utils.o
+$(NSS_OSLOGIN) : nss/nss_oslogin.o oslogin_utils.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 $(NSS_CACHE_OSLOGIN) : SONAME = $(NSS_CACHE_OSLOGIN_SONAME)
-$(NSS_CACHE_OSLOGIN) : nss/nss_cache_oslogin.o nss/compat/getpwent_r.o utils.o
+$(NSS_CACHE_OSLOGIN) : nss/nss_cache_oslogin.o nss/compat/getpwent_r.o oslogin_utils.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 # PAM modules
 
-$(PAM_LOGIN) : pam/pam_oslogin_login.o utils.o
+$(PAM_LOGIN) : pam/pam_oslogin_login.o oslogin_utils.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -shared $^ -o $@ $(PAMLIBS)
 
-$(PAM_ADMIN) : pam/pam_oslogin_admin.o utils.o
+$(PAM_ADMIN) : pam/pam_oslogin_admin.o oslogin_utils.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -shared $^ -o $@ $(PAMLIBS)
 
 # Utilities.
 
-google_authorized_keys : authorized_keys/authorized_keys.o utils.o
+google_authorized_keys : authorized_keys/authorized_keys.o oslogin_utils.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -o $@ $(LDLIBS)
 
-google_oslogin_nss_cache: cache_refresh/cache_refresh.o utils.o
+google_oslogin_nss_cache: cache_refresh/cache_refresh.o oslogin_utils.o
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -o $@ $(LDLIBS)
 
 install: all
