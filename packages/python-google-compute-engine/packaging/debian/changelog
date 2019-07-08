@@ -1,3 +1,11 @@
+python-google-compute-engine (1:20190708.00-g1) stable; urgency=medium
+
+  * Move Debian entry point scripts to python3.
+  * Update Debian build dependencies.
+  * Drop unnecessary build and package dependencies.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 08 Jul 2019 10:20:44 -0700
+
 python-google-compute-engine (2.8.16-1) stable; urgency=low
 
   * Fix guest attributes flow in Python 3.

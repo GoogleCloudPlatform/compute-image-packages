@@ -18,8 +18,9 @@
 %endif
 
 Name:           google-compute-engine-oslogin
+Epoch:          1
 Version:        %{_version}
-Release:        1%{?dist}
+Release:        g1%{?dist}
 Summary:        OS Login Functionality for Google Compute Engine
 
 License:        ASL 2.0
