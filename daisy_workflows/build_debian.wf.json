@@ -27,7 +27,7 @@
         },
         {
           "Name": "disk-deb10-build",
-          "SourceImage": "projects/debian-cloud-testing/global/images/family/debian-10",
+          "SourceImage": "projects/debian-cloud/global/images/family/debian-10",
           "SizeGb": "10",
           "Type": "pd-ssd"
         }

@@ -28,5 +28,11 @@ esac
 
 . /usr/share/initramfs-tools/hook-functions
 
-parted=$(command -v "parted")
-copy_exec "$parted" /bin
+copy_exec /sbin/parted /bin
+copy_exec /bin/grep /bin
+copy_exec /bin/sed /bin
+copy_exec /usr/bin/cut /bin
+copy_exec /sbin/e2fsck /bin
+copy_exec /sbin/blkid /bin
+copy_exec /sbin/resize2fs /bin
+copy_exec /bin/udevadm /bin

@@ -2,13 +2,13 @@ Source: gce-disk-expand
 Section: admin
 Priority: optional
 Maintainer: Google Cloud Team <gc-team@google.com>
-Build-Depends: debhelper (>= 9),
-               dh-systemd (>= 1.5),
+Build-Depends: debhelper (>= 10)
 Standards-Version: 3.9.8
 Homepage: https://github.com/GoogleCloudPlatform/compute-image-packages
 
 Package: gce-disk-expand
 Architecture: all
+Conflicts: cloud-initramfs-growroot
 Depends: parted,
          ${misc:Depends}
 Description: Automatically resize the root partition on first boot.
