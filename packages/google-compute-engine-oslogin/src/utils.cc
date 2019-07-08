@@ -15,19 +15,19 @@
 // Requires libcurl4-openssl-dev libjson0 and libjson0-dev
 #include <curl/curl.h>
 #include <errno.h>
-#include <json.h>
 #include <grp.h>
+#include <json.h>
 #include <nss.h>
 #include <stdio.h>
 #include <time.h>
+
 #include <cstring>
 #include <iostream>
 #include <sstream>
 
 #if defined(__clang__) || __GNUC__ > 4 || \
-  (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
-                     (__GNUC_MINOR__ == 9 && \
-                      __GNUC_PATCHLEVEL__ > 0)))
+    (__GNUC__ == 4 &&                     \
+     (__GNUC_MINOR__ > 9 || (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ > 0)))
 #include <regex>
 #define Regex std
 #else
@@ -35,8 +35,8 @@
 #define Regex boost
 #endif
 
-#include <oslogin_utils.h>
 #include <compat.h>
+#include <oslogin_utils.h>
 
 using std::string;
 
@@ -171,7 +171,7 @@ bool NssCache::NssGetpwentHelper(BufferManager* buf, struct passwd* result,
         response.empty() || !LoadJsonArrayToCache(response)) {
       // It is possible this to be true after LoadJsonArrayToCache(), so we
       // must check it again.
-      if(!OnLastPage()) {
+      if (!OnLastPage()) {
         *errnop = ENOENT;
       }
       return false;
@@ -267,8 +267,7 @@ string UrlEncode(const string& param) {
   return encoded_param;
 }
 
-bool ValidatePasswd(struct passwd* result, BufferManager* buf,
-                    int* errnop) {
+bool ValidatePasswd(struct passwd* result, BufferManager* buf, int* errnop) {
   // OS Login disallows uids less than 1000.
   if (result->pw_uid < 1000) {
     *errnop = EINVAL;
@@ -306,7 +305,7 @@ bool ValidatePasswd(struct passwd* result, BufferManager* buf,
   return true;
 }
 
-bool ParseJsonToUsers(const string& json, std::vector<string> *result) {
+bool ParseJsonToUsers(const string& json, std::vector<string>* result) {
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
   if (root == NULL) {
@@ -320,7 +319,7 @@ bool ParseJsonToUsers(const string& json, std::vector<string> *result) {
   if (json_object_get_type(users) != json_type_array) {
     return false;
   }
-  for (int idx=0; idx < json_object_array_length(users); idx++) {
+  for (int idx = 0; idx < json_object_array_length(users); idx++) {
     json_object* user = json_object_array_get_idx(users, idx);
     const char* username = json_object_get_string(user);
     result->push_back(string(username));
@@ -328,7 +327,7 @@ bool ParseJsonToUsers(const string& json, std::vector<string> *result) {
   return true;
 }
 
-bool ParseJsonToGroups(const string& json, std::vector<Group> *result) {
+bool ParseJsonToGroups(const string& json, std::vector<Group>* result) {
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
   if (root == NULL) {
@@ -342,7 +341,7 @@ bool ParseJsonToGroups(const string& json, std::vector<Group> *result) {
   if (json_object_get_type(groups) != json_type_array) {
     return false;
   }
-  for (int idx=0; idx < json_object_array_length(groups); idx++) {
+  for (int idx = 0; idx < json_object_array_length(groups); idx++) {
     json_object* group = json_object_array_get_idx(groups, idx);
 
     json_object* gid;
@@ -533,26 +532,26 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
 }
 
 bool AddUsersToGroup(std::vector<string> users, struct group* result,
-                       BufferManager* buf, int* errnop) {
+                     BufferManager* buf, int* errnop) {
   if (users.size() < 1) {
     return true;
   }
 
   // Get some space for the char* array for number of users + 1 for NULL cap.
-  char **bufp;
-  if (!(bufp = (char **) buf->Reserve(sizeof(char *) * (users.size()+1), errnop)))
-  {
+  char** bufp;
+  if (!(bufp =
+            (char**)buf->Reserve(sizeof(char*) * (users.size() + 1), errnop))) {
     return false;
   }
   result->gr_mem = bufp;
 
-  for (auto & el: users) {
+  for (auto& el : users) {
     if (!buf->AppendString(el, bufp, errnop)) {
       result->gr_mem = NULL;
       return false;
     }
   }
-  *bufp = NULL; // End the array with a null pointer.
+  *bufp = NULL;  // End the array with a null pointer.
 
   return true;
 }
@@ -600,7 +599,7 @@ bool ParseJsonToKey(const string& json, const string& key, string* response) {
   const char* c_response;
 
   root = json_tokener_parse(json.c_str());
-  if (root==NULL) {
+  if (root == NULL) {
     return false;
   }
 
@@ -617,7 +616,7 @@ bool ParseJsonToKey(const string& json, const string& key, string* response) {
 }
 
 bool ParseJsonToChallenges(const string& json,
-                           std::vector<Challenge> *challenges) {
+                           std::vector<Challenge>* challenges) {
   json_object* root = NULL;
 
   root = json_tokener_parse(json.c_str());
@@ -625,7 +624,7 @@ bool ParseJsonToChallenges(const string& json,
     return false;
   }
 
-  json_object *jsonChallenges = NULL;
+  json_object* jsonChallenges = NULL;
   if (!json_object_object_get_ex(root, "challenges", &jsonChallenges)) {
     return false;
   }
@@ -669,8 +668,7 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
   do {
     url.str("");
     url << kMetadataServerUrl << "groups";
-    if (pageToken != "")
-      url << "?pageToken=" << pageToken;
+    if (pageToken != "") url << "?pageToken=" << pageToken;
 
     response.clear();
     http_code = 0;
@@ -690,9 +688,8 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
       return false;
     }
 
-
     // Check for a match.
-    for (auto & el: groups) {
+    for (auto& el : groups) {
       if ((result->gr_name != NULL) && (string(result->gr_name) == el.name)) {
         // Set the name even though it matches because the final string must
         // be stored in the provided buffer.
@@ -715,7 +712,8 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
   return false;
 }
 
-bool GetGroupsForUser(string username, std::vector<Group>* groups, int* errnop) {
+bool GetGroupsForUser(string username, std::vector<Group>* groups,
+                      int* errnop) {
   std::stringstream url;
 
   string response;
@@ -725,8 +723,7 @@ bool GetGroupsForUser(string username, std::vector<Group>* groups, int* errnop) 
   do {
     url.str("");
     url << kMetadataServerUrl << "groups?username=" << username;
-    if (pageToken != "")
-      url << "?pageToken=" << pageToken;
+    if (pageToken != "") url << "?pageToken=" << pageToken;
 
     response.clear();
     http_code = 0;
@@ -748,7 +745,8 @@ bool GetGroupsForUser(string username, std::vector<Group>* groups, int* errnop) 
   return true;
 }
 
-bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop) {
+bool GetUsersForGroup(string groupname, std::vector<string>* users,
+                      int* errnop) {
   string response;
   long http_code;
   string pageToken = "";
@@ -757,8 +755,7 @@ bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop)
   do {
     url.str("");
     url << kMetadataServerUrl << "users?groupname=" << groupname;
-    if (pageToken != "")
-      url << "?pageToken=" << pageToken;
+    if (pageToken != "") url << "?pageToken=" << pageToken;
 
     response.clear();
     http_code = 0;
@@ -774,7 +771,7 @@ bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop)
       *errnop = EINVAL;
       return false;
     }
-  } while(pageToken != "");
+  } while (pageToken != "");
   return true;
 }
 
@@ -783,8 +780,8 @@ bool GetUser(const string& username, string* response) {
   url << kMetadataServerUrl << "users?username=" << UrlEncode(username);
 
   long http_code = 0;
-  if (!HttpGet(url.str(), response, &http_code) || response->empty()
-      || http_code != 200) {
+  if (!HttpGet(url.str(), response, &http_code) || response->empty() ||
+      http_code != 200) {
     return false;
   }
   return true;
@@ -811,8 +808,8 @@ bool StartSession(const string& email, string* response) {
   url << kMetadataServerUrl << "authenticate/sessions/start";
 
   long http_code = 0;
-  if (!HttpPost(url.str(), data, response, &http_code) || response->empty()
-      || http_code != 200) {
+  if (!HttpPost(url.str(), data, response, &http_code) || response->empty() ||
+      http_code != 200) {
     ret = false;
   }
 
@@ -837,8 +834,7 @@ bool ContinueSession(bool alt, const string& email, const string& user_token,
     json_object_object_add(jobj, "action",
                            json_object_new_string("START_ALTERNATE"));
   } else {
-    json_object_object_add(jobj, "action",
-                           json_object_new_string("RESPOND"));
+    json_object_object_add(jobj, "action", json_object_new_string("RESPOND"));
   }
 
   // AUTHZEN type and START_ALTERNATE action don't provide credentials.
@@ -853,11 +849,11 @@ bool ContinueSession(bool alt, const string& email, const string& user_token,
   data = json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PLAIN);
 
   std::stringstream url;
-  url << kMetadataServerUrl << "authenticate/sessions/"
-      << session_id << "/continue";
+  url << kMetadataServerUrl << "authenticate/sessions/" << session_id
+      << "/continue";
   long http_code = 0;
-  if (!HttpPost(url.str(), data, response, &http_code) || response->empty()
-      || http_code != 200) {
+  if (!HttpPost(url.str(), data, response, &http_code) || response->empty() ||
+      http_code != 200) {
     ret = false;
   }
 

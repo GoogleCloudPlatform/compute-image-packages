@@ -13,10 +13,9 @@
 // limitations under the License.
 
 // Requires libgtest-dev and gtest compiled and installed.
-#include <oslogin_utils.h>
-
 #include <errno.h>
 #include <gtest/gtest.h>
+#include <oslogin_utils.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -28,7 +27,7 @@ namespace oslogin_utils {
 // Test that the buffer can successfully append multiple strings.
 TEST(BufferManagerTest, TestAppendString) {
   size_t buflen = 20;
-  char* buffer = (char*)malloc(buflen *sizeof(char));
+  char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
 
   char* first_string;
@@ -149,8 +148,7 @@ TEST(NssCacheTest, TestLoadJsonPartialArray) {
 // Test successfully loading and retrieving the final response.
 TEST(NssCacheTest, TestLoadJsonFinalResponse) {
   NssCache nss_cache(2);
-  string response =
-      "{\"nextPageToken\": \"0\"}";
+  string response = "{\"nextPageToken\": \"0\"}";
 
   ASSERT_FALSE(nss_cache.LoadJsonArrayToCache(response));
   ASSERT_EQ(nss_cache.GetPageToken(), "");
@@ -168,7 +166,6 @@ TEST(NssCacheTest, TestLoadJsonFinalResponse) {
   ASSERT_FALSE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
   ASSERT_EQ(test_errno, ENOENT);
 }
-
 
 // Tests that resetting, and checking HasNextPasswd does not crash.
 TEST(NssCacheTest, ResetNullPtrTest) {
@@ -347,8 +344,7 @@ TEST(ParseJsonPasswdTest, ValidateInvalidJsonResponse) {
 
 // Test parsing a valid JSON response from the metadata server.
 TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceeds) {
-  string test_group = 
-      "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":123452}]}";
+  string test_group = "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":123452}]}";
 
   std::vector<Group> groups;
   ASSERT_TRUE(ParseJsonToGroups(test_group, &groups));
@@ -368,7 +364,7 @@ TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceedsWithHighGid) {
 }
 
 TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceedsWithStringGid) {
-  string test_group = 
+  string test_group =
       "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":\"123452\"}]}";
 
   std::vector<Group> groups;
@@ -381,10 +377,8 @@ TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceedsWithStringGid) {
 TEST(ParseJsonToGroupsTest, ParseJsonToGroupsFails) {
   string test_badgid =
       "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":\"this-should-be-int\"}]}";
-  string test_nogid = 
-      "{\"posixGroups\":[{\"name\":\"demo\"}]}";
-  string test_noname = 
-      "{\"posixGroups\":[{\"gid\":123452}]}";
+  string test_nogid = "{\"posixGroups\":[{\"name\":\"demo\"}]}";
+  string test_noname = "{\"posixGroups\":[{\"gid\":123452}]}";
 
   std::vector<Group> groups;
   ASSERT_FALSE(ParseJsonToGroups(test_badgid, &groups));
@@ -394,8 +388,9 @@ TEST(ParseJsonToGroupsTest, ParseJsonToGroupsFails) {
 
 // Test parsing a valid JSON response from the metadata server.
 TEST(ParseJsonToUsersTest, ParseJsonToUsersSucceeds) {
-  string test_group_users = 
-      "{\"usernames\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\",\"user0005\"]}";
+  string test_group_users =
+      "{\"usernames\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\","
+      "\"user0005\"]}";
 
   std::vector<string> users;
   ASSERT_TRUE(ParseJsonToUsers(test_group_users, &users));
@@ -411,8 +406,7 @@ TEST(ParseJsonToUsersTest, ParseJsonToUsersSucceeds) {
 
 // Test parsing a valid JSON response from the metadata server.
 TEST(ParseJsonToUsersTest, ParseJsonToUsersEmptyGroupSucceeds) {
-  string test_group_users = 
-      "{\"usernames\":[]}";
+  string test_group_users = "{\"usernames\":[]}";
 
   std::vector<string> users;
   ASSERT_TRUE(ParseJsonToUsers(test_group_users, &users));
@@ -421,8 +415,9 @@ TEST(ParseJsonToUsersTest, ParseJsonToUsersEmptyGroupSucceeds) {
 
 // Test parsing malformed JSON responses.
 TEST(ParseJsonToUsersTest, ParseJsonToUsersFails) {
-  string test_group_users = 
-      "{\"badstuff\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\",\"user0005\"]}";
+  string test_group_users =
+      "{\"badstuff\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\","
+      "\"user0005\"]}";
 
   std::vector<string> users;
   ASSERT_FALSE(ParseJsonToUsers(test_group_users, &users));
@@ -431,7 +426,8 @@ TEST(ParseJsonToUsersTest, ParseJsonToUsersFails) {
 TEST(GetUsersForGroupTest, GetUsersForGroupSucceeds) {
   string response;
   long http_code;
-  ASSERT_TRUE(HttpGet("http://metadata.google.internal/reset", &response, &http_code));
+  ASSERT_TRUE(
+      HttpGet("http://metadata.google.internal/reset", &response, &http_code));
 
   std::vector<string> users;
   int errnop = 0;
@@ -445,7 +441,8 @@ TEST(GetUsersForGroupTest, GetUsersForGroupSucceeds) {
 TEST(FindGroupTest, FindGroupByGidSucceeds) {
   string response;
   long http_code;
-  ASSERT_TRUE(HttpGet("http://metadata.google.internal/reset", &response, &http_code));
+  ASSERT_TRUE(
+      HttpGet("http://metadata.google.internal/reset", &response, &http_code));
 
   size_t buflen = 200 * sizeof(char);
   char* buffer = (char*)malloc(buflen);
@@ -462,7 +459,8 @@ TEST(FindGroupTest, FindGroupByGidSucceeds) {
 TEST(FindGroupTest, FindGroupByNameSucceeds) {
   string response;
   long http_code;
-  ASSERT_TRUE(HttpGet("http://metadata.google.internal/reset", &response, &http_code));
+  ASSERT_TRUE(
+      HttpGet("http://metadata.google.internal/reset", &response, &http_code));
 
   size_t buflen = 200 * sizeof(char);
   char* buffer = (char*)malloc(buflen);
@@ -559,16 +557,8 @@ TEST(ParseJsonAuthorizeSuccess, SuccessfullyAuthorized) {
 }
 
 TEST(ValidateUserNameTest, ValidateValidUserNames) {
-  string cases[] = {
-      "user",
-      "_",
-      ".",
-      ".abc_",
-      "_abc-",
-      "ABC",
-      "A_.-",
-      "ausernamethirtytwocharacterslong"
-  };
+  string cases[] = {"user",  "_",   ".",    ".abc_",
+                    "_abc-", "ABC", "A_.-", "ausernamethirtytwocharacterslong"};
   for (auto test_user : cases) {
     ASSERT_TRUE(ValidateUserName(test_user));
   }
@@ -608,7 +598,8 @@ TEST(ParseJsonKeyTest, TestMissingKey) {
 }
 
 TEST(ParseJsonChallengesTest, TestChallenges) {
-  string challenges_json = "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
+  string challenges_json =
+      "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
       "\"testSessionId\",\"challenges\":[{\"challengeId\":1,\"challengeType\":"
       "\"TOTP\",\"status\":\"READY\"}, {\"challengeId\":2,\"challengeType\":"
       "\"AUTHZEN\",\"status\":\"PROPOSED\"}]}";
@@ -620,7 +611,8 @@ TEST(ParseJsonChallengesTest, TestChallenges) {
 }
 
 TEST(ParseJsonChallengesTest, TestMalformedChallenges) {
-  string challenges_json = "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
+  string challenges_json =
+      "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
       "\"testSessionId\",\"challenges\":[{\"challengeId\":1,\"challengeType\":"
       "\"TOTP\",\"status\":\"READY\"}, {\"challengeId\":2,\"challengeType\":"
       "\"AUTHZEN\"}]}";
@@ -629,7 +621,7 @@ TEST(ParseJsonChallengesTest, TestMalformedChallenges) {
   ASSERT_EQ(challenges.size(), 1);
 }
 }  // namespace oslogin_utils
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
