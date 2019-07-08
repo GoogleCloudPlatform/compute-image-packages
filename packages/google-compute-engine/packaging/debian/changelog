@@ -1,10 +1,10 @@
-google-compute-engine (1:20190703.00-g1) stable; urgency=medium
+google-compute-engine (1:20190708.00-g1) stable; urgency=medium
 
   * Drop unnecessary build and package dependencies.
   * Log to journal and console directly from systemd service files.
   * Update Debian build dependencies.
 
- -- Google Cloud Team <gc-team@google.com>  Wed, 03 Jul 2019 12:39:15 -0700
+ -- Google Cloud Team <gc-team@google.com>  Mon, 08 Jul 2019 10:20:15 -0700
 
 google-compute-engine (2.8.16-1) stable; urgency=low
 

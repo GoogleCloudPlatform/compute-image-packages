@@ -1,7 +1,7 @@
 SHELL = /bin/sh
 TOPDIR = $(realpath ..)
 
-VERSION = 20190703.00
+VERSION = 20190708.00
 
 CPPFLAGS = -Iinclude -I/usr/include/json-c
 CXXFLAGS = -fPIC -Wall -g
