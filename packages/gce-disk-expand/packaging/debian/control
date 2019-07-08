@@ -8,7 +8,6 @@ Homepage: https://github.com/GoogleCloudPlatform/compute-image-packages
 
 Package: gce-disk-expand
 Architecture: all
-Conflicts: cloud-initramfs-growroot
 Depends: parted,
          ${misc:Depends}
 Description: Automatically resize the root partition on first boot.
