@@ -84,35 +84,38 @@ class NetworkSetupTest(unittest.TestCase):
     # Disable.
     network_setup.NetworkSetup.DisableIpv6(
         self.setup, ['A'])
-    expected_calls.extend([mock.call.logger.info(mock.ANY, ['A']),
-                           mock.call.disable(['A'], mock.ANY)])
+    expected_calls.extend(
+        [mock.call.logger.info(mock.ANY, ['A']),
+         mock.call.disable(['A'], mock.ANY)])
     # Enable interfaces.
-    network_setup.NetworkSetup.EnableIpv6(
-        self.setup, ['A', 'B', 'C'])
-    expected_calls.extend([mock.call.logger.info(mock.ANY, ['A', 'B', 'C']),
-                           mock.call.enable(['A', 'B', 'C'], mock.ANY,
-                                            dhclient_script='/bin/script')])
-    # Remove interface
-    network_setup.NetworkSetup.DisableIpv6(
-        self.setup, ['A'])
+    network_setup.NetworkSetup.EnableIpv6(self.setup, ['A', 'B', 'C'])
+    expected_calls.extend(
+        [mock.call.logger.info(mock.ANY, ['A', 'B', 'C']),
+         mock.call.enable(['A', 'B', 'C'], mock.ANY,
+                          dhclient_script='/bin/script')])
+    # Remove interface.
+    network_setup.NetworkSetup.DisableIpv6(self.setup, ['A'])
     self.assertEqual(self.setup.ipv6_interfaces, set(['B', 'C']))
-    expected_calls.extend([mock.call.logger.info(mock.ANY, ['A']),
-                           mock.call.disable(['A'], mock.ANY)])
+    expected_calls.extend(
+        [mock.call.logger.info(mock.ANY, ['A']),
+         mock.call.disable(['A'], mock.ANY)])
 
-    # Add it back
+    # Add it back.
     network_setup.NetworkSetup.EnableIpv6(
         self.setup, ['A'])
     self.assertEqual(self.setup.ipv6_interfaces, set(['A', 'B', 'C']))
-    expected_calls.extend([mock.call.logger.info(mock.ANY, ['A']),
-                           mock.call.enable(['A'], mock.ANY,
-                                            dhclient_script='/bin/script')])
+    expected_calls.extend(
+        [mock.call.logger.info(mock.ANY, ['A']),
+         mock.call.enable(['A'], mock.ANY,
+                          dhclient_script='/bin/script')])
 
-    # Remove list
+    # Remove list.
     network_setup.NetworkSetup.DisableIpv6(
         self.setup, ['A', 'B'])
     self.assertEqual(self.setup.ipv6_interfaces, set(['C']))
-    expected_calls.extend([mock.call.logger.info(mock.ANY, ['A', 'B']),
-                           mock.call.disable(['A', 'B'], mock.ANY)])
+    expected_calls.extend(
+        [mock.call.logger.info(mock.ANY, ['A', 'B']),
+         mock.call.disable(['A', 'B'], mock.ANY)])
 
     # Try removing again, these are no ops.
     network_setup.NetworkSetup.DisableIpv6(self.setup, ['A'])
@@ -121,16 +124,18 @@ class NetworkSetupTest(unittest.TestCase):
     # Remove the last element.
     network_setup.NetworkSetup.DisableIpv6(self.setup, ['C'])
     self.assertEqual(self.setup.ipv6_interfaces, set([]))
-    expected_calls.extend([mock.call.logger.info(mock.ANY, ['C']),
-                           mock.call.disable(['C'], mock.ANY)])
+    expected_calls.extend(
+        [mock.call.logger.info(mock.ANY, ['C']),
+         mock.call.disable(['C'], mock.ANY)])
 
     # Empty list, allow adds back again.
     network_setup.NetworkSetup.EnableIpv6(
         self.setup, ['A'])
     self.assertEqual(self.setup.ipv6_interfaces, set(['A']))
-    expected_calls.extend([mock.call.logger.info(mock.ANY, ['A']),
-                           mock.call.enable(['A'], mock.ANY,
-                                            dhclient_script='/bin/script')])
+    expected_calls.extend(
+        [mock.call.logger.info(mock.ANY, ['A']),
+         mock.call.enable(['A'], mock.ANY,
+                          dhclient_script='/bin/script')])
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.networking.network_setup.network_setup.subprocess.check_call')

@@ -59,8 +59,9 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None, release_lease=Fal
 
   if release_lease:
     try:
-      subprocess.check_call(timeout_command + dhclient_command + ['-1', '-6', '-r', '-v']
-                            + interfaces)
+      subprocess.check_call(
+          timeout_command + dhclient_command + [
+              '-1', '-6', '-r', '-v'] + interfaces)
     except subprocess.CalledProcessError:
       logger.warning('Could not release IPv6 lease on interface %s.', interfaces)
     return
@@ -130,8 +131,8 @@ def CallWriteViaSysCtl(logger, name, value):
   """
   logger.info('Configuring sysctl %s.', name)
 
-  sysctl_command = ['sysctl', '-w',
-                    '{name}={value}'.format(name=name, value=value)]
+  sysctl_command = [
+      'sysctl', '-w', '{name}={value}'.format(name=name, value=value)]
   try:
     subprocess.check_call(sysctl_command)
   except subprocess.CalledProcessError:
