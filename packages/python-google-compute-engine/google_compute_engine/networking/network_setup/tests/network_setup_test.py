@@ -107,8 +107,7 @@ class NetworkSetupTest(unittest.TestCase):
     expected_calls.extend(
         [
             mock.call.logger.info(mock.ANY, ['A']),
-            mock.call.enable(['A'], mock.ANY,
-                             dhclient_script='/bin/script'),
+            mock.call.enable(['A'], mock.ANY, dhclient_script='/bin/script'),
         ])
 
     # Remove list.

@@ -95,8 +95,8 @@ class HelpersTest(unittest.TestCase):
     helpers.CallDhclientIpv6(['a', 'b'], mock_logger, 'test_script')
     helpers.CallDhclientIpv6(['c', 'd'], mock_logger, None)
     helpers.CallDhclientIpv6(['e', 'f'], mock_logger, None)
-    helpers.CallDhclientIpv6(['g', 'h'], mock_logger, 'test_script',
-                             release_lease=True)
+    helpers.CallDhclientIpv6(
+        ['g', 'h'], mock_logger, 'test_script', release_lease=True)
     helpers.CallDhclientIpv6(['i', 'j'], mock_logger, None, release_lease=True)
     helpers.CallDhclientIpv6(['k', 'l'], mock_logger, None, release_lease=True)
 
