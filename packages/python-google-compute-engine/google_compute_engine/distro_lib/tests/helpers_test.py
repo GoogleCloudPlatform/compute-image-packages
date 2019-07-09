@@ -75,7 +75,7 @@ class HelpersTest(unittest.TestCase):
     mock_call.assert_has_calls(
         [
             mock.call.call(
-                ['timeout', '5', 'dhclient', '-1', '-6', '-v', 'a', 'b'])
+                ['timeout', '5', 'dhclient', '-1', '-6', '-v', 'a', 'b']),
         ])
 
   @mock.patch('google_compute_engine.distro_lib.helpers.os.path.exists')
@@ -104,7 +104,7 @@ class HelpersTest(unittest.TestCase):
         mock.call.call(
             [
                 'timeout', '5','dhclient', '-sf', 'test_script', '-1', '-6',
-                '-v', 'a', 'b'
+                '-v', 'a', 'b',
             ]),
         mock.call.call(
             [
@@ -122,9 +122,10 @@ class HelpersTest(unittest.TestCase):
             [
                 'timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'i', 'j',
             ]),
-        mock.call.call([
-            'timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'k', 'l',
-        ]),
+        mock.call.call(
+            [
+                'timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'k', 'l',
+            ]),
     ]
 
     self.assertEqual(mock_call.mock_calls, expected_calls)
