@@ -92,18 +92,25 @@ class HelpersTest(unittest.TestCase):
     helpers.CallDhclientIpv6(['a', 'b'], mock_logger, 'test_script')
     helpers.CallDhclientIpv6(['c', 'd'], mock_logger, None)
     helpers.CallDhclientIpv6(['e', 'f'], mock_logger, None)
-    helpers.CallDhclientIpv6(['g', 'h'], mock_logger, 'test_script', release_lease=True)
+    helpers.CallDhclientIpv6(['g', 'h'], mock_logger, 'test_script',
+                             release_lease=True)
     helpers.CallDhclientIpv6(['i', 'j'], mock_logger, None, release_lease=True)
     helpers.CallDhclientIpv6(['k', 'l'], mock_logger, None, release_lease=True)
 
     expected_calls = [
         mock.call.call(
-            ['timeout', '5','dhclient', '-sf', 'test_script', '-1', '-6', '-v', 'a', 'b']),
-        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-v', 'c', 'd']),
-        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-v', 'e', 'f']),
-        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'g', 'h']),
-        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'i', 'j']),
-        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'k', 'l']),
+            ['timeout', '5','dhclient', '-sf', 'test_script', '-1', '-6',
+             '-v', 'a', 'b']),
+        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-v', 'c',
+                        'd']),
+        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-v', 'e',
+                        'f']),
+        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'g',
+                        'h']),
+        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'i',
+                        'j']),
+        mock.call.call(['timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'k',
+                        'l']),
     ]
 
     self.assertEqual(mock_call.mock_calls, expected_calls)
@@ -118,8 +125,9 @@ class HelpersTest(unittest.TestCase):
     interfaces = ['foo', 'bar', 'baz']
     helpers.CallEnableRouteAdvertisements(interfaces, mock_logger)
     mock_call.assert_has_calls([
-        mock.call(['sysctl', '-w',
-           'net.ipv6.conf.%s.accept_ra_rt_info_max_plen=128' % interface])
+        mock.call(
+            ['sysctl', '-w',
+             'net.ipv6.conf.%s.accept_ra_rt_info_max_plen=128' % interface])
         for interface in interfaces])
 
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')

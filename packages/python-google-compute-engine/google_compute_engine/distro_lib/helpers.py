@@ -42,7 +42,8 @@ def CallDhclient(
     logger.warning('Could not enable interfaces %s.', interfaces)
 
 
-def CallDhclientIpv6(interfaces, logger, dhclient_script=None, release_lease=False):
+def CallDhclientIpv6(interfaces, logger, dhclient_script=None,
+                     release_lease=False):
   """Configure the network interfaces for IPv6 using dhclient.
 
   Args:
@@ -63,7 +64,8 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None, release_lease=Fal
           timeout_command + dhclient_command + [
               '-1', '-6', '-r', '-v'] + interfaces)
     except subprocess.CalledProcessError:
-      logger.warning('Could not release IPv6 lease on interface %s.', interfaces)
+      logger.warning('Could not release IPv6 lease on interface %s.',
+                     interfaces)
     return
 
   if dhclient_script and os.path.exists(dhclient_script):
@@ -85,8 +87,8 @@ def CallEnableRouteAdvertisements(interfaces, logger):
   """
   for interface in interfaces:
     accept_ra = (
-      'net.ipv6.conf.{interface}.accept_ra_rt_info_max_plen'.format(
-        interface=interface))
+        'net.ipv6.conf.{interface}.accept_ra_rt_info_max_plen'.format(
+            interface=interface))
     CallWriteViaSysCtl(logger, accept_ra, 128)
 
 def CallHwclock(logger):

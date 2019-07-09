@@ -48,7 +48,8 @@ class UtilsTest(unittest.TestCase):
     mocks.attach_mock(mock_call_dhclient, 'dhclient')
 
     utils.Utils.DisableIpv6(self.mock_setup, ['A', 'B'], self.mock_logger)
-    expected_calls = [mock.call.dhclient(['A', 'B'], mock.ANY, None, release_lease=True)]
+    expected_calls = [mock.call.dhclient(['A', 'B'], mock.ANY, None,
+                                         release_lease=True)]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro_lib.helpers.CallDhclient')

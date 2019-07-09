@@ -70,9 +70,9 @@ class NetworkSetup(object):
     """
     # Allow to run once during Initialization and after that only when an
     # interface is found in the ipv6_interfaces set.
-    if not interfaces or (self.ipv6_initialized
-                          and not self.ipv6_interfaces.intersection(
-                              set(interfaces))):
+    if not interfaces or (
+        self.ipv6_initialized and not self.ipv6_interfaces.intersection(
+            set(interfaces))):
       return
 
     self.logger.info('Disabling IPv6 on Ethernet interface: %s.', interfaces)
