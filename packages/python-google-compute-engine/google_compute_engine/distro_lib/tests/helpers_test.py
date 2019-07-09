@@ -131,11 +131,11 @@ class HelpersTest(unittest.TestCase):
     self.assertEqual(mock_call.mock_calls, expected_calls)
     mock_logger.assert_has_calls(
         [
-            mock.call.warning(mock.ANY, ['e', 'f'])
+            mock.call.warning(mock.ANY, ['e', 'f']),
         ])
     mock_logger.assert_has_calls(
         [
-            mock.call.warning(mock.ANY, ['k', 'l'])
+            mock.call.warning(mock.ANY, ['k', 'l']),
         ])
 
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
