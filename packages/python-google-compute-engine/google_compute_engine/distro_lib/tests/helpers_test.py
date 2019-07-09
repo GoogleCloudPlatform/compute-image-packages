@@ -223,18 +223,18 @@ class HelpersTest(unittest.TestCase):
     self.assertEqual(mock_logger.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
-  def testCallWriteViaSysCtl(self, mock_call):
+  def testCallSysctl(self, mock_call):
     command = ['sysctl', '-w']
     mock_logger = mock.Mock()
     expected_log_calls = []
     for name in ['foo', 'bar', 'baz']:
       for value in ['foo', 'bar', 'baz']:
         params = ['{name}={value}'.format(name=name, value=value)]
-        helpers.CallWriteViaSysCtl(mock_logger, name, value)
+        helpers.CallSysctl(mock_logger, name, value)
         mock_call.assert_called_with(command + params)
         expected_log_calls.append(mock.call.info(mock.ANY, name))
     self.assertEqual(mock_logger.mock_calls, expected_log_calls)
 
     mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
-    helpers.CallWriteViaSysCtl(mock_logger, 'fail', 1)
+    helpers.CallSysctl(mock_logger, 'fail', 1)
     mock_logger.assert_has_calls([mock.call.warning(mock.ANY, 'fail')])

@@ -26,7 +26,6 @@ class NetworkSetup(object):
   """Enable network interfaces."""
 
   interfaces = set()
-  ipv6_interfaces = set()
   network_interfaces = 'instance/network-interfaces'
 
   def __init__(self, dhclient_script=None, dhcp_command=None, debug=False):
@@ -44,6 +43,7 @@ class NetworkSetup(object):
         name='network-setup', debug=debug, facility=facility)
     self.distro_utils = distro_utils.Utils(debug=debug)
     self.ipv6_initialized = False
+    self.ipv6_interfaces = set()
 
   def EnableIpv6(self, interfaces):
     """Enable IPv6 on the list of network interfaces.

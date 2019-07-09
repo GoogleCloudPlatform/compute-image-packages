@@ -83,13 +83,12 @@ def CallEnableRouteAdvertisements(interfaces, logger):
   Args:
     interfaces: list of string, the output device names to enable.
     logger: logger object, used to write to SysLog and serial port.
-    dhclient_script: string, the path to a dhclient script used by dhclient.
   """
   for interface in interfaces:
     accept_ra = (
         'net.ipv6.conf.{interface}.accept_ra_rt_info_max_plen'.format(
             interface=interface))
-    CallWriteViaSysCtl(logger, accept_ra, 128)
+    CallSysctl(logger, accept_ra, 128)
 
 def CallHwclock(logger):
   """Sync clock using hwclock.
@@ -125,10 +124,12 @@ def CallNtpdate(logger):
   else:
     logger.info('Synced system time with ntp server.')
 
-def CallWriteViaSysCtl(logger, name, value):
-  """Write a variable using sysctl,
+def CallSysctl(logger, name, value):
+  """Write a variable using sysctl.
+
   Args:
-      name: name of the sysctl variable.
+      logger: logger object, used to write to SysLog and serial port.
+      name: string name of the sysctl variable.
       value: value of the sysctl variable.
   """
   logger.info('Configuring sysctl %s.', name)
