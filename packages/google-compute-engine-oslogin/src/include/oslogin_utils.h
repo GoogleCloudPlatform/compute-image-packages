@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <grp.h>
 #include <pthread.h>
 #include <pwd.h>
+
 #include <string>
 #include <vector>
 
@@ -29,7 +31,7 @@ namespace oslogin_utils {
 
 // Metadata server URL.
 static const char kMetadataServerUrl[] =
-   "http://metadata.google.internal/computeMetadata/v1/oslogin/";
+    "http://metadata.google.internal/computeMetadata/v1/oslogin/";
 
 // BufferManager encapsulates and manages a buffer and length. This class is not
 // thread safe.
@@ -44,9 +46,11 @@ class BufferManager {
   // buffer for the string.
   bool AppendString(const string& value, char** buffer, int* errnop);
 
+  // Return a pointer to a buffer of size bytes. Returns NULL and sets errnop to
+  // ERANGE if there is not enough space left in the buffer for the request.
+  void* Reserve(size_t bytes, int* errnop);
+
  private:
-  // Return a pointer to a buffer of size bytes.
-  void* Reserve(size_t bytes);
   // Whether there is space available in the buffer.
   bool CheckSpaceAvailable(size_t bytes_to_write) const;
 
@@ -64,6 +68,12 @@ class Challenge {
   int id;
   string type;
   string status;
+};
+
+class Group {
+ public:
+  int64_t gid;
+  string name;
 };
 
 // NssCache caches passwd entries for getpwent_r. This is used to prevent making
@@ -98,7 +108,8 @@ class NssCache {
   // make an http call to the server if necessary to retrieve additional
   // entries. Returns whether passwd retrieval was successful. If true, the
   // passwd result will contain valid data.
-  bool NssGetpwentHelper(BufferManager* buf, struct passwd* result, int* errnop);
+  bool NssGetpwentHelper(BufferManager* buf, struct passwd* result,
+                         int* errnop);
 
   // Returns the page token for requesting the next page of passwd entries.
   string GetPageToken() { return page_token_; }
@@ -114,7 +125,7 @@ class NssCache {
   std::string page_token_;
 
   // Index for requesting the next passwd from the cache.
-  int index_;
+  uint32_t index_;
 
   // Whether the NssCache has reached the last page of the database.
   bool on_last_page_;
@@ -144,8 +155,7 @@ class MutexLock {
 };
 
 // Callback invoked when Curl completes a request.
-size_t
-OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp);
+size_t OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp);
 
 // Uses Curl to issue a GET request to the given url. Returns whether the
 // request was successful. If successful, the result from the server will be
@@ -163,17 +173,42 @@ std::string UrlEncode(const string& param);
 // Returns true if the given passwd contains valid fields. If pw_dir, pw_shell,
 // or pw_passwd are not set, this will populate these entries with default
 // values.
-bool ValidatePasswd(struct passwd* result, BufferManager* buf,
-                    int* errnop);
+bool ValidatePasswd(struct passwd* result, BufferManager* buf, int* errnop);
+
+// Adds users and associated array of char* to provided buffer and store pointer
+// to array in result.gr_mem.
+bool AddUsersToGroup(std::vector<string> users, struct group* result,
+                     BufferManager* buf, int* errnop);
+
+// Iterates through all groups until one matching provided group is found,
+// replacing gr_name with a buffermanager provided string.
+bool FindGroup(struct group* grp, BufferManager* buf, int* errnop);
+
+// Iterates through all users for a group, storing results in a provided string
+// vector.
+bool GetUsersForGroup(string groupname, std::vector<string>* users,
+                      int* errnop);
+
+// Iterates through all groups for a user, storing results in a provided string
+// vector.
+bool GetGroupsForUser(string username, std::vector<Group>* groups, int* errnop);
+
+// Parses a JSON groups response, storing results in a provided Group vector.
+bool ParseJsonToGroups(const string& json, std::vector<Group>* groups);
+
+// Parses a JSON users response, storing results in a provided string vector.
+bool ParseJsonToUsers(const string& json, std::vector<string>* users);
 
 // Parses a JSON LoginProfiles response for SSH keys. Returns a vector of valid
 // ssh_keys. A key is considered valid if it's expiration date is greater than
 // current unix time.
 std::vector<string> ParseJsonToSshKeys(const string& json);
 
+// Parses a JSON object and returns the value associated with a given key.
+bool ParseJsonToKey(const string& json, const string& key, string* response);
+
 // Parses a JSON LoginProfiles response and returns the email under the "name"
 // field.
-bool ParseJsonToKey(const string& json, const string& key, string* email);
 bool ParseJsonToEmail(const string& json, string* email);
 
 // Parses a JSON LoginProfiles response and populates the passwd struct with the
@@ -187,7 +222,7 @@ bool ParseJsonToPasswd(const string& response, struct passwd* result,
 bool ParseJsonToSuccess(const string& json);
 
 // Parses a JSON startSession response into a vector of Challenge objects.
-bool ParseJsonToChallenges(const string& json, vector<Challenge> *challenges);
+bool ParseJsonToChallenges(const string& json, vector<Challenge>* challenges);
 
 // Calls the startSession API.
 bool StartSession(const string& email, string* response);
