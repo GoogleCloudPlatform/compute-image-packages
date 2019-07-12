@@ -1,6 +1,6 @@
 [Unit]
 Description=Google Compute Engine Instance Setup
-After=network-online.target network.target
+After=network-online.target network.target rsyslog.service
 Before=sshd.service
 
 [Service]
