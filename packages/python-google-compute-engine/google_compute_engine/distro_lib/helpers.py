@@ -62,7 +62,7 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None,
     try:
       subprocess.check_call(
           timeout_command + dhclient_command + [
-              '-1', '-6', '-r', '-v'] + interfaces)
+              '-6', '-r', '-v'] + interfaces)
     except subprocess.CalledProcessError:
       logger.warning('Could not release IPv6 lease on interface %s.',
                      interfaces)

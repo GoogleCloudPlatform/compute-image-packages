@@ -116,15 +116,15 @@ class HelpersTest(unittest.TestCase):
              ]),
         mock.call.call(
             [
-                'timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'g', 'h',
+                'timeout', '5', 'dhclient', '-6', '-r', '-v', 'g', 'h',
             ]),
         mock.call.call(
             [
-                'timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'i', 'j',
+                'timeout', '5', 'dhclient', '-6', '-r', '-v', 'i', 'j',
             ]),
         mock.call.call(
             [
-                'timeout', '5', 'dhclient', '-1', '-6', '-r', '-v', 'k', 'l',
+                'timeout', '5', 'dhclient', '-6', '-r', '-v', 'k', 'l',
             ]),
     ]
 
