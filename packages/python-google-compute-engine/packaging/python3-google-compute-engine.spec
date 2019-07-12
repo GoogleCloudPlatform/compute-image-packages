@@ -13,8 +13,9 @@
 # limitations under the License.
 
 Name: python3-google-compute-engine
+Epoch: 1
 Version: %{_version}
-Release: 1%{?dist}
+Release: g1%{?dist}
 Summary: Google Compute Engine python3 library
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages

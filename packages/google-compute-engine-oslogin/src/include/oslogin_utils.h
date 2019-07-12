@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <grp.h>
 #include <pthread.h>
 #include <pwd.h>
 #include <grp.h>
@@ -30,7 +31,7 @@ namespace oslogin_utils {
 
 // Metadata server URL.
 static const char kMetadataServerUrl[] =
-   "http://metadata.google.internal/computeMetadata/v1/oslogin/";
+    "http://metadata.google.internal/computeMetadata/v1/oslogin/";
 
 // BufferManager encapsulates and manages a buffer and length. This class is not
 // thread safe.
@@ -75,9 +76,9 @@ class Group {
   string name;
 };
 
-// NssCache caches group or passwd entries for getpwent_r/getgrent_r. This is
-// used to prevent making an HTTP call on every invocation. Stores up to
-// cache_size entries at a time. This class is not thread safe.
+// NssCache caches passwd entries for getpwent_r. This is used to prevent making
+// an HTTP call on every getpwent_r invocation. Stores up to cache_size entries
+// at a time. This class is not thread safe.
 class NssCache {
  public:
   explicit NssCache(int cache_size);
@@ -156,8 +157,7 @@ class MutexLock {
 };
 
 // Callback invoked when Curl completes a request.
-size_t
-OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp);
+size_t OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp);
 
 // Uses Curl to issue a GET request to the given url. Returns whether the
 // request was successful. If successful, the result from the server will be
@@ -175,8 +175,31 @@ std::string UrlEncode(const string& param);
 // Returns true if the given passwd contains valid fields. If pw_dir, pw_shell,
 // or pw_passwd are not set, this will populate these entries with default
 // values.
-bool ValidatePasswd(struct passwd* result, BufferManager* buf,
-                    int* errnop);
+bool ValidatePasswd(struct passwd* result, BufferManager* buf, int* errnop);
+
+// Adds users and associated array of char* to provided buffer and store pointer
+// to array in result.gr_mem.
+bool AddUsersToGroup(std::vector<string> users, struct group* result,
+                     BufferManager* buf, int* errnop);
+
+// Iterates through all groups until one matching provided group is found,
+// replacing gr_name with a buffermanager provided string.
+bool FindGroup(struct group* grp, BufferManager* buf, int* errnop);
+
+// Iterates through all users for a group, storing results in a provided string
+// vector.
+bool GetUsersForGroup(string groupname, std::vector<string>* users,
+                      int* errnop);
+
+// Iterates through all groups for a user, storing results in a provided string
+// vector.
+bool GetGroupsForUser(string username, std::vector<Group>* groups, int* errnop);
+
+// Parses a JSON groups response, storing results in a provided Group vector.
+bool ParseJsonToGroups(const string& json, std::vector<Group>* groups);
+
+// Parses a JSON users response, storing results in a provided string vector.
+bool ParseJsonToUsers(const string& json, std::vector<string>* users);
 
 // Adds users and associated array of char* to provided buffer and store pointer
 // to array in result.gr_mem.
@@ -224,7 +247,7 @@ bool ParseJsonToGroup(const string& response, struct group* result,
 bool ParseJsonToSuccess(const string& json);
 
 // Parses a JSON startSession response into a vector of Challenge objects.
-bool ParseJsonToChallenges(const string& json, vector<Challenge> *challenges);
+bool ParseJsonToChallenges(const string& json, vector<Challenge>* challenges);
 
 // Calls the startSession API.
 bool StartSession(const string& email, string* response);

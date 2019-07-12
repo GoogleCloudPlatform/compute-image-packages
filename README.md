@@ -49,6 +49,7 @@ Ubuntu 16.04 | deb          | 3.5 or 2.7     | systemd
 Ubuntu 18.04 | deb          | 3.6            | systemd
 Ubuntu 19.04 | deb          | 3.7            | systemd
 Debian 9     | deb          | 3.5 or 2.7     | systemd
+Debian 10    | deb          | 3.7            | systemd
 
 We build the following packages for the Linux guest environment.
 
@@ -74,6 +75,12 @@ Debian, Red Hat, and CentOS. See the [README](packaging/README.md) in the
 packaging directory for more details.
 
 #### Version Updates
+
+Versions are described as 1:YYYYMMDD.NN-gN, meaning epoch 1 to denote from a
+distro maintained package which will be 0, a date string formatted as year,
+month, day, an incrementing minor release, and gN representing the Google
+package release. Debian, Ubuntu, and SUSE maintain distro packages which may be
+out of date, have different versioning, or naming.
 
 The method for making version updates differs by package.
 
@@ -102,11 +109,13 @@ Add the public repo key to your system:
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 ```
 
-Add a source list file `/etc/apt/sources.list.d/google-cloud.list`:
+Add a source list file `/etc/apt/sources.list.d/google-cloud.list` and change
+`DIST` to either `stretch` for Debian 9 or `buster` for Debian 10:
 ```
+DIST=stretch
 sudo tee /etc/apt/sources.list.d/google-cloud.list << EOM
-deb http://packages.cloud.google.com/apt google-compute-engine-stretch-stable main
-deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-stretch main
+deb http://packages.cloud.google.com/apt google-compute-engine-${DIST}-stable main
+deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-${DIST} main
 EOM
 ```
 
@@ -119,8 +128,8 @@ You are then able to install any of the packages from this repo.
 
 **For RedHat based distributions, run the following commands as root:**
 
-Add the yum repo to a repo file `/etc/yum.repos.d/google-cloud.repo` for either
-EL6 or EL7. Change `DIST` to either 6 or 7 respectively:
+Add the yum repo to a repo file `/etc/yum.repos.d/google-cloud.repo` for EL6,
+EL7, or EL8. Change `DIST` to either 6, 7, or 8 respectively:
 ```
 DIST=7
 tee /etc/yum.repos.d/google-cloud.repo << EOM

@@ -13,8 +13,9 @@
 # limitations under the License.
 Name: gce-disk-expand
 Summary: Google Compute Engine root disk expansion module
+Epoch: 1
 Version: %{_version}
-Release: 1
+Release: g1
 License: Apache Software License
 Group: System Environment/Base
 URL: https://github.com/GoogleCloudPlatform/compute-image-packages

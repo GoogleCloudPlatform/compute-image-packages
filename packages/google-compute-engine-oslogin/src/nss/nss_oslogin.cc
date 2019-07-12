@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <compat.h>
+#include <oslogin_utils.h>
+
 #include <curl/curl.h>
 #include <errno.h>
 #include <grp.h>
@@ -26,9 +29,6 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-
-#include <compat.h>
-#include <oslogin_utils.h>
 
 using std::string;
 
@@ -54,8 +54,9 @@ static NssCache nss_cache(kNssCacheSize);
 extern "C" {
 
 // Get a passwd entry by id.
-enum nss_status _nss_oslogin_getpwuid_r(uid_t uid, struct passwd *result, char *buffer,
-                            size_t buflen, int *errnop) {
+enum nss_status _nss_oslogin_getpwuid_r(uid_t uid, struct passwd *result,
+                                        char *buffer, size_t buflen,
+                                        int *errnop) {
   BufferManager buffer_manager(buffer, buflen);
   std::stringstream url;
   url << kMetadataServerUrl << "users?uid=" << uid;
@@ -80,7 +81,8 @@ enum nss_status _nss_oslogin_getpwuid_r(uid_t uid, struct passwd *result, char *
 
 // Get a passwd entry by name.
 enum nss_status _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
-                            char *buffer, size_t buflen, int *errnop) {
+                                        char *buffer, size_t buflen,
+                                        int *errnop) {
   BufferManager buffer_manager(buffer, buflen);
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(name);
@@ -103,7 +105,8 @@ enum nss_status _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
   return NSS_STATUS_SUCCESS;
 }
 
-enum nss_status _nss_oslogin_getgrby(struct group *grp, char *buf, size_t buflen, int *errnop) {
+enum nss_status _nss_oslogin_getgrby(struct group *grp, char *buf,
+                                     size_t buflen, int *errnop) {
   BufferManager buffer_manager(buf, buflen);
   if (!FindGroup(grp, &buffer_manager, errnop))
     return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
@@ -118,30 +121,32 @@ enum nss_status _nss_oslogin_getgrby(struct group *grp, char *buf, size_t buflen
   return NSS_STATUS_SUCCESS;
 }
 
-enum nss_status _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf, size_t buflen, int *errnop) {
+enum nss_status _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf,
+                                        size_t buflen, int *errnop) {
   grp->gr_gid = gid;
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
-enum nss_status _nss_oslogin_getgrnam_r(const char *name, struct group *grp, char *buf, size_t buflen,
-                                        int *errnop) {
-  grp->gr_name = (char *) name;
+enum nss_status _nss_oslogin_getgrnam_r(const char *name, struct group *grp,
+                                        char *buf, size_t buflen, int *errnop) {
+  grp->gr_name = (char *)name;
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
-// TODO: thin cache
-enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup, long int *start,
-                                            long int *size, gid_t **groupsp, long int limit, int *errnop) {
+enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup,
+                                            long int *start, long int *size,
+                                            gid_t **groupsp, long int limit,
+                                            int *errnop) {
   std::vector<Group> grouplist;
   if (!GetGroupsForUser(string(user), &grouplist, errnop)) {
     return NSS_STATUS_NOTFOUND;
   }
 
-  gid_t* groups = *groupsp;
-  for (auto & group: grouplist) {
+  gid_t *groups = *groupsp;
+  for (auto &group : grouplist) {
     // Resize the buffer if needed.
     if (*start == *size) {
-      gid_t* newgroups;
+      gid_t *newgroups;
       long int newsize = 2 * *size;
       // Stop at limit if provided.
       if (limit > 0) {
@@ -149,9 +154,9 @@ enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup, l
           *errnop = ERANGE;
           return NSS_STATUS_TRYAGAIN;
         }
-        newsize = MIN (limit, newsize);
+        newsize = MIN(limit, newsize);
       }
-      newgroups = (gid_t*)realloc(groups, newsize * sizeof(gid_t*));
+      newgroups = (gid_t *)realloc(groups, newsize * sizeof(gid_t *));
       if (newgroups == NULL) {
         *errnop = EAGAIN;
         return NSS_STATUS_TRYAGAIN;
@@ -180,21 +185,20 @@ NSS_METHOD_PROTOTYPE(__nss_compat_getgrnam_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_getgrgid_r);
 
 DECLARE_NSS_METHOD_TABLE(methods,
-    { NSDB_PASSWD, "getpwnam_r", __nss_compat_getpwnam_r,
-      (void*)_nss_oslogin_getpwnam_r },
-    { NSDB_PASSWD, "getpwuid_r", __nss_compat_getpwuid_r,
-      (void*)_nss_oslogin_getpwuid_r },
-    { NSDB_PASSWD, "getpwent_r", __nss_compat_getpwent_r,
-      (void*)_nss_oslogin_getpwent_r },
-    { NSDB_PASSWD, "endpwent", __nss_compat_endpwent,
-      (void*)_nss_oslogin_endpwent },
-    { NSDB_PASSWD, "setpwent", __nss_compat_setpwent,
-      (void*)_nss_oslogin_setpwent },
-    { NSDB_GROUP, "getgrnam_r", __nss_compat_getgrnam_r,
-      (void*)_nss_oslogin_getgrnam_r },
-    { NSDB_GROUP, "getgrgid_r", __nss_compat_getgrgid_r,
-      (void*)_nss_oslogin_getgrgid_r },
-)
+                         {NSDB_PASSWD, "getpwnam_r", __nss_compat_getpwnam_r,
+                          (void *)_nss_oslogin_getpwnam_r},
+                         {NSDB_PASSWD, "getpwuid_r", __nss_compat_getpwuid_r,
+                          (void *)_nss_oslogin_getpwuid_r},
+                         {NSDB_PASSWD, "getpwent_r", __nss_compat_getpwent_r,
+                          (void *)_nss_oslogin_getpwent_r},
+                         {NSDB_PASSWD, "endpwent", __nss_compat_endpwent,
+                          (void *)_nss_oslogin_endpwent},
+                         {NSDB_PASSWD, "setpwent", __nss_compat_setpwent,
+                          (void *)_nss_oslogin_setpwent},
+                         {NSDB_GROUP, "getgrnam_r", __nss_compat_getgrnam_r,
+                          (void *)_nss_oslogin_getgrnam_r},
+                         {NSDB_GROUP, "getgrgid_r", __nss_compat_getgrgid_r,
+                          (void *)_nss_oslogin_getgrgid_r}, )
 
 NSS_REGISTER_METHODS(methods)
 }  // extern "C"
