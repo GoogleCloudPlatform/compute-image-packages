@@ -26,7 +26,6 @@ class NetworkSetup(object):
   """Enable network interfaces."""
 
   interfaces = set()
-  ipv6_interfaces = set()
   network_interfaces = 'instance/network-interfaces'
 
   def __init__(self, dhclient_script=None, dhcp_command=None, debug=False):
@@ -43,6 +42,8 @@ class NetworkSetup(object):
     self.logger = logger.Logger(
         name='network-setup', debug=debug, facility=facility)
     self.distro_utils = distro_utils.Utils(debug=debug)
+    self.ipv6_initialized = False
+    self.ipv6_interfaces = set()
 
   def EnableIpv6(self, interfaces):
     """Enable IPv6 on the list of network interfaces.
@@ -50,15 +51,36 @@ class NetworkSetup(object):
     Args:
       interfaces: list of string, the output device names for enabling IPv6.
     """
-    if not interfaces or set(interfaces) == self.ipv6_interfaces:
+    if not interfaces or self.ipv6_interfaces == set(interfaces):
       return
 
     self.logger.info('Enabling IPv6 on Ethernet interface: %s.', interfaces)
-    self.ipv6_interfaces = set(interfaces)
+    self.ipv6_interfaces = self.ipv6_interfaces.union(set(interfaces))
+    self.ipv6_initialized = True
 
     # Distro-specific setup for enabling IPv6 on network interfaces.
     self.distro_utils.EnableIpv6(
         interfaces, self.logger, dhclient_script=self.dhclient_script)
+
+  def DisableIpv6(self, interfaces):
+    """Disable IPv6 on the list of network interfaces.
+
+    Args:
+      interfaces: list of string, the output device names for disabling IPv6.
+    """
+    # Allow to run once during Initialization and after that only when an
+    # interface is found in the ipv6_interfaces set.
+    if not interfaces or (
+        self.ipv6_initialized and not self.ipv6_interfaces.intersection(
+            set(interfaces))):
+      return
+
+    self.logger.info('Disabling IPv6 on Ethernet interface: %s.', interfaces)
+    self.ipv6_interfaces.difference_update(interfaces)
+    self.ipv6_initialized = True
+
+    # Distro-specific setup for disabling IPv6 on network interfaces.
+    self.distro_utils.DisableIpv6(interfaces, self.logger)
 
   def EnableNetworkInterfaces(self, interfaces):
     """Enable the list of network interfaces.
