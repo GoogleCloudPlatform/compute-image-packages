@@ -15,6 +15,7 @@
 #include <grp.h>
 #include <pthread.h>
 #include <pwd.h>
+#include <stdint.h>
 
 #include <string>
 #include <vector>

@@ -1,12 +1,12 @@
 SHELL = /bin/sh
 TOPDIR = $(realpath ..)
 
-VERSION = 20190711.00
+VERSION = 20190708.00
 
 CPPFLAGS = -Iinclude -I/usr/include/json-c
 FLAGS = -fPIC -Wall -g
 CFLAGS = $(FLAGS) -Wstrict-prototypes
-CXXFLAGS = $(FLAGS) -std=c++11
+CXXFLAGS = $(FLAGS)
 
 LDFLAGS = -shared -Wl,-soname,$(SONAME)
 LDLIBS = -lcurl -ljson-c
@@ -60,10 +60,10 @@ $(PAM_ADMIN) : pam/pam_oslogin_admin.o utils.o
 # Utilities.
 
 google_authorized_keys : authorized_keys/authorized_keys.o utils.o
-       $(CXX) $(CXXFLAGS) $(CPPFLAGS) -lboost_regex $^ -o $@ $(LDLIBS)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -o $@ $(LDLIBS)
 
 google_oslogin_nss_cache: cache_refresh/cache_refresh.o utils.o
-       $(CXX) $(CXXFLAGS) $(CPPFLAGS) -lboost_regex $^ -o $@ $(LDLIBS)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $^ -o $@ $(LDLIBS)
 
 install: all
 	install -d $(DESTDIR)$(LIBDIR)
