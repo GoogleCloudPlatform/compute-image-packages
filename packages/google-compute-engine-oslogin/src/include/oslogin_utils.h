@@ -16,6 +16,8 @@
 #include <pthread.h>
 #include <pwd.h>
 #include <grp.h>
+#include <stdint.h>
+
 #include <string>
 #include <syslog.h>
 #include <vector>

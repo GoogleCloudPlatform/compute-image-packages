@@ -97,12 +97,28 @@ class UtilsTest(unittest.TestCase):
       self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro_lib.helpers.CallDhclientIpv6')
-  def testEnableIpv6(self, mock_call):
+  @mock.patch('google_compute_engine.distro_lib.helpers.CallEnableRouteAdvertisements')
+  def testEnableIpv6(self, mock_call_enable_ra, mock_call_dhclient):
     mocks = mock.Mock()
-    mocks.attach_mock(mock_call, 'call')
+    mocks.attach_mock(mock_call_dhclient, 'dhclient')
+    mocks.attach_mock(mock_call_enable_ra, 'enable_ra')
 
     utils.Utils.EnableIpv6(self.mock_setup, ['A', 'B'], self.mock_logger)
-    expected_calls = [mock.call.call(['A', 'B'], mock.ANY)]
+    expected_calls = [
+        mock.call.enable_ra(['A', 'B'], mock.ANY),
+        mock.call.dhclient(['A', 'B'], mock.ANY),
+    ]
+    self.assertEqual(mocks.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro_lib.helpers.CallDhclientIpv6')
+  def testDisableIpv6(self, mock_call_dhclient):
+    mocks = mock.Mock()
+    mocks.attach_mock(mock_call_dhclient, 'dhclient')
+
+    utils.Utils.DisableIpv6(self.mock_setup, ['A', 'B'], self.mock_logger)
+    expected_calls = [
+        mock.call.dhclient(['A', 'B'], mock.ANY, None, release_lease=True),
+    ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.distro_lib.el_7.utils.os.path.exists')

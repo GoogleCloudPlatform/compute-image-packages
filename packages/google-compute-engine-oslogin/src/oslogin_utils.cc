@@ -646,6 +646,31 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result, BufferManager*
   return ValidatePasswd(result, buf, errnop);
 }
 
+bool AddUsersToGroup(std::vector<string> users, struct group* result,
+                     BufferManager* buf, int* errnop) {
+  if (users.size() < 1) {
+    return true;
+  }
+
+  // Get some space for the char* array for number of users + 1 for NULL cap.
+  char** bufp;
+  if (!(bufp =
+            (char**)buf->Reserve(sizeof(char*) * (users.size() + 1), errnop))) {
+    return false;
+  }
+  result->gr_mem = bufp;
+
+  for (int i = 0; i < (int) users.size(); i++) {
+    if (!buf->AppendString(users[i], bufp, errnop)) {
+      result->gr_mem = NULL;
+      return false;
+    }
+  }
+  *bufp = NULL;  // End the array with a null pointer.
+
+  return true;
+}
+
 bool ParseJsonToEmail(const string& json, string* email) {
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
@@ -745,30 +770,6 @@ bool ParseJsonToChallenges(const string& json, std::vector<Challenge>* challenge
 
 // ----------------- OS Login functions -----------------
 
-bool AddUsersToGroup(std::vector<string> users, struct group* result, BufferManager* buf, int* errnop) {
-  if (users.size() < 1) {
-    return true;
-  }
-
-  // Get some space for the char* array for number of users + 1 for NULL cap.
-  char **bufp;
-  if (!(bufp = (char **) buf->Reserve(sizeof(char *) * (users.size()+1), errnop)))
-  {
-    return false;
-  }
-  result->gr_mem = bufp;
-
-  for (auto& el : users) {
-    if (!buf->AppendString(el, bufp, errnop)) {
-      result->gr_mem = NULL;
-      return false;
-    }
-  }
-  *bufp = NULL;  // End the array with a null pointer.
-
-  return true;
-}
-
 bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
   if (result->gr_name == NULL && result->gr_gid == 0) {
     return false;
@@ -805,7 +806,8 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
     }
 
     // Check for a match.
-    for (auto& el : groups) {
+    for (int i = 0; i < (int) groups.size(); i++) {
+      Group el = groups[i];
       if ((result->gr_name != NULL) && (string(result->gr_name) == el.name)) {
         // Set the name even though it matches because the final string must
         // be stored in the provided buffer.

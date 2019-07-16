@@ -38,7 +38,17 @@ class Utils(utils.Utils):
       logger: logger object, used to write to SysLog and serial port.
       dhclient_script: string, the path to a dhclient script used by dhclient.
     """
+    helpers.CallEnableRouteAdvertisements(interfaces, logger)
     helpers.CallDhclientIpv6(interfaces, logger)
+
+  def DisableIpv6(self, interfaces, logger):
+    """Disable Ipv6 by giving up the DHCP lease using dhclient.
+
+    Args:
+      interface: string, the output device names for enabling IPv6.
+      logger: logger object, used to write to SysLog and serial port.
+    """
+    helpers.CallDhclientIpv6(interfaces, logger, None, release_lease=True)
 
   def EnableNetworkInterfaces(self, interfaces, logger, dhclient_script=None):
     """Enable the list of network interfaces.

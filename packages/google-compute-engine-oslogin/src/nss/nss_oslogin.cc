@@ -25,6 +25,7 @@
 #include <sys/param.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include <iostream>
 #include <sstream>
@@ -207,7 +208,7 @@ enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup,
   }
 
   gid_t *groups = *groupsp;
-  for (auto &group : grouplist) {
+  for (int i = 0; i < (int) grouplist.size(); i++) {
     // Resize the buffer if needed.
     if (*start == *size) {
       gid_t *newgroups;
@@ -228,7 +229,7 @@ enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup,
       *groupsp = groups = newgroups;
       *size = newsize;
     }
-    groups[(*start)++] = group.gid;
+    groups[(*start)++] = grouplist[i].gid;
   }
 
   if (found)

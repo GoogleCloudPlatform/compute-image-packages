@@ -42,18 +42,31 @@ def CallDhclient(
     logger.warning('Could not enable interfaces %s.', interfaces)
 
 
-def CallDhclientIpv6(interfaces, logger, dhclient_script=None):
+def CallDhclientIpv6(interfaces, logger, dhclient_script=None,
+                     release_lease=False):
   """Configure the network interfaces for IPv6 using dhclient.
 
   Args:
     interface: string, the output device names for enabling IPv6.
     logger: logger object, used to write to SysLog and serial port.
     dhclient_script: string, the path to a dhclient script used by dhclient.
+    release_lease: Release the IPv6 lease.
   """
-  logger.info('Enabling IPv6 on the Ethernet interfaces %s.', interfaces)
+  logger.info('Calling Dhclient for IPv6 configuration '
+              'on the Ethernet interfaces %s.', interfaces)
 
   timeout_command = ['timeout', '5']
   dhclient_command = ['dhclient']
+
+  if release_lease:
+    try:
+      subprocess.check_call(
+          timeout_command + dhclient_command + [
+              '-6', '-r', '-v'] + interfaces)
+    except subprocess.CalledProcessError:
+      logger.warning('Could not release IPv6 lease on interface %s.',
+                     interfaces)
+    return
 
   if dhclient_script and os.path.exists(dhclient_script):
     dhclient_command += ['-sf', dhclient_script]
@@ -64,6 +77,18 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None):
   except subprocess.CalledProcessError:
     logger.warning('Could not enable IPv6 on interface %s.', interfaces)
 
+
+def CallEnableRouteAdvertisements(interfaces, logger):
+  """Enable route advertisements.
+  Args:
+    interfaces: list of string, the output device names to enable.
+    logger: logger object, used to write to SysLog and serial port.
+  """
+  for interface in interfaces:
+    accept_ra = (
+        'net.ipv6.conf.{interface}.accept_ra_rt_info_max_plen'.format(
+            interface=interface))
+    CallSysctl(logger, accept_ra, 128)
 
 def CallHwclock(logger):
   """Sync clock using hwclock.
@@ -98,3 +123,20 @@ def CallNtpdate(logger):
     logger.warning('Failed to sync system time with ntp server.')
   else:
     logger.info('Synced system time with ntp server.')
+
+def CallSysctl(logger, name, value):
+  """Write a variable using sysctl.
+
+  Args:
+      logger: logger object, used to write to SysLog and serial port.
+      name: string name of the sysctl variable.
+      value: value of the sysctl variable.
+  """
+  logger.info('Configuring sysctl %s.', name)
+
+  sysctl_command = [
+      'sysctl', '-w', '{name}={value}'.format(name=name, value=value)]
+  try:
+    subprocess.check_call(sysctl_command)
+  except subprocess.CalledProcessError:
+    logger.warning('Unable to configure sysctl %s.', name)

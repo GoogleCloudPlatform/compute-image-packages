@@ -1,12 +1,12 @@
 SHELL = /bin/sh
 TOPDIR = $(realpath ..)
 
-VERSION = 20190711.00
+VERSION = 20190708.00
 
 CPPFLAGS = -Iinclude -I/usr/include/json-c
 FLAGS = -fPIC -Wall -g
 CFLAGS = $(FLAGS) -Wstrict-prototypes
-CXXFLAGS = $(FLAGS) -std=c++11
+CXXFLAGS = $(FLAGS)
 
 LDFLAGS = -shared -Wl,-soname,$(SONAME)
 LDLIBS = -lcurl -ljson-c
