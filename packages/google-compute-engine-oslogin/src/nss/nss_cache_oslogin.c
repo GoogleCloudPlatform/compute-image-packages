@@ -18,6 +18,7 @@
 #include <compat.h>
 
 #include <sys/mman.h>
+#include <time.h>
 
 // Locking implementation: use pthreads.
 #include <pthread.h>
@@ -311,7 +312,6 @@ enum nss_status _nss_cache_oslogin_getgrgid_r(gid_t gid, struct group *result,
   enum nss_status ret;
 
   NSS_CACHE_OSLOGIN_LOCK();
-
   ret = _nss_cache_oslogin_setgrent_locked();
 
   if (ret == NSS_STATUS_SUCCESS) {
@@ -336,7 +336,6 @@ enum nss_status _nss_cache_oslogin_getgrnam_r(const char *name, struct group *re
   enum nss_status ret;
 
   NSS_CACHE_OSLOGIN_LOCK();
-
   ret = _nss_cache_oslogin_setgrent_locked();
 
   if (ret == NSS_STATUS_SUCCESS) {
@@ -351,7 +350,6 @@ enum nss_status _nss_cache_oslogin_getgrnam_r(const char *name, struct group *re
 
   return ret;
 }
-
 
 NSS_METHOD_PROTOTYPE(__nss_compat_getpwnam_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_getpwuid_r);

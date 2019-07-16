@@ -50,11 +50,12 @@ const char kUserNameRegex[] = "^[a-zA-Z0-9._][a-zA-Z0-9._-]{0,31}$";
 
 namespace oslogin_utils {
 
+// ----------------- Buffer Manager -----------------
+
 BufferManager::BufferManager(char* buf, size_t buflen)
     : buf_(buf), buflen_(buflen) {}
 
-bool BufferManager::AppendString(const string& value, char** buffer,
-                                 int* errnop) {
+bool BufferManager::AppendString(const string& value, char** buffer, int* errnop) {
   size_t bytes_to_write = value.length() + 1;
   *buffer = static_cast<char*>(Reserve(bytes_to_write, errnop));
   if (*buffer == NULL) {
@@ -81,6 +82,8 @@ void* BufferManager::Reserve(size_t bytes, int* errnop) {
   buflen_ -= bytes;
   return result;
 }
+
+// ----------------- NSS Cache helper -----------------
 
 NssCache::NssCache(int cache_size)
     : cache_size_(cache_size),
@@ -275,6 +278,8 @@ bool NssCache::NssGetgrentHelper(BufferManager* buf, struct group* result, int* 
   return AddUsersToGroup(users, result, buf, errnop);
 }
 
+// ----------------- HTTP functions -----------------
+
 size_t OnCurlWrite(void* buf, size_t size, size_t nmemb, void* userp) {
   if (userp) {
     std::ostream& os = *static_cast<std::ostream*>(userp);
@@ -335,14 +340,8 @@ bool HttpGet(const string& url, string* response, long* http_code) {
   return HttpDo(url, "", response, http_code);
 }
 
-bool HttpPost(const string& url, const string& data, string* response,
-              long* http_code) {
+bool HttpPost(const string& url, const string& data, string* response, long* http_code) {
   return HttpDo(url, data, response, http_code);
-}
-
-bool ValidateUserName(const string& user_name) {
-  Regex::regex r(kUserNameRegex);
-  return Regex::regex_match(user_name, r);
 }
 
 string UrlEncode(const string& param) {
@@ -356,6 +355,11 @@ string UrlEncode(const string& param) {
   curl_free(encoded);
   curl_easy_cleanup(curl);
   return encoded_param;
+}
+
+bool ValidateUserName(const string& user_name) {
+  Regex::regex r(kUserNameRegex);
+  return Regex::regex_match(user_name, r);
 }
 
 bool ValidatePasswd(struct passwd* result, BufferManager* buf, int* errnop) {
@@ -396,21 +400,9 @@ bool ValidatePasswd(struct passwd* result, BufferManager* buf, int* errnop) {
   return true;
 }
 
-// ParseJsonToUsers parses a list of usernames and appends them to a provided
-// string vector.
-//
-// json:
-// {
-//   "usernames": [
-//     "user0001",
-//     "user0002",
-//     "user0003",
-//     "user0004",
-//     "user0005",
-//   ]
-// }
+// ----------------- JSON Parsing -----------------
 
-bool ParseJsonToUsers(const string& json, std::vector<string> *result) {
+bool ParseJsonToUsers(const string& json, std::vector<string>* result) {
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
   if (root == NULL) {
@@ -431,23 +423,6 @@ bool ParseJsonToUsers(const string& json, std::vector<string> *result) {
   }
   return true;
 }
-
-// ParseJsonToGroups parses a list of posixGroups and appends them to a provided
-// Group object vector.
-//
-// json:
-// {
-//   "posixGroups": [
-//     {
-//       "name": "mygroup",
-//       "gid": "123452"
-//     },
-//     {
-//       "name": "mygroup2",
-//       "gid": "123453"
-//     }
-//   ]
-// }
 
 bool ParseJsonToGroups(const string& json, std::vector<Group>* result) {
   json_object* root = NULL;
@@ -492,18 +467,6 @@ bool ParseJsonToGroups(const string& json, std::vector<Group>* result) {
   }
   return true;
 }
-
-// TODO: comments with example json for all parsing functions
-// TODO: unify nsscache functions with nss ones
-
-// ParseJsonToGroup parses a single posixGroup object to a struct group.
-//
-// json:
-// {
-//   "name": "mygroup",
-//   "gid":"123452"
-// }
-
 
 bool ParseJsonToGroup(const string& json, struct group* result, BufferManager* buf, int* errnop) {
   json_object* group = NULL;
@@ -589,30 +552,6 @@ std::vector<string> ParseJsonToSshKeys(const string& json) {
   return result;
 }
 
-// ParseJsonToPasswd parses a single loginProfile object to a struct passwd.
-//
-// json:
-// {
-//   "name": "12345",
-//   "posixAccounts": [
-//     {
-//       "primary": true,
-//       "username": "myuser",
-//       "uid": "12345",
-//       "gid": "12345",
-//       "homeDirectory": "/home/myuser",
-//       "shell": "/bin/bash",
-//       "accountId": "myproject",
-//       "operatingSystemType": "LINUX"
-//     }
-//   ],
-//   "sshPublicKeys": {
-//     "[FINGERPRINT]": {
-//       "key": "ssh-rsa [KEY]\n",
-//       "fingerprint": "[FINGERPRINT]"
-//     }
-//   }
-// }
 bool ParseJsonToPasswd(const string& json, struct passwd* result, BufferManager* buf, int* errnop) {
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
@@ -707,31 +646,6 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result, BufferManager*
   return ValidatePasswd(result, buf, errnop);
 }
 
-bool AddUsersToGroup(std::vector<string> users, struct group* result,
-                     BufferManager* buf, int* errnop) {
-  if (users.size() < 1) {
-    return true;
-  }
-
-  // Get some space for the char* array for number of users + 1 for NULL cap.
-  char **bufp;
-  if (!(bufp = (char **) buf->Reserve(sizeof(char *) * (users.size()+1), errnop)))
-  {
-    return false;
-  }
-  result->gr_mem = bufp;
-
-  for (auto& el : users) {
-    if (!buf->AppendString(el, bufp, errnop)) {
-      result->gr_mem = NULL;
-      return false;
-    }
-  }
-  *bufp = NULL;  // End the array with a null pointer.
-
-  return true;
-}
-
 bool ParseJsonToEmail(const string& json, string* email) {
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
@@ -791,8 +705,7 @@ bool ParseJsonToKey(const string& json, const string& key, string* response) {
   return true;
 }
 
-bool ParseJsonToChallenges(const string& json,
-                           std::vector<Challenge>* challenges) {
+bool ParseJsonToChallenges(const string& json, std::vector<Challenge>* challenges) {
   json_object* root = NULL;
 
   root = json_tokener_parse(json.c_str());
@@ -826,6 +739,32 @@ bool ParseJsonToChallenges(const string& json,
 
     challenges->push_back(challenge);
   }
+
+  return true;
+}
+
+// ----------------- OS Login functions -----------------
+
+bool AddUsersToGroup(std::vector<string> users, struct group* result, BufferManager* buf, int* errnop) {
+  if (users.size() < 1) {
+    return true;
+  }
+
+  // Get some space for the char* array for number of users + 1 for NULL cap.
+  char **bufp;
+  if (!(bufp = (char **) buf->Reserve(sizeof(char *) * (users.size()+1), errnop)))
+  {
+    return false;
+  }
+  result->gr_mem = bufp;
+
+  for (auto& el : users) {
+    if (!buf->AppendString(el, bufp, errnop)) {
+      result->gr_mem = NULL;
+      return false;
+    }
+  }
+  *bufp = NULL;  // End the array with a null pointer.
 
   return true;
 }
@@ -883,14 +822,13 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
         return true;
       }
     }
-  } while (pageToken != "");
+  } while (pageToken != "0");
   // Not found.
   *errnop = ENOENT;
   return false;
 }
 
-bool GetGroupsForUser(string username, std::vector<Group>* groups,
-                      int* errnop) {
+bool GetGroupsForUser(string username, std::vector<Group>* groups, int* errnop) {
   std::stringstream url;
 
   string response;
@@ -923,8 +861,7 @@ bool GetGroupsForUser(string username, std::vector<Group>* groups,
   return true;
 }
 
-bool GetUsersForGroup(string groupname, std::vector<string>* users,
-                      int* errnop) {
+bool GetUsersForGroup(string groupname, std::vector<string>* users, int* errnop) {
   string response;
   long http_code;
   string pageToken = "";
@@ -951,7 +888,7 @@ bool GetUsersForGroup(string groupname, std::vector<string>* users,
       *errnop = EINVAL;
       return false;
     }
-  } while (pageToken != "");
+  } while (pageToken != "0");
   return true;
 }
 
@@ -999,9 +936,7 @@ bool StartSession(const string& email, string* response) {
   return ret;
 }
 
-bool ContinueSession(bool alt, const string& email, const string& user_token,
-                     const string& session_id, const Challenge& challenge,
-                     string* response) {
+bool ContinueSession(bool alt, const string& email, const string& user_token, const string& session_id, const Challenge& challenge, string* response) {
   bool ret = true;
   struct json_object *jobj, *jresp;
 

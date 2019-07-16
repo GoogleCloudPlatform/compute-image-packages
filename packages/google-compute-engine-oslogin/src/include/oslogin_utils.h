@@ -17,12 +17,29 @@
 #include <pwd.h>
 #include <grp.h>
 #include <string>
+#include <syslog.h>
 #include <vector>
 
 #define TOTP "TOTP"
 #define AUTHZEN "AUTHZEN"
 #define INTERNAL_TWO_FACTOR "INTERNAL_TWO_FACTOR"
 #define IDV_PREREGISTERED_PHONE "IDV_PREREGISTERED_PHONE"
+
+#define INITGROUP_CACHE_EXPIRE_SECONDS 500
+
+#ifdef DEBUG
+#undef DEBUG
+#define DEBUG(fmt, ...)                                                        \
+  do {                                                                         \
+      openlog("nss_oslogin", LOG_PID|LOG_PERROR, LOG_DAEMON);                  \
+      syslog(LOG_ERR, fmt, ##__VA_ARGS__);                                     \
+      closelog();                                                              \
+  } while (0)
+#else
+#define DEBUG(fmt, ...)                                                        \
+  do {                                                                         \
+  } while (0)
+#endif /* DEBUG */
 
 using std::string;
 using std::vector;
