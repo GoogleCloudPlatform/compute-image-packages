@@ -15,11 +15,10 @@
 #include <grp.h>
 #include <pthread.h>
 #include <pwd.h>
-#include <grp.h>
 #include <stdint.h>
+#include <syslog.h>
 
 #include <string>
-#include <syslog.h>
 #include <vector>
 
 #define TOTP "TOTP"

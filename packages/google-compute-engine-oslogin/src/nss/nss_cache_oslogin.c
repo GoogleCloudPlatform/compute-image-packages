@@ -96,7 +96,7 @@ enum nss_status _nss_cache_oslogin_setpwent(int stayopen) {
 // Internal close routine
 
 static enum nss_status _nss_cache_oslogin_endpwent_locked(void) {
-  DEBUG("Closing %s\n", NSS_CACHE_OSLOGIN_PATH);
+  DEBUG("Closing %s\n", OSLOGIN_PASSWD_CACHE_PATH);
   if (p_file) {
     fclose(p_file);
     p_file = NULL;

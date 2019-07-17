@@ -13,16 +13,16 @@
 // limitations under the License.
 
 #include <errno.h>
-#include <nss.h>
-#include <stdlib.h>
-#include <pwd.h>
 #include <grp.h>
+#include <nss.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/param.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -31,9 +31,11 @@
 
 #ifdef DEBUG
 #undef DEBUG
-#define DEBUG(fmt, args...)                                                    \
+#define DEBUG(fmt, ...)                                                        \
   do {                                                                         \
-    fprintf(stderr, fmt, ##args);                                              \
+      openlog("nss_oslogin", LOG_PID|LOG_PERROR, LOG_DAEMON);                  \
+      syslog(LOG_ERR, fmt, ##__VA_ARGS__);                                     \
+      closelog();                                                              \
   } while (0)
 #else
 #define DEBUG(fmt, ...)                                                        \
