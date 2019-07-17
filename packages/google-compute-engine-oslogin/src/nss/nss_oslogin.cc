@@ -232,7 +232,7 @@ enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup,
     groups[(*start)++] = grouplist[i].gid;
   }
 
-  if (found)
+  if (!found)
     DEBUG("Would update cache\n");
   //update_initcache(&cached);
   return NSS_STATUS_SUCCESS;
