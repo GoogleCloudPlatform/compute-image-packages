@@ -129,7 +129,7 @@ static enum nss_status _nss_cache_oslogin_getpwent_r_locked(
 
   if (ret == NSS_STATUS_SUCCESS) {
     if (fgetpwent_r(p_file, result, buffer, buflen, &result) == 0) {
-      DEBUG("Returning user %d:%s\n", result->pw_uid, result->pw_name);
+      DEBUG("Returning user %s (%u)\n", result->pw_uid, result->pw_name);
     } else {
       if (errno == ENOENT) {
         errno = 0;
@@ -269,7 +269,7 @@ static enum nss_status _nss_cache_oslogin_getgrent_r_locked(struct group *result
 
     fgetpos(g_file, &position);
     if (fgetgrent_r(g_file, result, buffer, buflen, &result) == 0) {
-      DEBUG("Returning group %s (%d)\n", result->gr_name, result->gr_gid);
+      DEBUG("Returning group %s (%u)\n", result->gr_name, result->gr_gid);
     } else {
       /* Rewind back to where we were just before, otherwise the data read
        * into the buffer is probably going to be lost because there's no

@@ -772,6 +772,7 @@ bool ParseJsonToChallenges(const string& json, std::vector<Challenge>* challenge
 
 bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
   if (result->gr_name == NULL && result->gr_gid == 0) {
+    // Nobody told me what to find.
     return false;
   }
   std::stringstream url;
@@ -831,15 +832,28 @@ bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
 }
 
 bool GetGroupsForUser(string username, std::vector<Group>* groups, int* errnop) {
+  string response;
+  if (!(GetUser(username, &response))) {
+    DEBUG("GetGroupsForUser: !GetUser\n");
+    *errnop = ENOENT;
+    return false;
+  }
+
+  string email;
+  if (!ParseJsonToEmail(response, &email) || email.empty()) {
+    DEBUG("GetGroupsForUser: !ParseJsonToEmail\n");
+    *errnop = ENOENT;
+    return false;
+  }
+
   std::stringstream url;
 
-  string response;
   long http_code;
   string pageToken = "";
 
   do {
     url.str("");
-    url << kMetadataServerUrl << "groups?username=" << username;
+    url << kMetadataServerUrl << "groups?username=" << email;
     if (pageToken != "")
       url << "?pageToken=" << pageToken;
 
