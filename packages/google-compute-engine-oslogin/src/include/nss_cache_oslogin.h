@@ -33,7 +33,7 @@
 #undef DEBUG
 #define DEBUG(fmt, ...)                                                        \
   do {                                                                         \
-      openlog("nss_oslogin", LOG_PID|LOG_PERROR, LOG_DAEMON);                  \
+      openlog("nss_cache_oslogin", LOG_PID|LOG_PERROR, LOG_DAEMON);            \
       syslog(LOG_ERR, fmt, ##__VA_ARGS__);                                     \
       closelog();                                                              \
   } while (0)

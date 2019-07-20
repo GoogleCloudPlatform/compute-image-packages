@@ -129,7 +129,7 @@ static enum nss_status _nss_cache_oslogin_getpwent_r_locked(
 
   if (ret == NSS_STATUS_SUCCESS) {
     if (fgetpwent_r(p_file, result, buffer, buflen, &result) == 0) {
-      DEBUG("Returning user %s (%u)\n", result->pw_uid, result->pw_name);
+      DEBUG("Returning user %s (%u)\n", result->pw_name, result->pw_uid);
     } else {
       if (errno == ENOENT) {
         errno = 0;

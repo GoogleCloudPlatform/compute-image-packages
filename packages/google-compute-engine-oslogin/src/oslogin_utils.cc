@@ -660,11 +660,12 @@ bool AddUsersToGroup(std::vector<string> users, struct group* result,
   }
   result->gr_mem = bufp;
 
-  for (int i = 0; i < (int) users.size(); i++) {
+  for (int i = 0; i < (int)users.size(); i++) {
     if (!buf->AppendString(users[i], bufp, errnop)) {
       result->gr_mem = NULL;
       return false;
     }
+    bufp++;
   }
   *bufp = NULL;  // End the array with a null pointer.
 
