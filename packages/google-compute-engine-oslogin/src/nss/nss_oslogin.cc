@@ -127,86 +127,16 @@ enum nss_status _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf,
                                         size_t buflen, int *errnop) {
   memset(grp, 0, sizeof(struct group));
   grp->gr_gid = gid;
+  grp->gr_name = NULL; // This might be set by caller.
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
 // Get a group entry by name.
 enum nss_status _nss_oslogin_getgrnam_r(const char *name, struct group *grp,
                                         char *buf, size_t buflen, int *errnop) {
-  memset(grp, 0, sizeof(struct group));
   grp->gr_name = (char *)name;
+  grp->gr_gid = 0; // This might be set by caller; set it to invalid value.
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
-}
-
-bool initgroups_cached(const char *user, struct group *cached, char *buffer,
-                       size_t buflen, struct group **cachedp) {
-  static FILE *g_file = NULL;
-  if (!(g_file = fopen(OSLOGIN_INITGROUP_CACHE_PATH, "r"))) {
-    return false;
-  }
-  while (fgetgrent_r(g_file, cached, buffer, buflen, cachedp) == 0) {
-      if (!strcmp(cached->gr_name, user)) break;
-  }
-  return (cachedp != NULL) && 
-      (cached->gr_gid >= (time(NULL) - INITGROUP_CACHE_EXPIRE_SECONDS));
-}
-
-int fputgrent(FILE *stream, struct group grp) {
-  fprintf(stream, "%s:x:%ld:", grp.gr_name, time(NULL));
-  if (*grp.gr_mem != NULL) {
-    fprintf(stream, "%s", *grp.gr_mem);
-    grp.gr_mem++;
-
-    while(*(grp.gr_mem) != NULL) { 
-      fprintf(stream, ",%s", *grp.gr_mem);
-      grp.gr_mem++;
-    }
-  }
-  fprintf(stream, "\n");
-  return 0;
-}
-
-bool update_initcache(struct group *updated) {
-  static FILE *g_file, *new_g_file = NULL;
-  int exists = access(OSLOGIN_INITGROUP_CACHE_PATH, R_OK);
-  if (exists == 0 && !(g_file = fopen(OSLOGIN_INITGROUP_CACHE_PATH, "r"))) {
-    return false;
-  }
-  // TODO: LOCK
-  if (!(new_g_file = fopen(OSLOGIN_INITGROUP_CACHE_PATH".new", "w"))) {
-    return false;
-  }
-
-  struct group result;
-  struct group *resultp;
-  size_t buflen = 255; // TODO: constant for maximum size.
-  char buffer[buflen];
-
-  // Write updated entry first.
-  if (fputgrent(new_g_file, *updated) != 0) {
-    fclose(g_file);
-    fclose(new_g_file);
-    //TODO: UNLOCK
-    return false;
-  }
-
-  if (exists == 0) {
-    while (fgetgrent_r(g_file, &result, buffer, buflen, &resultp) == 0) {
-      if (strcmp(result.gr_name, updated->gr_name) == 0) {
-        continue;
-      }
-      if (fputgrent(new_g_file, *resultp) != 0) {
-        fclose(g_file);
-        fclose(new_g_file);
-        // TODO: UNLOCK
-        return false;
-      }
-    }
-  }
-  // TODO: perms
-  fclose(g_file);
-  fclose(new_g_file);
-  return rename(OSLOGIN_INITGROUP_CACHE_PATH".new", OSLOGIN_INITGROUP_CACHE_PATH) == 0;
 }
 
 // _nss_cache_oslogin_initgroups_dyn()
@@ -216,31 +146,16 @@ enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup,
                                             long int *start, long int *size,
                                             gid_t **groupsp, long int limit,
                                             int *errnop) {
+  // TODO: check if local cache file exists as a proxy for whether groups exist
+  // TODO: check if user exists in local passwd DB
   std::vector<Group> grouplist;
-  DEBUG("Initrgroups for %s\n", user);
-
-  struct group cached;
-  struct group *cachedp;
-  size_t buflen = 255;
-  char buffer[buflen];
-  bool found;
-  DEBUG("Checking cache\n");
-  if ((found = initgroups_cached(user, &cached, buffer, buflen, &cachedp))) {
-    DEBUG("Found user in cache\n");
-    for (int idx = 0; cached.gr_mem[idx] != NULL; idx++) {
-      Group g;
-      g.gid = atoi(cached.gr_mem[idx]);
-      grouplist.push_back(g);
-    }
-  }
-
-  DEBUG("Looking up groups\n");
-  if (!found && !GetGroupsForUser(string(user), &grouplist, errnop)) {
+  if (!GetGroupsForUser(string(user), &grouplist, errnop)) {
       return NSS_STATUS_NOTFOUND;
   }
 
   gid_t *groups = *groupsp;
-  for (int i = 0; i < (int) grouplist.size(); i++) {
+  int i;
+  for (i = 0; i < (int) grouplist.size(); i++) {
     // Resize the buffer if needed.
     if (*start == *size) {
       gid_t *newgroups;
@@ -264,9 +179,6 @@ enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup,
     groups[(*start)++] = grouplist[i].gid;
   }
 
-  if (!found)
-    DEBUG("Would update cache\n");
-  //update_initcache(&cached);
   return NSS_STATUS_SUCCESS;
 }
 
@@ -277,13 +189,21 @@ nss_status _nss_oslogin_getpwent_r() { return NSS_STATUS_NOTFOUND; }
 nss_status _nss_oslogin_endpwent() { return NSS_STATUS_SUCCESS; }
 nss_status _nss_oslogin_setpwent() { return NSS_STATUS_SUCCESS; }
 
+nss_status _nss_oslogin_getgrent_r() { return NSS_STATUS_NOTFOUND; }
+nss_status _nss_oslogin_endgrent() { return NSS_STATUS_SUCCESS; }
+nss_status _nss_oslogin_setgrent() { return NSS_STATUS_SUCCESS; }
+
 NSS_METHOD_PROTOTYPE(__nss_compat_getpwnam_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_getpwuid_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_getpwent_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_setpwent);
 NSS_METHOD_PROTOTYPE(__nss_compat_endpwent);
+
 NSS_METHOD_PROTOTYPE(__nss_compat_getgrnam_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_getgrgid_r);
+NSS_METHOD_PROTOTYPE(__nss_compat_getgrent_r);
+NSS_METHOD_PROTOTYPE(__nss_compat_setgrent);
+NSS_METHOD_PROTOTYPE(__nss_compat_endgrent);
 
 DECLARE_NSS_METHOD_TABLE(methods,
                          {NSDB_PASSWD, "getpwnam_r", __nss_compat_getpwnam_r,
