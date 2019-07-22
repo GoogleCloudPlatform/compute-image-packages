@@ -67,6 +67,7 @@ int refreshpasswdcache() {
   chown(kDefaultFilePath, 0, 0);
   chmod(kDefaultFilePath, S_IRUSR | S_IWUSR | S_IROTH);
 
+  int count = 0;
   nss_cache.Reset();
   while (!nss_cache.OnLastPage() || nss_cache.HasNextEntry()) {
     BufferManager buffer_manager(buffer, kPasswdBufferSize);
@@ -74,6 +75,7 @@ int refreshpasswdcache() {
       break;
     }
     cache_file << pwd.pw_name << ":" << pwd.pw_passwd << ":" << pwd.pw_uid << ":" << pwd.pw_gid << ":" << pwd.pw_gecos << ":" << pwd.pw_dir << ":" << pwd.pw_shell << "\n";
+    count++;
   }
   cache_file.close();
 
@@ -92,7 +94,7 @@ int refreshpasswdcache() {
     return error_code;
   }
 
-  if (rename(kDefaultBackupFilePath, kDefaultFilePath) != 0) {
+  if ((count > 0) && (rename(kDefaultBackupFilePath, kDefaultFilePath) != 0)) {
     openlog("oslogin_cache_refresh", LOG_PID, LOG_USER);
     syslog(LOG_ERR, "Could not move passwd cache file.");
     closelog();
@@ -118,6 +120,7 @@ int refreshgroupcache() {
   chmod(kDefaultGroupPath, S_IRUSR | S_IWUSR | S_IROTH);
 
   struct group grp;
+  int count = 0;
   nss_cache.Reset();
   while (!nss_cache.OnLastPage() || nss_cache.HasNextEntry()) {
     BufferManager buffer_manager(buffer, kPasswdBufferSize);
@@ -136,6 +139,7 @@ int refreshgroupcache() {
       cache_file << "," << user;
     }
     cache_file << "\n";
+    count++;
   }
   cache_file.close();
 
@@ -154,7 +158,7 @@ int refreshgroupcache() {
     return error_code;
   }
 
-  if (rename(kDefaultBackupGroupPath, kDefaultGroupPath) != 0) {
+  if ((count > 0) && (rename(kDefaultBackupGroupPath, kDefaultGroupPath) != 0)) {
     openlog("oslogin_cache_refresh", LOG_PID, LOG_USER);
     syslog(LOG_ERR, "Could not move group cache file.");
     closelog();
