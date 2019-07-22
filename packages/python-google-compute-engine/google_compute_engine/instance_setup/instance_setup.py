@@ -38,7 +38,7 @@ class PutRequest(urlrequest.Request):
     return 'PUT'
 
 
-GUEST_ATTRIBUTES_URL = ('http://metadata.google.internal/computeMetadata/v1beta1/'
+GUEST_ATTRIBUTES_URL = ('http://metadata.google.internal/computeMetadata/v1/'
                         'instance/guest-attributes')
 HOSTKEY_NAMESPACE = 'hostkeys'
 

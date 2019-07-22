@@ -336,7 +336,7 @@ class InstanceSetupTest(unittest.TestCase):
     key_type = 'ssh-rsa'
     key_value = 'asdfasdf'
     encoded_key_value = key_value.encode('utf-8')
-    expected_url = ('http://metadata.google.internal/computeMetadata/v1beta1/'
+    expected_url = ('http://metadata.google.internal/computeMetadata/v1/'
                     'instance/guest-attributes/hostkeys/%s' % key_type)
     headers = {'Metadata-Flavor': 'Google'}
 
