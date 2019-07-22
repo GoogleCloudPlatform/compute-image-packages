@@ -108,6 +108,9 @@ enum nss_status _nss_oslogin_getpwnam_r(const char *name, struct passwd *result,
 
 enum nss_status _nss_oslogin_getgrby(struct group *grp, char *buf,
                                      size_t buflen, int *errnop) {
+  // If there is no cache file, we will assume there are no groups.
+  if (access(OSLOGIN_GROUP_CACHE_PATH, R_OK) != 0)
+    return NSS_STATUS_NOTFOUND;
   BufferManager buffer_manager(buf, buflen);
   if (!FindGroup(grp, &buffer_manager, errnop))
     return *errnop == ERANGE ? NSS_STATUS_TRYAGAIN : NSS_STATUS_NOTFOUND;
@@ -146,6 +149,8 @@ enum nss_status _nss_oslogin_getsguid_r(gid_t gid, struct group *grp,
   if (!buffer_manager.AppendString(result.pw_name, &grp->gr_name, &errnop))
     return NSS_STATUS_NOTFOUND;
 
+  grp->gr_gid = result.pw_uid;
+
   // Create a list of only the matching user and add to members list.
   std::vector<string> members;
   members.push_back(string(result.pw_name));
@@ -179,6 +184,8 @@ enum nss_status _nss_oslogin_getsgnam_r(const char* name, struct group *grp,
   if (!buffer_manager.AppendString(result.pw_name, &grp->gr_name, &errnop))
     return NSS_STATUS_NOTFOUND;
 
+  grp->gr_gid = result.pw_uid;
+
   // Create a list of only the matching user and add to members list.
   std::vector<string> members;
   members.push_back(string(result.pw_name));
@@ -188,7 +195,9 @@ enum nss_status _nss_oslogin_getsgnam_r(const char* name, struct group *grp,
   return NSS_STATUS_SUCCESS;
 }
 
+// _nss_olosing_getgrgid_r()
 // Get a group entry by id.
+
 enum nss_status _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf,
                                         size_t buflen, int *errnop) {
   memset(grp, 0, sizeof(struct group));
@@ -198,7 +207,9 @@ enum nss_status _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf,
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
+// _nss_oslogin_getgrnam_r()
 // Get a group entry by name.
+
 enum nss_status _nss_oslogin_getgrnam_r(const char *name, struct group *grp,
                                         char *buf, size_t buflen, int *errnop) {
   memset(grp, 0, sizeof(struct group));
@@ -215,11 +226,16 @@ enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup,
                                             long int *start, long int *size,
                                             gid_t **groupsp, long int limit,
                                             int *errnop) {
-  // TODO: all groups fns: check if local cache file exists as a proxy for
-  //       whether groups exist
-  // TODO: initgroups: check if user exists in local passwd DB first, bc it
-  //       doesn't run after cache is checked
-  // TODO: function refactoring, use c vs adduserstogroup, etc
+  // check if user exists in local passwd DB
+  FILE *p_file = fopen(OSLOGIN_PASSWD_CACHE_PATH, "r");
+  if (p_file == NULL)
+    return NSS_STATUS_NOTFOUND;
+  struct passwd *userp;
+  while ((userp = fgetpwent(p_file)) != NULL)
+    if (strcmp(userp->pw_name, user) == 0)
+      return NSS_STATUS_NOTFOUND;
+  fclose(p_file);
+
   std::vector<Group> grouplist;
   if (!GetGroupsForUser(string(user), &grouplist, errnop)) {
       return NSS_STATUS_NOTFOUND;

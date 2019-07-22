@@ -59,7 +59,7 @@ int refreshpasswdcache() {
 
   std::ofstream cache_file(kDefaultBackupFilePath);
   if (cache_file.fail()) {
-    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    openlog("oslogin_cache_refresh", LOG_PID, LOG_USER);
     syslog(LOG_ERR, "Failed to open file %s.", kDefaultFilePath);
     closelog();
     return -1;
@@ -79,7 +79,7 @@ int refreshpasswdcache() {
 
   // Check for errors.
   if (error_code) {
-    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    openlog("oslogin_cache_refresh", LOG_PID, LOG_USER);
     if (error_code == ERANGE) {
       syslog(LOG_ERR, "Received unusually large passwd entry.");
     } else if (error_code == EINVAL) {
@@ -89,10 +89,14 @@ int refreshpasswdcache() {
     }
     closelog();
     remove(kDefaultBackupFilePath);
-  } else if (rename(kDefaultBackupFilePath, kDefaultFilePath) != 0) {
-    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    return error_code;
+  }
+
+  if (rename(kDefaultBackupFilePath, kDefaultFilePath) != 0) {
+    openlog("oslogin_cache_refresh", LOG_PID, LOG_USER);
     syslog(LOG_ERR, "Could not move passwd cache file.");
     closelog();
+    remove(kDefaultBackupFilePath);
   }
 
   return error_code;
@@ -105,7 +109,7 @@ int refreshgroupcache() {
 
   std::ofstream cache_file(kDefaultBackupGroupPath);
   if (cache_file.fail()) {
-    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    openlog("oslogin_cache_refresh", LOG_PID, LOG_USER);
     syslog(LOG_ERR, "Failed to open file %s.", kDefaultBackupGroupPath);
     closelog();
     return -1;
@@ -137,7 +141,7 @@ int refreshgroupcache() {
 
   // Check for errors.
   if (error_code) {
-    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    openlog("oslogin_cache_refresh", LOG_PID, LOG_USER);
     if (error_code == ERANGE) {
       syslog(LOG_ERR, "Received unusually large group entry.");
     } else if (error_code == EINVAL) {
@@ -147,19 +151,24 @@ int refreshgroupcache() {
     }
     closelog();
     remove(kDefaultBackupGroupPath);
-  } else if (rename(kDefaultBackupGroupPath, kDefaultGroupPath) != 0) {
-    openlog("nss_cache_oslogin", LOG_PID, LOG_USER);
+    return error_code;
+  }
+
+  if (rename(kDefaultBackupGroupPath, kDefaultGroupPath) != 0) {
+    openlog("oslogin_cache_refresh", LOG_PID, LOG_USER);
     syslog(LOG_ERR, "Could not move group cache file.");
     closelog();
+    remove(kDefaultBackupGroupPath);
   }
 
   return error_code;
 }
 
 int main() {
-  int res = 0;
-  if ((res = refreshpasswdcache()) != 0) {
-    return res;
-  }
-  return refreshgroupcache();
+  int u_res, g_res;
+  u_res = refreshpasswdcache();
+  g_res = refreshgroupcache();
+  if (u_res != 0)
+    return u_res;
+  return g_res;
 }
