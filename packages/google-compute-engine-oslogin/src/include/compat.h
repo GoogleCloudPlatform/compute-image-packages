@@ -40,9 +40,13 @@ nss_module_register (const char *name, unsigned int *size,      \
 
 #define OSLOGIN_PASSWD_CACHE_PATH "/usr/local/etc/oslogin_passwd.cache"
 #define OSLOGIN_GROUP_CACHE_PATH "/usr/local/etc/oslogin_group.cache"
-#define OSLOGIN_INITGROUP_CACHE_PATH "/usr/local/etc/oslogin_initgroup.cache"
-#define K_DEFAULT_FILE_PATH "/usr/local/etc/oslogin_passwd.cache"
-#define K_DEFAULT_BACKUP_FILE_PATH "/usr/local/etc/oslogin_passwd.cache.bak"
+#define PASSWD_PATH "/usr/local/etc/passwd"
+
+#define K_DEFAULT_PFILE_PATH "/usr/local/etc/oslogin_passwd.cache"
+#define K_DEFAULT_BACKUP_PFILE_PATH "/usr/local/etc/oslogin_passwd.cache.bak"
+#define K_DEFAULT_GFILE_PATH "/usr/local/etc/oslogin_group.cache"
+#define K_DEFAULT_BACKUP_GFILE_PATH "/usr/local/etc/oslogin_group.cache.bak"
+
 #define PAM_SYSLOG(pamh, ...) syslog(__VA_ARGS__)
 #define DEFAULT_SHELL "/bin/sh"
 
@@ -50,16 +54,21 @@ nss_module_register (const char *name, unsigned int *size,      \
 
 #include <security/pam_ext.h>
 
-#define DECLARE_NSS_METHOD_TABLE(name, ...)
 #define OSLOGIN_PASSWD_CACHE_PATH "/etc/oslogin_passwd.cache"
 #define OSLOGIN_GROUP_CACHE_PATH "/etc/oslogin_group.cache"
-#define OSLOGIN_INITGROUP_CACHE_PATH "/etc/oslogin_initgroup.cache"
-#define NSS_METHOD_PROTOTYPE(m)
-#define NSS_REGISTER_METHODS(methods)
-#define K_DEFAULT_FILE_PATH "/etc/oslogin_passwd.cache"
-#define K_DEFAULT_BACKUP_FILE_PATH "/etc/oslogin_passwd.cache.bak"
+#define PASSWD_PATH "/etc/passwd"
+
+#define K_DEFAULT_PFILE_PATH "/etc/oslogin_passwd.cache"
+#define K_DEFAULT_BACKUP_PFILE_PATH "/etc/oslogin_passwd.cache.bak"
+#define K_DEFAULT_GFILE_PATH "/etc/oslogin_group.cache"
+#define K_DEFAULT_BACKUP_GFILE_PATH "/etc/oslogin_group.cache.bak"
+
 #define PAM_SYSLOG pam_syslog
 #define DEFAULT_SHELL "/bin/bash"
+
+#define DECLARE_NSS_METHOD_TABLE(name, ...)
+#define NSS_METHOD_PROTOTYPE(m)
+#define NSS_REGISTER_METHODS(methods)
 
 #endif /* __FreeBSD__ */
 

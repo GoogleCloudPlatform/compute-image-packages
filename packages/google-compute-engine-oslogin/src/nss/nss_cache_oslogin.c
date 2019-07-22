@@ -331,7 +331,7 @@ enum nss_status _nss_cache_oslogin_getgrgid_r(gid_t gid, struct group *result,
     strncpy(string, user.pw_name, name_len);
     result->gr_name = string;
 
-    // member array starts past string.
+    // member array starts past strings.
     char **strarray = (char **)((size_t) string + name_len);
     strarray[0] = string;
     strarray[1] = NULL;
@@ -383,7 +383,7 @@ enum nss_status _nss_cache_oslogin_getgrnam_r(const char *name, struct group *re
     strncpy(string, user.pw_name, name_len);
     result->gr_name = string;
 
-    // member array starts past string.
+    // member array starts past strings.
     char **strarray = (char **)((size_t) string + name_len);
     strarray[0] = string;
     strarray[1] = NULL;

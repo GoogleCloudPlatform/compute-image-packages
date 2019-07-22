@@ -41,16 +41,8 @@ using oslogin_utils::GetUsersForGroup;
 using oslogin_utils::Group;
 using oslogin_utils::HttpGet;
 using oslogin_utils::kMetadataServerUrl;
-using oslogin_utils::NssCache;
 using oslogin_utils::ParseJsonToPasswd;
 using oslogin_utils::UrlEncode;
-
-// Size of the NssCache. This also determines how many users will be requested
-// per HTTP call.
-static const uint64_t kNssCacheSize = 2048;
-
-// NssCache for storing passwd entries.
-static NssCache nss_cache(kNssCacheSize);
 
 extern "C" {
 
@@ -125,8 +117,9 @@ enum nss_status _nss_oslogin_getgrby(struct group *grp, char *buf,
   return NSS_STATUS_SUCCESS;
 }
 
-// looks for a user matching the requested group.
-enum nss_status _nss_oslogin_getsguid_r(gid_t gid, struct group *grp,
+// look for OS Login user with uid matching the requested gid, and craft a
+// self-group for it.
+enum nss_status getselfgrgid(gid_t gid, struct group *grp,
                                           char *buf, size_t buflen) {
   BufferManager buffer_manager(buf, buflen);
   std::stringstream url;
@@ -160,8 +153,9 @@ enum nss_status _nss_oslogin_getsguid_r(gid_t gid, struct group *grp,
   return NSS_STATUS_SUCCESS;
 }
 
-// looks for a user matching the requested group.
-enum nss_status _nss_oslogin_getsgnam_r(const char* name, struct group *grp,
+// look for OS Login user with name matching the requested name, and craft a
+// self-group for it.
+enum nss_status getselfgrnam(const char* name, struct group *grp,
                                           char *buf, size_t buflen) {
   BufferManager buffer_manager(buf, buflen);
   std::stringstream url;
@@ -201,7 +195,7 @@ enum nss_status _nss_oslogin_getsgnam_r(const char* name, struct group *grp,
 enum nss_status _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf,
                                         size_t buflen, int *errnop) {
   memset(grp, 0, sizeof(struct group));
-  if (_nss_oslogin_getsguid_r(gid, grp, buf, buflen) == NSS_STATUS_SUCCESS)
+  if (getselfgrgid(gid, grp, buf, buflen) == NSS_STATUS_SUCCESS)
       return NSS_STATUS_SUCCESS;
   grp->gr_gid = gid;
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
@@ -213,7 +207,7 @@ enum nss_status _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf,
 enum nss_status _nss_oslogin_getgrnam_r(const char *name, struct group *grp,
                                         char *buf, size_t buflen, int *errnop) {
   memset(grp, 0, sizeof(struct group));
-  if (_nss_oslogin_getsgnam_r(name, grp, buf, buflen) == NSS_STATUS_SUCCESS)
+  if (getselfgrnam(name, grp, buf, buflen) == NSS_STATUS_SUCCESS)
       return NSS_STATUS_SUCCESS;
   grp->gr_name = (char *)name;
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
@@ -227,7 +221,7 @@ enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup,
                                             gid_t **groupsp, long int limit,
                                             int *errnop) {
   // check if user exists in local passwd DB
-  FILE *p_file = fopen(OSLOGIN_PASSWD_CACHE_PATH, "r");
+  FILE *p_file = fopen(PASSWD_PATH, "r");
   if (p_file == NULL)
     return NSS_STATUS_NOTFOUND;
   struct passwd *userp;

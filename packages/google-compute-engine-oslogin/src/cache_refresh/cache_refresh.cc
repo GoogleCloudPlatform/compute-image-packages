@@ -36,20 +36,20 @@ using oslogin_utils::NssCache;
 using oslogin_utils::GetUsersForGroup;
 
 // File paths for the nss cache file.
-static const char kDefaultFilePath[] = K_DEFAULT_FILE_PATH;
-static const char kDefaultBackupFilePath[] = K_DEFAULT_BACKUP_FILE_PATH;
-static const char kDefaultGroupPath[] = "/etc/oslogin_group.cache";
-static const char kDefaultBackupGroupPath[] = "/etc/oslogin_group.cache.bak";
+static const char kDefaultFilePath[] = K_DEFAULT_PFILE_PATH;
+static const char kDefaultBackupFilePath[] = K_DEFAULT_BACKUP_PFILE_PATH;
+static const char kDefaultGroupPath[] = K_DEFAULT_GFILE_PATH;
+static const char kDefaultBackupGroupPath[] = K_DEFAULT_BACKUP_GFILE_PATH;
 
-// Local NSS Cache size. This affects the maximum number of passwd entries per
-// http request.
-static const uint64_t kNssCacheSize = 2048;
+// Local NSS Cache size. This affects the maximum number of passwd or group
+// entries per http request.
+static const uint64_t kNssCacheSize = 499;
 
 // Passwd buffer size. We are guaranteed that a single OS Login user will not
 // exceed 32k.
 static const uint64_t kPasswdBufferSize = 32768;
 
-static NssCache nss_cache(499);
+static NssCache nss_cache(kNssCacheSize);
 
 int refreshpasswdcache() {
   int error_code = 0;

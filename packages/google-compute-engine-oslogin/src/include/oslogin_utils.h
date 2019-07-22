@@ -151,8 +151,8 @@ class NssCache {
   bool on_last_page_;
 
   // Not copyable or assignable.
-  //NssCache& operator=(const NssCache&);
-  //NssCache(const NssCache&);
+  NssCache& operator=(const NssCache&);
+  NssCache(const NssCache&);
 };
 
 // Auto locks and unlocks a given mutex on construction/destruction. Does NOT
