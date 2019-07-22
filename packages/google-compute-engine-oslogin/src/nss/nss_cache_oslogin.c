@@ -166,6 +166,7 @@ enum nss_status _nss_cache_oslogin_getpwuid_r(uid_t uid, struct passwd *result,
 
   NSS_CACHE_OSLOGIN_LOCK();
   ret = _nss_cache_oslogin_setpwent_locked();
+
   if (ret == NSS_STATUS_SUCCESS) {
     while ((ret = _nss_cache_oslogin_getpwent_r_locked(
                 result, buffer, buflen, errnop)) == NSS_STATUS_SUCCESS) {
