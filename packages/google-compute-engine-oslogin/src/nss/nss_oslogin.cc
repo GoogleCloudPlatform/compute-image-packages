@@ -122,20 +122,89 @@ enum nss_status _nss_oslogin_getgrby(struct group *grp, char *buf,
   return NSS_STATUS_SUCCESS;
 }
 
+// looks for a user matching the requested group.
+enum nss_status _nss_oslogin_getsguid_r(gid_t gid, struct group *grp,
+                                          char *buf, size_t buflen) {
+  BufferManager buffer_manager(buf, buflen);
+  std::stringstream url;
+  url << kMetadataServerUrl << "users?uid=" << gid;
+  string response;
+  long http_code = 0;
+  if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+      response.empty()) {
+    return NSS_STATUS_NOTFOUND;
+  }
+  struct passwd result;
+  int errnop;
+  if (!ParseJsonToPasswd(response, &result, &buffer_manager, &errnop))
+    return NSS_STATUS_NOTFOUND;
+
+  if (result.pw_gid != result.pw_uid)
+    return NSS_STATUS_NOTFOUND;
+
+  // Set the group name to the name of the matching user.
+  if (!buffer_manager.AppendString(result.pw_name, &grp->gr_name, &errnop))
+    return NSS_STATUS_NOTFOUND;
+
+  // Create a list of only the matching user and add to members list.
+  std::vector<string> members;
+  members.push_back(string(result.pw_name));
+  if (!AddUsersToGroup(members, grp, &buffer_manager, &errnop))
+    return NSS_STATUS_NOTFOUND;
+
+  return NSS_STATUS_SUCCESS;
+}
+
+// looks for a user matching the requested group.
+enum nss_status _nss_oslogin_getsgnam_r(const char* name, struct group *grp,
+                                          char *buf, size_t buflen) {
+  BufferManager buffer_manager(buf, buflen);
+  std::stringstream url;
+  url << kMetadataServerUrl << "users?username=" << UrlEncode(string(name));
+  string response;
+  long http_code = 0;
+  if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+      response.empty()) {
+    return NSS_STATUS_NOTFOUND;
+  }
+  struct passwd result;
+  int errnop;
+  if (!ParseJsonToPasswd(response, &result, &buffer_manager, &errnop))
+    return NSS_STATUS_NOTFOUND;
+
+  if (result.pw_gid != result.pw_uid)
+    return NSS_STATUS_NOTFOUND;
+
+  // Set the group name to the name of the matching user.
+  if (!buffer_manager.AppendString(result.pw_name, &grp->gr_name, &errnop))
+    return NSS_STATUS_NOTFOUND;
+
+  // Create a list of only the matching user and add to members list.
+  std::vector<string> members;
+  members.push_back(string(result.pw_name));
+  if (!AddUsersToGroup(members, grp, &buffer_manager, &errnop))
+    return NSS_STATUS_NOTFOUND;
+
+  return NSS_STATUS_SUCCESS;
+}
+
 // Get a group entry by id.
 enum nss_status _nss_oslogin_getgrgid_r(gid_t gid, struct group *grp, char *buf,
                                         size_t buflen, int *errnop) {
   memset(grp, 0, sizeof(struct group));
+  if (_nss_oslogin_getsguid_r(gid, grp, buf, buflen) == NSS_STATUS_SUCCESS)
+      return NSS_STATUS_SUCCESS;
   grp->gr_gid = gid;
-  grp->gr_name = NULL; // This might be set by caller.
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
 // Get a group entry by name.
 enum nss_status _nss_oslogin_getgrnam_r(const char *name, struct group *grp,
                                         char *buf, size_t buflen, int *errnop) {
+  memset(grp, 0, sizeof(struct group));
+  if (_nss_oslogin_getsgnam_r(name, grp, buf, buflen) == NSS_STATUS_SUCCESS)
+      return NSS_STATUS_SUCCESS;
   grp->gr_name = (char *)name;
-  grp->gr_gid = 0; // This might be set by caller; set it to invalid value.
   return _nss_oslogin_getgrby(grp, buf, buflen, errnop);
 }
 
@@ -146,8 +215,11 @@ enum nss_status _nss_oslogin_initgroups_dyn(const char *user, gid_t skipgroup,
                                             long int *start, long int *size,
                                             gid_t **groupsp, long int limit,
                                             int *errnop) {
-  // TODO: check if local cache file exists as a proxy for whether groups exist
-  // TODO: check if user exists in local passwd DB
+  // TODO: all groups fns: check if local cache file exists as a proxy for
+  //       whether groups exist
+  // TODO: initgroups: check if user exists in local passwd DB first, bc it
+  //       doesn't run after cache is checked
+  // TODO: function refactoring, use c vs adduserstogroup, etc
   std::vector<Group> grouplist;
   if (!GetGroupsForUser(string(user), &grouplist, errnop)) {
       return NSS_STATUS_NOTFOUND;

@@ -14,6 +14,7 @@
 
 // An NSS module which adds supports for file /etc/oslogin_passwd.cache
 
+#include <nss.h>
 #include <nss_cache_oslogin.h>
 #include <compat.h>
 
@@ -311,6 +312,34 @@ enum nss_status _nss_cache_oslogin_getgrgid_r(gid_t gid, struct group *result,
                                       int *errnop) {
   enum nss_status ret;
 
+  // First check for user whose UID matches requested GID, for self-groups.
+  struct passwd user;
+  size_t userbuflen = 1024;
+  char userbuf[userbuflen];
+  ret = _nss_cache_oslogin_getpwuid_r(gid, &user, userbuf, userbuflen, errnop);
+  if (ret == NSS_STATUS_SUCCESS && user.pw_gid == user.pw_uid) {
+    result->gr_gid = user.pw_gid;
+
+    // store "x" for password.
+    char* string = buffer;
+    strncpy(string, "x", 2);
+    result->gr_passwd = string;
+
+    // store name.
+    string = (char *)((size_t) string + 2);
+    size_t name_len = strlen(user.pw_name)+1;
+    strncpy(string, user.pw_name, name_len);
+    result->gr_name = string;
+
+    // member array starts past string.
+    char **strarray = (char **)((size_t) string + name_len);
+    strarray[0] = string;
+    strarray[1] = NULL;
+    result->gr_mem = strarray;
+
+    return NSS_STATUS_SUCCESS;
+  }
+
   NSS_CACHE_OSLOGIN_LOCK();
   ret = _nss_cache_oslogin_setgrent_locked();
 
@@ -334,6 +363,34 @@ enum nss_status _nss_cache_oslogin_getgrnam_r(const char *name, struct group *re
                                       char *buffer, size_t buflen,
                                       int *errnop) {
   enum nss_status ret;
+
+  // First check for user whose name matches request, for self-groups.
+  struct passwd user;
+  size_t userbuflen = 1024;
+  char userbuf[userbuflen];
+  ret = _nss_cache_oslogin_getpwnam_r(name, &user, userbuf, userbuflen, errnop);
+  if (ret == NSS_STATUS_SUCCESS && user.pw_gid == user.pw_uid) {
+    result->gr_gid = user.pw_gid;
+
+    // store "x" for password.
+    char* string = buffer;
+    strncpy(string, "x", 2);
+    result->gr_passwd = string;
+
+    // store name.
+    string = (char *)((size_t) string + 2);
+    size_t name_len = strlen(user.pw_name)+1;
+    strncpy(string, user.pw_name, name_len);
+    result->gr_name = string;
+
+    // member array starts past string.
+    char **strarray = (char **)((size_t) string + name_len);
+    strarray[0] = string;
+    strarray[1] = NULL;
+    result->gr_mem = strarray;
+
+    return NSS_STATUS_SUCCESS;
+  }
 
   NSS_CACHE_OSLOGIN_LOCK();
   ret = _nss_cache_oslogin_setgrent_locked();

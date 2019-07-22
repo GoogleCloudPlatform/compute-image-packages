@@ -771,6 +771,8 @@ bool ParseJsonToChallenges(const string& json, std::vector<Challenge>* challenge
 
 // ----------------- OS Login functions -----------------
 
+// TODO: this function reads all groups comparing names or gids; it should be
+// replaced by groups?groupname= lookup when this is available.
 bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
   if (result->gr_name == NULL && result->gr_gid == 0) {
     // Nobody told me what to find.
