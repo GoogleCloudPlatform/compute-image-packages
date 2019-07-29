@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="google-compute-engine-oslogin"
-VERSION="20190708.00"
+VERSION="20190729.00"
 
 DEB=$(cut -d. -f1 </etc/debian_version)
 if [[ -z $DEB ]]; then

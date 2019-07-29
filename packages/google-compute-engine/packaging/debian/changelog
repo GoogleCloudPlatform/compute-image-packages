@@ -1,3 +1,10 @@
+google-compute-engine (1:20190729.00-g1) stable; urgency=medium
+
+  * Suport Google Private Access over IPv6.
+  * Switch to v1 guest attributes URL.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 29 Jul 2019 10:07:29 -0700
+
 google-compute-engine (1:20190708.00-g1) stable; urgency=medium
 
   * Drop unnecessary build and package dependencies.

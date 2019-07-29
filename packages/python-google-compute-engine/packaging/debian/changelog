@@ -1,3 +1,9 @@
+python-google-compute-engine (1:20190729.00-g1) stable; urgency=medium
+
+  * Support for Google Private Access over IPv6.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 29 Jul 2019 10:09:24 -0700
+
 python-google-compute-engine (1:20190708.00-g1) stable; urgency=medium
 
   * Move Debian entry point scripts to python3.
