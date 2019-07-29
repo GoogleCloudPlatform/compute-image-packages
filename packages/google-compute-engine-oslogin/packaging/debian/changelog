@@ -1,8 +1,21 @@
+google-compute-engine-oslogin (1:20190729.00-g1) stable; urgency=medium
+
+  * Remove unnecessary binary search logic.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 29 Jul 2019 10:11:00 -0700
+
+google-compute-engine-oslogin (1:20190708.00-g1) stable; urgency=medium
+
+  * Restructure Makefile and Debian control files.
+  * Add man pages.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 08 Jul 2019 10:20:01 -0700
+
 google-compute-engine-oslogin (1.5.3-1) unstable; urgency=low
 
   * Update OS Login control file for FreeBSD support.
 
- -- Google Cloud Team <gc-team@google.com>  Tue, 22 Nay 2019 12:00:00 -0700
+ -- Google Cloud Team <gc-team@google.com>  Wed, 22 May 2019 12:00:00 -0700
 
 google-compute-engine-oslogin (1.5.2-1) unstable; urgency=low
 

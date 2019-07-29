@@ -1,8 +1,23 @@
+google-compute-engine (1:20190729.00-g1) stable; urgency=medium
+
+  * Suport Google Private Access over IPv6.
+  * Switch to v1 guest attributes URL.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 29 Jul 2019 10:07:29 -0700
+
+google-compute-engine (1:20190708.00-g1) stable; urgency=medium
+
+  * Drop unnecessary build and package dependencies.
+  * Log to journal and console directly from systemd service files.
+  * Update Debian build dependencies.
+
+ -- Google Cloud Team <gc-team@google.com>  Mon, 08 Jul 2019 10:20:15 -0700
+
 google-compute-engine (2.8.16-1) stable; urgency=low
 
   * Fix instance setup in Python 3 environments.
 
- -- Google Cloud Team <gc-team@google.com>  Tue, 22 May 2019 12:00:00 -0700
+ -- Google Cloud Team <gc-team@google.com>  Wed, 22 May 2019 12:00:00 -0700
 
 google-compute-engine (2.8.15-1) stable; urgency=low
 

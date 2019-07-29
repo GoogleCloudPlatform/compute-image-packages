@@ -16,7 +16,7 @@
 #include <sstream>
 #include <string>
 
-#include "../utils/oslogin_utils.h"
+#include <oslogin_utils.h>
 
 using std::cout;
 using std::endl;

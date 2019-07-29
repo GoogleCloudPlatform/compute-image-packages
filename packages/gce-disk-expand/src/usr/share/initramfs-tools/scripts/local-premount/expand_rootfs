@@ -26,7 +26,7 @@ case $1 in
 esac
 
 . /scripts/functions
-. /local-premount/expandfs-lib.sh
+. /scripts/expandfs-lib.sh
 
 if ! rootdev=$(resolve_device "${ROOT}"); then
   log_failure_message "Failed to resolve root device for \"${ROOT}\""
@@ -36,34 +36,32 @@ if ! fs_type=$(get_fstype "${rootdev}"); then
   log_failure_message "Failed to determine fstype for \"${rootdev}\""
 fi
 
-if ! out=$(get_partition "$rootdev"); then
-  echo "Failed to detect disk and partition info: ${out}"
+if ! out=$(split_partition "$rootdev"); then
+  log_failure_message "Failed to detect disk and partition info: ${out}"
   exit 0
 fi
 
 disk=${out%:*}
 partnum=${out#*:}
 
-if ! parted_needresize "$rootdisk" "$partnum"; then
+if ! parted_needresize "${disk}" "${partnum}"; then
+  log_success_message "Disk ${rootdev} doesn't need resizing."
   exit 0
 fi
 
-echo "Resizing disk ${rootdev}"
-
-if ! out=$(parted_fix_gpt); then
-  echo "$out"
+if ! out=$(parted_fix_gpt "$disk"); then
+  log_failure_message "Failed to fix GPT: ${out}"
   exit 0
 fi
 
-if parted --help | grep -q 'resizepart'; then
-  if ! out=$(parted_resizepart "$disk" "$partnum"); then
-    echo "Failed to resize partition: ${out}"
-    exit 0
-  fi
-else
-  echo "No 'resizepart' command in this parted, trying rm&&mkpart"
-  if ! out=$(parted_resize_mkpart "$disk" "$partnum"); then
-    echo "Failed to resize partition: ${out}"
-    exit 0
-  fi
+echo "Resizing partition on ${rootdev}"
+if ! out=$(parted_resizepart "${disk}" "${partnum}"); then
+  log_failure_message "Failed to resize partition: ${out}"
+  exit 0
+fi
+
+echo "Resizing filesystem on ${rootdev}"
+if ! out=$(resize_filesystem "${rootdev}"); then
+  log_failure_message "Failed to resize filesystem: ${out}"
+  exit 0
 fi

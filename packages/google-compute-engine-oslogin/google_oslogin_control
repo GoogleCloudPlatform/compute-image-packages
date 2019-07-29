@@ -201,6 +201,9 @@ modify_pam_config() (
     # Get location of system-remote-login.
     insert=$($sed -rn "/^auth\s+include\s+system-remote-login/=" "$pam_sshd_config")
     # TODO: find su_insert point for arch linux.
+  elif is_freebsd; then
+    # Get location of the first auth occurrence
+    insert=$($sed -rn '/^auth/=' "$pam_sshd_config" | head -1)
   fi
 
   added_config="$added_comment"
@@ -223,7 +226,7 @@ modify_pam_config() (
   # Insert su blocker at top of `su:account` stack.
   if [ -n "$su_insert" ] && ! grep -qE "$pam_account_su" "$pam_su_config"; then
     added_su_config="${added_comment}\n${pam_account_su}"
-    sed -i"" "${su_insert}i ${added_su_config}" "$pam_su_config"
+    $sed -i"" "${su_insert}i ${added_su_config}" "$pam_su_config"
   fi
 
   # Append account modules at end of `sshd:account` stack.
@@ -255,6 +258,12 @@ restore_pam_config() {
 }
 
 modify_group_conf() {
+  # In FreeBSD there is no pam_group config file similar to
+  # /etc/security/group.conf.
+  if is_freebsd; then
+    return
+  fi
+
   local group_config="${1:-${group_config}}"
   local group_conf_entry="sshd;*;*;Al0000-2400;adm,dip,docker,lxd,plugdev,video"
 
@@ -264,6 +273,12 @@ modify_group_conf() {
 }
 
 restore_group_conf() {
+  # In FreeBSD there is no pam_group config file similar to
+  # /etc/security/group.conf.
+  if is_freebsd; then
+    return
+  fi
+
   local group_config="${1:-${group_config}}"
 
   $sed -i"" "/${added_comment}/{n;d}" "$group_config"
@@ -286,7 +301,7 @@ restart_service() {
 
   # Use the service helper if it exists.
   if command -v service > /dev/null; then
-    if ! service "$service" status 2>&1 | grep -q unrecognized; then
+    if ! service "$service" status 2>&1 | grep -Eq "unrecognized|does not exist"; then
       service "$service" restart
       return $?
     else

@@ -15,17 +15,22 @@
 
 # Contains dracut-specific logic for detecting disk, then calls appropriate
 # library functions.
+
+kmsg() {
+  echo "expand_rootfs: $@" > /dev/kmsg
+}
+
 main() {
   local disk="" partnum="" fs_type="" rootdev=""
 
   # Remove 'block:' prefix and find the root device.
   if ! rootdev=$(readlink -f "${root#block:}") || [ -z "${rootdev}" ]; then
-    echo "Unable to find root device."
+    kmsg "Unable to find root device."
     return
   fi
 
   if ! out=$(split_partition "$rootdev"); then
-    echo "Failed to detect disk and partition info: ${out}"
+    kmsg "Failed to detect disk and partition info: ${out}"
     return
   fi
 
@@ -33,32 +38,28 @@ main() {
   partnum=${out#*:}
 
   if ! parted_needresize "$disk" "$partnum"; then
-    echo "Disk does not need resizing."
+    kmsg "Disk ${rootdev} doesn't need resizing"
     return
   fi
 
-  echo "Resizing disk ${rootdev}"
-
-  if ! out=$(parted_fix_gpt); then
-    echo "$out"
+  if ! parted --help | grep -q 'resizepart'; then
+    kmsg "No 'resizepart' command in this parted"
     return
   fi
 
-  if parted --help | grep -q 'resizepart'; then
+  kmsg "Resizing disk ${rootdev}"
+
+  if ! out=$(parted_resizepart "$disk" "$partnum"); then
+    # Try fixing the GPT and try resizing again.
+    parted_fix_gpt "$disk"
     if ! out=$(parted_resizepart "$disk" "$partnum"); then
-      echo "Failed to resize partition: ${out}"
-      return
-    fi
-  else
-    echo "No 'resizepart' command in this parted, trying rm&&mkpart."
-    if ! out=$(parted_resize_mkpart "$disk" "$partnum"); then
-      echo "Failed to resize partition: ${out}"
+      kmsg "Failed to resize partition: ${out}"
       return
     fi
   fi
 
   if ! out=$(resize_filesystem "$rootdev"); then
-    echo "Failed to resize filesystem: ${out}"
+    kmsg "Failed to resize filesystem: ${out}"
     return
   fi
 }

@@ -13,10 +13,9 @@
 // limitations under the License.
 
 // Requires libgtest-dev and gtest compiled and installed.
-#include "oslogin_utils.h"
-
 #include <errno.h>
 #include <gtest/gtest.h>
+#include <oslogin_utils.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,11 +24,10 @@ using std::vector;
 
 namespace oslogin_utils {
 
-
 // Test that the buffer can successfully append multiple strings.
 TEST(BufferManagerTest, TestAppendString) {
   size_t buflen = 20;
-  char* buffer = (char*)malloc(buflen *sizeof(char));
+  char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
 
   char* first_string;
@@ -38,7 +36,7 @@ TEST(BufferManagerTest, TestAppendString) {
   oslogin_utils::BufferManager buffer_manager(buffer, buflen);
   buffer_manager.AppendString("test1", &first_string, &test_errno);
   buffer_manager.AppendString("test2", &second_string, &test_errno);
-  EXPECT_EQ(test_errno, 0);
+  ASSERT_EQ(test_errno, 0);
   ASSERT_STREQ(first_string, "test1");
   ASSERT_STREQ(second_string, "test2");
   ASSERT_STREQ(buffer, "test1");
@@ -57,7 +55,7 @@ TEST(BufferManagerTest, TestAppendStringTooLarge) {
   oslogin_utils::BufferManager buffer_manager(buffer, buflen);
   ASSERT_FALSE(
       buffer_manager.AppendString("test1", &first_string, &test_errno));
-  EXPECT_EQ(test_errno, ERANGE);
+  ASSERT_EQ(test_errno, ERANGE);
 }
 
 // Test successfully loading and retrieving an array of JSON posix accounts.
@@ -87,9 +85,9 @@ TEST(NssCacheTest, TestLoadJsonArray) {
   // Verify that the first user was stored.
   ASSERT_TRUE(nss_cache.HasNextPasswd());
   ASSERT_TRUE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
-  EXPECT_EQ(test_errno, 0);
-  EXPECT_EQ(result.pw_uid, 1337);
-  EXPECT_EQ(result.pw_gid, 1337);
+  ASSERT_EQ(test_errno, 0);
+  ASSERT_EQ(result.pw_uid, 1337);
+  ASSERT_EQ(result.pw_gid, 1337);
   ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
   ASSERT_STREQ(result.pw_dir, "/home/foo");
@@ -97,9 +95,9 @@ TEST(NssCacheTest, TestLoadJsonArray) {
   // Verify that the second user was stored.
   ASSERT_TRUE(nss_cache.HasNextPasswd());
   ASSERT_TRUE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
-  EXPECT_EQ(test_errno, 0);
-  EXPECT_EQ(result.pw_uid, 1338);
-  EXPECT_EQ(result.pw_gid, 1338);
+  ASSERT_EQ(test_errno, 0);
+  ASSERT_EQ(result.pw_uid, 1338);
+  ASSERT_EQ(result.pw_gid, 1338);
   ASSERT_STREQ(result.pw_name, "bar");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
   ASSERT_STREQ(result.pw_dir, "/home/bar");
@@ -107,7 +105,7 @@ TEST(NssCacheTest, TestLoadJsonArray) {
   // Verify that there are no more users stored.
   ASSERT_FALSE(nss_cache.HasNextPasswd());
   ASSERT_FALSE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
-  EXPECT_EQ(test_errno, ENOENT);
+  ASSERT_EQ(test_errno, ENOENT);
 }
 
 // Test successfully loading and retrieving a partial array.
@@ -132,9 +130,9 @@ TEST(NssCacheTest, TestLoadJsonPartialArray) {
   // Verify that the first user was stored.
   ASSERT_TRUE(nss_cache.HasNextPasswd());
   ASSERT_TRUE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
-  EXPECT_EQ(test_errno, 0);
-  EXPECT_EQ(result.pw_uid, 1337);
-  EXPECT_EQ(result.pw_gid, 1337);
+  ASSERT_EQ(test_errno, 0);
+  ASSERT_EQ(result.pw_uid, 1337);
+  ASSERT_EQ(result.pw_gid, 1337);
   ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
   ASSERT_STREQ(result.pw_dir, "/home/foo");
@@ -144,14 +142,13 @@ TEST(NssCacheTest, TestLoadJsonPartialArray) {
   // Verify that there are no more users stored.
   ASSERT_FALSE(nss_cache.HasNextPasswd());
   ASSERT_FALSE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
-  EXPECT_EQ(test_errno, ENOENT);
+  ASSERT_EQ(test_errno, ENOENT);
 }
 
 // Test successfully loading and retrieving the final response.
 TEST(NssCacheTest, TestLoadJsonFinalResponse) {
   NssCache nss_cache(2);
-  string response =
-      "{\"nextPageToken\": \"0\"}";
+  string response = "{\"nextPageToken\": \"0\"}";
 
   ASSERT_FALSE(nss_cache.LoadJsonArrayToCache(response));
   ASSERT_EQ(nss_cache.GetPageToken(), "");
@@ -167,9 +164,8 @@ TEST(NssCacheTest, TestLoadJsonFinalResponse) {
   ASSERT_FALSE(nss_cache.HasNextPasswd());
   ASSERT_TRUE(nss_cache.OnLastPage());
   ASSERT_FALSE(nss_cache.GetNextPasswd(&buf, &result, &test_errno));
-  EXPECT_EQ(test_errno, ENOENT);
+  ASSERT_EQ(test_errno, ENOENT);
 }
-
 
 // Tests that resetting, and checking HasNextPasswd does not crash.
 TEST(NssCacheTest, ResetNullPtrTest) {
@@ -192,8 +188,8 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdSucceeds) {
   struct passwd result;
   int test_errno = 0;
   ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
-  EXPECT_EQ(result.pw_uid, 1337);
-  EXPECT_EQ(result.pw_gid, 1338);
+  ASSERT_EQ(result.pw_uid, 1337);
+  ASSERT_EQ(result.pw_gid, 1338);
   ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
   ASSERT_STREQ(result.pw_dir, "/home/foo");
@@ -213,8 +209,8 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdSucceedsWithHighUid) {
   struct passwd result;
   int test_errno = 0;
   ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
-  EXPECT_EQ(result.pw_uid, 4294967295);
-  EXPECT_EQ(result.pw_gid, 4294967295);
+  ASSERT_EQ(result.pw_uid, 4294967295);
+  ASSERT_EQ(result.pw_gid, 4294967295);
   ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
   ASSERT_STREQ(result.pw_dir, "/home/foo");
@@ -233,8 +229,8 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdSucceedsWithStringUid) {
   struct passwd result;
   int test_errno = 0;
   ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
-  EXPECT_EQ(result.pw_uid, 1337);
-  EXPECT_EQ(result.pw_gid, 1338);
+  ASSERT_EQ(result.pw_uid, 1337);
+  ASSERT_EQ(result.pw_gid, 1338);
   ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
   ASSERT_STREQ(result.pw_dir, "/home/foo");
@@ -253,8 +249,8 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdNoLoginProfilesSucceeds) {
   struct passwd result;
   int test_errno = 0;
   ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
-  EXPECT_EQ(result.pw_uid, 1337);
-  EXPECT_EQ(result.pw_gid, 1337);
+  ASSERT_EQ(result.pw_uid, 1337);
+  ASSERT_EQ(result.pw_gid, 1337);
   ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
   ASSERT_STREQ(result.pw_dir, "/home/foo");
@@ -274,7 +270,7 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdFailsWithERANGE) {
   struct passwd result;
   int test_errno = 0;
   ASSERT_FALSE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
-  EXPECT_EQ(test_errno, ERANGE);
+  ASSERT_EQ(test_errno, ERANGE);
 }
 
 // Test parsing malformed JSON responses.
@@ -297,13 +293,13 @@ TEST(ParseJsonPasswdTest, ParseJsonToPasswdFailsWithEINVAL) {
   struct passwd result;
   int test_errno = 0;
   ASSERT_FALSE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
-  EXPECT_EQ(test_errno, EINVAL);
+  ASSERT_EQ(test_errno, EINVAL);
   // Reset errno.
   test_errno = 0;
   ASSERT_TRUE(ParseJsonToPasswd(test_user2, &result, &buf, &test_errno));
-  EXPECT_EQ(test_errno, 0);
-  EXPECT_EQ(result.pw_uid, 1337);
-  EXPECT_EQ(result.pw_gid, 1337);
+  ASSERT_EQ(test_errno, 0);
+  ASSERT_EQ(result.pw_uid, 1337);
+  ASSERT_EQ(result.pw_gid, 1337);
 }
 
 // Test parsing a partially filled response. Validate should fill empty fields
@@ -321,8 +317,8 @@ TEST(ParseJsonPasswdTest, ValidatePartialJsonResponse) {
   struct passwd result;
   int test_errno = 0;
   ASSERT_TRUE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
-  EXPECT_EQ(result.pw_uid, 1337);
-  EXPECT_EQ(result.pw_gid, 1337);
+  ASSERT_EQ(result.pw_uid, 1337);
+  ASSERT_EQ(result.pw_gid, 1337);
   ASSERT_STREQ(result.pw_name, "foo");
   ASSERT_STREQ(result.pw_shell, "/bin/bash");
   ASSERT_STREQ(result.pw_dir, "/home/foo");
@@ -343,7 +339,139 @@ TEST(ParseJsonPasswdTest, ValidateInvalidJsonResponse) {
   struct passwd result;
   int test_errno = 0;
   ASSERT_FALSE(ParseJsonToPasswd(test_user, &result, &buf, &test_errno));
-  EXPECT_EQ(test_errno, EINVAL);
+  ASSERT_EQ(test_errno, EINVAL);
+}
+
+// Test parsing a valid JSON response from the metadata server.
+TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceeds) {
+  string test_group = "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":123452}]}";
+
+  std::vector<Group> groups;
+  ASSERT_TRUE(ParseJsonToGroups(test_group, &groups));
+  ASSERT_EQ(groups[0].gid, 123452);
+  ASSERT_EQ(groups[0].name, "demo");
+}
+
+// Test parsing a valid JSON response from the metadata server with gid > 2^31.
+TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceedsWithHighGid) {
+  string test_group =
+      "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":4294967295}]}";
+
+  std::vector<Group> groups;
+  ASSERT_TRUE(ParseJsonToGroups(test_group, &groups));
+  ASSERT_EQ(groups[0].gid, 4294967295);
+  ASSERT_EQ(groups[0].name, "demo");
+}
+
+TEST(ParseJsonToGroupsTest, ParseJsonToGroupsSucceedsWithStringGid) {
+  string test_group =
+      "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":\"123452\"}]}";
+
+  std::vector<Group> groups;
+  ASSERT_TRUE(ParseJsonToGroups(test_group, &groups));
+  ASSERT_EQ(groups[0].gid, 123452);
+  ASSERT_EQ(groups[0].name, "demo");
+}
+
+// Test parsing malformed JSON responses.
+TEST(ParseJsonToGroupsTest, ParseJsonToGroupsFails) {
+  string test_badgid =
+      "{\"posixGroups\":[{\"name\":\"demo\",\"gid\":\"this-should-be-int\"}]}";
+  string test_nogid = "{\"posixGroups\":[{\"name\":\"demo\"}]}";
+  string test_noname = "{\"posixGroups\":[{\"gid\":123452}]}";
+
+  std::vector<Group> groups;
+  ASSERT_FALSE(ParseJsonToGroups(test_badgid, &groups));
+  ASSERT_FALSE(ParseJsonToGroups(test_nogid, &groups));
+  ASSERT_FALSE(ParseJsonToGroups(test_noname, &groups));
+}
+
+// Test parsing a valid JSON response from the metadata server.
+TEST(ParseJsonToUsersTest, ParseJsonToUsersSucceeds) {
+  string test_group_users =
+      "{\"usernames\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\","
+      "\"user0005\"]}";
+
+  std::vector<string> users;
+  ASSERT_TRUE(ParseJsonToUsers(test_group_users, &users));
+  ASSERT_FALSE(users.empty());
+  ASSERT_EQ(users.size(), 5);
+
+  ASSERT_EQ(users[0], "user0001");
+  ASSERT_EQ(users[1], "user0002");
+  ASSERT_EQ(users[2], "user0003");
+  ASSERT_EQ(users[3], "user0004");
+  ASSERT_EQ(users[4], "user0005");
+}
+
+// Test parsing a valid JSON response from the metadata server.
+TEST(ParseJsonToUsersTest, ParseJsonToUsersEmptyGroupSucceeds) {
+  string test_group_users = "{\"usernames\":[]}";
+
+  std::vector<string> users;
+  ASSERT_TRUE(ParseJsonToUsers(test_group_users, &users));
+  ASSERT_TRUE(users.empty());
+}
+
+// Test parsing malformed JSON responses.
+TEST(ParseJsonToUsersTest, ParseJsonToUsersFails) {
+  string test_group_users =
+      "{\"badstuff\":[\"user0001\",\"user0002\",\"user0003\",\"user0004\","
+      "\"user0005\"]}";
+
+  std::vector<string> users;
+  ASSERT_FALSE(ParseJsonToUsers(test_group_users, &users));
+}
+
+TEST(GetUsersForGroupTest, GetUsersForGroupSucceeds) {
+  string response;
+  long http_code;
+  ASSERT_TRUE(
+      HttpGet("http://metadata.google.internal/reset", &response, &http_code));
+
+  std::vector<string> users;
+  int errnop = 0;
+
+  ASSERT_TRUE(GetUsersForGroup("demo", &users, &errnop));
+  ASSERT_FALSE(users.empty());
+  ASSERT_EQ(users[0], "user000173_grande_focustest_org");
+  ASSERT_EQ(errnop, 0);
+}
+
+TEST(FindGroupTest, FindGroupByGidSucceeds) {
+  string response;
+  long http_code;
+  ASSERT_TRUE(
+      HttpGet("http://metadata.google.internal/reset", &response, &http_code));
+
+  size_t buflen = 200 * sizeof(char);
+  char* buffer = (char*)malloc(buflen);
+  ASSERT_STRNE(buffer, NULL);
+  BufferManager buf(buffer, buflen);
+  int errnop = 0;
+
+  struct group grp = {};
+  grp.gr_gid = 123452;
+  ASSERT_TRUE(FindGroup(&grp, &buf, &errnop));
+  ASSERT_EQ(errnop, 0);
+}
+
+TEST(FindGroupTest, FindGroupByNameSucceeds) {
+  string response;
+  long http_code;
+  ASSERT_TRUE(
+      HttpGet("http://metadata.google.internal/reset", &response, &http_code));
+
+  size_t buflen = 200 * sizeof(char);
+  char* buffer = (char*)malloc(buflen);
+  ASSERT_STRNE(buffer, NULL);
+  BufferManager buf(buffer, buflen);
+  int errnop;
+
+  const char* match = "demo";
+  struct group grp = {};
+  grp.gr_name = (char*)match;
+  ASSERT_TRUE(FindGroup(&grp, &buf, &errnop));
 }
 
 TEST(ParseJsonEmailTest, SuccessfullyParsesEmail) {
@@ -372,10 +500,9 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysSucceeds) {
   char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  int test_errno = 0;
   std::vector<string> result = ParseJsonToSshKeys(test_user);
-  EXPECT_EQ(result.size(), 1);
-  EXPECT_EQ(result[0], "test_key");
+  ASSERT_EQ(result.size(), 1);
+  ASSERT_EQ(result[0], "test_key");
 }
 
 TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysMultipleKeys) {
@@ -388,11 +515,10 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysMultipleKeys) {
   char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  int test_errno = 0;
   std::vector<string> result = ParseJsonToSshKeys(test_user);
-  EXPECT_EQ(result.size(), 2);
-  EXPECT_EQ(result[0], "test_key");
-  EXPECT_EQ(result[1], "test_key2");
+  ASSERT_EQ(result.size(), 2);
+  ASSERT_EQ(result[0], "test_key");
+  ASSERT_EQ(result[1], "test_key2");
 }
 
 TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersExpiredKeys) {
@@ -405,10 +531,9 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersExpiredKeys) {
   char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  int test_errno = 0;
   std::vector<string> result = ParseJsonToSshKeys(test_user);
-  EXPECT_EQ(result.size(), 1);
-  EXPECT_EQ(result[0], "test_key");
+  ASSERT_EQ(result.size(), 1);
+  ASSERT_EQ(result[0], "test_key");
 }
 
 TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersMalformedExpiration) {
@@ -421,10 +546,9 @@ TEST(ParseJsonSshKeyTest, ParseJsonToSshKeysFiltersMalformedExpiration) {
   char* buffer = (char*)malloc(buflen * sizeof(char));
   ASSERT_STRNE(buffer, NULL);
   BufferManager buf(buffer, buflen);
-  int test_errno = 0;
   std::vector<string> result = ParseJsonToSshKeys(test_user);
-  EXPECT_EQ(result.size(), 1);
-  EXPECT_EQ(result[0], "test_key");
+  ASSERT_EQ(result.size(), 1);
+  ASSERT_EQ(result[0], "test_key");
 }
 
 TEST(ParseJsonAuthorizeSuccess, SuccessfullyAuthorized) {
@@ -433,16 +557,8 @@ TEST(ParseJsonAuthorizeSuccess, SuccessfullyAuthorized) {
 }
 
 TEST(ValidateUserNameTest, ValidateValidUserNames) {
-  string cases[] = {
-      "user",
-      "_",
-      ".",
-      ".abc_",
-      "_abc-",
-      "ABC",
-      "A_.-",
-      "ausernamethirtytwocharacterslong"
-  };
+  string cases[] = {"user",  "_",   ".",    ".abc_",
+                    "_abc-", "ABC", "A_.-", "ausernamethirtytwocharacterslong"};
   for (auto test_user : cases) {
     ASSERT_TRUE(ValidateUserName(test_user));
   }
@@ -482,29 +598,30 @@ TEST(ParseJsonKeyTest, TestMissingKey) {
 }
 
 TEST(ParseJsonChallengesTest, TestChallenges) {
-  string challenges_json = "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
+  string challenges_json =
+      "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
       "\"testSessionId\",\"challenges\":[{\"challengeId\":1,\"challengeType\":"
       "\"TOTP\",\"status\":\"READY\"}, {\"challengeId\":2,\"challengeType\":"
       "\"AUTHZEN\",\"status\":\"PROPOSED\"}]}";
   vector<Challenge> challenges;
   ASSERT_TRUE(ParseJsonToChallenges(challenges_json, &challenges));
-  EXPECT_EQ(challenges.size(), 2);
-  EXPECT_EQ(challenges[0].id, 1);
-  EXPECT_EQ(challenges[0].type, "TOTP");
+  ASSERT_EQ(challenges.size(), 2);
+  ASSERT_EQ(challenges[0].id, 1);
+  ASSERT_EQ(challenges[0].type, "TOTP");
 }
 
 TEST(ParseJsonChallengesTest, TestMalformedChallenges) {
-  string challenges_json = "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
+  string challenges_json =
+      "{\"status\":\"CHALLENGE_REQUIRED\",\"sessionId\":"
       "\"testSessionId\",\"challenges\":[{\"challengeId\":1,\"challengeType\":"
       "\"TOTP\",\"status\":\"READY\"}, {\"challengeId\":2,\"challengeType\":"
       "\"AUTHZEN\"}]}";
   vector<Challenge> challenges;
   ASSERT_FALSE(ParseJsonToChallenges(challenges_json, &challenges));
-  EXPECT_EQ(challenges.size(), 1);
+  ASSERT_EQ(challenges.size(), 1);
 }
 }  // namespace oslogin_utils
-
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

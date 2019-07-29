@@ -15,18 +15,19 @@
 // Requires libcurl4-openssl-dev libjson0 and libjson0-dev
 #include <curl/curl.h>
 #include <errno.h>
+#include <grp.h>
 #include <json.h>
 #include <nss.h>
 #include <stdio.h>
 #include <time.h>
+
 #include <cstring>
 #include <iostream>
 #include <sstream>
 
 #if defined(__clang__) || __GNUC__ > 4 || \
-  (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
-                     (__GNUC_MINOR__ == 9 && \
-                      __GNUC_PATCHLEVEL__ > 0)))
+    (__GNUC__ == 4 &&                     \
+     (__GNUC_MINOR__ > 9 || (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ > 0)))
 #include <regex>
 #define Regex std
 #else
@@ -34,8 +35,8 @@
 #define Regex boost
 #endif
 
-#include "oslogin_utils.h"
-#include "../compat.h"
+#include <compat.h>
+#include <oslogin_utils.h>
 
 using std::string;
 
@@ -53,11 +54,10 @@ BufferManager::BufferManager(char* buf, size_t buflen)
 bool BufferManager::AppendString(const string& value, char** buffer,
                                  int* errnop) {
   size_t bytes_to_write = value.length() + 1;
-  if (!CheckSpaceAvailable(bytes_to_write)) {
-    *errnop = ERANGE;
+  *buffer = static_cast<char*>(Reserve(bytes_to_write, errnop));
+  if (*buffer == NULL) {
     return false;
   }
-  *buffer = static_cast<char*>(Reserve(bytes_to_write));
   strncpy(*buffer, value.c_str(), bytes_to_write);
   return true;
 }
@@ -69,11 +69,10 @@ bool BufferManager::CheckSpaceAvailable(size_t bytes_to_write) const {
   return true;
 }
 
-void* BufferManager::Reserve(size_t bytes) {
-  if (buflen_ < bytes) {
-    std::cerr << "Attempted to reserve more bytes than the buffer can hold!"
-              << "\n";
-    abort();
+void* BufferManager::Reserve(size_t bytes, int* errnop) {
+  if (!CheckSpaceAvailable(bytes)) {
+    *errnop = ERANGE;
+    return NULL;
   }
   void* result = buf_;
   buf_ += bytes;
@@ -95,7 +94,7 @@ void NssCache::Reset() {
 }
 
 bool NssCache::HasNextPasswd() {
-  return index_ < passwd_cache_.size() && !passwd_cache_[index_].empty();
+  return (index_ < passwd_cache_.size()) && !passwd_cache_[index_].empty();
 }
 
 bool NssCache::GetNextPasswd(BufferManager* buf, passwd* result, int* errnop) {
@@ -172,7 +171,7 @@ bool NssCache::NssGetpwentHelper(BufferManager* buf, struct passwd* result,
         response.empty() || !LoadJsonArrayToCache(response)) {
       // It is possible this to be true after LoadJsonArrayToCache(), so we
       // must check it again.
-      if(!OnLastPage()) {
+      if (!OnLastPage()) {
         *errnop = ENOENT;
       }
       return false;
@@ -268,8 +267,7 @@ string UrlEncode(const string& param) {
   return encoded_param;
 }
 
-bool ValidatePasswd(struct passwd* result, BufferManager* buf,
-                    int* errnop) {
+bool ValidatePasswd(struct passwd* result, BufferManager* buf, int* errnop) {
   // OS Login disallows uids less than 1000.
   if (result->pw_uid < 1000) {
     *errnop = EINVAL;
@@ -307,6 +305,72 @@ bool ValidatePasswd(struct passwd* result, BufferManager* buf,
   return true;
 }
 
+bool ParseJsonToUsers(const string& json, std::vector<string>* result) {
+  json_object* root = NULL;
+  root = json_tokener_parse(json.c_str());
+  if (root == NULL) {
+    return false;
+  }
+
+  json_object* users = NULL;
+  if (!json_object_object_get_ex(root, "usernames", &users)) {
+    return false;
+  }
+  if (json_object_get_type(users) != json_type_array) {
+    return false;
+  }
+  for (int idx = 0; idx < json_object_array_length(users); idx++) {
+    json_object* user = json_object_array_get_idx(users, idx);
+    const char* username = json_object_get_string(user);
+    result->push_back(string(username));
+  }
+  return true;
+}
+
+bool ParseJsonToGroups(const string& json, std::vector<Group>* result) {
+  json_object* root = NULL;
+  root = json_tokener_parse(json.c_str());
+  if (root == NULL) {
+    return false;
+  }
+
+  json_object* groups = NULL;
+  if (!json_object_object_get_ex(root, "posixGroups", &groups)) {
+    return false;
+  }
+  if (json_object_get_type(groups) != json_type_array) {
+    return false;
+  }
+  for (int idx = 0; idx < json_object_array_length(groups); idx++) {
+    json_object* group = json_object_array_get_idx(groups, idx);
+
+    json_object* gid;
+    if (!json_object_object_get_ex(group, "gid", &gid)) {
+      return false;
+    }
+
+    json_object* name;
+    if (!json_object_object_get_ex(group, "name", &name)) {
+      return false;
+    }
+
+    Group g;
+    g.gid = json_object_get_int64(gid);
+    // get_int64 will confusingly return 0 if the string can't be converted to
+    // an integer. We can't rely on type check as it may be a string in the API.
+    if (g.gid == 0) {
+      return false;
+    }
+    g.name = json_object_get_string(name);
+    if (g.name == "") {
+      return false;
+    }
+
+    result->push_back(g);
+  }
+  return true;
+}
+
 std::vector<string> ParseJsonToSshKeys(const string& json) {
   std::vector<string> result;
   json_object* root = NULL;
@@ -333,17 +397,14 @@ std::vector<string> ParseJsonToSshKeys(const string& json) {
   if (json_object_get_type(ssh_public_keys) != json_type_object) {
     return result;
   }
-  json_object_object_foreach(ssh_public_keys, key, val) {
-    json_object* iter;
-    if (!json_object_object_get_ex(ssh_public_keys, key, &iter)) {
-      return result;
-    }
-    if (json_object_get_type(iter) != json_type_object) {
+  json_object_object_foreach(ssh_public_keys, key, obj) {
+    (void)(key);
+    if (json_object_get_type(obj) != json_type_object) {
       continue;
     }
     string key_to_add = "";
     bool expired = false;
-    json_object_object_foreach(iter, key, val) {
+    json_object_object_foreach(obj, key, val) {
       string string_key(key);
       int val_type = json_object_get_type(val);
       if (string_key == "key") {
@@ -470,6 +531,31 @@ bool ParseJsonToPasswd(const string& json, struct passwd* result,
   return ValidatePasswd(result, buf, errnop);
 }
 
+bool AddUsersToGroup(std::vector<string> users, struct group* result,
+                     BufferManager* buf, int* errnop) {
+  if (users.size() < 1) {
+    return true;
+  }
+
+  // Get some space for the char* array for number of users + 1 for NULL cap.
+  char** bufp;
+  if (!(bufp =
+            (char**)buf->Reserve(sizeof(char*) * (users.size() + 1), errnop))) {
+    return false;
+  }
+  result->gr_mem = bufp;
+
+  for (int i = 0; i < (int) users.size(); i++) {
+    if (!buf->AppendString(users[i], bufp, errnop)) {
+      result->gr_mem = NULL;
+      return false;
+    }
+  }
+  *bufp = NULL;  // End the array with a null pointer.
+
+  return true;
+}
+
 bool ParseJsonToEmail(const string& json, string* email) {
   json_object* root = NULL;
   root = json_tokener_parse(json.c_str());
@@ -513,7 +599,7 @@ bool ParseJsonToKey(const string& json, const string& key, string* response) {
   const char* c_response;
 
   root = json_tokener_parse(json.c_str());
-  if (root==NULL) {
+  if (root == NULL) {
     return false;
   }
 
@@ -530,7 +616,7 @@ bool ParseJsonToKey(const string& json, const string& key, string* response) {
 }
 
 bool ParseJsonToChallenges(const string& json,
-                           std::vector<Challenge> *challenges) {
+                           std::vector<Challenge>* challenges) {
   json_object* root = NULL;
 
   root = json_tokener_parse(json.c_str());
@@ -538,7 +624,7 @@ bool ParseJsonToChallenges(const string& json,
     return false;
   }
 
-  json_object *jsonChallenges = NULL;
+  json_object* jsonChallenges = NULL;
   if (!json_object_object_get_ex(root, "challenges", &jsonChallenges)) {
     return false;
   }
@@ -568,13 +654,135 @@ bool ParseJsonToChallenges(const string& json,
   return true;
 }
 
+bool FindGroup(struct group* result, BufferManager* buf, int* errnop) {
+  if (result->gr_name == NULL && result->gr_gid == 0) {
+    return false;
+  }
+  std::stringstream url;
+  std::vector<Group> groups;
+
+  string response;
+  long http_code;
+  string pageToken = "";
+
+  do {
+    url.str("");
+    url << kMetadataServerUrl << "groups";
+    if (pageToken != "") url << "?pageToken=" << pageToken;
+
+    response.clear();
+    http_code = 0;
+    if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+        response.empty()) {
+      *errnop = EAGAIN;
+      return false;
+    }
+
+    if (!ParseJsonToKey(response, "nextPageToken", &pageToken)) {
+      pageToken = "";
+    }
+
+    groups.clear();
+    if (!ParseJsonToGroups(response, &groups) || groups.empty()) {
+      *errnop = ENOENT;
+      return false;
+    }
+
+    // Check for a match.
+    for (int i = 0; i < (int) groups.size(); i++) {
+      Group el = groups[i];
+      if ((result->gr_name != NULL) && (string(result->gr_name) == el.name)) {
+        // Set the name even though it matches because the final string must
+        // be stored in the provided buffer.
+        if (!buf->AppendString(el.name, &result->gr_name, errnop)) {
+          return false;
+        }
+        result->gr_gid = el.gid;
+        return true;
+      }
+      if ((result->gr_gid != 0) && (result->gr_gid == el.gid)) {
+        if (!buf->AppendString(el.name, &result->gr_name, errnop)) {
+          return false;
+        }
+        return true;
+      }
+    }
+  } while (pageToken != "");
+  // Not found.
+  *errnop = ENOENT;
+  return false;
+}
+
+bool GetGroupsForUser(string username, std::vector<Group>* groups,
+                      int* errnop) {
+  std::stringstream url;
+
+  string response;
+  long http_code;
+  string pageToken = "";
+
+  do {
+    url.str("");
+    url << kMetadataServerUrl << "groups?username=" << username;
+    if (pageToken != "") url << "?pageToken=" << pageToken;
+
+    response.clear();
+    http_code = 0;
+    if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+        response.empty()) {
+      *errnop = EAGAIN;
+      return false;
+    }
+
+    if (!ParseJsonToKey(response, "pageToken", &pageToken)) {
+      pageToken = "";
+    }
+
+    if (!ParseJsonToGroups(response, groups)) {
+      *errnop = ENOENT;
+      return false;
+    }
+  } while (pageToken != "");
+  return true;
+}
+
+bool GetUsersForGroup(string groupname, std::vector<string>* users,
+                      int* errnop) {
+  string response;
+  long http_code;
+  string pageToken = "";
+  std::stringstream url;
+
+  do {
+    url.str("");
+    url << kMetadataServerUrl << "users?groupname=" << groupname;
+    if (pageToken != "") url << "?pageToken=" << pageToken;
+
+    response.clear();
+    http_code = 0;
+    if (!HttpGet(url.str(), &response, &http_code) || http_code != 200 ||
+        response.empty()) {
+      *errnop = EAGAIN;
+      return false;
+    }
+    if (!ParseJsonToKey(response, "nextPageToken", &pageToken)) {
+      pageToken = "";
+    }
+    if (!ParseJsonToUsers(response, users)) {
+      *errnop = EINVAL;
+      return false;
+    }
+  } while (pageToken != "");
+  return true;
+}
+
 bool GetUser(const string& username, string* response) {
   std::stringstream url;
   url << kMetadataServerUrl << "users?username=" << UrlEncode(username);
 
   long http_code = 0;
-  if (!HttpGet(url.str(), response, &http_code) || response->empty()
-      || http_code != 200) {
+  if (!HttpGet(url.str(), response, &http_code) || response->empty() ||
+      http_code != 200) {
     return false;
   }
   return true;
@@ -601,8 +809,8 @@ bool StartSession(const string& email, string* response) {
   url << kMetadataServerUrl << "authenticate/sessions/start";
 
   long http_code = 0;
-  if (!HttpPost(url.str(), data, response, &http_code) || response->empty()
-      || http_code != 200) {
+  if (!HttpPost(url.str(), data, response, &http_code) || response->empty() ||
+      http_code != 200) {
     ret = false;
   }
 
@@ -627,8 +835,7 @@ bool ContinueSession(bool alt, const string& email, const string& user_token,
     json_object_object_add(jobj, "action",
                            json_object_new_string("START_ALTERNATE"));
   } else {
-    json_object_object_add(jobj, "action",
-                           json_object_new_string("RESPOND"));
+    json_object_object_add(jobj, "action", json_object_new_string("RESPOND"));
   }
 
   // AUTHZEN type and START_ALTERNATE action don't provide credentials.
@@ -643,11 +850,11 @@ bool ContinueSession(bool alt, const string& email, const string& user_token,
   data = json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PLAIN);
 
   std::stringstream url;
-  url << kMetadataServerUrl << "authenticate/sessions/"
-      << session_id << "/continue";
+  url << kMetadataServerUrl << "authenticate/sessions/" << session_id
+      << "/continue";
   long http_code = 0;
-  if (!HttpPost(url.str(), data, response, &http_code) || response->empty()
-      || http_code != 200) {
+  if (!HttpPost(url.str(), data, response, &http_code) || response->empty() ||
+      http_code != 200) {
     ret = false;
   }
 

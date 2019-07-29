@@ -18,8 +18,9 @@
 %endif
 
 Name:           google-compute-engine-oslogin
+Epoch:          1
 Version:        %{_version}
-Release:        1%{?dist}
+Release:        g1%{?dist}
 Summary:        OS Login Functionality for Google Compute Engine
 
 License:        ASL 2.0
@@ -41,8 +42,6 @@ Requires:  policycoreutils-python
 Requires:  boost-regex
 Requires: json-c
 
-%define pam_install_path /%{_lib}/security
-
 %description
 This package contains several libraries and changes to enable OS Login functionality
 for Google Compute Engine.
@@ -53,26 +52,28 @@ for Google Compute Engine.
 %setup
 
 %build
-make %{?_smp_mflags} LIBS="-lcurl -ljson-c -lboost_regex"
+make %{?_smp_mflags} LDLIBS="-lcurl -ljson-c -lboost_regex"
 
 %install
 rm -rf %{buildroot}
-make install DESTDIR=%{buildroot} NSS_INSTALL_PATH=/%{_lib} PAM_INSTALL_PATH=%{pam_install_path} INSTALL_SELINUX=true
+make install DESTDIR=%{buildroot} LIBDIR=/%{_lib} INSTALL_SELINUX=y
 
 %files
 %doc
-%attr(0755,-,-) /%{_lib}/libnss_%{name}-%{version}.so
-%attr(0755,-,-) /%{_lib}/libnss_cache_%{name}-%{version}.so
-%if 0%{?rhel} == 8
+/%{_lib}/libnss_oslogin-%{version}.so
+/%{_lib}/libnss_cache_oslogin-%{version}.so
 /%{_lib}/libnss_oslogin.so.2
 /%{_lib}/libnss_cache_oslogin.so.2
-%endif
-%attr(0755,-,-) %{pam_install_path}/pam_oslogin_admin.so
-%attr(0755,-,-) %{pam_install_path}/pam_oslogin_login.so
+/%{_lib}/security/pam_oslogin_admin.so
+/%{_lib}/security/pam_oslogin_login.so
 /usr/bin/google_authorized_keys
 /usr/bin/google_oslogin_control
 /usr/bin/google_oslogin_nss_cache
 /usr/share/selinux/packages/oslogin.pp
+%{_mandir}/man8/nss-oslogin.8.gz
+%{_mandir}/man8/libnss_oslogin.so.2.8.gz
+%{_mandir}/man8/nss-cache-oslogin.8.gz
+%{_mandir}/man8/libnss_cache_oslogin.so.2.8.gz
 
 %post
 /sbin/ldconfig

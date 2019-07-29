@@ -26,8 +26,8 @@
 #include <string>
 #include <map>
 
-#include "../compat.h"
-#include "../utils/oslogin_utils.h"
+#include <compat.h>
+#include <oslogin_utils.h>
 
 using oslogin_utils::ContinueSession;
 using oslogin_utils::GetUser;

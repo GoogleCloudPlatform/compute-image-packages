@@ -2,18 +2,18 @@ Source: google-compute-engine
 Section: admin
 Priority: optional
 Maintainer: Google Cloud Team <gc-team@google.com>
-Build-Depends: debhelper (>= 9),
-               dh-systemd (>= 1.5)
+Build-Depends: debhelper (>= 10)
 Standards-Version: 3.9.8
 Homepage: https://github.com/GoogleCloudPlatform/compute-image-packages
 
 Package: google-compute-engine
 Architecture: all
 Depends: google-compute-engine-oslogin,
+         python-google-compute-engine,
+         python3-google-compute-engine,
          ${misc:Depends},
-         rsyslog | system-log-daemon,
          systemd
-Recommends: rsyslog
+Recommends: rsyslog | system-log-daemon
 Provides: irqbalance
 Conflicts: google-compute-engine-jessie,
            google-compute-engine-init-jessie,

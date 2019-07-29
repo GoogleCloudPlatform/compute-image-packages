@@ -23,8 +23,8 @@
 
 #include <fstream>
 
-#include "../compat.h"
-#include "../utils/oslogin_utils.h"
+#include <compat.h>
+#include <oslogin_utils.h>
 
 
 using oslogin_utils::BufferManager;

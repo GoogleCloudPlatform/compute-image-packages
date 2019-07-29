@@ -65,6 +65,92 @@ class HelpersTest(unittest.TestCase):
 
     self.assertEqual(mocks.mock_calls, expected_calls)
 
+  @mock.patch('google_compute_engine.distro_lib.helpers.os.path.exists')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  def testCallDhclientIpv6NonExistentScript(self, mock_call, mock_exists):
+    mock_logger = mock.Mock()
+
+    mock_exists.side_effect = [False]
+    helpers.CallDhclientIpv6(['a', 'b'], mock_logger, 'test_script')
+    mock_call.assert_has_calls(
+        [
+            mock.call.call(
+                ['timeout', '5', 'dhclient', '-1', '-6', '-v', 'a', 'b']),
+        ])
+
+  @mock.patch('google_compute_engine.distro_lib.helpers.os.path.exists')
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  def testCallDhclientIpv6(self, mock_call, mock_exists):
+    mock_logger = mock.Mock()
+    mock_exists.side_effect = [True]
+    mock_call.side_effect = [
+        None,
+        None,
+        subprocess.CalledProcessError(1, 'Test'),
+        None,
+        None,
+        subprocess.CalledProcessError(1, 'Test'),
+    ]
+
+    helpers.CallDhclientIpv6(['a', 'b'], mock_logger, 'test_script')
+    helpers.CallDhclientIpv6(['c', 'd'], mock_logger, None)
+    helpers.CallDhclientIpv6(['e', 'f'], mock_logger, None)
+    helpers.CallDhclientIpv6(
+        ['g', 'h'], mock_logger, 'test_script', release_lease=True)
+    helpers.CallDhclientIpv6(['i', 'j'], mock_logger, None, release_lease=True)
+    helpers.CallDhclientIpv6(['k', 'l'], mock_logger, None, release_lease=True)
+
+    expected_calls = [
+        mock.call.call(
+            [
+                'timeout', '5','dhclient', '-sf', 'test_script', '-1', '-6',
+                '-v', 'a', 'b',
+            ]),
+        mock.call.call(
+            [
+                'timeout', '5', 'dhclient', '-1', '-6', '-v', 'c', 'd',
+            ]),
+        mock.call.call(
+            [
+                'timeout', '5', 'dhclient', '-1', '-6', '-v', 'e', 'f',
+             ]),
+        mock.call.call(
+            [
+                'timeout', '5', 'dhclient', '-6', '-r', '-v', 'g', 'h',
+            ]),
+        mock.call.call(
+            [
+                'timeout', '5', 'dhclient', '-6', '-r', '-v', 'i', 'j',
+            ]),
+        mock.call.call(
+            [
+                'timeout', '5', 'dhclient', '-6', '-r', '-v', 'k', 'l',
+            ]),
+    ]
+
+    self.assertEqual(mock_call.mock_calls, expected_calls)
+    mock_logger.assert_has_calls(
+        [
+            mock.call.warning(mock.ANY, ['e', 'f']),
+        ])
+    mock_logger.assert_has_calls(
+        [
+            mock.call.warning(mock.ANY, ['k', 'l']),
+        ])
+
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  def testEnableRouteAdvertisements(self, mock_call):
+    mock_logger = mock.Mock()
+    interfaces = ['foo', 'bar', 'baz']
+    helpers.CallEnableRouteAdvertisements(interfaces, mock_logger)
+    mock_call.assert_has_calls([
+        mock.call(
+            [
+                'sysctl', '-w',
+                'net.ipv6.conf.%s.accept_ra_rt_info_max_plen=128' % interface,
+            ])
+        for interface in interfaces])
+
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallHwclock(self, mock_call):
     command = ['/sbin/hwclock', '--hctosys']
@@ -135,3 +221,20 @@ class HelpersTest(unittest.TestCase):
     mock_check_call.assert_called_once_with(command_ntpdate, shell=True)
     expected_calls = [mock.call.warning(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  def testCallSysctl(self, mock_call):
+    command = ['sysctl', '-w']
+    mock_logger = mock.Mock()
+    expected_log_calls = []
+    for name in ['foo', 'bar', 'baz']:
+      for value in ['foo', 'bar', 'baz']:
+        params = ['{name}={value}'.format(name=name, value=value)]
+        helpers.CallSysctl(mock_logger, name, value)
+        mock_call.assert_called_with(command + params)
+        expected_log_calls.append(mock.call.info(mock.ANY, name))
+    self.assertEqual(mock_logger.mock_calls, expected_log_calls)
+
+    mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
+    helpers.CallSysctl(mock_logger, 'fail', 1)
+    mock_logger.assert_has_calls([mock.call.warning(mock.ANY, 'fail')])
