@@ -800,7 +800,7 @@ bool StartSession(const string& email, string* response) {
 
   jobj = json_object_new_object();
   json_object_object_add(jobj, "email", json_object_new_string(email.c_str()));
-  json_object_object_add(jobj, "supportedChallengeTypes", jarr);
+  json_object_object_add(jobj, "supportedChallengeTypes", jarr); // Ownership transferred to jobj.
 
   const char* data;
   data = json_object_to_json_string_ext(jobj, JSON_C_TO_STRING_PLAIN);
@@ -814,7 +814,6 @@ bool StartSession(const string& email, string* response) {
     ret = false;
   }
 
-  json_object_put(jarr);
   json_object_put(jobj);
 
   return ret;
@@ -843,7 +842,7 @@ bool ContinueSession(bool alt, const string& email, const string& user_token,
     jresp = json_object_new_object();
     json_object_object_add(jresp, "credential",
                            json_object_new_string(user_token.c_str()));
-    json_object_object_add(jobj, "proposalResponse", jresp);
+    json_object_object_add(jobj, "proposalResponse", jresp); // Ownership transferred to jobj.
   }
 
   const char* data = NULL;
@@ -859,10 +858,6 @@ bool ContinueSession(bool alt, const string& email, const string& user_token,
   }
 
   json_object_put(jobj);
-  // Match condition where we created this to avoid double-free.
-  if (challenge.type != AUTHZEN && !alt) {
-    json_object_put(jresp);
-  }
 
   return ret;
 }
