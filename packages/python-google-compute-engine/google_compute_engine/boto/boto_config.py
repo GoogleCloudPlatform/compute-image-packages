@@ -58,14 +58,15 @@ class BotoConfig(object):
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self._CreateConfig(project_id)
 
-  def _GetNumericProjectId(self):
-    """Get the numeric project ID for this VM.
+  def _GetProjectId(self):
+    """Get the (non-numeric) project ID for this VM.
 
     Returns:
-      string, the numeric project ID if one is found.
+      string, the project ID if one is found.
     """
-    project_id = 'project/numeric-project-id'
-    return self.watcher.GetMetadata(metadata_key=project_id, recursive=False)
+    project_id_key = 'project/project-id'
+    return self.watcher.GetMetadata(metadata_key=project_id_key,
+                                    recursive=False)
 
   def _CreateConfig(self, project_id):
     """Create the boto config to support standalone GSUtil.
@@ -73,7 +74,7 @@ class BotoConfig(object):
     Args:
       project_id: string, the project ID to use in the config file.
     """
-    project_id = project_id or self._GetNumericProjectId()
+    project_id = project_id or self._GetProjectId()
 
     # Our project doesn't support service accounts.
     if not project_id:

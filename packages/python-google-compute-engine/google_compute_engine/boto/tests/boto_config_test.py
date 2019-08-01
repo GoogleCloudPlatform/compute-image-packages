@@ -68,7 +68,7 @@ class BotoConfigTest(unittest.TestCase):
 
     boto_config.BotoConfig()
     mock_watcher_instance.GetMetadata.assert_called_once_with(
-        metadata_key='project/numeric-project-id', recursive=False)
+        metadata_key='project/project-id', recursive=False)
     expected_calls = [
         mock.call('GSUtil', 'default_project_id', self.project_id),
     ]
@@ -85,7 +85,7 @@ class BotoConfigTest(unittest.TestCase):
 
     boto_config.BotoConfig()
     mock_watcher_instance.GetMetadata.assert_called_once_with(
-        metadata_key='project/numeric-project-id', recursive=False)
+        metadata_key='project/project-id', recursive=False)
     mock_config.SetOption.assert_not_called()
 
 
