@@ -25,7 +25,6 @@ packaging.
 """
 
 import os
-import sys
 
 from google_compute_engine import config_manager
 from google_compute_engine import constants
@@ -86,7 +85,4 @@ class BotoConfig(object):
     config.SetOption('GSUtil', 'default_project_id', project_id)
     config.SetOption('GSUtil', 'default_api_version', '2')
     config.SetOption('GoogleCompute', 'service_account', 'default')
-    # Don't set the plugin for python3 as it is not compatible.
-    if sys.version_info < (3, 0):
-      config.SetOption('Plugin', 'plugin_directory', boto_dir)
     config.WriteConfig(config_file=self.boto_config)

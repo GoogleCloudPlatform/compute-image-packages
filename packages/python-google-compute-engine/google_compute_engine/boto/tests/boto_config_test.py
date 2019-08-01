@@ -15,8 +15,6 @@
 
 """Unittest for boto_config.py module."""
 
-import sys
-
 from google_compute_engine.boto import boto_config
 from google_compute_engine.test_compat import mock
 from google_compute_engine.test_compat import unittest
@@ -47,29 +45,16 @@ class BotoConfigTest(unittest.TestCase):
     mock_logger.Logger.return_value = mock_logger_instance
 
     boto_config.BotoConfig(self.project_id, debug=True)
-    if sys.version_info < (3, 0):
-      expected_calls = [
-          mock.call.logger.Logger(name=mock.ANY, debug=True),
-          mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
-          mock.call.config(
-              config_file='template', config_header='/tmp/test.py template'),
-          mock.call.set('GSUtil', 'default_project_id', self.project_id),
-          mock.call.set('GSUtil', 'default_api_version', '2'),
-          mock.call.set('GoogleCompute', 'service_account', 'default'),
-          mock.call.set('Plugin', 'plugin_directory', '/tmp'),
-          mock.call.write(config_file='config'),
-      ]
-    else:
-      expected_calls = [
-          mock.call.logger.Logger(name=mock.ANY, debug=True),
-          mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
-          mock.call.config(
-              config_file='template', config_header='/tmp/test.py template'),
-          mock.call.set('GSUtil', 'default_project_id', self.project_id),
-          mock.call.set('GSUtil', 'default_api_version', '2'),
-          mock.call.set('GoogleCompute', 'service_account', 'default'),
-          mock.call.write(config_file='config'),
-      ]
+    expected_calls = [
+        mock.call.logger.Logger(name=mock.ANY, debug=True),
+        mock.call.watcher.MetadataWatcher(logger=mock_logger_instance),
+        mock.call.config(
+            config_file='template', config_header='/tmp/test.py template'),
+        mock.call.set('GSUtil', 'default_project_id', self.project_id),
+        mock.call.set('GSUtil', 'default_api_version', '2'),
+        mock.call.set('GoogleCompute', 'service_account', 'default'),
+        mock.call.write(config_file='config'),
+    ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
   @mock.patch('google_compute_engine.boto.boto_config.metadata_watcher')
