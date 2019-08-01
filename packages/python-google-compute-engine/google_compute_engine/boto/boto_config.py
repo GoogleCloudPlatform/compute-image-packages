@@ -80,7 +80,6 @@ class BotoConfig(object):
     config = config_manager.ConfigManager(
         config_file=self.boto_config_template,
         config_header=self.boto_config_header)
-    boto_dir = os.path.dirname(self.boto_config_script)
 
     config.SetOption('GSUtil', 'default_project_id', project_id)
     config.SetOption('GSUtil', 'default_api_version', '2')
