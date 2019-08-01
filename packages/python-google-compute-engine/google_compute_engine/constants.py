@@ -16,7 +16,6 @@
 """A module for global constants."""
 
 import platform
-import sys
 
 OSLOGIN_CONTROL_SCRIPT = 'google_oslogin_control'
 OSLOGIN_NSS_CACHE_SCRIPT = 'google_oslogin_nss_cache'
@@ -42,8 +41,3 @@ else:
   OSLOGIN_NSS_CACHE = '/etc/oslogin_passwd.cache'
   SYSCONFDIR = '/etc/default'
   SYSLOG_SOCKET = '/dev/log'
-
-if sys.version_info >= (3, 0):
-  SET_BOTO_CONFIG = 'false'
-else:
-  SET_BOTO_CONFIG = 'true'

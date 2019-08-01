@@ -53,7 +53,6 @@ class BotoConfigTest(unittest.TestCase):
         mock.call.set('GSUtil', 'default_project_id', self.project_id),
         mock.call.set('GSUtil', 'default_api_version', '2'),
         mock.call.set('GoogleCompute', 'service_account', 'default'),
-        mock.call.set('Plugin', 'plugin_directory', '/tmp'),
         mock.call.write(config_file='config'),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
