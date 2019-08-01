@@ -35,6 +35,10 @@ from google_compute_engine import metadata_watcher
 class BotoConfig(object):
   """Creates a boto config file for standalone GSUtil."""
 
+  # WARNING: The path should remain as /etc/boto.cfg in order to not break
+  # tools, such as gsutil, that rely on loading well-known Boto config paths.
+  # If you want to change this, please consult the gsutil team
+  # (GoogleCloudPlatform/gsutil) first.
   boto_config = constants.BOTOCONFDIR + '/etc/boto.cfg'
   boto_config_template = constants.BOTOCONFDIR + '/etc/boto.cfg.template'
   boto_config_script = os.path.abspath(__file__)
@@ -80,10 +84,10 @@ class BotoConfig(object):
     config = config_manager.ConfigManager(
         config_file=self.boto_config_template,
         config_header=self.boto_config_header)
-    boto_dir = os.path.dirname(self.boto_config_script)
 
+    # WARNING: If you want to change the contents of this config file, please
+    # consult the gsutil team (GoogleCloudPlatform/gsutil) first.
     config.SetOption('GSUtil', 'default_project_id', project_id)
     config.SetOption('GSUtil', 'default_api_version', '2')
     config.SetOption('GoogleCompute', 'service_account', 'default')
-    config.SetOption('Plugin', 'plugin_directory', boto_dir)
     config.WriteConfig(config_file=self.boto_config)

@@ -1,3 +1,10 @@
+python-google-compute-engine (1:20190801.00-g1) stable; urgency=medium
+
+  * Re-enable boto config and drop writing plugin directory.
+  * Fix metadata script retrieval.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 01 Aug 2019 13:55:46 -0700
+
 python-google-compute-engine (1:20190729.00-g1) stable; urgency=medium
 
   * Support for Google Private Access over IPv6.

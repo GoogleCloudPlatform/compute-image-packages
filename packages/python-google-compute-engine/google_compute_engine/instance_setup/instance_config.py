@@ -78,7 +78,9 @@ class InstanceConfig(config_manager.ConfigManager):
           'host_key_types': 'ecdsa,ed25519,rsa',
           'optimize_local_ssd': 'true',
           'network_enabled': 'true',
-          'set_boto_config': constants.SET_BOTO_CONFIG,
+          # WARNING: Do not change the value of 'set_boto_config' without first
+          # consulting the gsutil team (GoogleCloudPlatform/gsutil).
+          'set_boto_config': 'true',
           'set_host_keys': 'true',
           'set_multiqueue': 'true',
       },
