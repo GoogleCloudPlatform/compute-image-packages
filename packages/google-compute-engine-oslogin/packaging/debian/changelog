@@ -1,3 +1,9 @@
+google-compute-engine-oslogin (1:20190801.00-g1) stable; urgency=medium
+
+  * Correct JSON refcount decrementing.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 01 Aug 2019 13:57:16 -0700
+
 google-compute-engine-oslogin (1:20190729.00-g1) stable; urgency=medium
 
   * Remove unnecessary binary search logic.
