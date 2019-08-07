@@ -43,6 +43,7 @@ fi
 # Build packages.
 cd compute-image-packages/packages
 for package in *; do
+  [[ -d "${package}/packaging" ]] || continue
   pushd "$package"
   ./packaging/setup_deb.sh
   if [[ $? -ne 0 ]]; then
