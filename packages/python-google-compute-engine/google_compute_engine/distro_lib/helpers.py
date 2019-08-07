@@ -140,3 +140,17 @@ def CallSysctl(logger, name, value):
     subprocess.check_call(sysctl_command)
   except subprocess.CalledProcessError:
     logger.warning('Unable to configure sysctl %s.', name)
+
+def SystemctlRestart(service, logger):
+  """Restart a service using systemctl
+
+  Args:
+      service: the name of the service to restart.
+      logger: logger object, used to write to SysLog and serial port.
+  """
+  logger.info('Restarting service via "systemctl restart %s".', service)
+  systemctl_command = ['systemctl', 'restart', service]
+  try:
+    subprocess.check_call(systemctl_command)
+  except subprocess.CalledProcessError:
+    logger.warning('Failed to restart service %s.', service)
