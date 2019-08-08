@@ -79,10 +79,8 @@ class NetworkDaemon(object):
         self.logger.info('Starting Google Networking daemon.')
         timeout = 60 + random.randint(0, 30)
         self.watcher.WatchMetadata(
-            self.HandleNetworkInterfaces,
-            metadata_key="instance/",
-            recursive=True,
-            timeout=timeout)
+            self.HandleNetworkInterfaces, metadata_key='instance/',
+            recursive=True, timeout=timeout)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
@@ -92,7 +90,8 @@ class NetworkDaemon(object):
     Args:
       result: dict, the metadata response with the network interfaces.
     """
-    network_interfaces = self._ExtractInterfaceMetadata(result['networkInterfaces'])
+    network_interfaces = self._ExtractInterfaceMetadata(
+        result['networkInterfaces'])
 
     if self.network_setup_enabled:
       default_interface = network_interfaces[0]
@@ -105,10 +104,9 @@ class NetworkDaemon(object):
 
     if self.ip_forwarding_enabled:
       for interface in network_interfaces:
-        self.ip_forwarding.HandleForwardedIps(interface.name,
-                                              interface.forwarded_ips,
-                                              interface.ip)
-    if socket.gethostname() != result['hostname'].split(".")[0]:
+        self.ip_forwarding.HandleForwardedIps(
+            interface.name, interface.forwarded_ips, interface.ip)
+    if socket.gethostname() != result['hostname'].split('.')[0]:
       self.distro_utils.RestartNetworking(self.logger)
 
   def _ExtractInterfaceMetadata(self, metadata):
