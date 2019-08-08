@@ -79,8 +79,9 @@ class NetworkDaemon(object):
         self.logger.info('Starting Google Networking daemon.')
         timeout = 60 + random.randint(0, 30)
         self.watcher.WatchMetadata(
-            self.HandleNetworkInterfaces, metadata_key=instance_metadata_key,
-            recursive=True, timeout=timeout)
+            self.HandleNetworkInterfaces,
+            metadata_key=self.instance_metadata_key, recursive=True,
+            timeout=timeout)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
