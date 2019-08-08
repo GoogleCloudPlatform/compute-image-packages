@@ -108,8 +108,8 @@ class NetworkDaemon(object):
         self.ip_forwarding.HandleForwardedIps(interface.name,
                                               interface.forwarded_ips,
                                               interface.ip)
-    if socket.gethostname() != result['hostname']:
-      distro_utils.RestartNetworking(self.logger)
+    if socket.gethostname() != result['hostname'].split(".")[0]:
+      self.distro_utils.RestartNetworking(self.logger)
 
   def _ExtractInterfaceMetadata(self, metadata):
     """Extracts network interface metadata.
