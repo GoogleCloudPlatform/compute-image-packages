@@ -15,6 +15,8 @@
 
 """Utilities that are distro specific for use on EL 6."""
 
+import subprocess
+
 from google_compute_engine.distro_lib import helpers
 from google_compute_engine.distro_lib import ip_forwarding_utils
 from google_compute_engine.distro_lib import utils

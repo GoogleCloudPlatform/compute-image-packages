@@ -30,9 +30,9 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine import network_utils
+from google_compute_engine.compat import distro_utils
 from google_compute_engine.networking.ip_forwarding import ip_forwarding
 from google_compute_engine.networking.network_setup import network_setup
-from google_compute_engine.compat import distro_utils
 
 LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_networking.lock'
 
@@ -108,8 +108,8 @@ class NetworkDaemon(object):
         self.ip_forwarding.HandleForwardedIps(interface.name,
                                               interface.forwarded_ips,
                                               interface.ip)
-    if socket.gethostname() != result['hostname']:
-      distro_utils.RestartNetworking(self.logger)
+    if socket.gethostname() != result['hostname'].split(".")[0]:
+      self.distro_utils.RestartNetworking(self.logger)
 
   def _ExtractInterfaceMetadata(self, metadata):
     """Extracts network interface metadata.
