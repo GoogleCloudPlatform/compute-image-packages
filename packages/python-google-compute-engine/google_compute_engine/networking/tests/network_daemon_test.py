@@ -54,6 +54,7 @@ class NetworkDaemonTest(unittest.TestCase):
     mocks.attach_mock(mock_ip_forwarding, 'forwarding')
     mocks.attach_mock(mock_network_setup, 'network_setup')
     mocks.attach_mock(mock_watcher, 'watcher')
+    metadata_key = network_daemon.NetworkDaemon.instance_metadata_key
 
     with mock.patch.object(
         network_daemon.NetworkDaemon, 'HandleNetworkInterfaces'
@@ -78,7 +79,7 @@ class NetworkDaemonTest(unittest.TestCase):
           mock.call.lock.LockFile().__enter__(),
           mock.call.logger.Logger().info(mock.ANY),
           mock.call.watcher.MetadataWatcher().WatchMetadata(
-              mock_handle, metadata_key="instance/", recursive=True,
+              mock_handle, metadata_key=metadata_key, recursive=True,
               timeout=mock.ANY),
           mock.call.lock.LockFile().__exit__(None, None, None),
       ]
