@@ -65,8 +65,8 @@ class BotoConfig(object):
       string, the project ID if one is found.
     """
     project_id_key = 'project/project-id'
-    return self.watcher.GetMetadata(metadata_key=project_id_key,
-                                    recursive=False)
+    return self.watcher.GetMetadata(
+        metadata_key=project_id_key, recursive=False)
 
   def _CreateConfig(self, project_id):
     """Create the boto config to support standalone GSUtil.
