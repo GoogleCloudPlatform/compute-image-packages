@@ -40,7 +40,7 @@ LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_networking.lock'
 class NetworkDaemon(object):
   """Manage networking based on changes to network metadata."""
 
-  network_interface_metadata_key = 'instance/network-interfaces'
+  instance_metadata_key = 'instance/'
 
   def __init__(
       self, ip_forwarding_enabled, proto_id, ip_aliases, target_instance_ips,
@@ -79,7 +79,7 @@ class NetworkDaemon(object):
         self.logger.info('Starting Google Networking daemon.')
         timeout = 60 + random.randint(0, 30)
         self.watcher.WatchMetadata(
-            self.HandleNetworkInterfaces, metadata_key='instance/',
+            self.HandleNetworkInterfaces, metadata_key=instance_metadata_key,
             recursive=True, timeout=timeout)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
