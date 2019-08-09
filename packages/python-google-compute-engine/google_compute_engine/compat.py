@@ -48,12 +48,8 @@ elif 'red hat enterprise linux' in distro_name:
   import google_compute_engine.distro_lib.el_7.utils as distro_utils
 elif 'fedora' in distro_name:
   import google_compute_engine.distro_lib.el_7.utils as distro_utils
-elif 'debian' in distro_name and distro_version == '8':
-  import google_compute_engine.distro_lib.debian_8.utils as distro_utils
 elif 'debian' in distro_name:
   import google_compute_engine.distro_lib.debian_9.utils as distro_utils
-elif 'suse' in distro_name and distro_version == '11':
-  import google_compute_engine.distro_lib.sles_11.utils as distro_utils
 elif 'suse' in distro_name:
   import google_compute_engine.distro_lib.sles_12.utils as distro_utils
 elif 'freebsd' in distro_name:

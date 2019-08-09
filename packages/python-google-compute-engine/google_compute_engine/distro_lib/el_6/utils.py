@@ -15,6 +15,8 @@
 
 """Utilities that are distro specific for use on EL 6."""
 
+import subprocess
+
 from google_compute_engine.distro_lib import helpers
 from google_compute_engine.distro_lib import ip_forwarding_utils
 from google_compute_engine.distro_lib import utils
@@ -70,3 +72,15 @@ class Utils(utils.Utils):
       proto_id: string, the routing protocol identifier for Google IP changes.
     """
     return ip_forwarding_utils.IpForwardingUtilsIproute(logger, proto_id)
+
+  def RestartNetworking(self, logger):
+    """Restart the networking service to force a DHCP refresh.
+
+    Args:
+      logger: logger object, used to write to SysLog and serial port.
+    """
+    logger.info('Restarting networking via "service network restart".')
+    try:
+      subprocess.check_call(['service', 'network', 'restart'])
+    except subprocess.CalledProcessError:
+      logger.warning('Failed to restart networking.')
