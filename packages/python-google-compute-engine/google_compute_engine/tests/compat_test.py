@@ -73,14 +73,10 @@ class CompatTest(unittest.TestCase):
     test_cases = {
         ('Fedora', '28', ''):
             google_compute_engine.distro_lib.el_7.utils,
-        ('debian', '8.10', ''):
-            google_compute_engine.distro_lib.debian_8.utils,
         ('debian', '9.3', ''):
             google_compute_engine.distro_lib.debian_9.utils,
         ('debian', '10.3', ''):
             google_compute_engine.distro_lib.debian_9.utils,
-        ('SUSE Linux Enterprise Server', '11', 'x86_64'):
-            google_compute_engine.distro_lib.sles_11.utils,
         ('SUSE Linux Enterprise Server', '12', 'x86_64'):
             google_compute_engine.distro_lib.sles_12.utils,
         ('SUSE Linux Enterprise Server', '13', 'x86_64'):
