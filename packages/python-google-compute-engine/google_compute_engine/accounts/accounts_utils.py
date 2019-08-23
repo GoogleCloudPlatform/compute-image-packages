@@ -41,7 +41,7 @@ class AccountsUtils(object):
   google_comment = '# Added by Google'
 
   def __init__(
-      self, logger, groups=None, remove=False, gpasswd_add_cmd=None,
+      self, logger, groups=None, remove=False, add=True, gpasswd_add_cmd=None,
       gpasswd_remove_cmd=None, groupadd_cmd=None, useradd_cmd=None,
       userdel_cmd=None, usermod_cmd=None):
     """Constructor.
@@ -50,6 +50,7 @@ class AccountsUtils(object):
       logger: logger object, used to write to SysLog and serial port.
       groups: string, a comma separated list of groups.
       remove: bool, True if deprovisioning a user should be destructive.
+      add: bool, True if users needs to be created if they don't exist.
       gpasswd_add_cmd: string, command to add an user to a group.
       gpasswd_remove_cmd: string, command to remove an user from a group.
       groupadd_cmd: string, command to add a new group.
@@ -74,6 +75,7 @@ class AccountsUtils(object):
     self.groups = groups.split(',') if groups else []
     self.groups = list(filter(self._GetGroup, self.groups))
     self.remove = remove
+    self.add = add
 
   def _GetGroup(self, group):
     """Retrieve a Linux group.
@@ -138,15 +140,19 @@ class AccountsUtils(object):
     """
     self.logger.info('Creating a new user account for %s.', user)
 
-    command = self.useradd_cmd.format(user=user)
-    try:
-      subprocess.check_call(command.split(' '))
-    except subprocess.CalledProcessError as e:
-      self.logger.warning('Could not create user %s. %s.', user, str(e))
-      return False
+    if self.add:
+      command = self.useradd_cmd.format(user=user)
+      try:
+        subprocess.check_call(command.split(' '))
+      except subprocess.CalledProcessError as e:
+        self.logger.warning('Could not create user %s. %s.', user, str(e))
+        return False
+      else:
+        self.logger.info('Created user account %s.', user)
+        return True
     else:
-      self.logger.info('Created user account %s.', user)
-      return True
+      self.logger.warning('User %s was not created because `add` is set to False.', user)
+      return False
 
   def _UpdateUserGroups(self, user, groups):
     """Update group membership for a Linux user.

@@ -39,7 +39,7 @@ class AccountsDaemon(object):
   user_ssh_keys = {}
 
   def __init__(
-      self, groups=None, remove=False, gpasswd_add_cmd=None,
+      self, groups=None, remove=False, add=True, gpasswd_add_cmd=None,
       gpasswd_remove_cmd=None, groupadd_cmd=None, useradd_cmd=None,
       userdel_cmd=None, usermod_cmd=None, debug=False):
     """Constructor.
@@ -47,6 +47,7 @@ class AccountsDaemon(object):
     Args:
       groups: string, a comma separated list of groups.
       remove: bool, True if deprovisioning a user should be destructive.
+      add: bool, True if users needs to be created if they don't exist.
       useradd_cmd: string, command to create a new user.
       userdel_cmd: string, command to delete a user.
       usermod_cmd: string, command to modify user's groups.
@@ -60,7 +61,7 @@ class AccountsDaemon(object):
         name='google-accounts', debug=debug, facility=facility)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
     self.utils = accounts_utils.AccountsUtils(
-        logger=self.logger, groups=groups, remove=remove,
+        logger=self.logger, groups=groups, remove=remove, add=add,
         gpasswd_add_cmd=gpasswd_add_cmd, gpasswd_remove_cmd=gpasswd_remove_cmd,
         groupadd_cmd=groupadd_cmd, useradd_cmd=useradd_cmd,
         userdel_cmd=userdel_cmd, usermod_cmd=usermod_cmd)
@@ -296,6 +297,7 @@ def main():
     AccountsDaemon(
         groups=instance_config.GetOptionString('Accounts', 'groups'),
         remove=instance_config.GetOptionBool('Accounts', 'deprovision_remove'),
+        add=instance_config.GetOptionBool('Accounts', 'add'),
         useradd_cmd=instance_config.GetOptionString('Accounts', 'useradd_cmd'),
         userdel_cmd=instance_config.GetOptionString('Accounts', 'userdel_cmd'),
         usermod_cmd=instance_config.GetOptionString('Accounts', 'usermod_cmd'),
