@@ -2,6 +2,7 @@
 Description=Google Compute Engine Startup Scripts
 After=network-online.target network.target rsyslog.service
 After=google-instance-setup.service google-network-daemon.service
+Before=apt-daily.service
 
 [Service]
 ExecStart=/usr/bin/google_metadata_script_runner --script-type startup
