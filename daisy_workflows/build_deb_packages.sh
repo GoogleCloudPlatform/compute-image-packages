@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -e
+
 URL="http://metadata/computeMetadata/v1/instance/attributes"
 
 BRANCH="$(curl -f -H Metadata-Flavor:Google ${URL}/github_branch)"
@@ -57,12 +59,7 @@ done
 
 # Copy the deb and dsc files to the output.
 cd "${workdir}/output"
-# For Debian 10 right now, only copy OS Login package.
-if [[ "$(cut -d. -f1 </etc/debian_version)" == "10" ]]; then
-  gsutil cp google-compute-engine-oslogin*.* ${OUTPUT}
-else
-  gsutil cp *.dsc *.deb ${OUTPUT}
-fi
+gsutil cp *.dsc *.deb ${OUTPUT}
 
 if [ $? -ne 0 ]; then
   echo "BuildFailed: copying to ${OUTPUT} failed."
