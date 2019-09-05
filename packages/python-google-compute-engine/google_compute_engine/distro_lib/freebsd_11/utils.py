@@ -59,3 +59,11 @@ class Utils(utils.Utils):
       proto_id: string, the routing protocol identifier for Google IP changes.
     """
     return ip_forwarding_utils.IpForwardingUtilsIfconfig(logger)
+
+  def RestartNetworking(self, logger):
+    """Restart the networking service to force a DHCP refresh.
+
+    Args:
+      logger: logger object, used to write to SysLog and serial port.
+    """
+    pass
