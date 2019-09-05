@@ -1,3 +1,11 @@
+python-google-compute-engine (1:20190905.00-g1) stable; urgency=medium
+
+  * Fix setup.py version to be compliant with legacy builds.
+  * Detect hostname changes.
+  * Use non-numeric project ID in generated boto.cfg for GSUtil.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 05 Sep 2019 11:08:18 -0700
+
 python-google-compute-engine (1:20190801.00-g1) stable; urgency=medium
 
   * Fix setup.py version to be compliant with legacy builds.

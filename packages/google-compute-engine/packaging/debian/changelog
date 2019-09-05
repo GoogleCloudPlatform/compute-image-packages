@@ -1,3 +1,9 @@
+google-compute-engine (1:20190905.00-g1) stable; urgency=medium
+
+  * Bump version to match python package release.
+
+ -- Google Cloud Team <gc-team@google.com>  Thu, 05 Sep 2019 12:00:22 -0700
+
 google-compute-engine (1:20190801.00-g1) stable; urgency=medium
 
   * Re-enable boto config and drop writing plugin directory.
