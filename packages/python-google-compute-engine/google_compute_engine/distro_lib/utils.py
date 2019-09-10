@@ -37,6 +37,15 @@ class Utils(object):
     """
     pass
 
+  def DisableIpv6(self, interfaces, logger):
+    """Disable Ipv6.
+
+    Args:
+      interface: string, the output device names for enabling IPv6.
+      logger: logger object, used to write to SysLog and serial port.
+    """
+    pass
+
   def EnableNetworkInterfaces(self, interfaces, logger, dhclient_script=None):
     """Enable the list of network interfaces.
 
