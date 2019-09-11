@@ -107,7 +107,7 @@ class NetworkDaemon(object):
       for interface in network_interfaces:
         self.ip_forwarding.HandleForwardedIps(
             interface.name, interface.forwarded_ips, interface.ip)
-    if socket.gethostname() != result['hostname'].split('.')[0]:
+    if socket.gethostname().split('.')[0] != result['hostname'].split('.')[0]:
       self.distro_utils.RestartNetworking(self.logger)
 
   def _ExtractInterfaceMetadata(self, metadata):
