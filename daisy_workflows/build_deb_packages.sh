@@ -33,7 +33,8 @@ fi
 workdir=$(pwd)
 mkdir output
 
-sudo apt-get install -y git
+apt-get update
+apt-get install -y git
 
 # Clone the github repo.
 git clone ${GIT_REPO} -b ${BRANCH} compute-image-packages
