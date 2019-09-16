@@ -66,6 +66,11 @@ cp -a src/lib/udev/rules.d/* %{buildroot}/%{_udevrulesdir}
 %config /etc/sysctl.d/*
 
 %post
+if [ $1 -eq 2 ]; then
+  # New service might not be enabled during upgrade.
+  systemctl enable google-network-daemon.service
+fi
+
 # On upgrade run instance setup again to handle any new configs and restart
 # daemons.
 if [ $1 -eq 2 ]; then

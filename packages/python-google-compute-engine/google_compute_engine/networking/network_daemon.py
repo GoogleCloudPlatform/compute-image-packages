@@ -30,7 +30,6 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine import network_utils
-from google_compute_engine.compat import distro_utils
 from google_compute_engine.networking.ip_forwarding import ip_forwarding
 from google_compute_engine.networking.network_setup import network_setup
 
@@ -40,7 +39,7 @@ LOCKFILE = constants.LOCALSTATEDIR + '/lock/google_networking.lock'
 class NetworkDaemon(object):
   """Manage networking based on changes to network metadata."""
 
-  instance_metadata_key = 'instance/'
+  network_interface_metadata_key = 'instance/network-interfaces'
 
   def __init__(
       self, ip_forwarding_enabled, proto_id, ip_aliases, target_instance_ips,
@@ -64,7 +63,6 @@ class NetworkDaemon(object):
     self.ip_forwarding_enabled = ip_forwarding_enabled
     self.network_setup_enabled = network_setup_enabled
     self.target_instance_ips = target_instance_ips
-    self.dhclient_script = dhclient_script
 
     self.ip_forwarding = ip_forwarding.IpForwarding(
         proto_id=proto_id, debug=debug)
@@ -72,7 +70,6 @@ class NetworkDaemon(object):
         dhclient_script=dhclient_script, dhcp_command=dhcp_command, debug=debug)
     self.network_utils = network_utils.NetworkUtils(logger=self.logger)
     self.watcher = metadata_watcher.MetadataWatcher(logger=self.logger)
-    self.distro_utils = distro_utils.Utils(debug=debug)
 
     try:
       with file_utils.LockFile(LOCKFILE):
@@ -80,7 +77,7 @@ class NetworkDaemon(object):
         timeout = 60 + random.randint(0, 30)
         self.watcher.WatchMetadata(
             self.HandleNetworkInterfaces,
-            metadata_key=self.instance_metadata_key, recursive=True,
+            metadata_key=self.network_interface_metadata_key, recursive=True,
             timeout=timeout)
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
@@ -91,8 +88,7 @@ class NetworkDaemon(object):
     Args:
       result: dict, the metadata response with the network interfaces.
     """
-    network_interfaces = self._ExtractInterfaceMetadata(
-        result['networkInterfaces'])
+    network_interfaces = self._ExtractInterfaceMetadata(result)
 
     if self.network_setup_enabled:
       default_interface = network_interfaces[0]
@@ -107,8 +103,6 @@ class NetworkDaemon(object):
       for interface in network_interfaces:
         self.ip_forwarding.HandleForwardedIps(
             interface.name, interface.forwarded_ips, interface.ip)
-    if socket.gethostname().split('.')[0] != result['hostname'].split('.')[0]:
-      self.distro_utils.RestartNetworking(self.logger)
 
   def _ExtractInterfaceMetadata(self, metadata):
     """Extracts network interface metadata.

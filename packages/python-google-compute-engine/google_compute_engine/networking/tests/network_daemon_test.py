@@ -54,7 +54,7 @@ class NetworkDaemonTest(unittest.TestCase):
     mocks.attach_mock(mock_ip_forwarding, 'forwarding')
     mocks.attach_mock(mock_network_setup, 'network_setup')
     mocks.attach_mock(mock_watcher, 'watcher')
-    metadata_key = network_daemon.NetworkDaemon.instance_metadata_key
+    metadata_key = network_daemon.NetworkDaemon.network_interface_metadata_key
 
     with mock.patch.object(
         network_daemon.NetworkDaemon, 'HandleNetworkInterfaces'
@@ -129,13 +129,11 @@ class NetworkDaemonTest(unittest.TestCase):
       ]
       self.assertEqual(mocks.mock_calls, expected_calls)
 
-  @mock.patch('google_compute_engine.networking.network_daemon.distro_utils')
-  def testHandleNetworkInterfaces(self, mock_distro_utils):
+  def testHandleNetworkInterfaces(self):
     mocks = mock.Mock()
     mocks.attach_mock(self.mock_ip_forwarding, 'forwarding')
     mocks.attach_mock(self.mock_network_setup, 'network_setup')
     mocks.attach_mock(self.mock_setup, 'setup')
-    mocks.attach_mock(mock_distro_utils, 'distro_utils')
     self.mock_setup.ip_aliases = None
     self.mock_setup.target_instance_ips = None
     self.mock_setup.ip_forwarding_enabled = True
@@ -145,19 +143,17 @@ class NetworkDaemonTest(unittest.TestCase):
             'eth0', forwarded_ips=['a'], ip='1.1.1.1', ipv6=False),
         network_daemon.NetworkDaemon.NetworkInterface('eth1'),
     ]
-    self.mock_setup.distro_utils = mock.MagicMock()
-    result = mock.MagicMock()
+    result = mock.Mock()
 
     network_daemon.NetworkDaemon.HandleNetworkInterfaces(
         self.mock_setup, result)
     expected_calls = [
-        mock.call.setup._ExtractInterfaceMetadata(result['networkInterfaces']),
+        mock.call.setup._ExtractInterfaceMetadata(result),
         mock.call.network_setup.DisableIpv6(['eth0']),
         mock.call.network_setup.EnableNetworkInterfaces(['eth1']),
         mock.call.forwarding.HandleForwardedIps(
             'eth0', ['a'], '1.1.1.1'),
         mock.call.forwarding.HandleForwardedIps('eth1', None, None),
-        mock.call.setup.distro_utils.RestartNetworking(self.mock_setup.logger),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
@@ -174,18 +170,16 @@ class NetworkDaemonTest(unittest.TestCase):
         network_daemon.NetworkDaemon.NetworkInterface(
             'eth0', forwarded_ips=['a'], ip='1.1.1.1', ipv6=True),
     ]
-    self.mock_setup.distro_utils = mock.MagicMock()
-    result = mock.MagicMock()
+    result = mock.Mock()
 
     network_daemon.NetworkDaemon.HandleNetworkInterfaces(
         self.mock_setup, result)
     expected_calls = [
-        mock.call.setup._ExtractInterfaceMetadata(result['networkInterfaces']),
+        mock.call.setup._ExtractInterfaceMetadata(result),
         mock.call.network_setup.EnableIpv6(['eth0']),
         mock.call.network_setup.EnableNetworkInterfaces([]),
         mock.call.forwarding.HandleForwardedIps(
             'eth0', ['a'], '1.1.1.1'),
-        mock.call.setup.distro_utils.RestartNetworking(self.mock_setup.logger),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
@@ -202,18 +196,16 @@ class NetworkDaemonTest(unittest.TestCase):
         network_daemon.NetworkDaemon.NetworkInterface(
             'eth0', forwarded_ips=['a'], ip='1.1.1.1', ipv6=False),
     ]
-    self.mock_setup.distro_utils = mock.MagicMock()
-    result = mock.MagicMock()
+    result = mock.Mock()
 
     network_daemon.NetworkDaemon.HandleNetworkInterfaces(
         self.mock_setup, result)
     expected_calls = [
-        mock.call.setup._ExtractInterfaceMetadata(result['networkInterfaces']),
+        mock.call.setup._ExtractInterfaceMetadata(result),
         mock.call.network_setup.DisableIpv6(['eth0']),
         mock.call.network_setup.EnableNetworkInterfaces([]),
         mock.call.forwarding.HandleForwardedIps(
             'eth0', ['a'], '1.1.1.1'),
-        mock.call.setup.distro_utils.RestartNetworking(self.mock_setup.logger),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 
@@ -230,14 +222,12 @@ class NetworkDaemonTest(unittest.TestCase):
         network_daemon.NetworkDaemon.NetworkInterface('a'),
         network_daemon.NetworkDaemon.NetworkInterface('b'),
     ]
-    self.mock_setup.distro_utils = mock.MagicMock()
-    result = mock.MagicMock()
+    result = mock.Mock()
 
     network_daemon.NetworkDaemon.HandleNetworkInterfaces(
         self.mock_setup, result)
     expected_calls = [
-        mock.call.setup._ExtractInterfaceMetadata(result['networkInterfaces']),
-        mock.call.setup.distro_utils.RestartNetworking(self.mock_setup.logger),
+        mock.call.setup._ExtractInterfaceMetadata(result),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
 

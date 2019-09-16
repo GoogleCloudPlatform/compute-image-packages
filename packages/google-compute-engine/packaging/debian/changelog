@@ -1,8 +1,8 @@
-google-compute-engine (1:20190911.00-g1) stable; urgency=medium
+google-compute-engine (1:20190916.00-g1) stable; urgency=medium
 
   * Bump version to match python package release.
 
- -- Google Cloud Team <gc-team@google.com>  Thu, 11 Sep 2019 10:39:08 -0700
+ -- Google Cloud Team <gc-team@google.com>  Mon, 16 Sep 2019 15:51:24 -0700
 
 google-compute-engine (1:20190905.00-g1) stable; urgency=medium
 
