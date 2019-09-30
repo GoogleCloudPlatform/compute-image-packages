@@ -115,6 +115,7 @@ done
 # If we have more CPUs than queues, then stripe CPUs across tx affinity
 # as CPUNumber % queue_count.
 for q in $XPS; do
+  [[ -f $q ]] || continue
   queue_re=".*tx-([0-9]+).*$"
   if [[ "$q" =~ ${queue_re} ]]; then
     queue_num=${BASH_REMATCH[1]}
