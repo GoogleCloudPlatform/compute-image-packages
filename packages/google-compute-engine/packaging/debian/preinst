@@ -16,17 +16,13 @@
 #DEBHELPER#
 
 set -e
-if [ -d /run/systemd/system ] ; then
-  if [ "$1" = upgrade ]; then
-    # Remove old services if they exist on upgrade.
-    if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
-      systemctl stop google-ip-forwarding-daemon.service
-      systemctl disable google-ip-forwarding-daemon.service
-    fi
-
-    if [ -f /lib/systemd/system/google-network-setup.service ]; then
-      systemctl stop google-network-setup.service
-      systemctl disable google-network-setup.service
-    fi
-  fi
+if [ "$1" = upgrade && -d /run/systemd/system ] ; then
+  # Remove old services if they exist on upgrade.
+  for svc in google-ip-forwarding-daemon google-network-setup \
+    google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
+      if [ -f /lib/systemd/system/${svc}.service ]; then
+        systemctl stop ${svc}.service
+        systemctl disable ${svc}.service
+      fi
+  done
 fi

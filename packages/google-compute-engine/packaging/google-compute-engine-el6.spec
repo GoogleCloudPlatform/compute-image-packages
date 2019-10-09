@@ -60,16 +60,13 @@ ln -sf /usr/bin/google_set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
 %config /etc/sysctl.d/*
 
 %post
-# On upgrade run instance setup again to handle any new configs and restart
-# daemons.
+# On upgrade:
+# - run instance setup again to handle any new configs.
+# - restart the guest agent.
 if [ $1 -eq 2 ]; then
-  stop -q -n google-accounts-daemon
-  stop -q -n google-clock-skew-daemon
-  stop -q -n google-network-daemon
+  stop -q -n google-guest-agent
   /usr/bin/google_instance_setup
-  start -q -n google-accounts-daemon
-  start -q -n google-clock-skew-daemon
-  start -q -n google-network-daemon
+  start -q -n google-guest-agent
 fi
 
 if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
@@ -79,9 +76,6 @@ fi
 %preun
 # On uninstall only.
 if [ $1 -eq 0 ]; then
-  stop -q -n google-accounts-daemon
-  stop -q -n google-clock-skew-daemon
-  stop -q -n google-network-daemon
   if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
     stop -q -n google-ip-forwarding-daemon
   fi

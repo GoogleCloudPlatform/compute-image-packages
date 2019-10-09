@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="google-compute-engine"
-VERSION="20190916.00"
+VERSION="20191009.00"
 
 working_dir=${PWD}
 if [[ $(basename "$working_dir") != $NAME ]]; then

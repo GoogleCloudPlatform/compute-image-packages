@@ -26,8 +26,5 @@ if [ -d /run/systemd/system ]; then
     _dh_action=start
   fi
   deb-systemd-invoke $_dh_action \
-    google-instance-setup.service \
-    google-accounts-daemon.service \
-    google-clock-skew-daemon.service \
-    google-network-daemon.service >/dev/null || true
+    google-instance-setup.service >/dev/null || true
 fi
