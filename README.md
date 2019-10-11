@@ -41,6 +41,7 @@ SLES 12      | rpm          | 2.7            | systemd
 SLES 15      | rpm          | 3.6            | systemd
 CentOS 6     | rpm          | 2.6            | upstart
 CentOS 7     | rpm          | 2.7            | systemd
+CentOS 8     | rpm          | 3.6            | systemd
 RHEL 6       | rpm          | 2.6            | upstart
 RHEL 7       | rpm          | 2.7            | systemd
 RHEL 8       | rpm          | 3.6            | systemd
