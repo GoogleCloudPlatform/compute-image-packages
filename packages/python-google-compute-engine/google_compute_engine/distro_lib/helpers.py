@@ -71,11 +71,10 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None,
 
   # Check for a 'tentative' IPv6 address which would prevent `dhclient -6` from
   # succeeding below. This should only take 1 second, but we try for up to 5.
-  command = [
-      'ip', '-6', '-o', 'a', 's', 'dev', 'eth0', 'scope', 'link', 'tentative'
-  ]
+  command = ['ip', '-6', '-o', 'a', 's', 'dev', interfaces[0], 'scope',
+             'link', 'tentative']
   for i in range(5):
-    output = ""
+    output = ''
     try:
       output = subprocess.check_output(command)
     except subprocess.CalledProcessError as e:
