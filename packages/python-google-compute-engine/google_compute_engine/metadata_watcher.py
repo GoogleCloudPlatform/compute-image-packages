@@ -182,6 +182,7 @@ class MetadataWatcher(object):
         if retry:
           retry_count += 1
           continue
+          retry_count += 1
         else:
           break
 
