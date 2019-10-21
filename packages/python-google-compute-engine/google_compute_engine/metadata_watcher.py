@@ -154,7 +154,7 @@ class MetadataWatcher(object):
 
   def _HandleMetadataUpdate(
       self, metadata_key='', recursive=True, wait=True, timeout=None,
-      retry=True):
+      retry=True, retry_limit=50):
     """Wait for a successful metadata response.
 
     Args:
@@ -163,12 +163,14 @@ class MetadataWatcher(object):
       wait: bool, True if we should wait for a metadata change.
       timeout: int, timeout in seconds for returning metadata output.
       retry: bool, True if we should retry on failure.
+      retry_limit: int, number of times to retry obtaining metadata.
 
     Returns:
       json, the deserialized contents of the metadata server.
     """
     exception = None
-    while True:
+    retry_count = 0
+    while retry_count < retry_limit:
       try:
         return self._GetMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
@@ -178,6 +180,7 @@ class MetadataWatcher(object):
           exception = e
           self.logger.error('GET request error retrieving metadata. %s.', e)
         if retry:
+          retry_count += 1
           continue
         else:
           break
