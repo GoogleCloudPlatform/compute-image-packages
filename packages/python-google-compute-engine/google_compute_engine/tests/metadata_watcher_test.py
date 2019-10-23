@@ -259,12 +259,12 @@ class MetadataWatcherTest(unittest.TestCase):
     metadata_key = 'instance/id'
     recursive = False
     wait = False
-    retry = True
+    retries = 5
 
     self.assertEqual(
         self.mock_watcher._HandleMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
-            timeout=None, retry=retry),
+            timeout=None, retries=retries),
         {})
     expected_calls = [
         mock.call(
@@ -282,12 +282,12 @@ class MetadataWatcherTest(unittest.TestCase):
     metadata_key = 'instance/id'
     recursive = False
     wait = False
-    retry = False
+    retries = 5
 
     self.assertIsNone(
         self.mock_watcher._HandleMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
-            timeout=None, retry=retry))
+            timeout=None, retries=retries))
     expected_calls = [
         mock.call(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
