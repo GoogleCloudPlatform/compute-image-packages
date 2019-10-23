@@ -179,7 +179,6 @@ class MetadataWatcher(object):
           exception = e
           self.logger.error('GET request error retrieving metadata. %s.', e)
         time.sleep(1)
-        continue
 
   def WatchMetadata(
       self, handler, metadata_key='', recursive=True, timeout=None):
