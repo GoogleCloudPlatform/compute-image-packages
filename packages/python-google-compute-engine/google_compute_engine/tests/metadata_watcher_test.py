@@ -333,7 +333,7 @@ class MetadataWatcherTest(unittest.TestCase):
 
     self.assertEqual(self.mock_watcher.GetMetadata(), {})
     mock_response.assert_called_once_with(
-        metadata_key='', recursive=True, wait=False, timeout=None, retry=True)
+        metadata_key='', recursive=True, wait=False, timeout=None, retries=0)
     self.mock_watcher.logger.exception.assert_not_called()
 
   def testGetMetadataArgs(self):
@@ -350,7 +350,7 @@ class MetadataWatcherTest(unittest.TestCase):
     self.assertEqual(response, {})
     mock_response.assert_called_once_with(
         metadata_key=metadata_key, recursive=False, wait=False, timeout=60,
-        retries=None)
+        retries=0)
     self.mock_watcher.logger.exception.assert_not_called()
 
 
