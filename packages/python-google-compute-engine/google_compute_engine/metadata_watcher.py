@@ -156,7 +156,6 @@ class MetadataWatcher(object):
       self, metadata_key='', recursive=True, wait=True, timeout=None,
       retries=5):
     """Wait for a successful metadata response.
-
     Args:
       metadata_key: string, the metadata key to watch for changes.
       recursive: bool, True if we should recursively watch for metadata changes.
