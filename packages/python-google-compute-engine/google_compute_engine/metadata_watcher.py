@@ -174,6 +174,7 @@ class MetadataWatcher(object):
             metadata_key=metadata_key, recursive=recursive, wait=wait,
             timeout=timeout)
       except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
+        retries -= 1
         if not isinstance(e, type(exception)):
           exception = e
           self.logger.error('GET request error retrieving metadata. %s.', e)
