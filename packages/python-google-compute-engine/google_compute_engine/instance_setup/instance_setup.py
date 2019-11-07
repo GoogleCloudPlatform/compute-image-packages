@@ -65,17 +65,27 @@ class InstanceSetup(object):
       instance_config_metadata = self._GetInstanceConfig()
       self.instance_config = instance_config.InstanceConfig(
           logger=self.logger, instance_config_metadata=instance_config_metadata)
+
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_host_keys'):
         host_key_types = self.instance_config.GetOptionString(
             'InstanceSetup', 'host_key_types')
         self._SetSshHostKeys(host_key_types=host_key_types)
+
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
         self._SetupBotoConfig()
+
+      # machineType is e.g. u'projects/00000000000000/machineTypes/n1-standard-1'
+      machineType = self.metadata_dict['instance']['machineType'].split('/')[-1]
+      if machineType.startswith("e2-"):
+        subprocess.call(["sysctl", "vm.overcommit_memory=1"])
+
     if self.instance_config.GetOptionBool(
         'InstanceSetup', 'optimize_local_ssd'):
       self._RunScript('google_optimize_local_ssd')
+
     if self.instance_config.GetOptionBool('InstanceSetup', 'set_multiqueue'):
       self._RunScript('google_set_multiqueue')
+
     try:
       self.instance_config.WriteConfig()
     except (IOError, OSError) as e:
