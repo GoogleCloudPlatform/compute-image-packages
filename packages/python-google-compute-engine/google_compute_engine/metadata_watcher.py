@@ -168,7 +168,7 @@ class MetadataWatcher(object):
       json, the deserialized contents of the metadata server.
     """
     exception = None
-    while retries > -1:
+    while retries >= 0:
       try:
         return self._GetMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
