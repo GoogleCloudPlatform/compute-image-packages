@@ -28,7 +28,7 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine.boto import boto_config
-from google_compute_engine.compat import urlerror
+from google_compute_engine.compat import distro_name, urlerror
 from google_compute_engine.compat import urlrequest
 from google_compute_engine.instance_setup import instance_config
 
@@ -65,17 +65,27 @@ class InstanceSetup(object):
       instance_config_metadata = self._GetInstanceConfig()
       self.instance_config = instance_config.InstanceConfig(
           logger=self.logger, instance_config_metadata=instance_config_metadata)
+
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_host_keys'):
         host_key_types = self.instance_config.GetOptionString(
             'InstanceSetup', 'host_key_types')
         self._SetSshHostKeys(host_key_types=host_key_types)
+
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
         self._SetupBotoConfig()
+
+      # machineType is e.g. u'projects/00000000000000/machineTypes/n1-standard-1'
+      machineType = self.metadata_dict['instance']['machineType'].split('/')[-1]
+      if machineType.startswith("e2-") and 'bsd' not in distro_name:  # Not yet supported on BSD.
+        subprocess.call(["sysctl", "vm.overcommit_memory=1"])
+
     if self.instance_config.GetOptionBool(
         'InstanceSetup', 'optimize_local_ssd'):
       self._RunScript('google_optimize_local_ssd')
+
     if self.instance_config.GetOptionBool('InstanceSetup', 'set_multiqueue'):
       self._RunScript('google_set_multiqueue')
+
     try:
       self.instance_config.WriteConfig()
     except (IOError, OSError) as e:
@@ -205,10 +215,9 @@ class InstanceSetup(object):
     Args:
       host_key_types: string, a comma separated list of host key types.
     """
-    section = 'Instance'
     instance_id = self._GetInstanceId()
     if instance_id != self.instance_config.GetOptionString(
-        section, 'instance_id'):
+        'instance', 'instance_id'):
       self.logger.info('Generating SSH host keys for instance %s.', instance_id)
       file_regex = re.compile(r'ssh_host_(?P<type>[a-z0-9]*)_key\Z')
       key_dir = '/etc/ssh'
@@ -222,7 +231,7 @@ class InstanceSetup(object):
         if key_data:
           self._WriteHostKeyToGuestAttributes(key_data[0], key_data[1])
       self._StartSshd()
-      self.instance_config.SetOption(section, 'instance_id', str(instance_id))
+      self.instance_config.SetOption('Instance', 'instance_id', str(instance_id))
 
   def _GetNumericProjectId(self):
     """Get the numeric project ID.
