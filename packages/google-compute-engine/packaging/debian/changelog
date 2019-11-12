@@ -1,6 +1,6 @@
 google-compute-engine (1:20190916.00-g2) stable; urgency=medium
 
-  * Update depencies.
+  * Update dependencies.
 
  -- Google Cloud Team <gc-team@google.com>  Mon, 16 Sep 2019 15:51:24 -0700
 
