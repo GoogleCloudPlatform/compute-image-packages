@@ -97,7 +97,7 @@ class ScriptRetriever(object):
 
     if not self.token:
       response = self.watcher.GetMetadata(
-          self.token_metadata_key, recursive=False, retry=False)
+          self.token_metadata_key, recursive=False, retries=1)
 
       if not response:
         self.logger.info(

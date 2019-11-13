@@ -20,7 +20,7 @@
 Name: google-compute-engine
 Epoch: 1
 Version: %{_version}
-Release: g1%{?dist}
+Release: g2%{?dist}
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages
@@ -28,9 +28,9 @@ Source0: %{name}_%{version}.orig.tar.gz
 Requires: curl
 Requires: google-compute-engine-oslogin
 %if 0%{?rhel} == 8
-Requires: python3-google-compute-engine = 1:%{version}
+Requires: python3-google-compute-engine >= 1:20190916.00
 %else
-Requires: python-google-compute-engine = 1:%{version}
+Requires: python-google-compute-engine >= 1:20190916.00
 %endif
 Requires: rsyslog
 

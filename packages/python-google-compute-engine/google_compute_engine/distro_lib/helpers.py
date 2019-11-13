@@ -17,6 +17,7 @@
 
 import os
 import subprocess
+import time
 
 
 def CallDhclient(
@@ -67,6 +68,23 @@ def CallDhclientIpv6(interfaces, logger, dhclient_script=None,
       logger.warning('Could not release IPv6 lease on interface %s.',
                      interfaces)
     return
+
+  # Check for a 'tentative' IPv6 address which would prevent `dhclient -6` from
+  # succeeding below. This should only take 1 second, but we try for up to 5.
+  command = ['ip', '-6', '-o', 'a', 's', 'dev', interfaces[0], 'scope',
+             'link', 'tentative']
+  for i in range(5):
+    output = ''
+    try:
+      output = subprocess.check_output(command)
+    except subprocess.CalledProcessError as e:
+      logger.warning('Could not confirm tentative IPv6 address: %s.', e.output)
+    if output:
+      logger.info('Found tentative ipv6 link address %s, sleeping 1 second.',
+                  output.strip())
+      time.sleep(1)
+    else:
+      break
 
   if dhclient_script and os.path.exists(dhclient_script):
     dhclient_command += ['-sf', dhclient_script]
