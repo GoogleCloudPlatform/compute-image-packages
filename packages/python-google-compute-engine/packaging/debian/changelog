@@ -1,10 +1,16 @@
+python-google-compute-engine (1:20191115.00-g1) stable; urgency=medium
+
+  * REVERT: Enable sysctl change for E2 platform.
+
+ -- Google Cloud Team <gc-team@google.com>  Fri, 15 Sep 2019 10:08:24 -0700
+
 python-google-compute-engine (1:20191112.00-g1) stable; urgency=medium
 
   * Enable sysctl change for E2 platform.
   * Retry metadata lookups in agent.
   * Wait for link-local IPv6 addresses to resolve.
 
- -- Google Cloud Team <gc-team@google.com>  Mon, 16 Sep 2019 15:52:24 -0700
+ -- Google Cloud Team <gc-team@google.com>  Mon, 11 Nov 2019 15:52:24 -0700
 
 python-google-compute-engine (1:20190916.00-g1) stable; urgency=medium
 
