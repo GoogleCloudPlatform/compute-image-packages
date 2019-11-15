@@ -46,7 +46,7 @@ class InstanceSetupTest(unittest.TestCase):
     mock_logger_instance = mock.Mock()
     mock_logger.Logger.return_value = mock_logger_instance
     mock_watcher_instance = mock.Mock()
-    mock_watcher_instance.GetMetadata.return_value = {'hello': 'world', 'instance': {'machineType': 'fake'}}
+    mock_watcher_instance.GetMetadata.return_value = {'hello': 'world'}
     mock_watcher.MetadataWatcher.return_value = mock_watcher_instance
     mock_config_instance = mock.Mock()
     mock_config_instance.GetOptionBool.return_value = True
@@ -91,7 +91,7 @@ class InstanceSetupTest(unittest.TestCase):
         mock.call.config.InstanceConfig().WriteConfig(),
     ]
     self.assertEqual(mocks.mock_calls, expected_calls)
-    self.assertEqual(mock_setup.metadata_dict, {'hello': 'world', 'instance': {'machineType': 'fake'}})
+    self.assertEqual(mock_setup.metadata_dict, {'hello': 'world'})
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.instance_config')
   @mock.patch('google_compute_engine.instance_setup.instance_setup.metadata_watcher')
@@ -386,7 +386,7 @@ class InstanceSetupTest(unittest.TestCase):
     ]
 
     self.assertEqual(sorted(mock_generate_key.mock_calls), expected_calls)
-    self.mock_instance_config.SetOption.assert_called_with(
+    self.mock_instance_config.SetOption.assert_called_once_with(
         'Instance', 'instance_id', '123')
 
   def testGetNumericProjectId(self):
