@@ -217,7 +217,7 @@ class InstanceSetup(object):
     """
     instance_id = self._GetInstanceId()
     if instance_id != self.instance_config.GetOptionString(
-        'instance', 'instance_id'):
+        'Instance', 'instance_id'):
       self.logger.info('Generating SSH host keys for instance %s.', instance_id)
       file_regex = re.compile(r'ssh_host_(?P<type>[a-z0-9]*)_key\Z')
       key_dir = '/etc/ssh'
