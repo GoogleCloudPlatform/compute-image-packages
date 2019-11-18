@@ -27,11 +27,6 @@ Url: https://github.com/GoogleCloudPlatform/compute-image-packages
 Source0: %{name}_%{version}.orig.tar.gz
 Requires: curl
 Requires: google-compute-engine-oslogin
-%if 0%{?rhel} == 8
-Requires: python3-google-compute-engine = 1:%{version}
-%else
-Requires: python-google-compute-engine = 1:%{version}
-%endif
 Requires: rsyslog
 
 BuildArch: noarch
@@ -66,15 +61,6 @@ cp -a src/lib/udev/rules.d/* %{buildroot}/%{_udevrulesdir}
 %config /etc/sysctl.d/*
 
 %post
-# On upgrade:
-# - run instance setup again to handle any new configs.
-# - restart the guest agent.
-if [ $1 -eq 2 ]; then
-  /usr/bin/google_instance_setup
-  systemctl reload-or-restart google-guest-agent.service
-fi
-
-%systemd_post google-instance-setup.service
 %systemd_post google-shutdown-scripts.service
 %systemd_post google-startup-scripts.service
 
@@ -92,7 +78,6 @@ fi
 %preun
 # On uninstall only.
 if [ $1 -eq 0 ]; then
-  %systemd_preun google-instance-setup.service
   %systemd_preun google-shutdown-scripts.service
   %systemd_preun google-startup-scripts.service
 fi

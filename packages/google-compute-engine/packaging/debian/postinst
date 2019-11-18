@@ -25,6 +25,4 @@ if [ -d /run/systemd/system ]; then
   else
     _dh_action=start
   fi
-  deb-systemd-invoke $_dh_action \
-    google-instance-setup.service >/dev/null || true
 fi

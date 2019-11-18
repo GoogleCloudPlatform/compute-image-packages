@@ -22,7 +22,6 @@ Url: https://github.com/GoogleCloudPlatform/compute-image-packages
 Source0: %{name}_%{version}.orig.tar.gz
 Requires: curl
 Requires: google-compute-engine-oslogin
-Requires: python-google-compute-engine = 1:%{version}
 Requires: rsyslog
 # Old packages.
 Obsoletes: google-compute-engine-init
@@ -60,15 +59,6 @@ ln -sf /usr/bin/google_set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
 %config /etc/sysctl.d/*
 
 %post
-# On upgrade:
-# - run instance setup again to handle any new configs.
-# - restart the guest agent.
-if [ $1 -eq 2 ]; then
-  stop -q -n google-guest-agent
-  /usr/bin/google_instance_setup
-  start -q -n google-guest-agent
-fi
-
 if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
   stop -q -n google-ip-forwarding-daemon
 fi
