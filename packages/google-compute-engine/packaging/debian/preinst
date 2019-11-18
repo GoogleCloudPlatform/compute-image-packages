@@ -16,7 +16,7 @@
 #DEBHELPER#
 
 set -e
-if [ "$1" = upgrade && -d /run/systemd/system ] ; then
+if [ "$1" = upgrade ] && [ -d /run/systemd/system ] ; then
   # Remove old services if they exist on upgrade.
   for svc in google-ip-forwarding-daemon google-network-setup \
     google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
