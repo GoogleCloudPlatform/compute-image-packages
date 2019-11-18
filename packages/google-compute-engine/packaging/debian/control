@@ -10,8 +10,6 @@ Package: google-compute-engine
 Architecture: all
 Depends: google-compute-engine-oslogin,
          google-guest-agent,
-         python-google-compute-engine,
-         python3-google-compute-engine,
          ${misc:Depends},
          systemd
 Recommends: rsyslog | system-log-daemon
