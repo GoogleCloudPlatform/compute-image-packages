@@ -28,7 +28,9 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine.boto import boto_config
-from google_compute_engine.compat import distro_name, urlerror, urlrequest
+from google_compute_engine.compat import distro_name
+from google_compute_engine.compat import urlerror
+from google_compute_engine.compat import urlrequest
 from google_compute_engine.instance_setup import instance_config
 
 
@@ -73,10 +75,10 @@ class InstanceSetup(object):
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
         self._SetupBotoConfig()
 
-      # machineType is e.g. u'projects/00000000000000/machineTypes/n1-standard-1'
+      # machineType is e.g. 'projects/00000000000000/machineTypes/n1-standard-1'
       machineType = self.metadata_dict['instance']['machineType'].split('/')[-1]
-      if machineType.startswith("e2-") and 'bsd' not in distro_name:  # Not yet supported on BSD.
-        subprocess.call(["sysctl", "vm.overcommit_memory=1"])
+      if machineType.startswith('e2-') and 'bsd' not in distro_name:
+        subprocess.call(['sysctl', 'vm.overcommit_memory=1'])
 
     if self.instance_config.GetOptionBool(
         'InstanceSetup', 'optimize_local_ssd'):
