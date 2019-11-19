@@ -65,15 +65,13 @@ cp -a src/lib/udev/rules.d/* %{buildroot}/%{_udevrulesdir}
 %systemd_post google-startup-scripts.service
 
 # Remove old services.
-if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
-  systemctl stop --no-block google-ip-forwarding-daemon
-  systemctl disable google-ip-forwarding-daemon.service
-fi
-
-if [ -f /lib/systemd/system/google-network-setup.service ]; then
-  systemctl stop --no-block google-network-setup
-  systemctl disable google-network-setup.service
-fi
+for svc in google-ip-forwarding-daemon google-network-setup \
+  google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
+    if [ -f /lib/systemd/system/${svc}.service ]; then
+      systemctl stop ${svc}.service
+      systemctl disable ${svc}.service
+    fi
+done
 
 %preun
 # On uninstall only.
