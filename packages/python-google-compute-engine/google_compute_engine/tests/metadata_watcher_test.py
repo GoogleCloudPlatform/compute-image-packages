@@ -259,12 +259,12 @@ class MetadataWatcherTest(unittest.TestCase):
     metadata_key = 'instance/id'
     recursive = False
     wait = False
-    retries = 5
+    retry = True
 
     self.assertEqual(
         self.mock_watcher._HandleMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
-            timeout=None, retries=retries),
+            timeout=None, retry=retry),
         {})
     expected_calls = [
         mock.call(
@@ -282,12 +282,12 @@ class MetadataWatcherTest(unittest.TestCase):
     metadata_key = 'instance/id'
     recursive = False
     wait = False
-    retries = 0
+    retry = False
 
     self.assertIsNone(
         self.mock_watcher._HandleMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
-            timeout=None, retries=retries))
+            timeout=None, retry=retry))
     expected_calls = [
         mock.call(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
@@ -333,7 +333,7 @@ class MetadataWatcherTest(unittest.TestCase):
 
     self.assertEqual(self.mock_watcher.GetMetadata(), {})
     mock_response.assert_called_once_with(
-        metadata_key='', recursive=True, wait=False, timeout=None, retries=5)
+        metadata_key='', recursive=True, wait=False, timeout=None, retry=True)
     self.mock_watcher.logger.exception.assert_not_called()
 
   def testGetMetadataArgs(self):
@@ -342,15 +342,15 @@ class MetadataWatcherTest(unittest.TestCase):
     self.mock_watcher._HandleMetadataUpdate = mock_response
     metadata_key = 'instance/id'
     recursive = False
-    retries = 5
+    retry = False
 
     response = self.mock_watcher.GetMetadata(
         metadata_key=metadata_key, recursive=recursive, timeout=60,
-        retries=retries)
+        retry=retry)
     self.assertEqual(response, {})
     mock_response.assert_called_once_with(
         metadata_key=metadata_key, recursive=False, wait=False, timeout=60,
-        retries=5)
+        retry=False)
     self.mock_watcher.logger.exception.assert_not_called()
 
 
