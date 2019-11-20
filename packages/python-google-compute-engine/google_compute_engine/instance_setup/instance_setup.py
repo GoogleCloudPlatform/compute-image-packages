@@ -75,10 +75,7 @@ class InstanceSetup(object):
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
         self._SetupBotoConfig()
 
-      # machineType is e.g. 'projects/00000000000000/machineTypes/n1-standard-1'
-      machineType = self.metadata_dict['instance']['machineType'].split('/')[-1]
-      if machineType.startswith('e2-') and 'bsd' not in distro_name:
-        subprocess.call(['sysctl', 'vm.overcommit_memory=1'])
+      self._DisableOvercommit()
 
     if self.instance_config.GetOptionBool(
         'InstanceSetup', 'optimize_local_ssd'):
@@ -91,6 +88,15 @@ class InstanceSetup(object):
       self.instance_config.WriteConfig()
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
+
+  def _DisableOvercommit(self):
+    """Disable overcommit accounting on E2 machine types."""
+
+    # Expected machine type format:
+    # 'projects/00000000000/machineTypes/n1-standard-1'
+    machine_type = self.metadata_dict['instance']['machineType'].split('/')[-1]
+    if machine_type.startswith('e2-') and 'bsd' not in distro_name:
+      subprocess.call(['sysctl', 'vm.overcommit_memory=1'])
 
   def _GetInstanceConfig(self):
     """Get the instance configuration specified in metadata.
