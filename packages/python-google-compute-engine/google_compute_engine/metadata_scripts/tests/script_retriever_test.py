@@ -89,7 +89,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     # GetMetadata includes a prefix, so remove it.
     stripped_url = token_url.replace(metadata_prefix, '')
     mock_get_metadata.assert_called_once_with(
-        stripped_url, recursive=False, retries=1)
+        stripped_url, recursive=False, retry=False)
 
     self.assertEqual(self.retriever.token, 'foo bar')
 
@@ -119,7 +119,7 @@ class ScriptRetrieverTest(unittest.TestCase):
     prefix = 'http://metadata.google.internal/computeMetadata/v1/'
     stripped_url = token_url.replace(prefix, '')
     mock_get_metadata.assert_called_once_with(
-        stripped_url, recursive=False, retries=1)
+        stripped_url, recursive=False, retry=False)
     mock_download_url.assert_called_once_with(auth_url, self.dest_dir)
 
     self.assertIsNone(self.retriever.token)
