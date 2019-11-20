@@ -89,13 +89,13 @@ class InstanceSetup(object):
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
 
-  def _DisableOvercommit(self):
+  def _DisableOvercommit(self, distro=distro_name):
     """Disable overcommit accounting on E2 machine types."""
 
     # Expected machine type format:
     # 'projects/00000000000/machineTypes/n1-standard-1'
     machine_type = self.metadata_dict['instance']['machineType'].split('/')[-1]
-    if machine_type.startswith('e2-') and 'bsd' not in distro_name:
+    if machine_type.startswith('e2-') and 'bsd' not in distro:
       subprocess.call(['sysctl', 'vm.overcommit_memory=1'])
 
   def _GetInstanceConfig(self):

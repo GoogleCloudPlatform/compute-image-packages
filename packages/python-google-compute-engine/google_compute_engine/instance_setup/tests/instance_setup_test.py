@@ -82,6 +82,7 @@ class InstanceSetupTest(unittest.TestCase):
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'set_boto_config'),
         mock.call.setup._SetupBotoConfig(),
+        mock.call.setup._DisableOvercommit(),
         # Setup for local SSD.
         mock.call.config.InstanceConfig().GetOptionBool(
             'InstanceSetup', 'optimize_local_ssd'),
@@ -426,6 +427,37 @@ class InstanceSetupTest(unittest.TestCase):
     mock_boto.side_effect = IOError('Test Error')
     instance_setup.InstanceSetup._SetupBotoConfig(self.mock_setup)
     self.mock_logger.warning.assert_called_once_with('Test Error')
+
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess')
+  def testDisableOvercommitNonE2(self, mock_subprocess):
+    self.mock_setup.metadata_dict = {
+        'instance': {
+            'machineType': 'projects/00000000000/machineTypes/n1-standard-1'
+        }
+    }
+    instance_setup.InstanceSetup._DisableOvercommit(self.mock_setup)
+    mock_subprocess.call.assert_not_called()
+
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess')
+  def testDisableOvercommitE2(self, mock_subprocess):
+    self.mock_setup.metadata_dict = {
+        'instance': {
+            'machineType': 'projects/00000000000/machineTypes/e2-standard-1'
+        }
+    }
+    instance_setup.InstanceSetup._DisableOvercommit(self.mock_setup)
+    mock_subprocess.call.assert_called_once_with(['sysctl',
+                                                  'vm.overcommit_memory=1'])
+
+  @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess')
+  def testDisableOvercommitBSD(self, mock_subprocess):
+    self.mock_setup.metadata_dict = {
+        'instance': {
+            'machineType': 'projects/00000000000/machineTypes/e2-standard-1'
+        }
+    }
+    instance_setup.InstanceSetup._DisableOvercommit(self.mock_setup, "bsd")
+    mock_subprocess.call.assert_not_called()
 
 
 if __name__ == '__main__':
