@@ -432,7 +432,7 @@ class InstanceSetupTest(unittest.TestCase):
   def testDisableOvercommitNonE2(self, mock_subprocess):
     self.mock_setup.metadata_dict = {
         'instance': {
-            'machineType': 'projects/00000000000/machineTypes/n1-standard-1'
+            'machineType': 'projects/00000000000/machineTypes/n1-standard-1',
         }
     }
     instance_setup.InstanceSetup._DisableOvercommit(self.mock_setup)
@@ -442,18 +442,19 @@ class InstanceSetupTest(unittest.TestCase):
   def testDisableOvercommitE2(self, mock_subprocess):
     self.mock_setup.metadata_dict = {
         'instance': {
-            'machineType': 'projects/00000000000/machineTypes/e2-standard-1'
+            'machineType': 'projects/00000000000/machineTypes/e2-standard-1',
         }
     }
     instance_setup.InstanceSetup._DisableOvercommit(self.mock_setup)
-    mock_subprocess.call.assert_called_once_with(['sysctl',
-                                                  'vm.overcommit_memory=1'])
+    mock_subprocess.call.assert_called_once_with(
+        ['sysctl', 'vm.overcommit_memory=1']
+    )
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess')
   def testDisableOvercommitBSD(self, mock_subprocess):
     self.mock_setup.metadata_dict = {
         'instance': {
-            'machineType': 'projects/00000000000/machineTypes/e2-standard-1'
+            'machineType': 'projects/00000000000/machineTypes/e2-standard-1',
         }
     }
     instance_setup.InstanceSetup._DisableOvercommit(self.mock_setup, "bsd")
