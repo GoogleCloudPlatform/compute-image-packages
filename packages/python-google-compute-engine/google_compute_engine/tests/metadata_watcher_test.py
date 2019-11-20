@@ -259,12 +259,12 @@ class MetadataWatcherTest(unittest.TestCase):
     metadata_key = 'instance/id'
     recursive = False
     wait = False
-    retry = True
+    retry_limit = None
 
     self.assertEqual(
         self.mock_watcher._HandleMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
-            timeout=None, retry=retry),
+            timeout=None, retry_limit=retry_limit),
         {})
     expected_calls = [
         mock.call(
@@ -282,12 +282,12 @@ class MetadataWatcherTest(unittest.TestCase):
     metadata_key = 'instance/id'
     recursive = False
     wait = False
-    retry = False
+    retry_limit = 0
 
     self.assertIsNone(
         self.mock_watcher._HandleMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
-            timeout=None, retry=retry))
+            timeout=None, retry_limit=retry_limit))
     expected_calls = [
         mock.call(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
@@ -333,7 +333,8 @@ class MetadataWatcherTest(unittest.TestCase):
 
     self.assertEqual(self.mock_watcher.GetMetadata(), {})
     mock_response.assert_called_once_with(
-        metadata_key='', recursive=True, wait=False, timeout=None, retry=True)
+        metadata_key='', recursive=True, wait=False, timeout=None,
+        retry_limit=None)
     self.mock_watcher.logger.exception.assert_not_called()
 
   def testGetMetadataArgs(self):
@@ -342,15 +343,15 @@ class MetadataWatcherTest(unittest.TestCase):
     self.mock_watcher._HandleMetadataUpdate = mock_response
     metadata_key = 'instance/id'
     recursive = False
-    retry = False
+    retry_limit = None
 
     response = self.mock_watcher.GetMetadata(
         metadata_key=metadata_key, recursive=recursive, timeout=60,
-        retry=retry)
+        retry_limit=retry_limit)
     self.assertEqual(response, {})
     mock_response.assert_called_once_with(
         metadata_key=metadata_key, recursive=False, wait=False, timeout=60,
-        retry=False)
+        retry_limit=None)
     self.mock_watcher.logger.exception.assert_not_called()
 
 

@@ -154,7 +154,7 @@ class MetadataWatcher(object):
 
   def _HandleMetadataUpdate(
       self, metadata_key='', recursive=True, wait=True, timeout=None,
-      retry=True):
+      retry_limit=None):
     """Wait for a successful metadata response.
 
     Args:
@@ -162,25 +162,24 @@ class MetadataWatcher(object):
       recursive: bool, True if we should recursively watch for metadata changes.
       wait: bool, True if we should wait for a metadata change.
       timeout: int, timeout in seconds for returning metadata output.
-      retry: bool, True if we should retry on failure.
+      retry_limit: int or None, limit for number of times to retry on failure.
 
     Returns:
       json, the deserialized contents of the metadata server.
     """
     exception = None
-    while True:
+    while retry_limit is None or retry_limit >= 0:
       try:
         return self._GetMetadataUpdate(
             metadata_key=metadata_key, recursive=recursive, wait=wait,
             timeout=timeout)
       except (httpclient.HTTPException, socket.error, urlerror.URLError) as e:
+        if retry_limit is not None:
+          retry_limit -= 1
         if not isinstance(e, type(exception)):
           exception = e
           self.logger.error('GET request error retrieving metadata. %s.', e)
-        if retry:
-          continue
-        else:
-          break
+        time.sleep(1)
 
   def WatchMetadata(
       self, handler, metadata_key='', recursive=True, timeout=None):
@@ -202,18 +201,18 @@ class MetadataWatcher(object):
         self.logger.exception('Exception calling the response handler. %s.', e)
 
   def GetMetadata(
-      self, metadata_key='', recursive=True, timeout=None, retry=True):
+      self, metadata_key='', recursive=True, timeout=None, retry_limit=None):
     """Retrieve the contents of metadata server for a metadata key.
 
     Args:
       metadata_key: string, the metadata key to watch for changes.
       recursive: bool, True if we should recursively watch for metadata changes.
       timeout: int, timeout in seconds for returning metadata output.
-      retry: bool, True if we should retry on failure.
+      retry_limit: int or None, limit for number of times to retry on failure.
 
     Returns:
       json, the deserialized contents of the metadata server or None if error.
     """
     return self._HandleMetadataUpdate(
         metadata_key=metadata_key, recursive=recursive, wait=False,
-        timeout=timeout, retry=retry)
+        timeout=timeout, retry_limit=retry_limit)
