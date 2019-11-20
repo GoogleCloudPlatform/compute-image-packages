@@ -447,8 +447,7 @@ class InstanceSetupTest(unittest.TestCase):
     }
     instance_setup.InstanceSetup._DisableOvercommit(self.mock_setup)
     mock_subprocess.call.assert_called_once_with(
-        ['sysctl', 'vm.overcommit_memory=1']
-    )
+        ['sysctl', 'vm.overcommit_memory=1'])
 
   @mock.patch('google_compute_engine.instance_setup.instance_setup.subprocess')
   def testDisableOvercommitBSD(self, mock_subprocess):
@@ -457,7 +456,7 @@ class InstanceSetupTest(unittest.TestCase):
             'machineType': 'projects/00000000000/machineTypes/e2-standard-1',
         }
     }
-    instance_setup.InstanceSetup._DisableOvercommit(self.mock_setup, "bsd")
+    instance_setup.InstanceSetup._DisableOvercommit(self.mock_setup, 'bsd')
     mock_subprocess.call.assert_not_called()
 
 
