@@ -1,3 +1,9 @@
+python-google-compute-engine (1:20191120.00-g1) stable; urgency=medium
+
+  * REVERT: Retry metadata lookups in agent.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 20 Sep 2019 15:28:54 -0700
+
 python-google-compute-engine (1:20191115.00-g1) stable; urgency=medium
 
   * REVERT: Enable sysctl change for E2 platform.
