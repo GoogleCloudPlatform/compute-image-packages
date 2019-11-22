@@ -27,6 +27,7 @@ Url: https://github.com/GoogleCloudPlatform/compute-image-packages
 Source0: %{name}_%{version}.orig.tar.gz
 Requires: curl
 Requires: google-compute-engine-oslogin
+Requires: google-guest-agent
 Requires: rsyslog
 
 BuildArch: noarch
