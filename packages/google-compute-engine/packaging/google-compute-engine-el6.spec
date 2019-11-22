@@ -53,7 +53,6 @@ ln -sf /usr/bin/google_set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
 %attr(0755,-,-) %{_bindir}/*
 %attr(0755,-,-) %{_sbindir}/*
 /lib/udev/rules.d/*
-/etc/init/*.conf
 /etc/dhcp/dhclient-exit-hooks
 %config /etc/modprobe.d/*
 %config /etc/rsyslog.d/*

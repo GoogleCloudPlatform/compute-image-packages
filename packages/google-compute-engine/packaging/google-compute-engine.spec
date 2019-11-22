@@ -45,9 +45,7 @@ specific to the Google Compute Engine cloud environment.
 
 %install
 cp -a src/{etc,usr} %{buildroot}
-install -d %{buildroot}/{%{_unitdir},%{_presetdir},%{_udevrulesdir}}
-cp -a src/lib/systemd/system/* %{buildroot}/%{_unitdir}
-cp -a src/lib/systemd/system-preset/* %{buildroot}/%{_presetdir}
+install -d %{buildroot}/%{_udevrulesdir}
 cp -a src/lib/udev/rules.d/* %{buildroot}/%{_udevrulesdir}
 
 %files
@@ -55,16 +53,11 @@ cp -a src/lib/udev/rules.d/* %{buildroot}/%{_udevrulesdir}
 %attr(0755,-,-) %{_bindir}/*
 %attr(0755,-,-) /etc/dhcp/dhclient.d/google_hostname.sh
 %{_udevrulesdir}/*
-%{_unitdir}/*
-%{_presetdir}/*
 %config /etc/modprobe.d/*
 %config /etc/rsyslog.d/*
 %config /etc/sysctl.d/*
 
 %post
-%systemd_post google-shutdown-scripts.service
-%systemd_post google-startup-scripts.service
-
 # Remove old services.
 for svc in google-ip-forwarding-daemon google-network-setup \
   google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
@@ -73,10 +66,3 @@ for svc in google-ip-forwarding-daemon google-network-setup \
       systemctl disable ${svc}.service
     fi
 done
-
-%preun
-# On uninstall only.
-if [ $1 -eq 0 ]; then
-  %systemd_preun google-shutdown-scripts.service
-  %systemd_preun google-startup-scripts.service
-fi
