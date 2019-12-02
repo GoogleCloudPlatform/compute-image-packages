@@ -29,8 +29,8 @@ resize_filesystem() {
       ;;
     ext*)
       if ! out=$(e2fsck -pf "$disk"); then
-        echo "Calling e2fsck \"${disk}\" failed: ${out}"
-        return 1
+        local ret=$?
+        echo "Calling e2fsck \"${disk}\" failed: ${out} exit code ${ret}"
       fi
       if ! out=$(resize2fs "$disk"); then
         echo "Calling resize2fs \"${disk}\" failed: ${out}"
