@@ -21,8 +21,8 @@ if [ "$1" = upgrade ] && [ -d /run/systemd/system ] ; then
   for svc in google-ip-forwarding-daemon google-network-setup \
     google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
       if [ -f /lib/systemd/system/${svc}.service ]; then
-        systemctl stop ${svc}.service
-        systemctl disable ${svc}.service
+        systemctl --no-reload disable ${svc}.service >/dev/null 2>&1 || :
+        systemctl stop ${svc}.service >/dev/null 2>&1 || :
       fi
   done
 fi
