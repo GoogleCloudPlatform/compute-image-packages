@@ -29,15 +29,15 @@ esac
 . /scripts/expandfs-lib.sh
 
 if ! rootdev=$(resolve_device "${ROOT}"); then
-  log_failure_message "Failed to resolve root device for \"${ROOT}\""
+  log_failure_msg "Failed to resolve root device for \"${ROOT}\""
 fi
 
 if ! fs_type=$(get_fstype "${rootdev}"); then
-  log_failure_message "Failed to determine fstype for \"${rootdev}\""
+  log_failure_msg "Failed to determine fstype for \"${rootdev}\""
 fi
 
 if ! out=$(split_partition "$rootdev"); then
-  log_failure_message "Failed to detect disk and partition info: ${out}"
+  log_failure_msg "Failed to detect disk and partition info: ${out}"
   exit 0
 fi
 
@@ -50,18 +50,18 @@ if ! parted_needresize "${disk}" "${partnum}"; then
 fi
 
 if ! out=$(parted_fix_gpt "$disk"); then
-  log_failure_message "Failed to fix GPT: ${out}"
+  log_failure_msg "Failed to fix GPT: ${out}"
   exit 0
 fi
 
 echo "Resizing partition on ${rootdev}"
 if ! out=$(parted_resizepart "${disk}" "${partnum}"); then
-  log_failure_message "Failed to resize partition: ${out}"
+  log_failure_msg "Failed to resize partition: ${out}"
   exit 0
 fi
 
 echo "Resizing filesystem on ${rootdev}"
 if ! out=$(resize_filesystem "${rootdev}"); then
-  log_failure_message "Failed to resize filesystem: ${out}"
+  log_failure_msg "Failed to resize filesystem: ${out}"
   exit 0
 fi
