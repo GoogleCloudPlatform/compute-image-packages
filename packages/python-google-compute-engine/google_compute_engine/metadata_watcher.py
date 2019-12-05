@@ -163,6 +163,7 @@ class MetadataWatcher(object):
       wait: bool, True if we should wait for a metadata change.
       timeout: int, timeout in seconds for returning metadata output.
       retry_limit: int or None, limit for number of times to retry on failure.
+          Retry indefinitely when set to None. Do not retry when set to zero.
 
     Returns:
       json, the deserialized contents of the metadata server.
@@ -209,6 +210,7 @@ class MetadataWatcher(object):
       recursive: bool, True if we should recursively watch for metadata changes.
       timeout: int, timeout in seconds for returning metadata output.
       retry_limit: int or None, limit for number of times to retry on failure.
+          Retry indefinitely when set to None. Do not retry when set to zero.
 
     Returns:
       json, the deserialized contents of the metadata server or None if error.
