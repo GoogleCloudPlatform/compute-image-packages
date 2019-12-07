@@ -62,6 +62,6 @@ ln -sf /usr/bin/google_set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
 for svc in google-ip-forwarding-daemon google-network-setup \
   google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
     if initctl status $svc >/dev/null 2>&1; then
-      initctl stop ${svc}.service || :
+      initctl stop ${svc} || :
     fi
 done
