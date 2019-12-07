@@ -59,14 +59,9 @@ ln -sf /usr/bin/google_set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
 %config /etc/sysctl.d/*
 
 %post
-if initctl status google-ip-forwarding-daemon 2>&1 | grep -q 'running'; then
-  stop -q -n google-ip-forwarding-daemon
-fi
-
-%preun
-# On uninstall only.
-if [ $1 -eq 0 ]; then
-  if initctl status google-ip-forwarding-daemon 2>&1 | grep -q 'running'; then
-    stop -q -n google-ip-forwarding-daemon
-  fi
-fi
+for svc in google-ip-forwarding-daemon google-network-setup \
+  google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
+    if initctl status $svc >/dev/null 2>&1; then
+      initctl stop ${svc}.service || :
+    fi
+done

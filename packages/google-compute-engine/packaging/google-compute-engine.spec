@@ -61,8 +61,10 @@ cp -a src/lib/udev/rules.d/* %{buildroot}/%{_udevrulesdir}
 # Remove old services.
 for svc in google-ip-forwarding-daemon google-network-setup \
   google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
-    if [ -f /lib/systemd/system/${svc}.service ]; then
-      systemctl stop ${svc}.service
+    if systemctl is-enabled ${svc}.service >/dev/null 2>&1; then
       systemctl disable ${svc}.service
+      if [ -d /run/systemd/system ]; then
+        systemctl stop ${svc}.service
+      fi
     fi
 done
