@@ -3,5 +3,7 @@
 %:
 	dh $@ --with systemd
 
-override_dh_systemd_start:
+#TODO: validate that enabling this (by commenting out the override) doesn't have
+#any adverse impact
+#override_dh_systemd_start:
 	# Configured in postinst.

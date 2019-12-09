@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#DEBHELPER#
-
 set -e
 if [ "$1" = upgrade ] && [ -d /run/systemd/system ] ; then
   # Remove old services if they exist on upgrade.
@@ -26,3 +24,7 @@ if [ "$1" = upgrade ] && [ -d /run/systemd/system ] ; then
       fi
   done
 fi
+
+#TODO: verify a reload happens in debhelper below
+
+#DEBHELPER#
