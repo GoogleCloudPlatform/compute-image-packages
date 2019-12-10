@@ -1,6 +1,7 @@
 python-google-compute-engine (1:20191210.00-g1) stable; urgency=medium
 
   * Enable sysctl change for E2 platform.
+  * Support retry limits in metadata retrieval.
 
  -- Google Cloud Team <gc-team@google.com>  Tue, 10 Dec 2019 15:02:59 -0800
 
