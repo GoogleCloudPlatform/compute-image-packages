@@ -1,9 +1,9 @@
-google-compute-engine (1:20191207.00-g1) stable; urgency=medium
+google-compute-engine (1:20200113.00-g1) stable; urgency=medium
 
   * Remove python daemon configs.
   * Add dependency on guest-agent package.
 
- -- Google Cloud Team <gc-team@google.com>  Sat, 07 Dec 2019 12:01:55 -0700
+ -- Google Cloud Team <gc-team@google.com>  Mon, 13 Jan 2020 13:27:55 -0700
 
 google-compute-engine (1:20190916.00-g1) stable; urgency=medium
 

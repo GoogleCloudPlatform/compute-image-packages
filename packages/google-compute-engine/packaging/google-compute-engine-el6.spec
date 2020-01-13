@@ -15,7 +15,7 @@
 Name: google-compute-engine
 Epoch: 1
 Version: %{_version}
-Release: g1.el6
+Release: g2.el6
 Summary: Google Compute Engine guest environment.
 License: ASL 2.0
 Url: https://github.com/GoogleCloudPlatform/compute-image-packages

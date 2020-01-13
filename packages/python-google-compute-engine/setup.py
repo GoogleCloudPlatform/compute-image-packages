@@ -36,7 +36,7 @@ setuptools.setup(
     name='google-compute-engine',
     packages=setuptools.find_packages(),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages',
-    version='20200108.0',
+    version='20200113.0',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

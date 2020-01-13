@@ -28,6 +28,7 @@ from google_compute_engine import file_utils
 from google_compute_engine import logger
 from google_compute_engine import metadata_watcher
 from google_compute_engine.boto import boto_config
+from google_compute_engine.compat import distro_name
 from google_compute_engine.compat import urlerror
 from google_compute_engine.compat import urlrequest
 from google_compute_engine.instance_setup import instance_config
@@ -65,21 +66,37 @@ class InstanceSetup(object):
       instance_config_metadata = self._GetInstanceConfig()
       self.instance_config = instance_config.InstanceConfig(
           logger=self.logger, instance_config_metadata=instance_config_metadata)
+
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_host_keys'):
         host_key_types = self.instance_config.GetOptionString(
             'InstanceSetup', 'host_key_types')
         self._SetSshHostKeys(host_key_types=host_key_types)
+
       if self.instance_config.GetOptionBool('InstanceSetup', 'set_boto_config'):
         self._SetupBotoConfig()
+
+      self._DisableOvercommit()
+
     if self.instance_config.GetOptionBool(
         'InstanceSetup', 'optimize_local_ssd'):
       self._RunScript('google_optimize_local_ssd')
+
     if self.instance_config.GetOptionBool('InstanceSetup', 'set_multiqueue'):
       self._RunScript('google_set_multiqueue')
+
     try:
       self.instance_config.WriteConfig()
     except (IOError, OSError) as e:
       self.logger.warning(str(e))
+
+  def _DisableOvercommit(self, distro=distro_name):
+    """Disable overcommit accounting on E2 machine types."""
+
+    # Expected machine type format:
+    # 'projects/00000000000/machineTypes/n1-standard-1'
+    machine_type = self.metadata_dict['instance']['machineType'].split('/')[-1]
+    if machine_type.startswith('e2-') and 'bsd' not in distro:
+      subprocess.call(['sysctl', 'vm.overcommit_memory=1'])
 
   def _GetInstanceConfig(self):
     """Get the instance configuration specified in metadata.
