@@ -1,9 +1,4 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@ --with systemd
-
-#TODO: validate that enabling this (by commenting out the override) doesn't have
-#any adverse impact
-#override_dh_systemd_start:
-	# Configured in postinst.
+	dh $@

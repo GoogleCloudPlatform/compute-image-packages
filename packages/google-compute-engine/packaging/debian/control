@@ -10,8 +10,7 @@ Package: google-compute-engine
 Architecture: all
 Depends: google-compute-engine-oslogin,
          google-guest-agent,
-         ${misc:Depends},
-         systemd
+         ${misc:Depends}
 Recommends: rsyslog | system-log-daemon
 Provides: irqbalance
 Conflicts: google-compute-engine-jessie,
@@ -32,5 +31,5 @@ Replaces: google-compute-engine-jessie,
           google-compute-daemon,
           google-startup-scripts
 Description: Google Compute Engine guest environment.
- This package contains scripts, configuration, and systemd init files for
+ This package contains scripts and configuration files for
  features specific to the Google Compute Engine cloud environment.

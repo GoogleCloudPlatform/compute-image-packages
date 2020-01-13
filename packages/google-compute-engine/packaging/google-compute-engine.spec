@@ -31,7 +31,6 @@ Requires: google-guest-agent
 Requires: rsyslog
 
 BuildArch: noarch
-BuildRequires: systemd
 
 # Allow other files in the source that don't end up in the package.
 %define _unpackaged_files_terminate_build 0
@@ -62,9 +61,9 @@ cp -a src/lib/udev/rules.d/* %{buildroot}/%{_udevrulesdir}
 for svc in google-ip-forwarding-daemon google-network-setup \
   google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
     if systemctl is-enabled ${svc}.service >/dev/null 2>&1; then
-      systemctl disable ${svc}.service
+      systemctl disable ${svc}.service >/dev/null 2>&1 || :
       if [ -d /run/systemd/system ]; then
-        systemctl stop ${svc}.service
+        systemctl stop ${svc}.service >/dev/null 2>&1 || :
       fi
     fi
 done
