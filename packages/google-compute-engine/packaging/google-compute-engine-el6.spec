@@ -58,10 +58,13 @@ ln -sf /usr/bin/google_set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
 %config /etc/rsyslog.d/*
 %config /etc/sysctl.d/*
 
-%post
-for svc in google-ip-forwarding-daemon google-network-setup \
-  google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
-    if initctl status $svc >/dev/null 2>&1; then
-      initctl stop ${svc} || :
-    fi
-done
+%pre
+if [ $1 -gt 1 ] ; then
+  # This is an upgrade. Stop services previously owned by this package, if any.
+  for svc in google-ip-forwarding-daemon google-network-setup \
+    google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
+      if initctl status $svc >/dev/null 2>&1; then
+        initctl stop ${svc} || :
+      fi
+  done
+fi
