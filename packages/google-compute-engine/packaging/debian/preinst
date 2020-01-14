@@ -17,7 +17,8 @@ set -e
 if [ "$1" = upgrade ] && [ -d /run/systemd/system ] ; then
   # Remove old services if they exist on upgrade.
   for svc in google-ip-forwarding-daemon google-network-setup \
-    google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
+    google-network-daemon google-accounts-daemon google-clock-skew-daemon \
+    google-instance-setup; do
       if [ -f /lib/systemd/system/${svc}.service ]; then
         systemctl --no-reload disable ${svc}.service >/dev/null 2>&1 || :
         systemctl stop ${svc}.service >/dev/null 2>&1 || :
