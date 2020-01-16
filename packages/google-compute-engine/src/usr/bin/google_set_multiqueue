@@ -26,6 +26,14 @@
 # configuration allows network traffic to be spread across the CPUs, giving
 # each CPU a dedicated TX and RX network queue, while ensuring that all packets
 # from a single flow are delivered to the same CPU.
+#
+# For a gvnic device, set the IRQ affinities to the per-IRQ affinity hint. 
+# The google virtual ethernet driver maps each queue MSI-X interrupt to a 
+# unique single CPU, which is stored in the affinity_hint for each MSI-X 
+# vector. In older versions of the kernel, irqblanace is expected to copy the 
+# affinity_hint to smp_affinity; however, GCE instances disable irqbalance by 
+# default. This script copies over the affinity_hint to smp_affinity on boot to
+# replicate the behavior of irqbalance.
 
 function is_decimal_int() {
   [ "${1}" -eq "${1}" ] > /dev/null 2>&1
@@ -36,11 +44,11 @@ function set_channels() {
 }
 
 echo "Running $(basename $0)."
-NET_DEVS=/sys/bus/virtio/drivers/virtio_net/virtio*
+VIRTIO_NET_DEVS=/sys/bus/virtio/drivers/virtio_net/virtio*
 
 # Loop through all the virtionet devices and enable multi-queue
 if [ -x "$(command -v ethtool)" ]; then
-  for dev in $NET_DEVS; do
+  for dev in $VIRTIO_NET_DEVS; do
     ETH_DEVS=${dev}/net/*
     for eth_dev in $ETH_DEVS; do
       eth_dev=$(basename "$eth_dev")
@@ -62,7 +70,7 @@ else
   echo "ethtool not found: cannot configure virtionet multiqueue."
 fi
 
-for dev in $NET_DEVS
+for dev in $VIRTIO_NET_DEVS
 do
     dev=$(basename "$dev")
     irq_dir=/proc/irq/*
@@ -102,6 +110,18 @@ do
       real_affinity=`cat ${smp_affinity}`
       echo "${smp_affinity}: real affinity ${real_affinity}"
     done
+done
+
+# Set smp_affinity properly for gvnic queues. '-ntfy-block.' is unique to gve
+# and will not affect virtio queues.
+for i in /proc/irq/*
+do
+  if ls ${i}/*-ntfy-block.* 1> /dev/null 2>&1; then
+    if [ -f ${i}/affinity_hint ]; then
+      echo Setting smp_affinity on ${i} to $(cat ${i}/affinity_hint)
+      cp ${i}/affinity_hint ${i}/smp_affinity
+    fi
+  fi
 done
 
 XPS=/sys/class/net/e*/queues/tx*/xps_cpus
