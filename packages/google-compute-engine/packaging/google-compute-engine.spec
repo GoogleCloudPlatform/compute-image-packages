@@ -27,15 +27,10 @@ Url: https://github.com/GoogleCloudPlatform/compute-image-packages
 Source0: %{name}_%{version}.orig.tar.gz
 Requires: curl
 Requires: google-compute-engine-oslogin
-%if 0%{?rhel} == 8
-Requires: python3-google-compute-engine >= 1:20190916.00
-%else
-Requires: python-google-compute-engine >= 1:20190916.00
-%endif
+Requires: google-guest-agent
 Requires: rsyslog
 
 BuildArch: noarch
-BuildRequires: systemd
 
 # Allow other files in the source that don't end up in the package.
 %define _unpackaged_files_terminate_build 0
@@ -49,9 +44,7 @@ specific to the Google Compute Engine cloud environment.
 
 %install
 cp -a src/{etc,usr} %{buildroot}
-install -d %{buildroot}/{%{_unitdir},%{_presetdir},%{_udevrulesdir}}
-cp -a src/lib/systemd/system/* %{buildroot}/%{_unitdir}
-cp -a src/lib/systemd/system-preset/* %{buildroot}/%{_presetdir}
+install -d %{buildroot}/%{_udevrulesdir}
 cp -a src/lib/udev/rules.d/* %{buildroot}/%{_udevrulesdir}
 
 %files
@@ -59,52 +52,24 @@ cp -a src/lib/udev/rules.d/* %{buildroot}/%{_udevrulesdir}
 %attr(0755,-,-) %{_bindir}/*
 %attr(0755,-,-) /etc/dhcp/dhclient.d/google_hostname.sh
 %{_udevrulesdir}/*
-%{_unitdir}/*
-%{_presetdir}/*
 %config /etc/modprobe.d/*
 %config /etc/rsyslog.d/*
 %config /etc/sysctl.d/*
 
-%post
-if [ $1 -eq 2 ]; then
-  # New service might not be enabled during upgrade.
-  systemctl enable google-network-daemon.service
+%pre
+if [ $1 -gt 1 ] ; then
+  # This is an upgrade. Stop and disable services previously owned by this
+  # package, if any.
+  for svc in google-ip-forwarding-daemon google-network-setup \
+    google-network-daemon google-accounts-daemon google-clock-skew-daemon \
+    google-instance-setup; do
+      if systemctl is-enabled ${svc}.service >/dev/null 2>&1; then
+        systemctl --no-reload disable ${svc}.service >/dev/null 2>&1 || :
+        if [ -d /run/systemd/system ]; then
+          systemctl stop ${svc}.service >/dev/null 2>&1 || :
+        fi
+      fi
+  done
+  systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 
-# On upgrade run instance setup again to handle any new configs and restart
-# daemons.
-if [ $1 -eq 2 ]; then
-  /usr/bin/google_instance_setup
-  systemctl reload-or-restart google-accounts-daemon.service
-  systemctl reload-or-restart google-clock-skew-daemon.service
-  systemctl reload-or-restart google-network-daemon.service
-fi
-
-%systemd_post google-accounts-daemon.service
-%systemd_post google-clock-skew-daemon.service
-%systemd_post google-instance-setup.service
-%systemd_post google-network-daemon.service
-%systemd_post google-shutdown-scripts.service
-%systemd_post google-startup-scripts.service
-
-# Remove old services.
-if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
-  systemctl stop --no-block google-ip-forwarding-daemon
-  systemctl disable google-ip-forwarding-daemon.service
-fi
-
-if [ -f /lib/systemd/system/google-network-setup.service ]; then
-  systemctl stop --no-block google-network-setup
-  systemctl disable google-network-setup.service
-fi
-
-%preun
-# On uninstall only.
-if [ $1 -eq 0 ]; then
-  %systemd_preun google-accounts-daemon.service
-  %systemd_preun google-clock-skew-daemon.service
-  %systemd_preun google-instance-setup.service
-  %systemd_preun google-network-daemon.service
-  %systemd_preun google-shutdown-scripts.service
-  %systemd_preun google-startup-scripts.service
-fi

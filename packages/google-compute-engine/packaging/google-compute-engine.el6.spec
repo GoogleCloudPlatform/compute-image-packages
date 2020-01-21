@@ -22,7 +22,7 @@ Url: https://github.com/GoogleCloudPlatform/compute-image-packages
 Source0: %{name}_%{version}.orig.tar.gz
 Requires: curl
 Requires: google-compute-engine-oslogin
-Requires: python-google-compute-engine >= 1:20190916.00
+Requires: google-guest-agent
 Requires: rsyslog
 # Old packages.
 Obsoletes: google-compute-engine-init
@@ -53,36 +53,18 @@ ln -sf /usr/bin/google_set_hostname %{buildroot}/etc/dhcp/dhclient-exit-hooks
 %attr(0755,-,-) %{_bindir}/*
 %attr(0755,-,-) %{_sbindir}/*
 /lib/udev/rules.d/*
-/etc/init/*.conf
 /etc/dhcp/dhclient-exit-hooks
 %config /etc/modprobe.d/*
 %config /etc/rsyslog.d/*
 %config /etc/sysctl.d/*
 
-%post
-# On upgrade run instance setup again to handle any new configs and restart
-# daemons.
-if [ $1 -eq 2 ]; then
-  stop -q -n google-accounts-daemon
-  stop -q -n google-clock-skew-daemon
-  stop -q -n google-network-daemon
-  /usr/bin/google_instance_setup
-  start -q -n google-accounts-daemon
-  start -q -n google-clock-skew-daemon
-  start -q -n google-network-daemon
-fi
-
-if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
-  stop -q -n google-ip-forwarding-daemon
-fi
-
-%preun
-# On uninstall only.
-if [ $1 -eq 0 ]; then
-  stop -q -n google-accounts-daemon
-  stop -q -n google-clock-skew-daemon
-  stop -q -n google-network-daemon
-  if initctl status google-ip-forwarding-daemon | grep -q 'running'; then
-    stop -q -n google-ip-forwarding-daemon
-  fi
+%pre
+if [ $1 -gt 1 ] ; then
+  # This is an upgrade. Stop services previously owned by this package, if any.
+  for svc in google-ip-forwarding-daemon google-network-setup \
+    google-network-daemon google-accounts-daemon google-clock-skew-daemon; do
+      if initctl status $svc >/dev/null 2>&1; then
+        initctl stop ${svc} || :
+      fi
+  done
 fi

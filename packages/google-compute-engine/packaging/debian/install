@@ -2,7 +2,5 @@ etc/apt/apt.conf.d/*
 etc/modprobe.d/*
 etc/rsyslog.d/*
 etc/sysctl.d/*
-lib/systemd/system/*
-lib/systemd/system-preset/*
 lib/udev/rules.d/*
 usr/bin/*
