@@ -114,8 +114,7 @@ done
 
 # Set smp_affinity properly for gvnic queues. '-ntfy-block.' is unique to gve
 # and will not affect virtio queues.
-for i in /proc/irq/*
-do
+for i in /proc/irq/*; do
   if ls ${i}/*-ntfy-block.* 1> /dev/null 2>&1; then
     if [ -f ${i}/affinity_hint ]; then
       echo Setting smp_affinity on ${i} to $(cat ${i}/affinity_hint)
