@@ -15,7 +15,6 @@
 
 """Create a Python package of the Linux guest environment."""
 
-import glob
 import sys
 
 import setuptools
@@ -37,22 +36,10 @@ setuptools.setup(
     name='google-compute-engine',
     packages=setuptools.find_packages(),
     url='https://github.com/GoogleCloudPlatform/compute-image-packages',
-    version='20191112.0',
-    # Entry points create scripts in /usr/bin that call a function.
-    entry_points={
-        'console_scripts': [
-            'google_accounts_daemon=google_compute_engine.accounts.accounts_daemon:main',
-            'google_clock_skew_daemon=google_compute_engine.clock_skew.clock_skew_daemon:main',
-            'google_instance_setup=google_compute_engine.instance_setup.instance_setup:main',
-            'google_network_daemon=google_compute_engine.networking.network_daemon:main',
-            'google_metadata_script_runner=google_compute_engine.metadata_scripts.script_manager:main',
-        ],
-    },
+    version='20200113.0',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
-        'Environment :: No Input/Output (Daemon)',
         'Intended Audience :: Developers',
-        'Intended Audience :: System Administrators',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
@@ -68,7 +55,5 @@ setuptools.setup(
         'Programming Language :: Python :: 3.7',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: System :: Installation/Setup',
-        'Topic :: System :: Systems Administration',
     ],
 )
