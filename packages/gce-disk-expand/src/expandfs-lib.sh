@@ -60,32 +60,31 @@ blkid_get_fstype() (
     echo $ID_FS_TYPE
 )
 
+sgdisk_get_label() {
+    local root="$1"
+    [ -z "$root" ] && return 0
 
-# Checks for and corrects the end-of-disk GPT backup block in case of expanded
-# disk.
-parted_fix_gpt() {
+    if sgdisk -p "$root" | grep -q "Found invalid GPT and valid MBR"; then
+        echo "mbr"
+    else
+        echo "gpt"
+    fi
+}
+
+sgdisk_fix_gpt() {
   local disk="$1"
   [ -z "$disk" ] && return
 
-  if parted -sm "$disk" print 2>&1 | grep -q "fix the GPT"; then
-    # Running parted prompts the user to fix this condition, but only does so in
-    # the interactive exception handler. In order to pass input we must use the
-    # hidden triple-dash flag and pass both print and Fix arguments. `print`
-    # alone will not perform the fix, but `Fix` alone will fail the argument
-    # parser.
-    parted -m ---pretend-input-tty "$disk" print Fix >/dev/null 2>&1 </dev/null
-    parted -m ---pretend-input-tty "$disk" print Fix >/dev/null 2>&1 </dev/null
-    if parted -sm "$disk" print 2>&1 | grep -q "fix the GPT"; then
-      echo "Failed to fix the GPT."
-      return 1
-    fi
-  fi
+  local label=$(sgdisk_get_label "$disk")
+  [ "$label" != "gpt" ] && return
+
+  sgdisk --move-second-header "$disk"
 }
 
 # Returns "disk:partition", supporting multiple block types.
 split_partition() {
   local root="$1" disk="" partnum=""
-  [ -z "$root" ] && return
+  [ -z "$root" ] && return 0
 
   if [ -e /sys/block/${root##*/} ]; then
     echo "Root is not a partition, skipping partition resize."

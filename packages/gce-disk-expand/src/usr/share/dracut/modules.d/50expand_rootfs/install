@@ -21,6 +21,7 @@ inst_hook pre-mount 50 "$moddir/expand_rootfs.sh"
 inst_hook pre-pivot 99 "$moddir/xfs_growfs.sh"
 
 dracut_install parted
+dracut_install sgdisk
 dracut_install cut
 dracut_install sed
 dracut_install grep

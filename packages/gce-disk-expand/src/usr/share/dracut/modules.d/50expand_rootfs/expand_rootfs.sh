@@ -16,6 +16,12 @@
 # Contains dracut-specific logic for detecting disk, then calls appropriate
 # library functions.
 
+# Notes for developing dracut modules: this module must never exit with anything
+# other than a 0 exit code. That means no use of set -e or traps on err, and
+# every command must be defensively written so that errors are caught and
+# logged, rather than causing end of execution. Note that error handling in the
+# main() function always calls return 0
+
 kmsg() {
   echo "expand_rootfs: $@" > /dev/kmsg
 }
@@ -49,13 +55,14 @@ main() {
 
   kmsg "Resizing disk ${rootdev}"
 
+  # First, move the secondary GPT to the end.
+  if ! out=$(sgdisk_fix_gpt "$disk"); then
+    kmsg "Failed to fix GPT: ${out}"
+  fi
+
   if ! out=$(parted_resizepart "$disk" "$partnum"); then
-    # Try fixing the GPT and try resizing again.
-    parted_fix_gpt "$disk"
-    if ! out=$(parted_resizepart "$disk" "$partnum"); then
-      kmsg "Failed to resize partition: ${out}"
-      return
-    fi
+    kmsg "Failed to resize partition: ${out}"
+    return
   fi
 
   if ! out=$(resize_filesystem "$rootdev"); then

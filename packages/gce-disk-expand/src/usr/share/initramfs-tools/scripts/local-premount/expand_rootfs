@@ -49,7 +49,7 @@ if ! parted_needresize "${disk}" "${partnum}"; then
   exit 0
 fi
 
-if ! out=$(parted_fix_gpt "$disk"); then
+if ! out=$(sgdisk_fix_gpt "$disk"); then
   log_failure_msg "Failed to fix GPT: ${out}"
   exit 0
 fi
