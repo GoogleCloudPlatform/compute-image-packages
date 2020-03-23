@@ -103,7 +103,10 @@ split_partition() {
 # Checks if partition needs resizing.
 parted_needresize() {
   local disk="$1" partnum="$2" disksize="" partend=""
-  [ -z "$root" ] && return
+  if [ -z "$disk" ] || [ -z "$partnum" ]; then
+    echo "invalid args to parted_needresize"
+    return 1
+  fi
 
   if ! out=$(parted -sm "$disk" unit b print 2>&1); then
     echo "Failed to get disk details: ${out}"

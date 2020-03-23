@@ -45,7 +45,7 @@ disk=${out%:*}
 partnum=${out#*:}
 
 if ! parted_needresize "${disk}" "${partnum}"; then
-  log_success_message "Disk ${rootdev} doesn't need resizing."
+  log_success_msg "Disk ${rootdev} doesn't need resizing."
   exit 0
 fi
 
