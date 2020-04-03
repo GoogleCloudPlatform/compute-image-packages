@@ -20,8 +20,10 @@ License: Apache Software License
 Group: System Environment/Base
 URL: https://github.com/GoogleCloudPlatform/compute-image-packages
 Source0: %{name}_%{version}.orig.tar.gz
-Requires: e2fsprogs, dracut, grep, util-linux, parted
+Requires: e2fsprogs, dracut, grep, util-linux, parted, gdisk
 Conflicts: dracut-modules-growroot
+
+BuildRequires: rsync
 
 # Allow other files in the source that don't end up in the package.
 %define _unpackaged_files_terminate_build 0

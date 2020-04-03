@@ -13,20 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#DEBHELPER#
-
 set -e
-if [ -d /run/systemd/system ] ; then
-  if [ "$1" = upgrade ]; then
-    # Remove old services if they exist on upgrade.
-    if [ -f /lib/systemd/system/google-ip-forwarding-daemon.service ]; then
-      systemctl stop google-ip-forwarding-daemon.service
-      systemctl disable google-ip-forwarding-daemon.service
-    fi
-
-    if [ -f /lib/systemd/system/google-network-setup.service ]; then
-      systemctl stop google-network-setup.service
-      systemctl disable google-network-setup.service
-    fi
-  fi
+if [ "$1" = upgrade ]; then
+  # Remove old services if they exist on upgrade.
+  for svc in google-ip-forwarding-daemon google-network-setup \
+    google-network-daemon google-accounts-daemon google-clock-skew-daemon \
+    google-instance-setup; do
+      if systemctl is-enabled ${svc}.service >/dev/null 2>&1; then
+        systemctl --no-reload disable ${svc}.service >/dev/null 2>&1 || :
+        if [ -d /run/systemd/system ]; then
+          systemctl stop ${svc}.service >/dev/null 2>&1 || :
+        fi
+      fi
+  done
+  systemdctl daemon-reload >/dev/null 2>&1 || :
 fi

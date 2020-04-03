@@ -36,3 +36,5 @@ copy_exec /sbin/e2fsck /bin
 copy_exec /sbin/blkid /bin
 copy_exec /sbin/resize2fs /bin
 copy_exec /bin/udevadm /bin
+copy_exec /usr/sbin/dmidecode /bin
+copy_exec /sbin/sgdisk /bin
