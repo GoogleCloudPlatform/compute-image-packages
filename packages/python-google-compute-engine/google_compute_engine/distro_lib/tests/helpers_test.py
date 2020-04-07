@@ -153,7 +153,7 @@ class HelpersTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallHwclock(self, mock_call):
-    command = ['/sbin/hwclock', '--hctosys']
+    command = ['/sbin/hwclock', '--hctosys', '--utc']
     mock_logger = mock.Mock()
 
     helpers.CallHwclock(mock_logger)
@@ -163,7 +163,7 @@ class HelpersTest(unittest.TestCase):
 
   @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
   def testCallHwclockError(self, mock_call):
-    command = ['/sbin/hwclock', '--hctosys']
+    command = ['/sbin/hwclock', '--hctosys', '--utc']
     mock_logger = mock.Mock()
     mock_call.side_effect = subprocess.CalledProcessError(1, 'Test')
 

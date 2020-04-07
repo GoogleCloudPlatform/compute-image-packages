@@ -115,7 +115,7 @@ def CallHwclock(logger):
   Args:
     logger: logger object, used to write to SysLog and serial port.
   """
-  command = ['/sbin/hwclock', '--hctosys']
+  command = ['/sbin/hwclock', '--hctosys', '--utc']
   try:
     subprocess.check_call(command)
   except subprocess.CalledProcessError:
