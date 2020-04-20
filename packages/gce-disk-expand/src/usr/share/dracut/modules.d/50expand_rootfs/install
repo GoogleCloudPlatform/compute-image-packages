@@ -28,5 +28,4 @@ dracut_install grep
 dracut_install resize2fs
 dracut_install e2fsck
 dracut_install udevadm
-dracut_install systemctl
 dracut_install -o xfs_growfs
