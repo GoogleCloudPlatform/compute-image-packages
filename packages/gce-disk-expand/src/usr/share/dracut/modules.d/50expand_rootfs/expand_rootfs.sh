@@ -54,6 +54,9 @@ main() {
   fi
 
   kmsg "Resizing disk ${rootdev}"
+  # Reset the counter for failed job starts to prevent overrunning the default
+  # start burst limits for systemd-fsck-root.service.
+  systemctl reset-failed
 
   # First, move the secondary GPT to the end.
   if ! out=$(sgdisk_fix_gpt "$disk"); then
