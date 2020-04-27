@@ -69,6 +69,7 @@ sgdisk_get_label() {
     else
         echo "gpt"
     fi
+    udevadm settle
 }
 
 sgdisk_fix_gpt() {
@@ -79,6 +80,7 @@ sgdisk_fix_gpt() {
   [ "$label" != "gpt" ] && return
 
   sgdisk --move-second-header "$disk"
+  udevadm settle
 }
 
 # Returns "disk:partition", supporting multiple block types.
