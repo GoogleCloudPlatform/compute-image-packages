@@ -47,6 +47,7 @@ resize_filesystem() {
 blkid_get_fstype() (
     local root="$1"
 
+    udevadm settle
     if ! out=$(blkid -o udev "$root"); then
         echo "Detecting fstype by blkid failed: ${out}"
         return 1
@@ -62,6 +63,8 @@ blkid_get_fstype() (
 
 sgdisk_get_label() {
     local root="$1"
+
+    udevadm settle
     [ -z "$root" ] && return 0
 
     if sgdisk -p "$root" | grep -q "Found invalid GPT and valid MBR"; then
@@ -69,7 +72,6 @@ sgdisk_get_label() {
     else
         echo "gpt"
     fi
-    udevadm settle
 }
 
 sgdisk_fix_gpt() {
@@ -86,6 +88,8 @@ sgdisk_fix_gpt() {
 # Returns "disk:partition", supporting multiple block types.
 split_partition() {
   local root="$1" disk="" partnum=""
+
+  udevadm settle
   [ -z "$root" ] && return 0
 
   if [ -e /sys/block/${root##*/} ]; then
