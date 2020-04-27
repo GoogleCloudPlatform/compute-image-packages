@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+kmsg() {
+  echo "expand_rootfs: $@" > /dev/kmsg
+}
+
 resize_filesystem() {
   local disk="$1" fs_type=""
 
@@ -23,22 +27,22 @@ resize_filesystem() {
 
   case "${fs_type}" in
     xfs)
-      echo "XFS filesystems must be mounted to be resized, deferring."
+      kmsg "XFS filesystems must be mounted to be resized, deferring."
       echo "true" > /tmp/xfs_resize
       return 1
       ;;
     ext*)
       if ! out=$(e2fsck -pf "$disk"); then
         local ret=$?
-        echo "Calling e2fsck \"${disk}\" failed: ${out} exit code ${ret}"
+        kmsg "Calling e2fsck \"${disk}\" failed: ${out} exit code ${ret}"
       fi
       if ! out=$(resize2fs "$disk"); then
-        echo "Calling resize2fs \"${disk}\" failed: ${out}"
+        kmsg "Calling resize2fs \"${disk}\" failed: ${out}"
         return 1
       fi
       ;;
     *)
-      echo "Unsupported filesystem type ${fs_type}, unable to expand size."
+      kmsg "Unsupported filesystem type ${fs_type}, unable to expand size."
       return 1
       ;;
   esac
@@ -47,14 +51,15 @@ resize_filesystem() {
 blkid_get_fstype() (
     local root="$1"
 
+    kmsg "Getting fstype for $root with blkid."
     if ! out=$(blkid -o udev "$root"); then
-        echo "Detecting fstype by blkid failed: ${out}"
+        kmsg "Detecting fstype by blkid failed: ${out}"
         return 1
     fi
 
     eval "$out"
     if [ -z "$ID_FS_TYPE" ]; then
-        echo "No ID_FS_TYPE from blkid."
+        kmsg "No ID_FS_TYPE from blkid."
         return 1
     fi
     echo $ID_FS_TYPE
@@ -64,6 +69,7 @@ sgdisk_get_label() {
     local root="$1"
     [ -z "$root" ] && return 0
 
+    kmsg "Getting $root label with sgdisk."
     if sgdisk -p "$root" | grep -q "Found invalid GPT and valid MBR"; then
         echo "mbr"
     else
@@ -78,7 +84,14 @@ sgdisk_fix_gpt() {
   local label=$(sgdisk_get_label "$disk")
   [ "$label" != "gpt" ] && return
 
+  # Add sleeps to allow this operation to fully complete. On some systems, other
+  # operations such as systemd-fsck tasks can collide and fail.
+  udevadm settle
+  sleep 1
+  kmsg "Moving GPT header for $disk with sgdisk."
   sgdisk --move-second-header "$disk"
+  udevadm settle
+  sleep 1
 }
 
 # Returns "disk:partition", supporting multiple block types.
@@ -87,7 +100,7 @@ split_partition() {
   [ -z "$root" ] && return 0
 
   if [ -e /sys/block/${root##*/} ]; then
-    echo "Root is not a partition, skipping partition resize."
+    kmsg "Root is not a partition, skipping partition resize."
     return 1
   fi
 
@@ -104,19 +117,20 @@ split_partition() {
 parted_needresize() {
   local disk="$1" partnum="$2" disksize="" partend=""
   if [ -z "$disk" ] || [ -z "$partnum" ]; then
-    echo "invalid args to parted_needresize"
+    kmsg "invalid args to parted_needresize"
     return 1
   fi
 
+  kmsg "Check if $disk partition $partnum needs resize with parted."
   if ! out=$(parted -sm "$disk" unit b print 2>&1); then
-    echo "Failed to get disk details: ${out}"
+    kmsg "Failed to get disk details: ${out}"
     return 1
   fi
 
   udevadm settle
 
   if ! printf "$out" | sed '$!d' | grep -q "^${partnum}:"; then
-    echo "Root partition is not final partition on disk. Not resizing."
+    kmsg "Root partition is not final partition on disk. Not resizing."
     return 1
   fi
 
@@ -137,8 +151,9 @@ parted_resizepart() {
   local disk="$1" partnum="$2"
   [ -z "$disk" -o -z "$partnum" ] && return
 
+  kmsg "Resizing $disk partition $partnum with parted."
   if ! out=$(parted -sm "$disk" -- resizepart $partnum -1 2>&1); then
-    echo "Unable to resize ${disk}${partnum}: ${out}"
+    kmsg "Unable to resize ${disk}${partnum}: ${out}"
     return 1
   fi
   udevadm settle
