@@ -14,7 +14,7 @@
 # limitations under the License.
 
 NAME="gce-disk-expand"
-VERSION="20190708.00"
+VERSION="20200428.00"
 
 rpm_working_dir=/tmp/rpmpackage/
 working_dir=${PWD}
