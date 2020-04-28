@@ -22,10 +22,6 @@
 # logged, rather than causing end of execution. Note that error handling in the
 # main() function always calls return 0
 
-kmsg() {
-  echo "expand_rootfs: $@" > /dev/kmsg
-}
-
 main() {
   local rootdev="" disk="" partnum=""
   udevadm settle
