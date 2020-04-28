@@ -14,7 +14,7 @@
 # limitations under the License.
 
 kmsg() {
-  echo "expand_rootfs: $@" > /dev/kmsg
+  echo "gce-disk-expand: $@" > /dev/kmsg
 }
 
 resize_filesystem() {
@@ -84,6 +84,7 @@ sgdisk_fix_gpt() {
   local label=$(sgdisk_get_label "$disk")
   [ "$label" != "gpt" ] && return
 
+  # TODO Find a better solution than sleep.
   # Add sleeps to allow this operation to fully complete. On some systems, other
   # operations such as systemd-fsck tasks can collide and fail.
   udevadm settle
