@@ -1,3 +1,9 @@
+gce-disk-expand (1:20200428.00-g1) stable; urgency=medium
+
+  * Fix potential races in disk expand logic with GPT disks.
+
+ -- Google Cloud Team <gc-team@google.com>  Tue, 28 Apr 2020 10:24:07 -0700
+
 gce-disk-expand (1:20190708.00-g1) stable; urgency=medium
 
   * Update disk expand to fix bugs with GPT.
