@@ -24,7 +24,6 @@
 
 main() {
   local rootdev="" disk="" partnum=""
-  udevadm settle
 
   # Remove 'block:' prefix and find the root device.
   if ! rootdev=$(readlink -f "${root#block:}") || [ -z "${rootdev}" ]; then
@@ -41,6 +40,11 @@ main() {
   partnum=${out#*:}
 
   (
+    # If we can't obtain an exclusive lock on FD 9 (which is associated in this
+    # subshell with the root device we're modifying), then exit. This is needed
+    # to prevent systemd from issuing udev re-enumerations and fsck calls before
+    # we're done. See https://systemd.io/BLOCK_DEVICE_LOCKING/
+
     if ! flock -n 9; then
       kmsg "couldn't obtain lock on ${rootdev}"
       exit
@@ -76,4 +80,6 @@ main() {
 }
 
 . /lib/expandfs-lib.sh
+udevadm settle
 main
+udevadm settle
