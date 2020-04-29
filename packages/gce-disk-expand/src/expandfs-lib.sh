@@ -84,15 +84,8 @@ sgdisk_fix_gpt() {
   local label=$(sgdisk_get_label "$disk")
   [ "$label" != "gpt" ] && return
 
-  # TODO Find a better solution than sleep.
-  # Add sleeps to allow this operation to fully complete. On some systems, other
-  # operations such as systemd-fsck tasks can collide and fail.
-  udevadm settle
-  sleep 1
   kmsg "Moving GPT header for $disk with sgdisk."
   sgdisk --move-second-header "$disk"
-  udevadm settle
-  sleep 1
 }
 
 # Returns "disk:partition", supporting multiple block types.
@@ -128,8 +121,6 @@ parted_needresize() {
     return 1
   fi
 
-  udevadm settle
-
   if ! printf "$out" | sed '$!d' | grep -q "^${partnum}:"; then
     kmsg "Root partition is not final partition on disk. Not resizing."
     return 1
@@ -157,5 +148,4 @@ parted_resizepart() {
     kmsg "Unable to resize ${disk}${partnum}: ${out}"
     return 1
   fi
-  udevadm settle
 }
