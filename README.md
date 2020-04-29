@@ -33,14 +33,14 @@ We build the following packages for the Linux guest environment.
     *  System init scripts (systemd, upstart, or sysvinit).
     *  Includes udev rules, sysctl rules, rsyslog configs, dhcp configs for
        hostname setting.
-    *  Includes bash scripts used by `instance_setup`.
+    *  Includes bash scripts used during instance setup.
     * This package depends on the other necessary packages, and can be used as
       an entry point to [install the guest environment](https://cloud.google.com/compute/docs/images/install-guest-environment).
 *   `google-compute-engine-oslogin`(located in the [guest-oslogin](https://github.com/GoogleCloudPlatform/guest-oslogin) repo)
     *  The PAM and NSS modules for [OS Login](https://cloud.google.com/compute/docs/oslogin/)
 *   `google-guest-agent`(located in the [guest-agent](https://github.com/GoogleCloudPlatform/guest-agent) repo)
-    *  The guest agent which performs all live actions needed to enable GCE
-       functionality.
+    *  The guest agent which performs all on-guest actions needed to support GCE
+       features.
 *   `gce-disk-expand`
     *  The on-boot resize scripts for root partition.
 

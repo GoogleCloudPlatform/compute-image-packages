@@ -22,9 +22,6 @@
 # logged, rather than causing end of execution. Note that error handling in the
 # main() function always calls return 0
 
-kmsg() {
-  echo "expand_rootfs: $@" > /dev/kmsg
-}
 
 main() {
   local disk="" partnum="" fs_type="" rootdev=""
@@ -54,6 +51,9 @@ main() {
   fi
 
   kmsg "Resizing disk ${rootdev}"
+  # Reset the counter for failed job starts to prevent overrunning the default
+  # start burst limits for systemd-fsck-root.service.
+  systemctl reset-failed
 
   # First, move the secondary GPT to the end.
   if ! out=$(sgdisk_fix_gpt "$disk"); then
@@ -66,7 +66,7 @@ main() {
   fi
 
   if ! out=$(resize_filesystem "$rootdev"); then
-    kmsg "Failed to resize filesystem: ${out}"
+    kmsg "Not resizing filesystem: ${out}"
     return
   fi
 }
