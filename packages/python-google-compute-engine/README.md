@@ -1,7 +1,7 @@
 ## Python Linux Guest Environment for Google Compute Engine
 
-This package contains the Python guest environment installed on Google supported
-Compute Engine Linux [images](https://cloud.google.com/compute/docs/images).
+This package contains the Python guest environment which was historically installed on Google supported
+Compute Engine Linux [images](https://cloud.google.com/compute/docs/images). It has been superceded by the [guest agent](https://github.com/GoogleCloudPlatform/guest-agent), but is still provided here for interested consumers. The `google_compute_engine` library is also available as a PyPI package.
 
 **Table of Contents**
 
