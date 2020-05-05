@@ -41,7 +41,7 @@ We build the following packages for the Linux guest environment.
 *   `google-guest-agent`(located in the [guest-agent](https://github.com/GoogleCloudPlatform/guest-agent) repo)
     *  The guest agent which performs all on-guest actions needed to support GCE
        features.
-*   `gce-disk-expand`
+*   `gce-disk-expand`(located in the [guest-diskexpand](https://github.com/GoogleCloudPlatform/guest-diskexpand) repo)
     *  The on-boot resize scripts for root partition.
 
 The legacy [guest Python code](packages/python-google-compute-engine) is

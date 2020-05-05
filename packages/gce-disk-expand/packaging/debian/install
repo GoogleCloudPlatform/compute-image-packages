@@ -1,2 +1,0 @@
-src/usr/share/initramfs-tools usr/share/
-src/expandfs-lib.sh usr/share/initramfs-tools/scripts/
