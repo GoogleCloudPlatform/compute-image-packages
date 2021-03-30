@@ -92,7 +92,6 @@ name=Google Compute Engine
 baseurl=https://packages.cloud.google.com/yum/repos/google-compute-engine-el${DIST}-x86_64-stable
 enabled=1
 gpgcheck=1
-repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM
